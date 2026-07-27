@@ -6,6 +6,29 @@
 <title>Anfrage stellen – Waschlurch</title>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window._db = db;
+  window._collection = collection;
+  window._addDoc = addDoc;
+  window._serverTimestamp = serverTimestamp;
+  window._firebaseReady = true;
+</script>
 <style>
 :root {
   --green: #22C55E;
@@ -95,7 +118,6 @@ main { padding:64px 5% 80px; min-height:100vh; }
 /* FIELDS */
 .field { margin-bottom:18px; }
 .field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
-.field-hint { font-size:12px; color:rgba(255,255,255,0.35); margin-top:6px; }
 .field input, .field select, .field textarea {
   width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
   border:1px solid rgba(255,255,255,0.12); border-radius:12px;
@@ -107,24 +129,6 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .field textarea { min-height:90px; resize:vertical; }
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .field-error { display:none; color:#F87171; font-size:12px; margin-top:6px; }
-
-/* PHOTOS */
-.dropzone {
-  border:2px dashed rgba(255,255,255,0.2); border-radius:16px;
-  padding:32px 16px; text-align:center; cursor:pointer; transition:border-color .2s;
-}
-.dropzone:hover { border-color:var(--green); }
-.dropzone-icon { font-size:32px; margin-bottom:10px; }
-.dropzone-text { font-size:14px; font-weight:600; margin-bottom:4px; }
-.dropzone-hint { font-size:12px; color:rgba(255,255,255,0.4); }
-.photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px; margin-top:16px; }
-.photo-thumb { position:relative; border-radius:12px; overflow:hidden; aspect-ratio:1; background:rgba(255,255,255,0.06); }
-.photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-.photo-remove {
-  position:absolute; top:5px; right:5px; width:22px; height:22px; border-radius:50%;
-  background:rgba(0,0,0,0.7); color:var(--white); border:none; cursor:pointer;
-  font-size:13px; display:flex; align-items:center; justify-content:center;
-}
 
 /* SUMMARY */
 .summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:24px; }
@@ -184,8 +188,8 @@ main { padding:64px 5% 80px; min-height:100vh; }
 
   <div class="wizard-head">
     <div class="tag">Kostenlose Anfrage</div>
-    <h1 class="wizard-title">In 5 Schritten zu Ihrem Angebot</h1>
-    <p class="wizard-sub">Wählen Sie Ihre Leistungen und laden Sie ein paar Fotos hoch – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Kein Anruf nötig.</p>
+    <h1 class="wizard-title">In 4 Schritten zu Ihrem Angebot</h1>
+    <p class="wizard-sub">Wählen Sie Ihre Leistungen – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Kein Anruf nötig.</p>
   </div>
 
   <div class="progress" id="progress"></div>
@@ -194,7 +198,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
 
     <!-- STEP 1: LEISTUNGEN -->
     <div class="step-panel active" data-step="1">
-      <div class="step-label">Schritt 1 von 5</div>
+      <div class="step-label">Schritt 1 von 4</div>
       <div class="step-heading">Welche Leistung(en) benötigen Sie?</div>
       <div class="tiles" id="tiles"></div>
       <div class="field-error" id="err-1">Bitte wählen Sie mindestens eine Leistung aus.</div>
@@ -202,7 +206,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
 
     <!-- STEP 2: UMFANG -->
     <div class="step-panel" data-step="2">
-      <div class="step-label">Schritt 2 von 5</div>
+      <div class="step-label">Schritt 2 von 4</div>
       <div class="step-heading">Umfang & Häufigkeit</div>
       <div class="field">
         <label>Fläche in m² (falls bekannt)</label>
@@ -225,7 +229,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
 
     <!-- STEP 3: ADRESSE -->
     <div class="step-panel" data-step="3">
-      <div class="step-label">Schritt 3 von 5</div>
+      <div class="step-label">Schritt 3 von 4</div>
       <div class="step-heading">Adresse & Wunschtermin</div>
       <div class="field">
         <label>Straße & Hausnummer *</label>
@@ -248,22 +252,9 @@ main { padding:64px 5% 80px; min-height:100vh; }
       <div class="field-error" id="err-3">Bitte Straße, PLZ und Ort ausfüllen.</div>
     </div>
 
-    <!-- STEP 4: FOTOS -->
+    <!-- STEP 4: KONTAKT -->
     <div class="step-panel" data-step="4">
-      <div class="step-label">Schritt 4 von 5</div>
-      <div class="step-heading">Fotos hochladen</div>
-      <div class="dropzone" id="dropzone" onclick="document.getElementById('f-fotos').click()">
-        <div class="dropzone-icon">📷</div>
-        <div class="dropzone-text">Fotos vom Objekt aufnehmen oder hochladen</div>
-        <div class="dropzone-hint">Direkt vom Handy – hilft uns, Ihnen ein genaueres Angebot zu machen (optional, max. 5 Fotos, je 5 MB)</div>
-      </div>
-      <input type="file" id="f-fotos" accept="image/*" capture="environment" multiple style="display:none">
-      <div class="photo-grid" id="photo-grid"></div>
-    </div>
-
-    <!-- STEP 5: KONTAKT -->
-    <div class="step-panel" data-step="5">
-      <div class="step-label">Schritt 5 von 5</div>
+      <div class="step-label">Schritt 4 von 4</div>
       <div class="step-heading">Ihre Kontaktdaten</div>
       <div class="summary" id="summary"></div>
 
@@ -290,7 +281,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
           <label>Nachricht (optional)</label>
           <textarea id="f-nachricht" placeholder="Weitere Wünsche oder Hinweise ..."></textarea>
         </div>
-        <div class="field-error" id="err-5">Bitte alle Pflichtfelder korrekt ausfüllen.</div>
+        <div class="field-error" id="err-4">Bitte alle Pflichtfelder korrekt ausfüllen.</div>
       </div>
 
       <div id="code-panel" style="display:none">
@@ -326,7 +317,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
 
 <script>
 const WEB3FORMS_KEY = '24205589-1aa2-44d0-a816-6bcba6b1e810';
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 4;
 
 const SERVICES = [
   { id:'haushalt',   icon:'🏠', name:'Haushaltsreinigung',   price:'ab 54 €' },
@@ -342,7 +333,6 @@ const SERVICES = [
 
 let currentStep = 1;
 let selectedServices = new Set();
-let photos = [];
 let _verifyCode = '';
 let _countdownInterval;
 let codeStageActive = false;
@@ -378,38 +368,6 @@ function renderProgress() {
   }
 }
 
-// ── PHOTOS ─────────────────────
-document.getElementById('f-fotos').addEventListener('change', function(e){
-  const files = Array.from(e.target.files);
-  files.forEach(file => {
-    if(photos.length >= 5) return;
-    if(file.size > 5*1024*1024) return;
-    photos.push(file);
-  });
-  renderPhotos();
-  e.target.value = '';
-});
-
-function renderPhotos(){
-  const grid = document.getElementById('photo-grid');
-  grid.innerHTML = '';
-  photos.forEach((file, idx) => {
-    const reader = new FileReader();
-    const thumb = document.createElement('div');
-    thumb.className = 'photo-thumb';
-    const img = document.createElement('img');
-    thumb.appendChild(img);
-    const btn = document.createElement('button');
-    btn.className = 'photo-remove';
-    btn.textContent = '×';
-    btn.onclick = (ev) => { ev.stopPropagation(); photos.splice(idx,1); renderPhotos(); };
-    thumb.appendChild(btn);
-    grid.appendChild(thumb);
-    reader.onload = e => img.src = e.target.result;
-    reader.readAsDataURL(file);
-  });
-}
-
 // ── VALIDATION ─────────────────────
 function validateTel(tel) {
   const cleaned = tel.replace(/\s/g,'');
@@ -430,19 +388,19 @@ function validateStep(step) {
     document.getElementById('err-3').style.display = ok ? 'none' : 'block';
     return ok;
   }
-  if(step === 5){
+  if(step === 4){
     const vorname = document.getElementById('f-vorname').value.trim();
     const nachname = document.getElementById('f-nachname').value.trim();
     const email = document.getElementById('f-email').value.trim();
     const tel = document.getElementById('f-tel').value.trim();
     const ok = vorname && nachname && email.includes('@') && email.includes('.') && validateTel(tel);
-    document.getElementById('err-5').style.display = ok ? 'none' : 'block';
+    document.getElementById('err-4').style.display = ok ? 'none' : 'block';
     return ok;
   }
   return true;
 }
 
-// ── SUMMARY (step 5) ─────────────────────
+// ── SUMMARY (step 4) ─────────────────────
 function renderSummary(){
   const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
   const flaeche = document.getElementById('f-flaeche').value.trim();
@@ -458,7 +416,6 @@ function renderSummary(){
     ['Häufigkeit', haeufigkeit],
     ['Adresse', (strasse || ort) ? (strasse + (strasse&&ort?', ':'') + plz + ' ' + ort) : '–'],
     ['Wunschtermin', termin || '–'],
-    ['Fotos', photos.length + ' angehängt'],
   ];
   document.getElementById('summary').innerHTML = rows.map(r =>
     `<div class="summary-row"><span>${r[0]}</span><span>${r[1]}</span></div>`
@@ -471,18 +428,18 @@ function showStep(step){
   document.querySelector(`.step-panel[data-step="${step}"]`).classList.add('active');
   renderProgress();
   document.getElementById('btn-back').style.display = step === 1 ? 'none' : 'block';
-  if(step === 5){
+  if(step === TOTAL_STEPS){
     document.getElementById('btn-next').textContent = 'Code senden →';
   } else {
     document.getElementById('btn-next').textContent = 'Weiter →';
   }
-  if(step === 5) renderSummary();
+  if(step === TOTAL_STEPS) renderSummary();
 }
 
 function nextStep(){
   if(currentStep === TOTAL_STEPS){
     if(!codeStageActive){
-      if(!validateStep(5)) return;
+      if(!validateStep(TOTAL_STEPS)) return;
       sendVerificationCode();
     } else {
       verifyCodeAndSubmit();
@@ -535,8 +492,8 @@ function sendVerificationCode(){
     startCountdown();
   }).catch(function(error){
     console.error('EmailJS error:', error);
-    document.getElementById('err-5').textContent = 'Fehler beim Senden des Codes. Bitte versuchen Sie es erneut.';
-    document.getElementById('err-5').style.display = 'block';
+    document.getElementById('err-4').textContent = 'Fehler beim Senden des Codes. Bitte versuchen Sie es erneut.';
+    document.getElementById('err-4').style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Code senden →';
   });
@@ -578,38 +535,6 @@ function verifyCodeAndSubmit(){
   submitRequest();
 }
 
-// ── SUBMIT (mit automatischem Fallback ohne Fotos) ─────────────────────
-function buildFormData(includePhotos){
-  const vorname = document.getElementById('f-vorname').value.trim();
-  const nachname = document.getElementById('f-nachname').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-  const tel = document.getElementById('f-tel').value.trim();
-  const nachricht = document.getElementById('f-nachricht').value.trim();
-  const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
-
-  const fd = new FormData();
-  fd.append('access_key', WEB3FORMS_KEY);
-  fd.append('subject', `Anfrage: ${vorname} ${nachname} · ${names}`);
-  fd.append('from_name', 'Waschlurch Anfrage-Assistent');
-  fd.append('vorname', vorname);
-  fd.append('nachname', nachname);
-  fd.append('email', email);
-  fd.append('telefon', tel);
-  fd.append('leistungen', names);
-  fd.append('flaeche_m2', document.getElementById('f-flaeche').value.trim());
-  fd.append('haeufigkeit', document.getElementById('f-haeufigkeit').value);
-  fd.append('anmerkung_objekt', document.getElementById('f-anmerkung').value.trim());
-  fd.append('adresse', `${document.getElementById('f-strasse').value.trim()}, ${document.getElementById('f-plz').value.trim()} ${document.getElementById('f-ort').value.trim()}`);
-  fd.append('wunschtermin', document.getElementById('f-termin').value);
-  fd.append('nachricht', nachricht);
-  if(includePhotos){
-    photos.forEach(file => fd.append('attachment', file));
-  } else if(photos.length){
-    fd.append('hinweis_fotos', photos.length + ' Foto(s) konnten technisch nicht angehängt werden – bitte beim Kunden nachfragen.');
-  }
-  return { fd, vorname };
-}
-
 function showSuccess(vorname){
   document.getElementById('success-title').textContent = `Vielen Dank, ${vorname}!`;
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
@@ -619,6 +544,7 @@ function showSuccess(vorname){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+// ── SUBMIT: Firestore ist die Quelle der Wahrheit, Web3Forms nur als E-Mail-Benachrichtigung ─────────────────────
 function submitRequest(){
   const btn = document.getElementById('btn-next');
   const errBox = document.getElementById('submit-error');
@@ -626,43 +552,82 @@ function submitRequest(){
   btn.disabled = true;
   btn.textContent = 'Wird gesendet ...';
 
-  const { fd, vorname } = buildFormData(true);
+  const vorname = document.getElementById('f-vorname').value.trim();
+  const nachname = document.getElementById('f-nachname').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  const nachricht = document.getElementById('f-nachricht').value.trim();
+  const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
+  const flaeche = document.getElementById('f-flaeche').value.trim();
+  const haeufigkeit = document.getElementById('f-haeufigkeit').value;
+  const anmerkung = document.getElementById('f-anmerkung').value.trim();
+  const strasse = document.getElementById('f-strasse').value.trim();
+  const plz = document.getElementById('f-plz').value.trim();
+  const ort = document.getElementById('f-ort').value.trim();
+  const termin = document.getElementById('f-termin').value;
 
-  fetch('https://api.web3forms.com/submit', { method:'POST', body:fd })
-    .then(r => r.json())
-    .then(data => {
-      if(data.success){
-        showSuccess(vorname);
-      } else {
-        throw new Error(data.message || 'Unbekannter Fehler');
-      }
-    })
-    .catch(err => {
-      console.warn('Versand mit Fotos fehlgeschlagen, versuche erneut ohne Fotos:', err);
-      if(photos.length === 0){
+  function trySubmit(retries){
+    if(!window._firebaseReady){
+      if(retries <= 0){
+        errBox.textContent = 'Verbindung zur Datenbank konnte nicht hergestellt werden. Bitte laden Sie die Seite neu und versuchen Sie es erneut.';
         errBox.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Code bestätigen & Anfrage senden →';
         return;
       }
-      // Fallback: gleiche Anfrage ohne Fotos senden, damit sie auf jeden Fall ankommt
-      const { fd: fdNoPhotos, vorname: vn } = buildFormData(false);
-      fetch('https://api.web3forms.com/submit', { method:'POST', body:fdNoPhotos })
-        .then(r => r.json())
-        .then(data2 => {
-          if(data2.success){
-            showSuccess(vn);
-          } else {
-            throw new Error(data2.message || 'Unbekannter Fehler');
-          }
-        })
-        .catch(err2 => {
-          console.error('Web3Forms error (auch ohne Fotos):', err2);
-          errBox.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'Code bestätigen & Anfrage senden →';
-        });
-    });
+      setTimeout(() => trySubmit(retries - 1), 300);
+      return;
+    }
+
+    const docData = {
+      createdAt: window._serverTimestamp(),
+      status: 'neu',
+      leistungen: names,
+      flaeche_m2: flaeche,
+      haeufigkeit: haeufigkeit,
+      anmerkung_objekt: anmerkung,
+      strasse: strasse,
+      plz: plz,
+      ort: ort,
+      wunschtermin: termin,
+      vorname: vorname,
+      nachname: nachname,
+      email: email,
+      telefon: tel,
+      nachricht: nachricht,
+    };
+
+    window._addDoc(window._collection(window._db, 'anfragen'), docData)
+      .then(() => {
+        // E-Mail-Benachrichtigung an Daniel (best effort, blockiert den Erfolg nicht)
+        const fd = new FormData();
+        fd.append('access_key', WEB3FORMS_KEY);
+        fd.append('subject', `Anfrage: ${vorname} ${nachname} · ${names}`);
+        fd.append('from_name', 'Waschlurch Anfrage-Assistent');
+        fd.append('vorname', vorname);
+        fd.append('nachname', nachname);
+        fd.append('email', email);
+        fd.append('telefon', tel);
+        fd.append('leistungen', names);
+        fd.append('flaeche_m2', flaeche);
+        fd.append('haeufigkeit', haeufigkeit);
+        fd.append('anmerkung_objekt', anmerkung);
+        fd.append('adresse', `${strasse}, ${plz} ${ort}`);
+        fd.append('wunschtermin', termin);
+        fd.append('nachricht', nachricht);
+        fetch('https://api.web3forms.com/submit', { method:'POST', body:fd }).catch(() => {});
+
+        showSuccess(vorname);
+      })
+      .catch(err => {
+        console.error('Firestore error:', err);
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Code bestätigen & Anfrage senden →';
+      });
+  }
+
+  trySubmit(10);
 }
 
 showStep(1);
