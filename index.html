@@ -827,15 +827,19 @@ footer {
     </div>
     <div class="kontakt-form">
       <div class="form-title">📬 Anfrage senden</div>
-      <div id="form-wrap">
+      <form action="https://api.web3forms.com/submit" method="POST" id="contact-form">
+        <input type="hidden" name="access_key" value="24205589-1aa2-44d0-a816-6bcba6b1e810">
+        <input type="hidden" name="subject" value="Neue Anfrage über waschlurch.com">
+        <input type="hidden" name="from_name" value="Waschlurch Website">
+        <input type="hidden" name="redirect" value="https://waschlurch.com?success=true">
         <div class="form-row">
-          <div class="form-field"><label>Vorname *</label><input type="text" id="f-vorname" placeholder="Max"></div>
-          <div class="form-field"><label>Nachname *</label><input type="text" id="f-nachname" placeholder="Mustermann"></div>
+          <div class="form-field"><label>Vorname *</label><input type="text" name="vorname" placeholder="Max" required></div>
+          <div class="form-field"><label>Nachname *</label><input type="text" name="nachname" placeholder="Mustermann" required></div>
         </div>
-        <div class="form-field"><label>E-Mail *</label><input type="email" id="f-email" placeholder="ihre@email.de"></div>
-        <div class="form-field"><label>Telefon *</label><input type="tel" id="f-tel" placeholder="+49 ..."></div>
+        <div class="form-field"><label>E-Mail *</label><input type="email" name="email" placeholder="ihre@email.de" required></div>
+        <div class="form-field"><label>Telefon *</label><input type="tel" name="telefon" placeholder="+49 ..." required></div>
         <div class="form-field"><label>Gewünschte Leistung</label>
-          <select id="f-leistung">
+          <select name="leistung">
             <option value="">Bitte wählen ...</option>
             <option>Haushaltsreinigung</option>
             <option>Büroreinigung</option>
@@ -849,15 +853,11 @@ footer {
             <option>Sonstiges / Mehreres</option>
           </select>
         </div>
-        <div class="form-field"><label>Nachricht *</label><textarea id="f-nachricht" placeholder="Beschreiben Sie kurz Ihr Anliegen ..."></textarea></div>
-        <button class="form-submit" id="send-btn">Anfrage absenden →</button>
-        <p class="form-error" id="f-error">Bitte alle Pflichtfelder ausfüllen.</p>
-      </div>
-      <div class="form-success" id="form-success">
-        <div class="form-success-icon">✅</div>
-        <h3>Anfrage gesendet!</h3>
-        <p>Vielen Dank! Wir melden uns innerhalb von 24 Stunden bei Ihnen zurück.</p>
-      </div>
+        <div class="form-field"><label>Nachricht *</label><textarea name="nachricht" placeholder="Beschreiben Sie kurz Ihr Anliegen ..." required></textarea></div>
+        <!-- Honeypot Spam Protection -->
+        <input type="checkbox" name="botcheck" style="display:none">
+        <button type="submit" class="form-submit">Anfrage absenden →</button>
+      </form>
     </div>
   </div>
 </section>
@@ -902,10 +902,7 @@ function toggleFaq(el) {
   if(!isOpen) item.classList.add('open');
 }
 
-// FORM
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('send-btn').addEventListener('click', sendForm);
-});
+// FORM - handled by Web3Forms HTML form
 
 function sendForm() {
   const vorname   = document.getElementById('f-vorname').value.trim();
