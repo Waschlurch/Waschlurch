@@ -829,7 +829,7 @@ footer {
       <div class="form-title">📬 Anfrage senden</div>
       <form action="https://api.web3forms.com/submit" method="POST" id="contact-form">
         <input type="hidden" name="access_key" value="24205589-1aa2-44d0-a816-6bcba6b1e810">
-        <input type="hidden" name="subject" value="Neue Anfrage über waschlurch.com">
+        <input type="hidden" name="subject" id="form-subject" value="Neue Anfrage über waschlurch.com">
         <input type="hidden" name="from_name" value="Waschlurch Website">
         <input type="hidden" name="redirect" value="https://waschlurch.com?success=true">
         <div class="form-row">
@@ -902,7 +902,15 @@ function toggleFaq(el) {
   if(!isOpen) item.classList.add('open');
 }
 
-// FORM - handled by Web3Forms HTML form
+// FORM - update subject dynamically
+document.getElementById('contact-form').addEventListener('submit', function() {
+  const vorname  = this.querySelector('[name="vorname"]').value;
+  const nachname = this.querySelector('[name="nachname"]').value;
+  const leistung = this.querySelector('[name="leistung"]').value || 'Allgemein';
+  const ort      = ''; // optional falls du später Ort-Feld hinzufügst
+  document.getElementById('form-subject').value = 
+    'Anfrage: ' + vorname + ' ' + nachname + ' · ' + leistung;
+});
 
 function sendForm() {
   const vorname   = document.getElementById('f-vorname').value.trim();
