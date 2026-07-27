@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Waschlurch – Reinigung & Hausmeisterservice</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <style>
 :root {
   --green: #22C55E;
@@ -987,33 +989,21 @@ function sendVerificationCode() {
   _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   // Send code via Web3Forms to customer email
-  fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','Accept':'application/json'},
-    body: JSON.stringify({
-      access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
-      subject: 'Ihr Bestätigungscode: ' + _verifyCode,
-      from_name: 'Waschlurch',
-      email: email,
-      name: vorname + ' ' + nachname,
-      nachricht: 'Ihr Bestätigungscode für waschlurch.com lautet:\n\n' + _verifyCode + '\n\nDieser Code ist 10 Minuten gültig.\n\nFalls Sie keine Anfrage gestellt haben, ignorieren Sie diese E-Mail.',
-      _template: 'basic'
-    })
-  }).then(r => r.json()).then(d => {
-    if(d.success) {
-      // Show step 2
-      document.getElementById('step-1').style.display = 'none';
-      document.getElementById('step-2').style.display = '';
-      document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
-      startCountdown();
-    } else {
-      err.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
-      err.style.display = 'block';
-    }
-  }).catch(() => {
-    err.textContent = 'Verbindungsfehler. Bitte erneut versuchen.';
+  emailjs.send('service_vp2kavs', 'template_lc0ucul', {
+    email: email,
+    to_name: vorname,
+    passcode: _verifyCode,
+  }).then(function(response) {
+    // Show step 2
+    document.getElementById('step-1').style.display = 'none';
+    document.getElementById('step-2').style.display = '';
+    document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
+    startCountdown();
+  }).catch(function(error) {
+    err.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
     err.style.display = 'block';
-  });
+    console.error('EmailJS error:', error);
+  })  });
 
   // Button loading
   const btn = document.getElementById('send-code-btn');
