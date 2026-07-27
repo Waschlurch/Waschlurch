@@ -1003,7 +1003,7 @@ function sendVerificationCode() {
     err.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
     err.style.display = 'block';
     console.error('EmailJS error:', error);
-  })  });
+  });
 
   // Button loading
   const btn = document.getElementById('send-code-btn');
