@@ -1,10 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anfrage stellen – Waschlurch</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <style>
 :root {
   --green: #22C55E;
@@ -147,6 +148,16 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .success-text { font-size:15px; color:rgba(255,255,255,0.6); text-align:center; line-height:1.6; margin-bottom:28px; }
 .success-link { display:block; text-align:center; color:var(--green); font-size:14px; font-weight:600; text-decoration:none; }
 .submit-error { display:none; color:#F87171; font-size:13px; text-align:center; margin-top:14px; }
+.code-input {
+  width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  font-family:inherit; color:var(--white); outline:none; transition:border .2s;
+}
+.code-input:focus { border-color:var(--green); }
+.code-hint { font-size:13px; color:rgba(255,255,255,0.5); text-align:center; margin-bottom:16px; }
+.code-resend { text-align:center; margin-top:16px; font-size:13px; }
+.code-resend button { background:transparent; border:none; color:var(--green); font-size:13px; cursor:pointer; font-family:inherit; font-weight:600; }
+.code-resend span { color:rgba(255,255,255,0.4); }
 
 @media(max-width:600px) {
   .tiles { grid-template-columns:repeat(2,1fr); }
@@ -255,29 +266,43 @@ main { padding:64px 5% 80px; min-height:100vh; }
       <div class="step-label">Schritt 5 von 5</div>
       <div class="step-heading">Ihre Kontaktdaten</div>
       <div class="summary" id="summary"></div>
-      <div class="field-row">
-        <div class="field">
-          <label>Vorname *</label>
-          <input type="text" id="f-vorname" placeholder="Max">
+
+      <div id="contact-fields">
+        <div class="field-row">
+          <div class="field">
+            <label>Vorname *</label>
+            <input type="text" id="f-vorname" placeholder="Max">
+          </div>
+          <div class="field">
+            <label>Nachname *</label>
+            <input type="text" id="f-nachname" placeholder="Mustermann">
+          </div>
         </div>
         <div class="field">
-          <label>Nachname *</label>
-          <input type="text" id="f-nachname" placeholder="Mustermann">
+          <label>E-Mail *</label>
+          <input type="email" id="f-email" placeholder="max@beispiel.de">
+        </div>
+        <div class="field">
+          <label>Telefon * <span style="text-transform:none;font-weight:400">(muss mit 0 oder +49 beginnen)</span></label>
+          <input type="tel" id="f-tel" placeholder="0172 1234567">
+        </div>
+        <div class="field">
+          <label>Nachricht (optional)</label>
+          <textarea id="f-nachricht" placeholder="Weitere Wünsche oder Hinweise ..."></textarea>
+        </div>
+        <div class="field-error" id="err-5">Bitte alle Pflichtfelder korrekt ausfüllen.</div>
+      </div>
+
+      <div id="code-panel" style="display:none">
+        <div class="code-hint" id="code-hint">Wir haben einen 6-stelligen Code an Ihre E-Mail gesendet.</div>
+        <input type="text" class="code-input" id="f-code" placeholder="123456" maxlength="6" inputmode="numeric">
+        <div class="field-error" id="code-error">Der Code ist leider falsch. Bitte erneut versuchen.</div>
+        <div class="code-resend">
+          <span id="resend-timer">Erneut senden in <span id="countdown">60</span>s</span>
+          <button type="button" id="resend-btn" onclick="resendCode()" style="display:none">Code erneut senden</button>
         </div>
       </div>
-      <div class="field">
-        <label>E-Mail *</label>
-        <input type="email" id="f-email" placeholder="max@beispiel.de">
-      </div>
-      <div class="field">
-        <label>Telefon * <span style="text-transform:none;font-weight:400">(muss mit 0 oder +49 beginnen)</span></label>
-        <input type="tel" id="f-tel" placeholder="0172 1234567">
-      </div>
-      <div class="field">
-        <label>Nachricht (optional)</label>
-        <textarea id="f-nachricht" placeholder="Weitere Wünsche oder Hinweise ..."></textarea>
-      </div>
-      <div class="field-error" id="err-5">Bitte alle Pflichtfelder korrekt ausfüllen.</div>
+
       <div class="submit-error" id="submit-error">Fehler beim Senden. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt an waschlurch@gmail.com.</div>
     </div>
 
@@ -318,6 +343,9 @@ const SERVICES = [
 let currentStep = 1;
 let selectedServices = new Set();
 let photos = [];
+let _verifyCode = '';
+let _countdownInterval;
+let codeStageActive = false;
 
 // ── RENDER TILES ─────────────────────
 const tilesEl = document.getElementById('tiles');
@@ -443,36 +471,115 @@ function showStep(step){
   document.querySelector(`.step-panel[data-step="${step}"]`).classList.add('active');
   renderProgress();
   document.getElementById('btn-back').style.display = step === 1 ? 'none' : 'block';
-  document.getElementById('btn-next').textContent = step === TOTAL_STEPS ? 'Anfrage jetzt senden →' : 'Weiter →';
+  if(step === 5){
+    document.getElementById('btn-next').textContent = 'Code senden →';
+  } else {
+    document.getElementById('btn-next').textContent = 'Weiter →';
+  }
   if(step === 5) renderSummary();
 }
 
 function nextStep(){
-  if(!validateStep(currentStep)) return;
   if(currentStep === TOTAL_STEPS){
-    submitRequest();
+    if(!codeStageActive){
+      if(!validateStep(5)) return;
+      sendVerificationCode();
+    } else {
+      verifyCodeAndSubmit();
+    }
     return;
   }
+  if(!validateStep(currentStep)) return;
   currentStep++;
   showStep(currentStep);
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function prevStep(){
+  if(currentStep === TOTAL_STEPS && codeStageActive){
+    codeStageActive = false;
+    clearInterval(_countdownInterval);
+    document.getElementById('code-panel').style.display = 'none';
+    document.getElementById('contact-fields').style.display = 'block';
+    document.getElementById('btn-next').textContent = 'Code senden →';
+    return;
+  }
   if(currentStep === 1) return;
   currentStep--;
   showStep(currentStep);
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-// ── SUBMIT ─────────────────────
-function submitRequest(){
+function sendVerificationCode(){
+  const email = document.getElementById('f-email').value.trim();
+  const vorname = document.getElementById('f-vorname').value.trim();
   const btn = document.getElementById('btn-next');
-  const errBox = document.getElementById('submit-error');
-  errBox.style.display = 'none';
-  btn.disabled = true;
-  btn.textContent = 'Wird gesendet ...';
 
+  _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+  btn.disabled = true;
+  btn.textContent = 'Code wird gesendet ...';
+
+  emailjs.send('service_vp2kavs', 'template_lc0ucul', {
+    email: email,
+    to_name: vorname,
+    passcode: _verifyCode,
+  }).then(function(){
+    codeStageActive = true;
+    document.getElementById('contact-fields').style.display = 'none';
+    document.getElementById('code-panel').style.display = 'block';
+    document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
+    document.getElementById('f-code').value = '';
+    document.getElementById('code-error').style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = 'Code bestätigen & Anfrage senden →';
+    startCountdown();
+  }).catch(function(error){
+    console.error('EmailJS error:', error);
+    document.getElementById('err-5').textContent = 'Fehler beim Senden des Codes. Bitte versuchen Sie es erneut.';
+    document.getElementById('err-5').style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Code senden →';
+  });
+}
+
+function resendCode(){
+  document.getElementById('resend-btn').style.display = 'none';
+  document.getElementById('resend-timer').style.display = '';
+  sendVerificationCode();
+}
+
+function startCountdown(){
+  let secs = 60;
+  document.getElementById('countdown').textContent = secs;
+  document.getElementById('resend-timer').style.display = '';
+  document.getElementById('resend-btn').style.display = 'none';
+  clearInterval(_countdownInterval);
+  _countdownInterval = setInterval(() => {
+    secs--;
+    document.getElementById('countdown').textContent = secs;
+    if(secs <= 0){
+      clearInterval(_countdownInterval);
+      document.getElementById('resend-timer').style.display = 'none';
+      document.getElementById('resend-btn').style.display = '';
+    }
+  }, 1000);
+}
+
+function verifyCodeAndSubmit(){
+  const entered = document.getElementById('f-code').value.trim();
+  const codeErr = document.getElementById('code-error');
+  if(entered !== _verifyCode){
+    codeErr.style.display = 'block';
+    document.getElementById('f-code').style.borderColor = '#F87171';
+    return;
+  }
+  codeErr.style.display = 'none';
+  clearInterval(_countdownInterval);
+  submitRequest();
+}
+
+// ── SUBMIT (mit automatischem Fallback ohne Fotos) ─────────────────────
+function buildFormData(includePhotos){
   const vorname = document.getElementById('f-vorname').value.trim();
   const nachname = document.getElementById('f-nachname').value.trim();
   const email = document.getElementById('f-email').value.trim();
@@ -495,27 +602,66 @@ function submitRequest(){
   fd.append('adresse', `${document.getElementById('f-strasse').value.trim()}, ${document.getElementById('f-plz').value.trim()} ${document.getElementById('f-ort').value.trim()}`);
   fd.append('wunschtermin', document.getElementById('f-termin').value);
   fd.append('nachricht', nachricht);
-  photos.forEach(file => fd.append('attachment', file));
+  if(includePhotos){
+    photos.forEach(file => fd.append('attachment', file));
+  } else if(photos.length){
+    fd.append('hinweis_fotos', photos.length + ' Foto(s) konnten technisch nicht angehängt werden – bitte beim Kunden nachfragen.');
+  }
+  return { fd, vorname };
+}
+
+function showSuccess(vorname){
+  document.getElementById('success-title').textContent = `Vielen Dank, ${vorname}!`;
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.step-panel[data-step="success"]').classList.add('active');
+  document.getElementById('wizard-nav').style.display = 'none';
+  document.getElementById('progress').style.display = 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function submitRequest(){
+  const btn = document.getElementById('btn-next');
+  const errBox = document.getElementById('submit-error');
+  errBox.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Wird gesendet ...';
+
+  const { fd, vorname } = buildFormData(true);
 
   fetch('https://api.web3forms.com/submit', { method:'POST', body:fd })
     .then(r => r.json())
     .then(data => {
       if(data.success){
-        document.getElementById('success-title').textContent = `Vielen Dank, ${vorname}!`;
-        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-        document.querySelector('.step-panel[data-step="success"]').classList.add('active');
-        document.getElementById('wizard-nav').style.display = 'none';
-        document.getElementById('progress').style.display = 'none';
-        window.scrollTo({top:0, behavior:'smooth'});
+        showSuccess(vorname);
       } else {
         throw new Error(data.message || 'Unbekannter Fehler');
       }
     })
     .catch(err => {
-      console.error('Web3Forms error:', err);
-      errBox.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Anfrage jetzt senden →';
+      console.warn('Versand mit Fotos fehlgeschlagen, versuche erneut ohne Fotos:', err);
+      if(photos.length === 0){
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Code bestätigen & Anfrage senden →';
+        return;
+      }
+      // Fallback: gleiche Anfrage ohne Fotos senden, damit sie auf jeden Fall ankommt
+      const { fd: fdNoPhotos, vorname: vn } = buildFormData(false);
+      fetch('https://api.web3forms.com/submit', { method:'POST', body:fdNoPhotos })
+        .then(r => r.json())
+        .then(data2 => {
+          if(data2.success){
+            showSuccess(vn);
+          } else {
+            throw new Error(data2.message || 'Unbekannter Fehler');
+          }
+        })
+        .catch(err2 => {
+          console.error('Web3Forms error (auch ohne Fotos):', err2);
+          errBox.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Code bestätigen & Anfrage senden →';
+        });
     });
 }
 
