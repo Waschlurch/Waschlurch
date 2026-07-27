@@ -908,36 +908,55 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function sendForm() {
-  const vorname  = document.getElementById('f-vorname').value.trim();
-  const nachname = document.getElementById('f-nachname').value.trim();
-  const email    = document.getElementById('f-email').value.trim();
-  const tel      = document.getElementById('f-tel').value.trim();
-  const leistung = document.getElementById('f-leistung').value;
+  const vorname   = document.getElementById('f-vorname').value.trim();
+  const nachname  = document.getElementById('f-nachname').value.trim();
+  const email     = document.getElementById('f-email').value.trim();
+  const tel       = document.getElementById('f-tel').value.trim();
+  const leistung  = document.getElementById('f-leistung').value;
   const nachricht = document.getElementById('f-nachricht').value.trim();
   const err = document.getElementById('f-error');
+  const btn = document.getElementById('send-btn');
 
   if(!vorname || !email || !tel || !nachricht) {
     err.style.display = 'block';
     return;
   }
   err.style.display = 'none';
+  btn.textContent = 'Wird gesendet ...';
+  btn.disabled = true;
 
-  const subject = encodeURIComponent('Neue Anfrage – ' + vorname + ' ' + nachname + (leistung ? ' · ' + leistung : ''));
-  const body = encodeURIComponent(
-    'Neue Anfrage über waschlurch.com\n\n' +
-    'Name: ' + vorname + ' ' + nachname + '\n' +
-    'E-Mail: ' + email + '\n' +
-    'Telefon: ' + tel + '\n' +
-    (leistung ? 'Leistung: ' + leistung + '\n' : '') +
-    '\nNachricht:\n' + nachricht
-  );
-
-  window.location.href = 'mailto:waschlurch@gmail.com?subject=' + subject + '&body=' + body;
-
-  setTimeout(() => {
-    document.getElementById('form-wrap').style.display = 'none';
-    document.getElementById('form-success').style.display = 'block';
-  }, 800);
+  fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
+      subject: 'Neue Anfrage – ' + vorname + ' ' + nachname + (leistung ? ' · ' + leistung : ''),
+      from_name: 'Waschlurch Website',
+      name: vorname + ' ' + nachname,
+      email: email,
+      telefon: tel,
+      leistung: leistung || 'Nicht angegeben',
+      nachricht: nachricht,
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success) {
+      document.getElementById('form-wrap').style.display = 'none';
+      document.getElementById('form-success').style.display = 'block';
+    } else {
+      btn.textContent = 'Anfrage absenden →';
+      btn.disabled = false;
+      err.textContent = 'Fehler beim Senden. Bitte erneut versuchen.';
+      err.style.display = 'block';
+    }
+  })
+  .catch(() => {
+    btn.textContent = 'Anfrage absenden →';
+    btn.disabled = false;
+    err.textContent = 'Verbindungsfehler. Bitte erneut versuchen.';
+    err.style.display = 'block';
+  });
 }
 </script>
 
