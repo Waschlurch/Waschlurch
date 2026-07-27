@@ -827,19 +827,24 @@ footer {
     </div>
     <div class="kontakt-form">
       <div class="form-title">📬 Anfrage senden</div>
-      <form action="https://api.web3forms.com/submit" method="POST" id="contact-form">
-        <input type="hidden" name="access_key" value="24205589-1aa2-44d0-a816-6bcba6b1e810">
-        <input type="hidden" name="subject" id="form-subject" value="Neue Anfrage über waschlurch.com">
-        <input type="hidden" name="from_name" value="Waschlurch Website">
-        <input type="hidden" name="redirect" value="https://waschlurch.com?success=true">
+
+      <!-- SCHRITT 1: Formular -->
+      <div id="step-1">
         <div class="form-row">
-          <div class="form-field"><label>Vorname *</label><input type="text" name="vorname" placeholder="Max" required></div>
-          <div class="form-field"><label>Nachname *</label><input type="text" name="nachname" placeholder="Mustermann" required></div>
+          <div class="form-field"><label>Vorname *</label><input type="text" id="f-vorname" placeholder="Max"></div>
+          <div class="form-field"><label>Nachname *</label><input type="text" id="f-nachname" placeholder="Mustermann"></div>
         </div>
-        <div class="form-field"><label>E-Mail *</label><input type="email" name="email" placeholder="ihre@email.de" required></div>
-        <div class="form-field"><label>Telefon *</label><input type="tel" name="telefon" placeholder="+49 ..." required></div>
+        <div class="form-field">
+          <label>E-Mail *</label>
+          <input type="email" id="f-email" placeholder="ihre@email.de">
+        </div>
+        <div class="form-field">
+          <label>Telefon * <span style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:400">(muss mit 0 oder +49 beginnen)</span></label>
+          <input type="tel" id="f-tel" placeholder="0176 12345678 oder +49 176 12345678">
+          <div id="tel-error" style="display:none;color:#F87171;font-size:12px;margin-top:5px">⚠️ Bitte eine gültige deutsche Nummer eingeben (beginnt mit 0 oder +49)</div>
+        </div>
         <div class="form-field"><label>Gewünschte Leistung</label>
-          <select name="leistung">
+          <select id="f-leistung">
             <option value="">Bitte wählen ...</option>
             <option>Haushaltsreinigung</option>
             <option>Büroreinigung</option>
@@ -853,10 +858,50 @@ footer {
             <option>Sonstiges / Mehreres</option>
           </select>
         </div>
-        <div class="form-field"><label>Nachricht *</label><textarea name="nachricht" placeholder="Beschreiben Sie kurz Ihr Anliegen ..." required></textarea></div>
-        <!-- Honeypot Spam Protection -->
+        <div class="form-field"><label>Nachricht *</label><textarea id="f-nachricht" placeholder="Beschreiben Sie kurz Ihr Anliegen ..."></textarea></div>
+        <button class="form-submit" id="send-code-btn" onclick="sendVerificationCode()">E-Mail verifizieren & weiter →</button>
+        <p id="f-error" style="display:none;color:#F87171;font-size:13px;text-align:center;margin-top:10px"></p>
+      </div>
+
+      <!-- SCHRITT 2: Code eingeben -->
+      <div id="step-2" style="display:none">
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="font-size:32px;margin-bottom:12px">📧</div>
+          <div style="font-size:16px;font-weight:700;color:var(--white);margin-bottom:8px">Code eingeben</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.5)" id="code-hint">Wir haben einen 6-stelligen Code an Ihre E-Mail gesendet.</div>
+        </div>
+        <div class="form-field">
+          <label>Bestätigungscode *</label>
+          <input type="text" id="f-code" placeholder="123456" maxlength="6" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:8px">
+          <div id="code-error" style="display:none;color:#F87171;font-size:12px;margin-top:5px;text-align:center">⚠️ Falscher Code. Bitte erneut versuchen.</div>
+        </div>
+        <button class="form-submit" onclick="verifyCode()">Code bestätigen & Anfrage senden →</button>
+        <button onclick="document.getElementById('step-1').style.display='';document.getElementById('step-2').style.display='none'" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:100px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;margin-top:10px;font-family:inherit">← Zurück</button>
+        <div style="text-align:center;margin-top:14px">
+          <span id="resend-timer" style="font-size:12px;color:rgba(255,255,255,0.4)">Code erneut senden in <span id="countdown">60</span>s</span>
+          <button id="resend-btn" onclick="resendCode()" style="display:none;background:transparent;border:none;color:var(--green);font-size:13px;cursor:pointer;font-family:inherit">Code erneut senden</button>
+        </div>
+      </div>
+
+      <!-- SCHRITT 3: Erfolg -->
+      <div class="form-success" id="form-success" style="display:none">
+        <div class="form-success-icon">✅</div>
+        <h3>Anfrage gesendet!</h3>
+        <p>Vielen Dank! Wir melden uns innerhalb von 24 Stunden bei Ihnen zurück.</p>
+      </div>
+
+      <!-- Verstecktes Web3Forms Formular -->
+      <form id="real-form" action="https://api.web3forms.com/submit" method="POST" style="display:none">
+        <input type="hidden" name="access_key" value="24205589-1aa2-44d0-a816-6bcba6b1e810">
+        <input type="hidden" name="subject" id="real-subject" value="">
+        <input type="hidden" name="from_name" value="Waschlurch Website">
+        <input type="hidden" name="vorname" id="r-vorname">
+        <input type="hidden" name="nachname" id="r-nachname">
+        <input type="hidden" name="email" id="r-email">
+        <input type="hidden" name="telefon" id="r-tel">
+        <input type="hidden" name="leistung" id="r-leistung">
+        <input type="hidden" name="nachricht" id="r-nachricht">
         <input type="checkbox" name="botcheck" style="display:none">
-        <button type="submit" class="form-submit">Anfrage absenden →</button>
       </form>
     </div>
   </div>
@@ -902,14 +947,166 @@ function toggleFaq(el) {
   if(!isOpen) item.classList.add('open');
 }
 
-// FORM - update subject dynamically
-document.getElementById('contact-form').addEventListener('submit', function() {
-  const vorname  = this.querySelector('[name="vorname"]').value;
-  const nachname = this.querySelector('[name="nachname"]').value;
-  const leistung = this.querySelector('[name="leistung"]').value || 'Allgemein';
-  const ort      = ''; // optional falls du später Ort-Feld hinzufügst
-  document.getElementById('form-subject').value = 
-    'Anfrage: ' + vorname + ' ' + nachname + ' · ' + leistung;
+// ── FORMULAR MIT EMAIL-VERIFIZIERUNG ─────────────────────
+let _verifyCode = '';
+let _countdownInterval;
+
+function validateTel(tel) {
+  const cleaned = tel.replace(/\s/g,'');
+  return cleaned.startsWith('0') || cleaned.startsWith('+49') || cleaned.startsWith('0049');
+}
+
+function sendVerificationCode() {
+  const vorname  = document.getElementById('f-vorname').value.trim();
+  const nachname = document.getElementById('f-nachname').value.trim();
+  const email    = document.getElementById('f-email').value.trim();
+  const tel      = document.getElementById('f-tel').value.trim();
+  const nachricht= document.getElementById('f-nachricht').value.trim();
+  const err      = document.getElementById('f-error');
+  const telErr   = document.getElementById('tel-error');
+
+  // Validate
+  err.style.display = 'none';
+  telErr.style.display = 'none';
+
+  if(!vorname || !nachname || !email || !tel || !nachricht) {
+    err.textContent = 'Bitte alle Pflichtfelder ausfüllen.';
+    err.style.display = 'block'; return;
+  }
+
+  if(!email.includes('@') || !email.includes('.')) {
+    err.textContent = 'Bitte eine gültige E-Mail-Adresse eingeben.';
+    err.style.display = 'block'; return;
+  }
+
+  if(!validateTel(tel)) {
+    telErr.style.display = 'block'; return;
+  }
+
+  // Generate 6-digit code
+  _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Send code via Web3Forms to customer email
+  fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Accept':'application/json'},
+    body: JSON.stringify({
+      access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
+      subject: 'Ihr Bestätigungscode: ' + _verifyCode,
+      from_name: 'Waschlurch',
+      email: email,
+      name: vorname + ' ' + nachname,
+      nachricht: 'Ihr Bestätigungscode für waschlurch.com lautet:\n\n' + _verifyCode + '\n\nDieser Code ist 10 Minuten gültig.\n\nFalls Sie keine Anfrage gestellt haben, ignorieren Sie diese E-Mail.',
+      _template: 'basic'
+    })
+  }).then(r => r.json()).then(d => {
+    if(d.success) {
+      // Show step 2
+      document.getElementById('step-1').style.display = 'none';
+      document.getElementById('step-2').style.display = '';
+      document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
+      startCountdown();
+    } else {
+      err.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
+      err.style.display = 'block';
+    }
+  }).catch(() => {
+    err.textContent = 'Verbindungsfehler. Bitte erneut versuchen.';
+    err.style.display = 'block';
+  });
+
+  // Button loading
+  const btn = document.getElementById('send-code-btn');
+  btn.textContent = 'Code wird gesendet ...';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = 'E-Mail verifizieren & weiter →'; btn.disabled = false; }, 3000);
+}
+
+function verifyCode() {
+  const entered = document.getElementById('f-code').value.trim();
+  const codeErr = document.getElementById('code-error');
+
+  if(entered !== _verifyCode) {
+    codeErr.style.display = 'block';
+    document.getElementById('f-code').style.borderColor = '#F87171';
+    return;
+  }
+  codeErr.style.display = 'none';
+
+  // Fill hidden form and submit
+  const vorname  = document.getElementById('f-vorname').value.trim();
+  const nachname = document.getElementById('f-nachname').value.trim();
+  const email    = document.getElementById('f-email').value.trim();
+  const tel      = document.getElementById('f-tel').value.trim();
+  const leistung = document.getElementById('f-leistung').value || 'Nicht angegeben';
+  const nachricht= document.getElementById('f-nachricht').value.trim();
+
+  document.getElementById('r-vorname').value  = vorname;
+  document.getElementById('r-nachname').value = nachname;
+  document.getElementById('r-email').value    = email;
+  document.getElementById('r-tel').value      = tel;
+  document.getElementById('r-leistung').value = leistung;
+  document.getElementById('r-nachricht').value= nachricht;
+  document.getElementById('real-subject').value = 'Anfrage: ' + vorname + ' ' + nachname + ' · ' + leistung;
+
+  // Submit via fetch
+  fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Accept':'application/json'},
+    body: JSON.stringify({
+      access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
+      subject: 'Anfrage: ' + vorname + ' ' + nachname + ' · ' + leistung,
+      from_name: 'Waschlurch Website',
+      name: vorname + ' ' + nachname,
+      email: email,
+      telefon: tel,
+      leistung: leistung,
+      nachricht: nachricht,
+    })
+  }).then(r => r.json()).then(d => {
+    if(d.success) {
+      clearInterval(_countdownInterval);
+      document.getElementById('step-2').style.display = 'none';
+      document.getElementById('form-success').style.display = 'block';
+    }
+  });
+}
+
+function resendCode() {
+  document.getElementById('resend-btn').style.display = 'none';
+  document.getElementById('resend-timer').style.display = '';
+  sendVerificationCode();
+  startCountdown();
+}
+
+function startCountdown() {
+  let secs = 60;
+  document.getElementById('countdown').textContent = secs;
+  document.getElementById('resend-timer').style.display = '';
+  document.getElementById('resend-btn').style.display = 'none';
+  clearInterval(_countdownInterval);
+  _countdownInterval = setInterval(() => {
+    secs--;
+    document.getElementById('countdown').textContent = secs;
+    if(secs <= 0) {
+      clearInterval(_countdownInterval);
+      document.getElementById('resend-timer').style.display = 'none';
+      document.getElementById('resend-btn').style.display = '';
+    }
+  }, 1000);
+}
+
+// Telefon live validieren
+document.addEventListener('DOMContentLoaded', function() {
+  const telInput = document.getElementById('f-tel');
+  if(telInput) {
+    telInput.addEventListener('input', function() {
+      const telErr = document.getElementById('tel-error');
+      if(this.value.length > 3) {
+        telErr.style.display = validateTel(this.value) ? 'none' : 'block';
+      }
+    });
+  }
 });
 
 function sendForm() {
