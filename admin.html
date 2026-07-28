@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard – Waschlurch</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
 :root {
   --green: #22C55E;
@@ -130,15 +131,93 @@ a { color:inherit; }
 .fin-delete { background:none; border:none; color:rgba(255,255,255,0.3); cursor:pointer; font-size:16px; }
 .fin-delete:hover { color:#F87171; }
 
+/* CHARTS */
+.chart-row { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:28px; }
+.chart-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; }
+.chart-card-title { font-size:13px; font-weight:700; color:rgba(255,255,255,0.6); margin-bottom:16px; }
+.chart-card canvas { max-height:220px; }
+
+/* PREISE */
+.preis-edit-row {
+  display:flex; align-items:center; gap:16px; padding:14px 18px;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; margin-bottom:10px;
+}
+.preis-edit-icon { font-size:22px; width:32px; text-align:center; flex-shrink:0; }
+.preis-edit-name { font-size:14px; font-weight:600; width:170px; flex-shrink:0; }
+.preis-edit-row input { flex:1; }
+.preis-save-bar { display:flex; align-items:center; gap:16px; margin-top:20px; }
+.preis-saved-msg { color:var(--green); font-size:13px; font-weight:600; display:none; }
+
 @media(max-width:900px){
-  .sidebar { position:static; width:100%; flex-direction:row; overflow-x:auto; padding:12px 16px; border-right:none; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .sidebar {
+    position:fixed; bottom:0; left:0; right:0; top:auto; width:100%;
+    flex-direction:row; overflow-x:auto; padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    border-right:none; border-top:1px solid rgba(255,255,255,0.1); background:rgba(10,10,10,0.95);
+    backdrop-filter:blur(20px); z-index:500; justify-content:space-between;
+  }
   .sidebar-logo { display:none; }
-  .sidebar-bottom { margin-top:0; margin-left:auto; }
-  .main { margin-left:0; padding:24px 5%; }
+  .sidebar-bottom { margin-top:0; margin-left:0; }
+  .logout-btn { width:auto; padding:8px 10px; white-space:nowrap; font-size:10px; }
+  .nav-item { flex-direction:column; gap:2px; font-size:10px; padding:8px 8px; min-width:56px; text-align:center; margin-bottom:0; }
+  .ni-icon { font-size:19px; }
+  .ni-label { font-size:9.5px; font-weight:700; }
+  .main { margin-left:0; padding:20px 5% 100px; }
   .stat-row { grid-template-columns:1fr 1fr; }
   .tpl-layout { grid-template-columns:1fr; }
   .req-grid { grid-template-columns:1fr; }
   .fin-form { grid-template-columns:1fr 1fr; }
+  .chart-row { grid-template-columns:1fr; }
+  .preis-edit-row { flex-wrap:wrap; }
+  .preis-edit-name { width:auto; }
+  .fin-table { display:block; }
+  .fin-table thead { display:none; }
+  .fin-table tbody { display:block; }
+  .fin-table tr { display:block; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px; margin-bottom:10px; }
+  .fin-table td { display:flex; justify-content:space-between; padding:6px 0; border-bottom:none; font-size:13px; }
+  .fin-table td:before { content:attr(data-label); color:rgba(255,255,255,0.4); font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
+  .steuer-cards { grid-template-columns:1fr 1fr; }
+  .bericht-grid { grid-template-columns:1fr 1fr; }
+}
+
+/* RANGE PICKER */
+.range-picker { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:20px; }
+.range-btn {
+  padding:9px 16px; border-radius:100px; font-size:13px; font-weight:600; cursor:pointer;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.6);
+  font-family:inherit; transition:all .15s;
+}
+.range-btn:hover { background:rgba(255,255,255,0.1); }
+.range-btn.active { background:rgba(34,197,94,0.15); border-color:var(--green); color:var(--green); }
+.range-custom { display:none; align-items:center; gap:8px; }
+.range-custom.open { display:flex; }
+.range-custom input { padding:9px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; color:var(--white); font-family:inherit; font-size:13px; }
+.range-apply-btn { padding:9px 16px; border-radius:100px; background:var(--green); color:var(--white); border:none; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+
+/* STEUERN */
+.steuer-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+.steuer-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; }
+.steuer-card-lbl { font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:8px; }
+.steuer-card-val { font-size:26px; font-weight:700; }
+.steuer-satz-box { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:24px; }
+.steuer-satz-box input { width:100px; padding:12px; text-align:center; font-size:18px; font-weight:700; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; color:var(--white); font-family:inherit; }
+.steuer-disclaimer { font-size:12px; color:rgba(255,255,255,0.35); line-height:1.6; margin-top:20px; }
+
+/* BERICHT */
+.bericht-summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px; margin-bottom:24px; }
+.bericht-summary-title { font-size:14px; font-weight:700; margin-bottom:16px; }
+.bericht-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.bericht-print-btn { padding:14px 28px; border-radius:100px; background:var(--green); color:var(--white); border:none; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; margin-bottom:24px; }
+.bericht-section-title { font-size:15px; font-weight:700; margin:24px 0 12px; }
+
+@media print {
+  body * { visibility:hidden; }
+  #bericht-print-area, #bericht-print-area * { visibility:visible; }
+  #bericht-print-area { position:absolute; top:0; left:0; width:100%; color:#000; background:#fff; padding:20px; }
+  #bericht-print-area .steuer-card, #bericht-print-area .bericht-summary { background:#f4f4f4; border:1px solid #ddd; color:#000; }
+  #bericht-print-area .steuer-card-val, #bericht-print-area .bericht-summary-title, #bericht-print-area .bericht-section-title { color:#000; }
+  #bericht-print-area table { color:#000; }
+  #bericht-print-area td, #bericht-print-area th { border-color:#ddd; color:#000; }
+  .no-print { display:none !important; }
 }
 </style>
 </head>
@@ -172,9 +251,13 @@ a { color:inherit; }
       <img src="data:image/png;base64,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" alt="">
       <span>Waschlurch</span>
     </div>
-    <div class="nav-item active" data-view="anfragen" onclick="switchView('anfragen')">📋 Anfragen</div>
-    <div class="nav-item" data-view="textbausteine" onclick="switchView('textbausteine')">✉️ Textbausteine</div>
-    <div class="nav-item" data-view="finanzen" onclick="switchView('finanzen')">💰 Finanzen</div>
+    <div class="nav-item active" data-view="anfragen" onclick="switchView('anfragen')"><span class="ni-icon">📋</span><span class="ni-label">Anfragen</span></div>
+    <div class="nav-item" data-view="textbausteine" onclick="switchView('textbausteine')"><span class="ni-icon">✉️</span><span class="ni-label">Antworten</span></div>
+    <div class="nav-item" data-view="finanzen" onclick="switchView('finanzen')"><span class="ni-icon">💰</span><span class="ni-label">Finanzen</span></div>
+    <div class="nav-item" data-view="ausgaben" onclick="switchView('ausgaben')"><span class="ni-icon">🧾</span><span class="ni-label">Ausgaben</span></div>
+    <div class="nav-item" data-view="steuern" onclick="switchView('steuern')"><span class="ni-icon">🧮</span><span class="ni-label">Steuern</span></div>
+    <div class="nav-item" data-view="bericht" onclick="switchView('bericht')"><span class="ni-icon">🖨️</span><span class="ni-label">Bericht</span></div>
+    <div class="nav-item" data-view="preise" onclick="switchView('preise')"><span class="ni-icon">🏷️</span><span class="ni-label">Preise</span></div>
     <div class="sidebar-bottom">
       <button class="logout-btn" onclick="doLogout()">Abmelden</button>
     </div>
@@ -189,6 +272,17 @@ a { color:inherit; }
         <div class="view-sub">Alle eingehenden Kundenanfragen von der Website</div>
       </div>
       <div class="stat-row" id="anfragen-stats"></div>
+      <div id="anfragen-range-picker"></div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-card-title" id="anfragen-chart-title">Anfragen-Verlauf</div>
+          <div style="height:220px;position:relative"><canvas id="chart-anfragen-verlauf"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Status-Verteilung im Zeitraum</div>
+          <div style="height:220px;position:relative"><canvas id="chart-status"></canvas></div>
+        </div>
+      </div>
       <div id="anfragen-list"><div class="empty-state">Lade Anfragen ...</div></div>
     </div>
 
@@ -227,6 +321,13 @@ a { color:inherit; }
         <div class="view-sub">Einfache Übersicht deiner Einnahmen</div>
       </div>
       <div class="stat-row" id="fin-stats"></div>
+      <div id="finanzen-range-picker"></div>
+      <div class="chart-row">
+        <div class="chart-card" style="grid-column:1/-1">
+          <div class="chart-card-title" id="finanzen-chart-title">Einnahmen im Zeitraum</div>
+          <div style="height:220px;position:relative"><canvas id="chart-einnahmen-monat"></canvas></div>
+        </div>
+      </div>
       <div class="fin-form">
         <div class="field"><label>Datum</label><input type="date" id="fin-datum"></div>
         <div class="field"><label>Kunde</label><input type="text" id="fin-kunde" placeholder="Max Mustermann"></div>
@@ -242,6 +343,105 @@ a { color:inherit; }
       </table>
     </div>
 
+    <!-- AUSGABEN -->
+    <div class="view" id="view-ausgaben">
+      <div class="view-head">
+        <div class="view-title">Ausgaben</div>
+        <div class="view-sub">Betriebsausgaben zum Absetzen bei der Steuer – Belege, Reinigungsmittel, Fahrtkosten etc.</div>
+      </div>
+      <div class="stat-row" id="ausgaben-stats"></div>
+      <div id="ausgaben-range-picker"></div>
+      <div class="fin-form">
+        <div class="field"><label>Datum</label><input type="date" id="ausg-datum"></div>
+        <div class="field">
+          <label>Kategorie</label>
+          <select id="ausg-kategorie">
+            <option value="Reinigungsmittel">Reinigungsmittel</option>
+            <option value="Ausrüstung/Geräte">Ausrüstung/Geräte</option>
+            <option value="Fahrtkosten">Fahrtkosten</option>
+            <option value="Arbeitskleidung">Arbeitskleidung</option>
+            <option value="Versicherung">Versicherung</option>
+            <option value="Sonstiges">Sonstiges</option>
+          </select>
+        </div>
+        <div class="field"><label>Beschreibung</label><input type="text" id="ausg-beschreibung" placeholder="z. B. Kassenbeleg Rossmann"></div>
+        <div class="field"><label>Betrag (€)</label><input type="number" id="ausg-betrag" placeholder="24.90" step="0.01"></div>
+        <button class="btn btn-primary" style="padding:13px 20px" onclick="addAusgabe()">+ Hinzufügen</button>
+      </div>
+      <table class="fin-table">
+        <thead>
+          <tr><th>Datum</th><th>Kategorie</th><th>Beschreibung</th><th>Betrag</th><th></th></tr>
+        </thead>
+        <tbody id="ausgaben-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- STEUERN -->
+    <div class="view" id="view-steuern">
+      <div class="view-head">
+        <div class="view-title">Steuern</div>
+        <div class="view-sub">Einfache Schätzung – kein Ersatz für eine steuerliche Beratung</div>
+      </div>
+      <div id="steuern-range-picker"></div>
+      <div class="steuer-satz-box">
+        <label style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)">Dein Steuersatz</label>
+        <input type="number" id="steuer-satz" value="25" min="0" max="100" step="0.1" oninput="renderSteuern()" onchange="saveSteuersatz()">
+        <span style="font-size:18px;font-weight:700">%</span>
+        <span style="font-size:12px;color:rgba(255,255,255,0.35);margin-left:auto">wird automatisch gespeichert</span>
+      </div>
+      <div class="steuer-cards" id="steuer-cards"></div>
+      <div class="steuer-disclaimer">Diese Berechnung ist eine unverbindliche, vereinfachte Schätzung basierend auf den erfassten Einnahmen und Ausgaben im gewählten Zeitraum. Sie ersetzt keine individuelle Beratung durch einen Steuerberater und berücksichtigt keine Freibeträge, Vorauszahlungen oder sonstigen steuerlichen Besonderheiten.</div>
+    </div>
+
+    <!-- BERICHT -->
+    <div class="view" id="view-bericht">
+      <div class="view-head">
+        <div class="view-title">Bericht</div>
+        <div class="view-sub">Zeitraum wählen und als PDF speichern oder ausdrucken</div>
+      </div>
+      <div id="bericht-range-picker" class="no-print"></div>
+      <button class="bericht-print-btn no-print" onclick="window.print()">🖨️ Drucken / Als PDF speichern</button>
+
+      <div id="bericht-print-area">
+        <div class="bericht-summary">
+          <div class="bericht-summary-title" id="bericht-titel">Waschlurch – Bericht</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px" id="bericht-zeitraum"></div>
+          <div class="bericht-grid" id="bericht-grid"></div>
+        </div>
+
+        <div class="bericht-section-title">Anfragen im Zeitraum</div>
+        <table class="fin-table">
+          <thead><tr><th>Datum</th><th>Name</th><th>Leistungen</th><th>Status</th></tr></thead>
+          <tbody id="bericht-anfragen-body"></tbody>
+        </table>
+
+        <div class="bericht-section-title">Einnahmen im Zeitraum</div>
+        <table class="fin-table">
+          <thead><tr><th>Datum</th><th>Kunde</th><th>Beschreibung</th><th>Betrag</th></tr></thead>
+          <tbody id="bericht-einnahmen-body"></tbody>
+        </table>
+
+        <div class="bericht-section-title">Ausgaben im Zeitraum</div>
+        <table class="fin-table">
+          <thead><tr><th>Datum</th><th>Kategorie</th><th>Beschreibung</th><th>Betrag</th></tr></thead>
+          <tbody id="bericht-ausgaben-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PREISE -->
+    <div class="view" id="view-preise">
+      <div class="view-head">
+        <div class="view-title">Preise</div>
+        <div class="view-sub">Änderungen erscheinen sofort auf der Website und im Anfrage-Formular</div>
+      </div>
+      <div id="preis-edit-list"></div>
+      <div class="preis-save-bar">
+        <button class="btn btn-primary" style="width:auto;padding:14px 28px" onclick="savePreise()" id="preis-save-btn">Preise speichern</button>
+        <span class="preis-saved-msg" id="preis-saved-msg">✓ Gespeichert – live auf der Website</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -251,7 +451,7 @@ import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import {
-  getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc, serverTimestamp
+  getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc, serverTimestamp, setDoc, getDoc
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -270,10 +470,30 @@ const db = getFirestore(app);
 
 let allRequests = [];
 let allEinnahmen = [];
+let allAusgaben = [];
 let unsubRequests = null;
 let unsubEinnahmen = null;
+let unsubAusgaben = null;
+
+let anfragenRange = null;
+let finanzenRange = null;
+let ausgabenRange = null;
+let steuernRange = null;
+let berichtRange = null;
 
 const STATUS_OPTIONS = ['neu','kontaktiert','angebot gesendet','gebucht','abgeschlossen','abgelehnt'];
+
+const SERVICES = [
+  { id:'haushalt',   icon:'🏠', name:'Haushaltsreinigung',   default:'ab 54 € inkl. MwSt.' },
+  { id:'buero',      icon:'🏢', name:'Büroreinigung',        default:'ab 68 € inkl. MwSt.' },
+  { id:'fenster',    icon:'🪟', name:'Fensterreinigung',     default:'ab 52 € inkl. MwSt.' },
+  { id:'grund',      icon:'🧹', name:'Grundreinigung',       default:'ab 190 € inkl. MwSt.' },
+  { id:'hausmeister',icon:'🔧', name:'Hausmeisterservice',   default:'ab 76 € · 2 Stunden' },
+  { id:'treppe',     icon:'↕️', name:'Treppenhausreinigung', default:'ab 29 € je Einsatz' },
+  { id:'winter',     icon:'❄️', name:'Winterdienst',         default:'ab 35 € je Einsatz' },
+  { id:'garten',     icon:'🌿', name:'Gartenpflege',         default:'ab 82 € · 2 Stunden' },
+  { id:'muell',      icon:'🗑️', name:'Mülltonnenservice',    default:'ab 9 € je Tonne/Mo.' },
+];
 
 const TEMPLATES = [
   {
@@ -375,6 +595,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('login-screen').style.display = 'flex';
     if(unsubRequests) unsubRequests();
     if(unsubEinnahmen) unsubEinnahmen();
+    if(unsubAusgaben) unsubAusgaben();
   }
 });
 
@@ -393,6 +614,7 @@ function startListeners(){
     allRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderRequests();
     renderRequestSelect();
+    renderBericht();
   }, err => {
     document.getElementById('anfragen-list').innerHTML = '<div class="empty-state">Fehler beim Laden. Bitte Firestore-Regeln prüfen.</div>';
     console.error(err);
@@ -402,7 +624,26 @@ function startListeners(){
   unsubEinnahmen = onSnapshot(finQuery, (snap) => {
     allEinnahmen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderEinnahmen();
+    renderSteuern();
+    renderBericht();
   }, err => console.error(err));
+
+  const ausgQuery = query(collection(db, 'ausgaben'), orderBy('datum', 'desc'));
+  unsubAusgaben = onSnapshot(ausgQuery, (snap) => {
+    allAusgaben = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderAusgaben();
+    renderSteuern();
+    renderBericht();
+  }, err => console.error(err));
+
+  loadPreise();
+  loadSteuersatz();
+
+  renderRangePicker('anfragen-range-picker', (range) => { anfragenRange = range; renderRequestCharts(); }, 14);
+  renderRangePicker('finanzen-range-picker', (range) => { finanzenRange = range; renderFinanzenChart(); }, 30);
+  renderRangePicker('ausgaben-range-picker', (range) => { ausgabenRange = range; renderAusgaben(); }, 30);
+  renderRangePicker('steuern-range-picker', (range) => { steuernRange = range; renderSteuern(); }, 30);
+  renderRangePicker('bericht-range-picker', (range) => { berichtRange = range; renderBericht(); }, 30);
 }
 
 function formatDate(ts){
@@ -428,6 +669,7 @@ function renderRequests(){
 
   if(allRequests.length === 0){
     listEl.innerHTML = '<div class="empty-state">Noch keine Anfragen eingegangen.</div>';
+    renderRequestCharts();
     return;
   }
 
@@ -459,6 +701,7 @@ function renderRequests(){
       </div>
     </div>
   `).join('');
+  renderRequestCharts();
 }
 
 window.updateStatus = function(id, newStatus){
@@ -534,19 +777,21 @@ function renderEinnahmen(){
 
   if(allEinnahmen.length === 0){
     body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.4);padding:30px">Noch keine Einträge.</td></tr>';
+    renderFinanzenChart();
     return;
   }
 
   body.innerHTML = allEinnahmen.map(e => `
     <tr>
-      <td>${e.datum||'–'}</td>
-      <td>${e.kunde||'–'}</td>
-      <td>${e.beschreibung||'–'}</td>
-      <td>${(e.betrag||0).toFixed(2)} €</td>
-      <td><span class="status-pill ${e.status}" onclick="toggleEinnahmeStatus('${e.id}','${e.status}')">${e.status}</span></td>
+      <td data-label="Datum">${e.datum||'–'}</td>
+      <td data-label="Kunde">${e.kunde||'–'}</td>
+      <td data-label="Beschreibung">${e.beschreibung||'–'}</td>
+      <td data-label="Betrag">${(e.betrag||0).toFixed(2)} €</td>
+      <td data-label="Status"><span class="status-pill ${e.status}" onclick="toggleEinnahmeStatus('${e.id}','${e.status}')">${e.status}</span></td>
       <td><button class="fin-delete" onclick="deleteEinnahme('${e.id}')">✕</button></td>
     </tr>
   `).join('');
+  renderFinanzenChart();
 }
 
 window.addEinnahme = function(){
@@ -575,6 +820,389 @@ window.deleteEinnahme = function(id){
   if(!confirm('Diesen Eintrag wirklich löschen?')) return;
   deleteDoc(doc(db, 'einnahmen', id)).catch(err => console.error(err));
 };
+
+// ── AUSGABEN ─────────────────────
+window.addAusgabe = function(){
+  const datum = document.getElementById('ausg-datum').value || new Date().toISOString().slice(0,10);
+  const kategorie = document.getElementById('ausg-kategorie').value;
+  const beschreibung = document.getElementById('ausg-beschreibung').value.trim();
+  const betrag = parseFloat(document.getElementById('ausg-betrag').value) || 0;
+
+  if(!beschreibung || !betrag){ return; }
+
+  addDoc(collection(db, 'ausgaben'), {
+    datum, kategorie, beschreibung, betrag, createdAt: serverTimestamp()
+  }).then(() => {
+    document.getElementById('ausg-beschreibung').value = '';
+    document.getElementById('ausg-betrag').value = '';
+  }).catch(err => console.error(err));
+};
+
+window.deleteAusgabe = function(id){
+  if(!confirm('Diesen Eintrag wirklich löschen?')) return;
+  deleteDoc(doc(db, 'ausgaben', id)).catch(err => console.error(err));
+};
+
+function filterByRange(items, range, dateField){
+  if(!range) return items;
+  return items.filter(item => {
+    const val = item[dateField];
+    if(!val) return false;
+    const d = new Date(val);
+    return d >= range.start && d <= range.end;
+  });
+}
+
+function renderAusgaben(){
+  const body = document.getElementById('ausgaben-table-body');
+  const statsEl = document.getElementById('ausgaben-stats');
+  const filtered = filterByRange(allAusgaben, ausgabenRange, 'datum');
+  const total = filtered.reduce((s,a) => s + (a.betrag||0), 0);
+
+  statsEl.innerHTML = `
+    <div class="stat-card"><div class="stat-val">${total.toFixed(2)} €</div><div class="stat-lbl">Ausgaben im Zeitraum</div></div>
+    <div class="stat-card"><div class="stat-val">${filtered.length}</div><div class="stat-lbl">Belege im Zeitraum</div></div>
+    <div class="stat-card"><div class="stat-val">${allAusgaben.reduce((s,a)=>s+(a.betrag||0),0).toFixed(2)} €</div><div class="stat-lbl">Gesamt (alle Zeit)</div></div>
+    <div class="stat-card"><div class="stat-val">${allAusgaben.length}</div><div class="stat-lbl">Belege gesamt</div></div>
+  `;
+
+  if(!body) return;
+  if(filtered.length === 0){
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.4);padding:30px">Keine Ausgaben in diesem Zeitraum.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = filtered.map(a => `
+    <tr>
+      <td data-label="Datum">${a.datum||'–'}</td>
+      <td data-label="Kategorie">${a.kategorie||'–'}</td>
+      <td data-label="Beschreibung">${a.beschreibung||'–'}</td>
+      <td data-label="Betrag">${(a.betrag||0).toFixed(2)} €</td>
+      <td><button class="fin-delete" onclick="deleteAusgabe('${a.id}')">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+// ── PREISE ─────────────────────
+function loadPreise(){
+  getDoc(doc(db, 'preise', 'aktuell')).then(snap => {
+    const data = snap.exists() ? snap.data() : {};
+    document.getElementById('preis-edit-list').innerHTML = SERVICES.map(s => `
+      <div class="preis-edit-row">
+        <div class="preis-edit-icon">${s.icon}</div>
+        <div class="preis-edit-name">${s.name}</div>
+        <input type="text" id="preis-input-${s.id}" value="${(data[s.id] || s.default).replace(/"/g,'&quot;')}">
+      </div>
+    `).join('');
+  }).catch(err => console.error(err));
+}
+
+window.savePreise = function(){
+  const btn = document.getElementById('preis-save-btn');
+  const msg = document.getElementById('preis-saved-msg');
+  btn.disabled = true;
+  btn.textContent = 'Speichere ...';
+
+  const data = {};
+  SERVICES.forEach(s => {
+    data[s.id] = document.getElementById('preis-input-' + s.id).value.trim();
+  });
+
+  setDoc(doc(db, 'preise', 'aktuell'), data, { merge: true })
+    .then(() => {
+      btn.disabled = false;
+      btn.textContent = 'Preise speichern';
+      msg.style.display = 'inline';
+      setTimeout(() => msg.style.display = 'none', 3000);
+    })
+    .catch(err => {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Preise speichern';
+      alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
+    });
+};
+
+// ── ZEITRAUM-AUSWAHL ─────────────────────
+function computeRangeFromPreset(days){
+  const end = new Date(); end.setHours(23,59,59,999);
+  const start = new Date(); start.setDate(start.getDate() - (days - 1)); start.setHours(0,0,0,0);
+  return { start, end };
+}
+
+function renderRangePicker(containerId, onChange, defaultDays){
+  const presets = [
+    { label:'14 Tage', days:14 },
+    { label:'30 Tage', days:30 },
+    { label:'6 Monate', days:182 },
+    { label:'1 Jahr', days:365 },
+  ];
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  let currentDays = defaultDays || 14;
+  let mode = 'preset';
+
+  function draw(){
+    container.innerHTML = `
+      <div class="range-picker">
+        ${presets.map(p => `<button type="button" class="range-btn ${mode==='preset' && currentDays===p.days ? 'active':''}" data-days="${p.days}">${p.label}</button>`).join('')}
+        <button type="button" class="range-btn ${mode==='custom'?'active':''}" data-custom="1">Benutzerdefiniert</button>
+        <div class="range-custom ${mode==='custom' ? 'open':''}">
+          <input type="date" id="${containerId}-von">
+          <span style="color:rgba(255,255,255,0.4);font-size:12px">bis</span>
+          <input type="date" id="${containerId}-bis">
+          <button type="button" class="range-apply-btn" data-apply="1">Anwenden</button>
+        </div>
+      </div>
+    `;
+    container.querySelectorAll('.range-btn[data-days]').forEach(btn => {
+      btn.onclick = () => {
+        mode = 'preset';
+        currentDays = parseInt(btn.dataset.days);
+        draw();
+        onChange(computeRangeFromPreset(currentDays));
+      };
+    });
+    const customBtn = container.querySelector('[data-custom]');
+    if(customBtn) customBtn.onclick = () => { mode = 'custom'; draw(); };
+    const applyBtn = container.querySelector('[data-apply]');
+    if(applyBtn){
+      applyBtn.onclick = () => {
+        const vonEl = document.getElementById(containerId+'-von');
+        const bisEl = document.getElementById(containerId+'-bis');
+        if(!vonEl.value || !bisEl.value) return;
+        const start = new Date(vonEl.value); start.setHours(0,0,0,0);
+        const end = new Date(bisEl.value); end.setHours(23,59,59,999);
+        onChange({ start, end });
+      };
+    }
+  }
+  draw();
+  onChange(computeRangeFromPreset(currentDays));
+}
+
+function getRangeDayCount(range){
+  return Math.max(1, Math.round((range.end - range.start) / 86400000) + 1);
+}
+
+function buildBuckets(range){
+  const totalDays = getRangeDayCount(range);
+  const granularity = totalDays <= 31 ? 'day' : (totalDays <= 200 ? 'week' : 'month');
+  const buckets = [];
+
+  if(granularity === 'day'){
+    let d = new Date(range.start);
+    while(d <= range.end){
+      const bStart = new Date(d); bStart.setHours(0,0,0,0);
+      const bEnd = new Date(d); bEnd.setHours(23,59,59,999);
+      buckets.push({ start:bStart, end:bEnd, label: bStart.toLocaleDateString('de-DE',{ day:'2-digit', month:'2-digit' }) });
+      d.setDate(d.getDate()+1);
+    }
+  } else if(granularity === 'week'){
+    let d = new Date(range.start);
+    while(d <= range.end){
+      const bStart = new Date(d); bStart.setHours(0,0,0,0);
+      let bEnd = new Date(d); bEnd.setDate(bEnd.getDate()+6); bEnd.setHours(23,59,59,999);
+      if(bEnd > range.end) bEnd = new Date(range.end);
+      buckets.push({ start:bStart, end:bEnd, label: bStart.toLocaleDateString('de-DE',{ day:'2-digit', month:'2-digit' }) });
+      d.setDate(d.getDate()+7);
+    }
+  } else {
+    let d = new Date(range.start.getFullYear(), range.start.getMonth(), 1);
+    while(d <= range.end){
+      const bStart = new Date(d);
+      let bEnd = new Date(d.getFullYear(), d.getMonth()+1, 0); bEnd.setHours(23,59,59,999);
+      if(bEnd > range.end) bEnd = new Date(range.end);
+      buckets.push({ start:bStart, end:bEnd, label: bStart.toLocaleDateString('de-DE',{ month:'short', year:'2-digit' }) });
+      d.setMonth(d.getMonth()+1);
+    }
+  }
+  return buckets;
+}
+
+
+let chartAnfragenVerlauf = null;
+let chartStatus = null;
+let chartEinnahmenMonat = null;
+
+const CHART_GREEN = '#22C55E';
+const CHART_TEXT = 'rgba(255,255,255,0.55)';
+const CHART_GRID = 'rgba(255,255,255,0.08)';
+
+function renderRequestCharts(){
+  const range = anfragenRange || computeRangeFromPreset(14);
+  const buckets = buildBuckets(range);
+  const counts = buckets.map(b => allRequests.filter(r => {
+    if(!r.createdAt || !r.createdAt.toDate) return false;
+    const rd = r.createdAt.toDate();
+    return rd >= b.start && rd <= b.end;
+  }).length);
+  const labels = buckets.map(b => b.label);
+
+  const titleEl = document.getElementById('anfragen-chart-title');
+  if(titleEl) titleEl.textContent = `Anfragen-Verlauf (${buckets.length} ${buckets.length === 1 ? 'Zeitpunkt' : 'Zeitpunkte'})`;
+
+  const ctx1 = document.getElementById('chart-anfragen-verlauf');
+  if(chartAnfragenVerlauf) chartAnfragenVerlauf.destroy();
+  chartAnfragenVerlauf = new Chart(ctx1, {
+    type: 'line',
+    data: { labels, datasets: [{ data: counts, borderColor: CHART_GREEN, backgroundColor: 'rgba(34,197,94,0.15)', fill:true, tension:0.35, pointRadius:2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { ticks:{ color:CHART_TEXT, font:{size:10}, maxRotation:0, autoSkip:true }, grid:{ color:CHART_GRID } },
+        y: { ticks:{ color:CHART_TEXT, stepSize:1, precision:0 }, grid:{ color:CHART_GRID }, beginAtZero:true }
+      }
+    }
+  });
+
+  // Status-Verteilung im gewählten Zeitraum
+  const inRange = allRequests.filter(r => {
+    if(!r.createdAt || !r.createdAt.toDate) return false;
+    const rd = r.createdAt.toDate();
+    return rd >= range.start && rd <= range.end;
+  });
+  const statusCounts = STATUS_OPTIONS.map(s => inRange.filter(r => r.status === s).length);
+  const ctx2 = document.getElementById('chart-status');
+  if(chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: STATUS_OPTIONS,
+      datasets: [{
+        data: statusCounts,
+        backgroundColor: ['#6B7280','#3B82F6','#FBBF24','#22C55E','#15803D','#F87171'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'bottom', labels:{ color:CHART_TEXT, font:{size:10}, boxWidth:10, padding:10 } } }
+    }
+  });
+}
+
+function renderFinanzenChart(){
+  const range = finanzenRange || computeRangeFromPreset(30);
+  const buckets = buildBuckets(range);
+  const values = buckets.map(b => allEinnahmen.filter(e => {
+    if(!e.datum) return false;
+    const d = new Date(e.datum);
+    return d >= b.start && d <= b.end;
+  }).reduce((s,e) => s + (e.betrag||0), 0));
+  const labels = buckets.map(b => b.label);
+
+  const titleEl = document.getElementById('finanzen-chart-title');
+  if(titleEl) titleEl.textContent = `Einnahmen im Zeitraum (${labels[0] || ''} – ${labels[labels.length-1] || ''})`;
+
+  const ctx = document.getElementById('chart-einnahmen-monat');
+  if(chartEinnahmenMonat) chartEinnahmenMonat.destroy();
+  chartEinnahmenMonat = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: CHART_GREEN, borderRadius: 6, maxBarThickness: 40 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { ticks:{ color:CHART_TEXT, maxRotation:0, autoSkip:true }, grid:{ display:false } },
+        y: { ticks:{ color:CHART_TEXT, callback:(v)=>v+' €' }, grid:{ color:CHART_GRID }, beginAtZero:true }
+      }
+    }
+  });
+}
+
+// ── STEUERN ─────────────────────
+function loadSteuersatz(){
+  getDoc(doc(db, 'einstellungen', 'steuer')).then(snap => {
+    if(snap.exists() && typeof snap.data().satz === 'number'){
+      document.getElementById('steuer-satz').value = snap.data().satz;
+    }
+    renderSteuern();
+  }).catch(err => { console.warn(err); renderSteuern(); });
+}
+
+window.saveSteuersatz = function(){
+  const satz = parseFloat(document.getElementById('steuer-satz').value) || 0;
+  setDoc(doc(db, 'einstellungen', 'steuer'), { satz }, { merge:true }).catch(err => console.error(err));
+};
+
+window.renderSteuern = function(){
+  const cardsEl = document.getElementById('steuer-cards');
+  if(!cardsEl) return;
+  const range = steuernRange || computeRangeFromPreset(30);
+  const einnahmenSum = filterByRange(allEinnahmen, range, 'datum').reduce((s,e) => s + (e.betrag||0), 0);
+  const ausgabenSum = filterByRange(allAusgaben, range, 'datum').reduce((s,a) => s + (a.betrag||0), 0);
+  const gewinn = einnahmenSum - ausgabenSum;
+  const satz = parseFloat(document.getElementById('steuer-satz').value) || 0;
+  const steuer = Math.max(0, gewinn) * (satz/100);
+  const nachSteuer = gewinn - steuer;
+
+  cardsEl.innerHTML = `
+    <div class="steuer-card"><div class="steuer-card-lbl">Einnahmen im Zeitraum</div><div class="steuer-card-val">${einnahmenSum.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Ausgaben im Zeitraum</div><div class="steuer-card-val">${ausgabenSum.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn (Einnahmen − Ausgaben)</div><div class="steuer-card-val">${gewinn.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Geschätzte Steuer (${satz}%)</div><div class="steuer-card-val" style="color:#FBBF24">${steuer.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn nach Steuer</div><div class="steuer-card-val" style="color:var(--green)">${nachSteuer.toFixed(2)} €</div></div>
+  `;
+};
+
+// ── BERICHT ─────────────────────
+function renderBericht(){
+  const grid = document.getElementById('bericht-grid');
+  if(!grid) return;
+  const range = berichtRange || computeRangeFromPreset(30);
+
+  const reqInRange = allRequests.filter(r => {
+    if(!r.createdAt || !r.createdAt.toDate) return false;
+    const rd = r.createdAt.toDate();
+    return rd >= range.start && rd <= range.end;
+  });
+  const einInRange = filterByRange(allEinnahmen, range, 'datum');
+  const ausInRange = filterByRange(allAusgaben, range, 'datum');
+
+  const einnahmenSum = einInRange.reduce((s,e) => s + (e.betrag||0), 0);
+  const ausgabenSum = ausInRange.reduce((s,a) => s + (a.betrag||0), 0);
+  const gewinn = einnahmenSum - ausgabenSum;
+
+  document.getElementById('bericht-zeitraum').textContent =
+    `Zeitraum: ${range.start.toLocaleDateString('de-DE')} – ${range.end.toLocaleDateString('de-DE')} · Erstellt am ${new Date().toLocaleDateString('de-DE')}`;
+
+  grid.innerHTML = `
+    <div class="steuer-card"><div class="steuer-card-lbl">Anfragen</div><div class="steuer-card-val">${reqInRange.length}</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Einnahmen</div><div class="steuer-card-val">${einnahmenSum.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Ausgaben</div><div class="steuer-card-val">${ausgabenSum.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn</div><div class="steuer-card-val" style="color:var(--green)">${gewinn.toFixed(2)} €</div></div>
+  `;
+
+  document.getElementById('bericht-anfragen-body').innerHTML = reqInRange.length ? reqInRange.map(r => `
+    <tr>
+      <td data-label="Datum">${formatDate(r.createdAt)}</td>
+      <td data-label="Name">${r.vorname||''} ${r.nachname||''}</td>
+      <td data-label="Leistungen">${r.leistungen||'–'}</td>
+      <td data-label="Status">${r.status||'–'}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,0.4)">Keine Anfragen im Zeitraum.</td></tr>';
+
+  document.getElementById('bericht-einnahmen-body').innerHTML = einInRange.length ? einInRange.map(e => `
+    <tr>
+      <td data-label="Datum">${e.datum||'–'}</td>
+      <td data-label="Kunde">${e.kunde||'–'}</td>
+      <td data-label="Beschreibung">${e.beschreibung||'–'}</td>
+      <td data-label="Betrag">${(e.betrag||0).toFixed(2)} €</td>
+    </tr>
+  `).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,0.4)">Keine Einnahmen im Zeitraum.</td></tr>';
+
+  document.getElementById('bericht-ausgaben-body').innerHTML = ausInRange.length ? ausInRange.map(a => `
+    <tr>
+      <td data-label="Datum">${a.datum||'–'}</td>
+      <td data-label="Kategorie">${a.kategorie||'–'}</td>
+      <td data-label="Beschreibung">${a.beschreibung||'–'}</td>
+      <td data-label="Betrag">${(a.betrag||0).toFixed(2)} €</td>
+    </tr>
+  `).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,0.4)">Keine Ausgaben im Zeitraum.</td></tr>';
+}
+
 </script>
 
 </body>
