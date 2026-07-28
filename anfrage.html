@@ -8,7 +8,7 @@
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
@@ -28,6 +28,12 @@
   window._addDoc = addDoc;
   window._serverTimestamp = serverTimestamp;
   window._firebaseReady = true;
+
+  getDoc(doc(db, 'preise', 'aktuell')).then(snap => {
+    if(!snap.exists()) return;
+    window._livePreise = snap.data();
+    if(window._applyLivePreise) window._applyLivePreise();
+  }).catch(err => console.warn('Preise konnten nicht geladen werden:', err));
 </script>
 <style>
 :root {
@@ -343,13 +349,22 @@ SERVICES.forEach(svc => {
   const el = document.createElement('div');
   el.className = 'tile';
   el.dataset.id = svc.id;
-  el.innerHTML = `<div class="tile-check">✓</div><div class="tile-icon">${svc.icon}</div><div class="tile-name">${svc.name}</div><div class="tile-price">${svc.price}</div>`;
+  el.innerHTML = `<div class="tile-check">✓</div><div class="tile-icon">${svc.icon}</div><div class="tile-name">${svc.name}</div><div class="tile-price" data-price-id="${svc.id}">${svc.price}</div>`;
   el.onclick = () => {
     if(selectedServices.has(svc.id)) { selectedServices.delete(svc.id); el.classList.remove('selected'); }
     else { selectedServices.add(svc.id); el.classList.add('selected'); }
   };
   tilesEl.appendChild(el);
 });
+
+window._applyLivePreise = function(){
+  if(!window._livePreise) return;
+  document.querySelectorAll('.tile-price[data-price-id]').forEach(el => {
+    const id = el.getAttribute('data-price-id');
+    if(window._livePreise[id]) el.textContent = window._livePreise[id];
+  });
+};
+window._applyLivePreise();
 
 // ── PROGRESS BAR ─────────────────────
 const progressEl = document.getElementById('progress');
