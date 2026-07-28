@@ -6,6 +6,32 @@
 <title>Waschlurch – Reinigung & Hausmeisterservice</title>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  getDoc(doc(db, 'preise', 'aktuell')).then(snap => {
+    if(!snap.exists()) return;
+    const preise = snap.data();
+    document.querySelectorAll('[data-price-id]').forEach(el => {
+      const id = el.getAttribute('data-price-id');
+      if(preise[id]) el.textContent = preise[id];
+    });
+  }).catch(err => console.warn('Preise konnten nicht geladen werden:', err));
+</script>
 <style>
 :root {
   --green: #22C55E;
@@ -629,7 +655,7 @@ footer {
             <div class="leistung-tag">Privat & Gewerbe</div>
             <div class="leistung-title">Haushaltsreinigung</div>
             <div class="leistung-desc">Gründlich, zuverlässig, regelmäßig oder einmalig.</div>
-            <div class="leistung-ab">ab 54 € inkl. MwSt.</div>
+            <div class="leistung-ab" data-price-id="haushalt">ab 54 € inkl. MwSt.</div>
           </div>
         </div>
 
@@ -639,7 +665,7 @@ footer {
             <div class="leistung-tag">Gewerbe</div>
             <div class="leistung-title">Büroreinigung</div>
             <div class="leistung-desc">Für Büros, Praxen und Gewerberäume aller Größen.</div>
-            <div class="leistung-ab">ab 68 € inkl. MwSt.</div>
+            <div class="leistung-ab" data-price-id="buero">ab 68 € inkl. MwSt.</div>
           </div>
         </div>
 
@@ -649,7 +675,7 @@ footer {
             <div class="leistung-tag">Innen & Außen</div>
             <div class="leistung-title">Fensterreinigung</div>
             <div class="leistung-desc">Kristallklar – innen und außen, Rahmen inklusive.</div>
-            <div class="leistung-ab">ab 52 € inkl. MwSt.</div>
+            <div class="leistung-ab" data-price-id="fenster">ab 52 € inkl. MwSt.</div>
           </div>
         </div>
 
@@ -659,7 +685,7 @@ footer {
             <div class="leistung-tag">Intensiv</div>
             <div class="leistung-title">Grundreinigung</div>
             <div class="leistung-desc">Tiefenreinigung nach Umzug oder Renovierung.</div>
-            <div class="leistung-ab">ab 190 € inkl. MwSt.</div>
+            <div class="leistung-ab" data-price-id="grund">ab 190 € inkl. MwSt.</div>
           </div>
         </div>
 
@@ -669,7 +695,7 @@ footer {
             <div class="leistung-tag">Rundum-Service</div>
             <div class="leistung-title">Hausmeisterservice</div>
             <div class="leistung-desc">Reparaturen, Kontrollen und Handwerk rund ums Objekt.</div>
-            <div class="leistung-ab">ab 76 € · 2 Stunden</div>
+            <div class="leistung-ab" data-price-id="hausmeister">ab 76 € · 2 Stunden</div>
           </div>
         </div>
 
@@ -679,7 +705,7 @@ footer {
             <div class="leistung-tag">Wohnanlagen</div>
             <div class="leistung-title">Treppenhausreinigung</div>
             <div class="leistung-desc">Regelmäßig und zuverlässig für Mehrfamilienhäuser.</div>
-            <div class="leistung-ab">ab 29 € je Einsatz</div>
+            <div class="leistung-ab" data-price-id="treppe">ab 29 € je Einsatz</div>
           </div>
         </div>
 
@@ -689,7 +715,7 @@ footer {
             <div class="leistung-tag">Saison</div>
             <div class="leistung-title">Winterdienst</div>
             <div class="leistung-desc">Räumen und Streuen – pünktlich, auch früh morgens.</div>
-            <div class="leistung-ab">ab 35 € je Einsatz</div>
+            <div class="leistung-ab" data-price-id="winter">ab 35 € je Einsatz</div>
           </div>
         </div>
 
@@ -699,7 +725,7 @@ footer {
             <div class="leistung-tag">Ganzjährig</div>
             <div class="leistung-title">Gartenpflege</div>
             <div class="leistung-desc">Rasen, Hecken, Beete – Ihr Garten in besten Händen.</div>
-            <div class="leistung-ab">ab 82 € · 2 Stunden</div>
+            <div class="leistung-ab" data-price-id="garten">ab 82 € · 2 Stunden</div>
           </div>
         </div>
 
@@ -709,7 +735,7 @@ footer {
             <div class="leistung-tag">Monatlich</div>
             <div class="leistung-title">Mülltonnenservice</div>
             <div class="leistung-desc">Raus- und Reinstellen pünktlich zum Abfuhrtag.</div>
-            <div class="leistung-ab">ab 9 € je Tonne/Mo.</div>
+            <div class="leistung-ab" data-price-id="muell">ab 9 € je Tonne/Mo.</div>
           </div>
         </div>
 
