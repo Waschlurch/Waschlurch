@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard – Waschlurch</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --green: #22C55E;
@@ -137,7 +138,14 @@ a { color:inherit; }
 .chart-card-title { font-size:13px; font-weight:700; color:rgba(255,255,255,0.6); margin-bottom:16px; }
 .chart-card canvas { max-height:220px; }
 
-/* PREISE */
+/* RECHNUNG / FIRMA */
+.req-actions button.invoice-btn { background:rgba(59,130,246,0.15); color:#3B82F6; border-color:rgba(59,130,246,0.3); }
+.req-actions button.invoice-btn:hover { background:rgba(59,130,246,0.25); }
+.preis-einheit-select { width:180px; flex-shrink:0; }
+.preis-preview { font-size:11px; color:rgba(255,255,255,0.35); flex-shrink:0; width:150px; text-align:right; }
+.mwst-toggle-box { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px 20px; margin-bottom:20px; flex-wrap:wrap; }
+.mwst-toggle-box label.bool-label { text-transform:none; font-size:13px; font-weight:600; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:8px; cursor:pointer; }
+.mwst-toggle-box input[type="number"] { width:80px; padding:10px; text-align:center; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; color:var(--white); font-family:inherit; }
 .preis-edit-row {
   display:flex; align-items:center; gap:16px; padding:14px 18px;
   background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; margin-bottom:10px;
@@ -258,6 +266,7 @@ a { color:inherit; }
     <div class="nav-item" data-view="steuern" onclick="switchView('steuern')"><span class="ni-icon">🧮</span><span class="ni-label">Steuern</span></div>
     <div class="nav-item" data-view="bericht" onclick="switchView('bericht')"><span class="ni-icon">🖨️</span><span class="ni-label">Bericht</span></div>
     <div class="nav-item" data-view="preise" onclick="switchView('preise')"><span class="ni-icon">🏷️</span><span class="ni-label">Preise</span></div>
+    <div class="nav-item" data-view="firma" onclick="switchView('firma')"><span class="ni-icon">🏢</span><span class="ni-label">Firma</span></div>
     <div class="sidebar-bottom">
       <button class="logout-btn" onclick="doLogout()">Abmelden</button>
     </div>
@@ -380,17 +389,24 @@ a { color:inherit; }
     <div class="view" id="view-steuern">
       <div class="view-head">
         <div class="view-title">Steuern</div>
-        <div class="view-sub">Einfache Schätzung – kein Ersatz für eine steuerliche Beratung</div>
+        <div class="view-sub">Einfache Schätzung mit Umsatzsteuer-Aufschlüsselung – kein Ersatz für eine steuerliche Beratung</div>
       </div>
       <div id="steuern-range-picker"></div>
+      <div class="mwst-toggle-box">
+        <label class="bool-label"><input type="checkbox" id="steuer-brutto-modus" checked onchange="renderSteuern()"> Erfasste Beträge sind Bruttobeträge (inkl. MwSt.)</label>
+        <label style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px">MwSt.-Satz <input type="number" id="steuer-mwst-satz" value="19" min="0" max="100" step="0.5" oninput="renderSteuern()" onchange="saveSteuersatz()"> %</label>
+      </div>
       <div class="steuer-satz-box">
-        <label style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)">Dein Steuersatz</label>
+        <label style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)">Dein persönlicher Einkommensteuersatz</label>
         <input type="number" id="steuer-satz" value="25" min="0" max="100" step="0.1" oninput="renderSteuern()" onchange="saveSteuersatz()">
         <span style="font-size:18px;font-weight:700">%</span>
         <span style="font-size:12px;color:rgba(255,255,255,0.35);margin-left:auto">wird automatisch gespeichert</span>
       </div>
-      <div class="steuer-cards" id="steuer-cards"></div>
-      <div class="steuer-disclaimer">Diese Berechnung ist eine unverbindliche, vereinfachte Schätzung basierend auf den erfassten Einnahmen und Ausgaben im gewählten Zeitraum. Sie ersetzt keine individuelle Beratung durch einen Steuerberater und berücksichtigt keine Freibeträge, Vorauszahlungen oder sonstigen steuerlichen Besonderheiten.</div>
+      <div class="bericht-section-title" style="margin-top:0">Umsatzsteuer (an das Finanzamt)</div>
+      <div class="steuer-cards" id="steuer-cards-ust"></div>
+      <div class="bericht-section-title">Einkommensteuer (auf deinen Gewinn)</div>
+      <div class="steuer-cards" id="steuer-cards-est"></div>
+      <div class="steuer-disclaimer">Diese Berechnung ist eine unverbindliche, vereinfachte Schätzung basierend auf den erfassten Einnahmen und Ausgaben im gewählten Zeitraum. Sie ersetzt keine individuelle Beratung durch einen Steuerberater und berücksichtigt keine Freibeträge, Vorauszahlungen, Kleinunternehmerregelung oder sonstigen steuerlichen Besonderheiten.</div>
     </div>
 
     <!-- BERICHT -->
@@ -439,6 +455,43 @@ a { color:inherit; }
       <div class="preis-save-bar">
         <button class="btn btn-primary" style="width:auto;padding:14px 28px" onclick="savePreise()" id="preis-save-btn">Preise speichern</button>
         <span class="preis-saved-msg" id="preis-saved-msg">✓ Gespeichert – live auf der Website</span>
+      </div>
+    </div>
+
+    <!-- FIRMA -->
+    <div class="view" id="view-firma">
+      <div class="view-head">
+        <div class="view-title">Firma</div>
+        <div class="view-sub">Diese Angaben werden für rechtssichere Rechnungen verwendet</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Firmenname</label><input type="text" id="firma-name" placeholder="Waschlurch"></div>
+        <div class="field"><label>Inhaber</label><input type="text" id="firma-inhaber" placeholder="Daniel Lurch"></div>
+      </div>
+      <div class="field"><label>Straße & Hausnummer</label><input type="text" id="firma-strasse" placeholder="Musterstraße 1"></div>
+      <div class="field-row">
+        <div class="field"><label>PLZ</label><input type="text" id="firma-plz" placeholder="53783"></div>
+        <div class="field"><label>Ort</label><input type="text" id="firma-ort" placeholder="Eitorf"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Steuernummer</label><input type="text" id="firma-steuernummer" placeholder="z. B. 123/456/78901"></div>
+        <div class="field"><label>USt-IdNr. (falls vorhanden)</label><input type="text" id="firma-ustid" placeholder="z. B. DE123456789"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Telefon</label><input type="text" id="firma-telefon" placeholder="+49 ..."></div>
+        <div class="field"><label>E-Mail</label><input type="email" id="firma-email" placeholder="waschlurch@gmail.com"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>IBAN</label><input type="text" id="firma-iban" placeholder="DE00 0000 0000 0000 0000 00"></div>
+        <div class="field"><label>BIC</label><input type="text" id="firma-bic" placeholder="XXXXXXXX"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Bank</label><input type="text" id="firma-bank" placeholder="z. B. Sparkasse Rhein-Sieg"></div>
+        <div class="field"><label>Zahlungsziel (Tage)</label><input type="number" id="firma-zahlungsziel" placeholder="14"></div>
+      </div>
+      <div class="preis-save-bar">
+        <button class="btn btn-primary" style="width:auto;padding:14px 28px" onclick="saveFirma()" id="firma-save-btn">Firmendaten speichern</button>
+        <span class="preis-saved-msg" id="firma-saved-msg">✓ Gespeichert</span>
       </div>
     </div>
 
@@ -556,6 +609,87 @@ Beste Grüße
 Daniel Lurch
 Waschlurch`
   },
+  {
+    id: 'verzoegerung',
+    name: 'Entschuldigung – Verzögerung',
+    subject: 'Kurze Info zu Ihrem Termin',
+    body: (r) => `Hallo ${r.vorname || '{Vorname}'},
+
+leider kommt es bei Ihrem Termin für ${r.leistungen || '{Leistung}'} zu einer Verzögerung. Es tut uns sehr leid für die entstandenen Unannehmlichkeiten.
+
+Wir melden uns schnellstmöglich mit einem neuen Zeitfenster bei Ihnen.
+
+Vielen Dank für Ihr Verständnis.
+
+Beste Grüße
+Daniel Lurch
+Waschlurch`
+  },
+  {
+    id: 'krankheit',
+    name: 'Krankheitsbedingter Ausfall',
+    subject: 'Terminverschiebung wegen Krankheit',
+    body: (r) => `Hallo ${r.vorname || '{Vorname}'},
+
+leider muss ich Ihren Termin für ${r.leistungen || '{Leistung}'} krankheitsbedingt kurzfristig absagen. Das tut mir sehr leid.
+
+Ich melde mich, sobald ich wieder einsatzfähig bin, mit einem neuen Terminvorschlag bei Ihnen.
+
+Vielen Dank für Ihr Verständnis und gute Grüße
+Daniel Lurch
+Waschlurch`
+  },
+  {
+    id: 'werbemail',
+    name: 'Werbe-/Info-Mail (Bestandskunden)',
+    subject: 'Neuigkeiten von Waschlurch',
+    body: (r) => `Hallo ${r.vorname || '{Vorname}'},
+
+wir wollten uns kurz bei Ihnen melden: Bei Waschlurch gibt es aktuell [NEUIGKEIT/AKTION einfügen].
+
+Falls Sie Interesse an einer weiteren Reinigung oder einer Ergänzung Ihres bestehenden Auftrags (z. B. ${r.leistungen || 'weitere Leistungen'}) haben, melden Sie sich gerne jederzeit bei uns.
+
+Wir freuen uns, weiterhin für Sie da zu sein.
+
+Beste Grüße
+Daniel Lurch
+Waschlurch`
+  },
+  {
+    id: 'firmenanfrage',
+    name: 'Antwort auf Firmenanfrage (B2B)',
+    subject: 'Ihre Anfrage – Waschlurch Reinigungsservice',
+    body: (r) => `Sehr geehrte Damen und Herren,
+
+vielen Dank für Ihre Anfrage bezüglich ${r.leistungen || '{Leistung}'} für Ihr Unternehmen.
+
+Gerne erstellen wir Ihnen ein individuelles Angebot. Dafür wären folgende Informationen hilfreich:
+– Gewünschter Leistungsumfang und Häufigkeit
+– Größe und Beschaffenheit der zu reinigenden Fläche
+– Gewünschter Beginn der Zusammenarbeit
+
+Wir freuen uns auf die Zusammenarbeit und melden uns nach Erhalt der Angaben mit einem passenden Angebot.
+
+Mit freundlichen Grüßen
+Daniel Lurch
+Waschlurch`
+  },
+  {
+    id: 'mahnung',
+    name: 'Zahlungserinnerung',
+    subject: 'Zahlungserinnerung – Rechnung Waschlurch',
+    body: (r) => `Hallo ${r.vorname || '{Vorname}'},
+
+wir möchten Sie freundlich daran erinnern, dass die Zahlung für ${r.leistungen || '{Leistung}'} noch offen ist.
+
+Falls Sie die Zahlung bereits veranlasst haben, betrachten Sie diese Nachricht bitte als gegenstandslos. Andernfalls bitten wir um kurzfristigen Ausgleich.
+
+Bei Rückfragen stehen wir Ihnen gerne zur Verfügung.
+
+Beste Grüße
+Daniel Lurch
+Waschlurch`
+  },
 ];
 
 let activeTemplateId = 'angebot';
@@ -638,6 +772,7 @@ function startListeners(){
 
   loadPreise();
   loadSteuersatz();
+  loadFirma();
 
   renderRangePicker('anfragen-range-picker', (range) => { anfragenRange = range; renderRequestCharts(); }, 14);
   renderRangePicker('finanzen-range-picker', (range) => { finanzenRange = range; renderFinanzenChart(); }, 30);
@@ -711,6 +846,8 @@ function renderRequests(){
       <div class="req-actions">
         <button onclick="prepareReply('${r.id}')">✉️ Antwort vorbereiten</button>
         <a href="tel:${r.telefon||''}">📞 Anrufen</a>
+        <button class="invoice-btn" onclick="generateInvoice('${r.id}', false)">📄 Rechnung</button>
+        <button class="invoice-btn" onclick="generateInvoice('${r.id}', true)">✉️ Rechnung senden</button>
       </div>
     </div>
   `).join('');
@@ -718,7 +855,13 @@ function renderRequests(){
 }
 
 window.updateStatus = function(id, newStatus){
-  updateDoc(doc(db, 'anfragen', id), { status: newStatus }).catch(err => console.error(err));
+  updateDoc(doc(db, 'anfragen', id), { status: newStatus })
+    .then(() => {
+      if(newStatus === 'abgeschlossen'){
+        window.generateInvoice(id, false);
+      }
+    })
+    .catch(err => console.error(err));
 };
 
 window.prepareReply = function(id){
@@ -897,18 +1040,57 @@ function renderAusgaben(){
 }
 
 // ── PREISE ─────────────────────
+const EINHEIT_OPTIONS = [
+  { value:'pauschal', suffix:'inkl. MwSt.', label:'Pauschal (inkl. MwSt.)' },
+  { value:'2std', suffix:'· 2 Stunden', label:'Pauschal · 2 Stunden' },
+  { value:'stunde', suffix:'pro Stunde', label:'Pro Stunde' },
+  { value:'tonne', suffix:'je Tonne/Mo.', label:'Je Tonne/Monat' },
+  { value:'einsatz', suffix:'je Einsatz', label:'Je Einsatz' },
+  { value:'m2', suffix:'je m²', label:'Je m²' },
+];
+
+function guessEinheitFromText(text){
+  if(!text) return { betrag:'', einheit:'pauschal' };
+  const numMatch = text.match(/(\d+(?:[.,]\d+)?)/);
+  const betrag = numMatch ? numMatch[1].replace(',','.') : '';
+  let einheit = 'pauschal';
+  for(const opt of EINHEIT_OPTIONS){
+    if(text.includes(opt.suffix)){ einheit = opt.value; break; }
+  }
+  return { betrag, einheit };
+}
+
 function loadPreise(){
   getDoc(doc(db, 'preise', 'aktuell')).then(snap => {
     const data = snap.exists() ? snap.data() : {};
-    document.getElementById('preis-edit-list').innerHTML = SERVICES.map(s => `
+    document.getElementById('preis-edit-list').innerHTML = SERVICES.map(s => {
+      const betragField = data[s.id + '_betrag'];
+      const einheitField = data[s.id + '_einheit'];
+      const guessed = guessEinheitFromText(data[s.id] || s.default);
+      const betrag = betragField != null ? betragField : guessed.betrag;
+      const einheit = einheitField || guessed.einheit;
+      return `
       <div class="preis-edit-row">
         <div class="preis-edit-icon">${s.icon}</div>
         <div class="preis-edit-name">${s.name}</div>
-        <input type="text" id="preis-input-${s.id}" value="${(data[s.id] || s.default).replace(/"/g,'&quot;')}">
-      </div>
-    `).join('');
+        <input type="number" step="0.5" id="preis-betrag-${s.id}" value="${betrag}" placeholder="Betrag" style="max-width:110px" oninput="updatePreisPreview('${s.id}')">
+        <span style="color:rgba(255,255,255,0.4)">€</span>
+        <select class="preis-einheit-select" id="preis-einheit-${s.id}" onchange="updatePreisPreview('${s.id}')">
+          ${EINHEIT_OPTIONS.map(o => `<option value="${o.value}" ${o.value===einheit?'selected':''}>${o.label}</option>`).join('')}
+        </select>
+        <div class="preis-preview" id="preis-preview-${s.id}"></div>
+      </div>`;
+    }).join('');
+    SERVICES.forEach(s => updatePreisPreview(s.id));
   }).catch(err => console.error(err));
 }
+
+window.updatePreisPreview = function(id){
+  const betrag = document.getElementById('preis-betrag-'+id).value;
+  const einheit = document.getElementById('preis-einheit-'+id).value;
+  const opt = EINHEIT_OPTIONS.find(o => o.value === einheit) || EINHEIT_OPTIONS[0];
+  document.getElementById('preis-preview-'+id).textContent = betrag ? `ab ${betrag} € ${opt.suffix}` : '–';
+};
 
 window.savePreise = function(){
   const btn = document.getElementById('preis-save-btn');
@@ -918,7 +1100,12 @@ window.savePreise = function(){
 
   const data = {};
   SERVICES.forEach(s => {
-    data[s.id] = document.getElementById('preis-input-' + s.id).value.trim();
+    const betrag = document.getElementById('preis-betrag-'+s.id).value.trim();
+    const einheit = document.getElementById('preis-einheit-'+s.id).value;
+    const opt = EINHEIT_OPTIONS.find(o => o.value === einheit) || EINHEIT_OPTIONS[0];
+    data[s.id] = betrag ? `ab ${betrag} € ${opt.suffix}` : s.default;
+    data[s.id + '_betrag'] = betrag;
+    data[s.id + '_einheit'] = einheit;
   });
 
   setDoc(doc(db, 'preise', 'aktuell'), data, { merge: true })
@@ -932,6 +1119,49 @@ window.savePreise = function(){
       console.error(err);
       btn.disabled = false;
       btn.textContent = 'Preise speichern';
+      alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
+    });
+};
+
+// ── FIRMA (Rechnungsdaten) ─────────────────────
+const FIRMA_FIELDS = ['name','inhaber','strasse','plz','ort','steuernummer','ustid','telefon','email','iban','bic','bank','zahlungsziel'];
+let firmaData = {};
+
+function loadFirma(){
+  getDoc(doc(db, 'einstellungen', 'firma')).then(snap => {
+    firmaData = snap.exists() ? snap.data() : {};
+    FIRMA_FIELDS.forEach(f => {
+      const el = document.getElementById('firma-'+f);
+      if(el && firmaData[f] != null) el.value = firmaData[f];
+    });
+    if(!firmaData.name) document.getElementById('firma-name').value = 'Waschlurch';
+    if(!firmaData.inhaber) document.getElementById('firma-inhaber').value = 'Daniel Lurch';
+    if(!firmaData.email) document.getElementById('firma-email').value = 'waschlurch@gmail.com';
+    if(!firmaData.zahlungsziel) document.getElementById('firma-zahlungsziel').value = '14';
+  }).catch(err => console.error(err));
+}
+
+window.saveFirma = function(){
+  const btn = document.getElementById('firma-save-btn');
+  const msg = document.getElementById('firma-saved-msg');
+  btn.disabled = true;
+  btn.textContent = 'Speichere ...';
+
+  const data = {};
+  FIRMA_FIELDS.forEach(f => { data[f] = document.getElementById('firma-'+f).value.trim(); });
+  firmaData = data;
+
+  setDoc(doc(db, 'einstellungen', 'firma'), data, { merge:true })
+    .then(() => {
+      btn.disabled = false;
+      btn.textContent = 'Firmendaten speichern';
+      msg.style.display = 'inline';
+      setTimeout(() => msg.style.display = 'none', 3000);
+    })
+    .catch(err => {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Firmendaten speichern';
       alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
     });
 };
@@ -1128,8 +1358,11 @@ function renderFinanzenChart(){
 // ── STEUERN ─────────────────────
 function loadSteuersatz(){
   getDoc(doc(db, 'einstellungen', 'steuer')).then(snap => {
-    if(snap.exists() && typeof snap.data().satz === 'number'){
-      document.getElementById('steuer-satz').value = snap.data().satz;
+    if(snap.exists()){
+      const d = snap.data();
+      if(typeof d.satz === 'number') document.getElementById('steuer-satz').value = d.satz;
+      if(typeof d.mwst_satz === 'number') document.getElementById('steuer-mwst-satz').value = d.mwst_satz;
+      if(typeof d.brutto_modus === 'boolean') document.getElementById('steuer-brutto-modus').checked = d.brutto_modus;
     }
     renderSteuern();
   }).catch(err => { console.warn(err); renderSteuern(); });
@@ -1137,26 +1370,57 @@ function loadSteuersatz(){
 
 window.saveSteuersatz = function(){
   const satz = parseFloat(document.getElementById('steuer-satz').value) || 0;
-  setDoc(doc(db, 'einstellungen', 'steuer'), { satz }, { merge:true }).catch(err => console.error(err));
+  const mwst_satz = parseFloat(document.getElementById('steuer-mwst-satz').value) || 0;
+  const brutto_modus = document.getElementById('steuer-brutto-modus').checked;
+  setDoc(doc(db, 'einstellungen', 'steuer'), { satz, mwst_satz, brutto_modus }, { merge:true }).catch(err => console.error(err));
 };
 
 window.renderSteuern = function(){
-  const cardsEl = document.getElementById('steuer-cards');
-  if(!cardsEl) return;
-  const range = steuernRange || computeRangeFromPreset(30);
-  const einnahmenSum = filterByRange(allEinnahmen, range, 'datum').reduce((s,e) => s + (e.betrag||0), 0);
-  const ausgabenSum = filterByRange(allAusgaben, range, 'datum').reduce((s,a) => s + (a.betrag||0), 0);
-  const gewinn = einnahmenSum - ausgabenSum;
-  const satz = parseFloat(document.getElementById('steuer-satz').value) || 0;
-  const steuer = Math.max(0, gewinn) * (satz/100);
-  const nachSteuer = gewinn - steuer;
+  const ustEl = document.getElementById('steuer-cards-ust');
+  const estEl = document.getElementById('steuer-cards-est');
+  if(!ustEl || !estEl) return;
 
-  cardsEl.innerHTML = `
-    <div class="steuer-card"><div class="steuer-card-lbl">Einnahmen im Zeitraum</div><div class="steuer-card-val">${einnahmenSum.toFixed(2)} €</div></div>
-    <div class="steuer-card"><div class="steuer-card-lbl">Ausgaben im Zeitraum</div><div class="steuer-card-val">${ausgabenSum.toFixed(2)} €</div></div>
-    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn (Einnahmen − Ausgaben)</div><div class="steuer-card-val">${gewinn.toFixed(2)} €</div></div>
-    <div class="steuer-card"><div class="steuer-card-lbl">Geschätzte Steuer (${satz}%)</div><div class="steuer-card-val" style="color:#FBBF24">${steuer.toFixed(2)} €</div></div>
-    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn nach Steuer</div><div class="steuer-card-val" style="color:var(--green)">${nachSteuer.toFixed(2)} €</div></div>
+  const range = steuernRange || computeRangeFromPreset(30);
+  const einnahmenBrutto = filterByRange(allEinnahmen, range, 'datum').reduce((s,e) => s + (e.betrag||0), 0);
+  const ausgabenBrutto = filterByRange(allAusgaben, range, 'datum').reduce((s,a) => s + (a.betrag||0), 0);
+
+  const mwstSatz = parseFloat(document.getElementById('steuer-mwst-satz').value) || 0;
+  const bruttoModus = document.getElementById('steuer-brutto-modus').checked;
+  const satz = parseFloat(document.getElementById('steuer-satz').value) || 0;
+
+  let einnahmenNetto, ustAusEinnahmen, ausgabenNetto, vorsteuer;
+  if(bruttoModus && mwstSatz > 0){
+    einnahmenNetto = einnahmenBrutto / (1 + mwstSatz/100);
+    ustAusEinnahmen = einnahmenBrutto - einnahmenNetto;
+    ausgabenNetto = ausgabenBrutto / (1 + mwstSatz/100);
+    vorsteuer = ausgabenBrutto - ausgabenNetto;
+  } else {
+    einnahmenNetto = einnahmenBrutto;
+    ustAusEinnahmen = 0;
+    ausgabenNetto = ausgabenBrutto;
+    vorsteuer = 0;
+  }
+
+  const ustZahllast = ustAusEinnahmen - vorsteuer;
+  const gewinn = einnahmenNetto - ausgabenNetto;
+  const einkommensteuer = Math.max(0, gewinn) * (satz/100);
+  const gewinnNachSteuer = gewinn - einkommensteuer;
+  const gesamtFinanzamt = Math.max(0, ustZahllast) + einkommensteuer;
+
+  ustEl.innerHTML = `
+    <div class="steuer-card"><div class="steuer-card-lbl">Bruttoeinnahmen</div><div class="steuer-card-val">${einnahmenBrutto.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">davon USt. (${mwstSatz}%)</div><div class="steuer-card-val">${ustAusEinnahmen.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Vorsteuer aus Ausgaben</div><div class="steuer-card-val">${vorsteuer.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">USt.-Zahllast ans Finanzamt</div><div class="steuer-card-val" style="color:#FBBF24">${ustZahllast.toFixed(2)} €</div></div>
+  `;
+
+  estEl.innerHTML = `
+    <div class="steuer-card"><div class="steuer-card-lbl">Nettoeinnahmen</div><div class="steuer-card-val">${einnahmenNetto.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Nettoausgaben</div><div class="steuer-card-val">${ausgabenNetto.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn (netto)</div><div class="steuer-card-val">${gewinn.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Einkommensteuer (${satz}%)</div><div class="steuer-card-val" style="color:#FBBF24">${einkommensteuer.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Gesamt ans Finanzamt</div><div class="steuer-card-val" style="color:#F87171">${gesamtFinanzamt.toFixed(2)} €</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn nach Einkommensteuer</div><div class="steuer-card-val" style="color:var(--green)">${gewinnNachSteuer.toFixed(2)} €</div></div>
   `;
 };
 
@@ -1215,6 +1479,178 @@ function renderBericht(){
     </tr>
   `).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,0.4)">Keine Ausgaben im Zeitraum.</td></tr>';
 }
+
+// ── RECHNUNG (PDF) ─────────────────────
+const LOGO_IMG_EL = document.querySelector('.sidebar-logo img') || document.querySelector('.login-logo img');
+const LOGO_DATA_URL = LOGO_IMG_EL ? LOGO_IMG_EL.src : null;
+
+async function getOrCreateInvoiceNumber(request){
+  if(request.rechnung_nummer) return request.rechnung_nummer;
+  const counterRef = doc(db, 'einstellungen', 'rechnungszaehler');
+  const snap = await getDoc(counterRef);
+  const current = (snap.exists() && typeof snap.data().naechste_nummer === 'number') ? snap.data().naechste_nummer : 1;
+  const jahr = new Date().getFullYear();
+  const nummer = `RE-${jahr}-${String(current).padStart(4,'0')}`;
+  await setDoc(counterRef, { naechste_nummer: current + 1 }, { merge:true });
+  const rechnungDatum = new Date().toISOString().slice(0,10);
+  await updateDoc(doc(db, 'anfragen', request.id), { rechnung_nummer: nummer, rechnung_datum: rechnungDatum });
+  request.rechnung_nummer = nummer;
+  request.rechnung_datum = rechnungDatum;
+  return nummer;
+}
+
+function buildInvoicePDF(request, nummer, netto, mwst, brutto, mwstSatz){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit:'mm', format:'a4' });
+
+  if(LOGO_DATA_URL){
+    try { pdf.addImage(LOGO_DATA_URL, 'PNG', 158, 14, 30, 26); } catch(e){ console.warn('Logo konnte nicht eingefügt werden', e); }
+  }
+
+  let y = 20;
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(18);
+  pdf.setTextColor(20,20,20);
+  pdf.text(firmaData.name || 'Waschlurch', 20, y);
+  y += 12;
+
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(120,120,120);
+  pdf.text(`${firmaData.name||'Waschlurch'} · ${firmaData.strasse||''} · ${firmaData.plz||''} ${firmaData.ort||''}`, 20, y);
+  y += 7;
+
+  pdf.setFontSize(11);
+  pdf.setTextColor(20,20,20);
+  pdf.text(`${request.vorname||''} ${request.nachname||''}`, 20, y); y += 5;
+  pdf.text(`${request.strasse||''}`, 20, y); y += 5;
+  pdf.text(`${request.plz||''} ${request.ort||''}`, 20, y);
+
+  let metaY = 48;
+  pdf.setFontSize(10);
+  pdf.text(`Rechnungsnummer: ${nummer}`, 118, metaY); metaY += 6;
+  pdf.text(`Rechnungsdatum: ${new Date().toLocaleDateString('de-DE')}`, 118, metaY); metaY += 6;
+  pdf.text(`Leistungsdatum: ${request.wunschtermin || new Date().toLocaleDateString('de-DE')}`, 118, metaY); metaY += 6;
+  pdf.text(`Kundennr.: ${request.id.slice(0,8).toUpperCase()}`, 118, metaY);
+
+  y = Math.max(y, metaY) + 16;
+
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(16);
+  pdf.text('RECHNUNG', 20, y);
+  y += 10;
+
+  pdf.setFillColor(240,240,240);
+  pdf.rect(20, y, 170, 8, 'F');
+  pdf.setFontSize(10);
+  pdf.text('Beschreibung', 22, y+5.5);
+  pdf.text('Betrag (netto)', 163, y+5.5);
+  y += 13;
+
+  pdf.setFont('helvetica','normal');
+  pdf.text(request.leistungen || 'Reinigungsleistung', 22, y);
+  pdf.text(netto.toFixed(2) + ' €', 163, y);
+  y += 6;
+
+  pdf.setFontSize(9);
+  pdf.setTextColor(110,110,110);
+  if(request.haeufigkeit){ pdf.text(`Häufigkeit: ${request.haeufigkeit}`, 22, y); y += 5; }
+  if(request.strasse || request.ort){ pdf.text(`Leistungsort: ${request.strasse||''}, ${request.plz||''} ${request.ort||''}`, 22, y); y += 5; }
+  pdf.setTextColor(20,20,20);
+  pdf.setFontSize(10);
+
+  y += 6;
+  pdf.setDrawColor(210,210,210);
+  pdf.line(20, y, 190, y);
+  y += 8;
+
+  pdf.text('Zwischensumme (netto)', 118, y);
+  pdf.text(netto.toFixed(2) + ' €', 163, y);
+  y += 6;
+  pdf.text(`zzgl. ${mwstSatz}% USt.`, 118, y);
+  pdf.text(mwst.toFixed(2) + ' €', 163, y);
+  y += 8;
+  pdf.line(118, y-3, 190, y-3);
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(12);
+  pdf.text('Gesamtbetrag', 118, y+3);
+  pdf.text(brutto.toFixed(2) + ' €', 163, y+3);
+  y += 20;
+
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(10);
+  pdf.text(`Bitte überweisen Sie den Betrag innerhalb von ${firmaData.zahlungsziel || 14} Tagen ohne Abzug auf folgendes Konto:`, 20, y);
+  y += 7;
+  pdf.text(`${firmaData.bank || '–'}   ·   IBAN: ${firmaData.iban || '–'}   ·   BIC: ${firmaData.bic || '–'}`, 20, y);
+  y += 14;
+
+  pdf.setFontSize(8);
+  pdf.setTextColor(120,120,120);
+  pdf.text('Hinweis: Diese Rechnung steht im Zusammenhang mit einer Leistung an einem Grundstück. Gemäß § 14b Abs. 1 Satz 5 UStG ist der Rechnungsempfänger verpflichtet, diese Rechnung, einen Zahlungsbeleg oder eine andere beweiskräftige Unterlage zwei Jahre lang aufzubewahren.', 20, y, { maxWidth:170 });
+
+  const footerY = 280;
+  pdf.setDrawColor(220,220,220);
+  pdf.line(20, footerY-6, 190, footerY-6);
+  pdf.setFontSize(8);
+  pdf.setTextColor(120,120,120);
+  pdf.text(`${firmaData.name||'Waschlurch'} · ${firmaData.inhaber||'Daniel Lurch'} · ${firmaData.strasse||''} · ${firmaData.plz||''} ${firmaData.ort||''}`, 20, footerY);
+  pdf.text(`Steuernummer: ${firmaData.steuernummer||'–'}${firmaData.ustid ? ' · USt-IdNr.: '+firmaData.ustid : ''} · Tel: ${firmaData.telefon||'–'} · ${firmaData.email||'–'}`, 20, footerY+4);
+
+  return pdf.output('blob');
+}
+
+window.generateInvoice = async function(requestId, alsoEmail){
+  const request = allRequests.find(r => r.id === requestId);
+  if(!request){ alert('Anfrage nicht gefunden.'); return; }
+  if(!request.vorname && !request.nachname){ alert('Für diese Anfrage fehlen Kundendaten.'); return; }
+
+  const vorschlag = (request.geschaetzter_auftragswert || 0).toFixed(2);
+  const eingabe = prompt(`Rechnungsbetrag bestätigen (Brutto, inkl. MwSt., in €):`, vorschlag);
+  if(eingabe === null) return;
+  const brutto = parseFloat(eingabe.replace(',','.'));
+  if(!brutto || brutto <= 0){ alert('Bitte einen gültigen Betrag eingeben.'); return; }
+
+  const mwstSatz = parseFloat(document.getElementById('steuer-mwst-satz') ? document.getElementById('steuer-mwst-satz').value : 19) || 19;
+  const netto = brutto / (1 + mwstSatz/100);
+  const mwst = brutto - netto;
+
+  let nummer;
+  try {
+    nummer = await getOrCreateInvoiceNumber(request);
+  } catch(err) {
+    console.error(err);
+    alert('Rechnungsnummer konnte nicht erstellt werden. Bitte Firestore-Regeln prüfen.');
+    return;
+  }
+
+  const blob = buildInvoicePDF(request, nummer, netto, mwst, brutto, mwstSatz);
+  const filename = `${nummer}_${(request.nachname||'Rechnung').replace(/[^a-zA-Z0-9]/g,'')}.pdf`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+  if(alsoEmail){
+    alert(`Die PDF "${filename}" wurde heruntergeladen.\n\nGleich öffnet sich dein E-Mail-Programm mit fertigem Text an ${request.email}. Bitte hänge die eben heruntergeladene Datei manuell an, bevor du die E-Mail versendest (automatische Anhänge sind aus Sicherheitsgründen im Browser nicht möglich).`);
+    const subject = `Ihre Rechnung ${nummer} – ${firmaData.name || 'Waschlurch'}`;
+    const bodyText = `Hallo ${request.vorname||''},
+
+vielen Dank für Ihren Auftrag (${request.leistungen||'Reinigungsleistung'}).
+
+Anbei erhalten Sie Ihre Rechnung ${nummer} über ${brutto.toFixed(2)} € (inkl. ${mwstSatz}% USt.), fällig innerhalb von ${firmaData.zahlungsziel || 14} Tagen ab Rechnungsdatum.
+
+Vielen Dank für Ihr Vertrauen in unsere Arbeit!
+
+Beste Grüße
+${firmaData.inhaber || 'Daniel Lurch'}
+${firmaData.name || 'Waschlurch'}`;
+    window.location.href = `mailto:${request.email||''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+  }
+};
 
 </script>
 
