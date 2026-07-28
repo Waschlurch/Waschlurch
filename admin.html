@@ -677,8 +677,8 @@ function renderRequests(){
     <div class="req-card">
       <div class="req-top">
         <div>
-          <div class="req-name">${r.vorname||''} ${r.nachname||''}</div>
-          <div class="req-meta">${formatDate(r.createdAt)}</div>
+          <div class="req-name">${r.vorname||''} ${r.nachname||''} ${r.prioritaet==='Sofort' ? '<span style="color:#F87171;font-size:11px;font-weight:700;margin-left:6px">● SOFORT</span>' : ''}</div>
+          <div class="req-meta">${formatDate(r.createdAt)} ${r.vollstaendigkeit_prozent!=null ? '· ' + r.vollstaendigkeit_prozent + '% ausgefüllt' : ''}</div>
         </div>
         <select class="req-status" onchange="updateStatus('${r.id}', this.value)">
           ${STATUS_OPTIONS.map(s => `<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
@@ -686,13 +686,26 @@ function renderRequests(){
       </div>
       <div class="req-grid">
         <div><span>Leistungen:</span>${r.leistungen||'–'}</div>
+        <div><span>Objektart:</span>${r.objektart||'–'}</div>
         <div><span>Häufigkeit:</span>${r.haeufigkeit||'–'}</div>
+        <div><span>Etagen:</span>${r.etagen||'–'}</div>
         <div><span>Adresse:</span>${r.strasse||''}, ${r.plz||''} ${r.ort||''}</div>
         <div><span>Fläche:</span>${r.flaeche_m2 ? r.flaeche_m2 + ' m²' : '–'}</div>
         <div><span>E-Mail:</span>${r.email||'–'}</div>
         <div><span>Telefon:</span>${r.telefon||'–'}</div>
+        <div><span>Beginn:</span>${r.gewuenschter_beginn||'–'}</div>
         <div><span>Wunschtermin:</span>${r.wunschtermin||'–'}</div>
+        <div><span>Geschätzter Wert:</span>${r.geschaetzter_auftragswert!=null ? r.geschaetzter_auftragswert.toFixed(2) + ' €' : '–'}</div>
+        <div><span>Priorität:</span>${r.prioritaet||'–'}</div>
       </div>
+      ${r.service_details && Object.keys(r.service_details).length ? `<div class="req-msg">${Object.entries(r.service_details).map(([sid, data]) => {
+        const svc = SERVICES.find(s => s.id === sid);
+        const entries = Object.entries(data).map(([k,v]) => `${k}: ${v}`).join(' · ');
+        return `<strong>${svc ? svc.name : sid}:</strong> ${entries || '–'}`;
+      }).join('<br>')}</div>` : ''}
+      ${(r.parkmoeglichkeiten || r.aufzug_vorhanden || r.zugang_objekt || r.besondere_verschmutzung || r.budget || r.quelle) ? `<div class="req-msg">
+        ${r.parkmoeglichkeiten ? 'Parkmöglichkeiten vorhanden · ' : ''}${r.aufzug_vorhanden ? 'Aufzug vorhanden · ' : ''}${r.zugang_objekt ? 'Zugang: ' + r.zugang_objekt + ' · ' : ''}${r.besondere_verschmutzung ? 'Verschmutzung: ' + r.besondere_verschmutzung + ' · ' : ''}${r.budget ? 'Budget: ' + r.budget + ' · ' : ''}${r.quelle ? 'Quelle: ' + r.quelle : ''}
+      </div>` : ''}
       ${r.nachricht ? `<div class="req-msg">"${r.nachricht}"</div>` : ''}
       ${r.anmerkung_objekt ? `<div class="req-msg">Anmerkung: ${r.anmerkung_objekt}</div>` : ''}
       <div class="req-actions">
