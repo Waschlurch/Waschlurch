@@ -169,6 +169,18 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .code-resend button { background:transparent; border:none; color:var(--green); font-size:13px; cursor:pointer; font-family:inherit; font-weight:600; }
 .code-resend span { color:rgba(255,255,255,0.4); }
 
+/* DYNAMIC SERVICE FIELDS */
+.service-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px; margin-bottom:16px; }
+.service-block-title { font-size:14px; font-weight:700; color:var(--green); margin-bottom:14px; }
+.optional-toggle { font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); cursor:pointer; padding:8px 0; user-select:none; }
+.optional-toggle:hover { color:var(--white); }
+.optional-box { margin-top:10px; }
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:14px; color:var(--white); display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0; font-weight:500; }
+.field label.bool-label input { width:auto; }
+.cb-group { display:flex; flex-wrap:wrap; gap:8px; }
+.cb-chip { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; font-size:12px; cursor:pointer; text-transform:none; }
+.cb-chip input { width:auto; }
+
 @media(max-width:600px) {
   .tiles { grid-template-columns:repeat(2,1fr); }
   .field-row { grid-template-columns:1fr; gap:0; }
@@ -210,27 +222,62 @@ main { padding:64px 5% 80px; min-height:100vh; }
       <div class="field-error" id="err-1">Bitte wählen Sie mindestens eine Leistung aus.</div>
     </div>
 
-    <!-- STEP 2: UMFANG -->
+    <!-- STEP 2: OBJEKT & UMFANG -->
     <div class="step-panel" data-step="2">
       <div class="step-label">Schritt 2 von 4</div>
-      <div class="step-heading">Umfang & Häufigkeit</div>
+      <div class="step-heading">Objekt & Umfang</div>
+
       <div class="field">
-        <label>Fläche in m² (falls bekannt)</label>
-        <input type="number" id="f-flaeche" placeholder="z. B. 85" min="0">
-      </div>
-      <div class="field">
-        <label>Häufigkeit</label>
-        <select id="f-haeufigkeit">
-          <option value="Einmalig">Einmalig</option>
-          <option value="Wöchentlich">Wöchentlich</option>
-          <option value="14-tägig">14-tägig</option>
-          <option value="Monatlich">Monatlich</option>
+        <label>Objektart *</label>
+        <select id="f-objektart">
+          <option value="">– Bitte wählen –</option>
+          <option>Einfamilienhaus</option>
+          <option>Mehrfamilienhaus</option>
+          <option>Büro</option>
+          <option>Praxis</option>
+          <option>Gewerbe</option>
+          <option>Sonstiges</option>
         </select>
       </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Anzahl Etagen *</label>
+          <input type="number" id="f-etagen" min="0" placeholder="z. B. 2">
+        </div>
+        <div class="field">
+          <label>Fläche in m² *</label>
+          <input type="number" id="f-flaeche" min="0" placeholder="z. B. 85">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Häufigkeit *</label>
+          <select id="f-haeufigkeit">
+            <option value="Einmalig">Einmalig</option>
+            <option value="Wöchentlich">Wöchentlich</option>
+            <option value="14-tägig">14-tägig</option>
+            <option value="Monatlich">Monatlich</option>
+            <option value="Quartalsweise">Quartalsweise</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Gewünschter Beginn *</label>
+          <select id="f-beginn">
+            <option value="Sofort">Sofort</option>
+            <option value="Innerhalb einer Woche">Innerhalb einer Woche</option>
+            <option value="Innerhalb eines Monats">Innerhalb eines Monats</option>
+            <option value="Flexibel">Flexibel</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="dyn-service-fields"></div>
+
       <div class="field">
         <label>Anmerkungen zum Objekt (optional)</label>
-        <textarea id="f-anmerkung" placeholder="z. B. Etage, Zugang, Besonderheiten ..."></textarea>
+        <textarea id="f-anmerkung" placeholder="z. B. Zugang, Besonderheiten ..."></textarea>
       </div>
+      <div class="field-error" id="err-2">Bitte alle Pflichtfelder ausfüllen.</div>
     </div>
 
     <!-- STEP 3: ADRESSE -->
@@ -256,6 +303,36 @@ main { padding:64px 5% 80px; min-height:100vh; }
         <input type="date" id="f-termin">
       </div>
       <div class="field-error" id="err-3">Bitte Straße, PLZ und Ort ausfüllen.</div>
+
+      <div class="optional-toggle" onclick="toggleOptional('allg-optional-box')">+ Weitere Angaben (optional)</div>
+      <div class="optional-box" id="allg-optional-box" style="display:none">
+        <div class="field"><label class="bool-label"><input type="checkbox" id="f-park"> Parkmöglichkeiten vorhanden</label></div>
+        <div class="field"><label class="bool-label"><input type="checkbox" id="f-aufzug-allg"> Aufzug im Gebäude vorhanden</label></div>
+        <div class="field">
+          <label>Zugang zum Objekt</label>
+          <input type="text" id="f-zugang" placeholder="z. B. Schlüssel bei Nachbarn, Code fürs Tor ...">
+        </div>
+        <div class="field">
+          <label>Besondere Verschmutzungen</label>
+          <input type="text" id="f-verschmutzung-allg" placeholder="z. B. Baustaub, Fettflecken ...">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Budget (optional)</label>
+            <input type="text" id="f-budget" placeholder="z. B. bis 100 €">
+          </div>
+          <div class="field">
+            <label>Wie sind Sie auf uns aufmerksam geworden?</label>
+            <select id="f-quelle">
+              <option value="">– Bitte wählen –</option>
+              <option>Google</option>
+              <option>Empfehlung</option>
+              <option>Social Media</option>
+              <option>Sonstiges</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- STEP 4: KONTAKT -->
@@ -337,6 +414,117 @@ const SERVICES = [
   { id:'muell',      icon:'🗑️', name:'Mülltonnenservice',    price:'ab 9 €/Mo.' },
 ];
 
+// ── DYNAMISCHE FELDER JE LEISTUNG (Schritt 2) ─────────────────────
+const SERVICE_FIELDS = {
+  haushalt: {
+    required: [
+      { id:'badezimmer', label:'Anzahl Badezimmer', type:'number' },
+      { id:'bewohner', label:'Anzahl Bewohner', type:'number' },
+    ],
+    optional: [
+      { id:'zimmer', label:'Anzahl Zimmer', type:'number' },
+      { id:'haustiere', label:'Haustiere vorhanden', type:'bool' },
+      { id:'kinder', label:'Kinder im Haushalt', type:'bool' },
+      { id:'verschmutzung', label:'Verschmutzungsgrad', type:'select', options:['Leicht','Mittel','Stark'] },
+      { id:'leistungen', label:'Gewünschte Leistungen', type:'multi', options:['Staubsaugen','Wischen','Küche reinigen','Badezimmer reinigen','Betten beziehen','Bügeln','Fenster reinigen'] },
+      { id:'tag', label:'Bevorzugter Reinigungstag', type:'select', options:['Egal','Montag','Dienstag','Mittwoch','Donnerstag','Freitag'] },
+    ]
+  },
+  buero: {
+    required: [ { id:'arbeitsplaetze', label:'Anzahl Arbeitsplätze', type:'number' } ],
+    optional: [
+      { id:'wcs', label:'Anzahl WCs', type:'number' },
+      { id:'kueche', label:'Küche vorhanden', type:'bool' },
+      { id:'konferenz', label:'Konferenzräume vorhanden', type:'bool' },
+      { id:'empfang', label:'Empfangsbereich vorhanden', type:'bool' },
+      { id:'glas_innen', label:'Glasflächen innen', type:'bool' },
+      { id:'ausserhalb', label:'Reinigung außerhalb der Arbeitszeiten', type:'bool' },
+      { id:'schluessel', label:'Schlüssel vorhanden', type:'bool' },
+      { id:'hygiene', label:'Besondere Hygieneanforderungen', type:'text' },
+    ]
+  },
+  fenster: {
+    required: [ { id:'seiten', label:'Innen, Außen oder Beides', type:'select', options:['Innen','Außen','Beides'] } ],
+    optional: [
+      { id:'anzahl_fenster', label:'Anzahl Fenster (ca.)', type:'number' },
+      { id:'bodentief', label:'Bodentiefe Fenster', type:'bool' },
+      { id:'dachfenster', label:'Dachfenster vorhanden', type:'bool' },
+      { id:'wintergarten', label:'Wintergarten vorhanden', type:'bool' },
+      { id:'glasdach', label:'Glasdach vorhanden', type:'bool' },
+      { id:'schaufenster', label:'Schaufenster vorhanden', type:'bool' },
+      { id:'sprossen', label:'Sprossenfenster', type:'bool' },
+      { id:'leiter', label:'Leiter erforderlich', type:'bool' },
+      { id:'hebebuehne', label:'Hebebühne erforderlich', type:'bool' },
+      { id:'verschmutzung', label:'Verschmutzungsgrad', type:'select', options:['Leicht','Mittel','Stark'] },
+    ]
+  },
+  grund: {
+    required: [ { id:'gebaeudetyp', label:'Gebäudetyp', type:'select', options:['Wohnung','Haus','Büro','Gewerbe'] } ],
+    optional: [
+      { id:'letzte', label:'Letzte Grundreinigung', type:'select', options:['Weniger als 6 Monate','6–12 Monate','Über 1 Jahr','Noch nie'] },
+      { id:'boden', label:'Bodenbeläge', type:'multi', options:['Fliesen','Parkett','PVC','Teppich'] },
+      { id:'kueche', label:'Küche vorhanden', type:'bool' },
+      { id:'sanitaer', label:'Sanitärbereiche vorhanden', type:'bool' },
+      { id:'moebel', label:'Möbel vorhanden', type:'bool' },
+      { id:'bauend', label:'Bauendreinigung', type:'bool' },
+      { id:'stark', label:'Starke Verschmutzungen', type:'bool' },
+    ]
+  },
+  hausmeister: {
+    required: [ { id:'art_arbeiten', label:'Art der Arbeiten', type:'text' } ],
+    optional: [
+      { id:'aufgaben', label:'Aufgaben', type:'multi', options:['Kleinreparaturen','Lampenwechsel','Objektkontrolle','Gartenpflege','Winterdienst','Mülltonnenservice','Entrümpelung','Sonstiges'] },
+      { id:'regelmaessig', label:'Regelmäßig oder einmalig', type:'select', options:['Regelmäßig','Einmalig'] },
+      { id:'zeitaufwand', label:'Geschätzter Zeitaufwand', type:'text' },
+      { id:'material', label:'Material vorhanden', type:'bool' },
+    ]
+  },
+  treppe: {
+    required: [ { id:'wohnungen', label:'Anzahl Wohnungen', type:'number' } ],
+    optional: [
+      { id:'aufzug', label:'Aufzug vorhanden', type:'bool' },
+      { id:'handlaeufe', label:'Handläufe reinigen', type:'bool' },
+      { id:'fenster_th', label:'Fenster im Treppenhaus', type:'bool' },
+      { id:'kellerflur', label:'Kellerflur reinigen', type:'bool' },
+      { id:'eingang', label:'Eingangsbereich reinigen', type:'bool' },
+      { id:'aussen', label:'Außenbereich reinigen', type:'bool' },
+      { id:'briefkasten', label:'Briefkastenanlage reinigen', type:'bool' },
+      { id:'glas_th', label:'Glasflächen reinigen', type:'bool' },
+    ]
+  },
+  winter: {
+    required: [ { id:'flaechenart', label:'Art der Fläche', type:'multi', options:['Gehweg','Parkplatz','Hof','Einfahrt','Privatweg'] } ],
+    optional: [
+      { id:'stellplaetze', label:'Anzahl Stellplätze', type:'number' },
+      { id:'treppen', label:'Treppen vorhanden', type:'bool' },
+      { id:'streugut', label:'Streugut gewünscht', type:'bool' },
+      { id:'raeumung', label:'Schneeräumung gewünscht', type:'bool' },
+      { id:'nur_streuen', label:'Nur Streuen', type:'bool' },
+      { id:'zugaenglich', label:'Objekt jederzeit zugänglich', type:'bool' },
+    ]
+  },
+  garten: {
+    required: [],
+    optional: [
+      { id:'arbeiten', label:'Gewünschte Arbeiten', type:'multi', options:['Rasen mähen','Heckenschnitt','Unkraut entfernen','Beetpflege','Baumschnitt','Laub entfernen','Bewässerung','Entsorgung Grünschnitt'] },
+      { id:'heckenlaenge', label:'Heckenlänge (m)', type:'number' },
+      { id:'baeume', label:'Anzahl Bäume', type:'number' },
+      { id:'hanglage', label:'Hanglage vorhanden', type:'bool' },
+      { id:'maehroboter', label:'Mähroboter vorhanden', type:'bool' },
+    ]
+  },
+  muell: {
+    required: [ { id:'anzahl_tonnen', label:'Anzahl Tonnen', type:'number' } ],
+    optional: [
+      { id:'tonnenarten', label:'Tonnenarten', type:'multi', options:['Restmüll','Biomüll','Papier','Gelbe Tonne'] },
+      { id:'entfernung', label:'Entfernung zur Straße', type:'text' },
+      { id:'treppen_m', label:'Treppen vorhanden', type:'bool' },
+      { id:'verschlossen', label:'Müllplatz verschlossen', type:'bool' },
+      { id:'rueckstellung', label:'Rückstellung der Tonnen nach Leerung', type:'bool' },
+    ]
+  },
+};
+
 let currentStep = 1;
 let selectedServices = new Set();
 let _verifyCode = '';
@@ -365,6 +553,128 @@ window._applyLivePreise = function(){
   });
 };
 window._applyLivePreise();
+
+// ── DYNAMISCHE FELDER RENDERN ─────────────────────
+function fieldHTML(domId, field, required){
+  const reqMark = required ? ' *' : '';
+  if(field.type === 'number'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="number" id="${domId}" min="0"></div>`;
+  }
+  if(field.type === 'text'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="text" id="${domId}"></div>`;
+  }
+  if(field.type === 'select'){
+    const opts = field.options.map(o => `<option value="${o}">${o}</option>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><select id="${domId}"><option value="">– Bitte wählen –</option>${opts}</select></div>`;
+  }
+  if(field.type === 'bool'){
+    return `<div class="field"><label class="bool-label"><input type="checkbox" id="${domId}"> ${field.label}</label></div>`;
+  }
+  if(field.type === 'multi'){
+    const opts = field.options.map(o => `<label class="cb-chip"><input type="checkbox" class="cb-option" data-value="${o}"> ${o}</label>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><div class="cb-group" id="${domId}">${opts}</div></div>`;
+  }
+  return '';
+}
+
+let step2BuiltForServices = null;
+function buildDynServiceFields(){
+  const key = Array.from(selectedServices).sort().join(',');
+  if(key === step2BuiltForServices) return;
+  step2BuiltForServices = key;
+
+  const container = document.getElementById('dyn-service-fields');
+  let html = '';
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    const svc = SERVICES.find(s => s.id === sid);
+    if(!cfg || !svc) return;
+    html += `<div class="service-block"><div class="service-block-title">${svc.icon} ${svc.name}</div>`;
+    cfg.required.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, true); });
+    if(cfg.optional.length){
+      const boxId = 'dyn_'+sid+'_optional';
+      html += `<div class="optional-toggle" onclick="toggleOptional('${boxId}')">+ Weitere Details zu ${svc.name} (optional)</div>`;
+      html += `<div class="optional-box" id="${boxId}" style="display:none">`;
+      cfg.optional.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, false); });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+window.toggleOptional = function(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+};
+
+function collectFieldValue(domId, field){
+  const el = document.getElementById(domId);
+  if(!el) return '';
+  if(field.type === 'bool') return el.checked;
+  if(field.type === 'multi'){
+    const vals = [...el.querySelectorAll('.cb-option:checked')].map(cb => cb.dataset.value);
+    return vals.join(', ');
+  }
+  return el.value ? el.value.trim() : '';
+}
+
+function collectServiceDetails(){
+  const details = {};
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    if(!cfg) return;
+    const data = {};
+    [...cfg.required, ...cfg.optional].forEach(f => {
+      const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+      if(val !== '' && val !== false) data[f.id] = val;
+    });
+    details[sid] = data;
+  });
+  return details;
+}
+
+function computeVollstaendigkeit(){
+  let total = 0, filled = 0;
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    if(!cfg) return;
+    cfg.optional.forEach(f => {
+      total++;
+      const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+      if(val !== '' && val !== false) filled++;
+    });
+  });
+  const generalOptionalIds = ['f-park','f-aufzug-allg','f-zugang','f-verschmutzung-allg','f-budget','f-quelle'];
+  generalOptionalIds.forEach(id => {
+    total++;
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = el.type === 'checkbox' ? el.checked : el.value.trim();
+    if(val) filled++;
+  });
+  if(total === 0) return 100;
+  return Math.round((filled/total)*100);
+}
+
+function computeAuftragswert(){
+  let sum = 0;
+  selectedServices.forEach(sid => {
+    const svc = SERVICES.find(s => s.id === sid);
+    if(!svc) return;
+    const text = (window._livePreise && window._livePreise[sid]) || svc.price;
+    const match = text.match(/(\d+(?:[.,]\d+)?)/);
+    if(match) sum += parseFloat(match[1].replace(',','.'));
+  });
+  return Math.round(sum * 100) / 100;
+}
+
+function computePrioritaet(beginn){
+  if(beginn === 'Sofort') return 'Sofort';
+  if(beginn === 'Innerhalb einer Woche') return 'Diese Woche';
+  return 'Flexibel';
+}
 
 // ── PROGRESS BAR ─────────────────────
 const progressEl = document.getElementById('progress');
@@ -395,6 +705,22 @@ function validateStep(step) {
     document.getElementById('err-1').style.display = ok ? 'none' : 'block';
     return ok;
   }
+  if(step === 2){
+    const objektart = document.getElementById('f-objektart').value;
+    const etagen = document.getElementById('f-etagen').value.trim();
+    const flaeche = document.getElementById('f-flaeche').value.trim();
+    let ok = !!objektart && !!etagen && !!flaeche;
+    selectedServices.forEach(sid => {
+      const cfg = SERVICE_FIELDS[sid];
+      if(!cfg) return;
+      cfg.required.forEach(f => {
+        const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+        if(val === '' || val === false) ok = false;
+      });
+    });
+    document.getElementById('err-2').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
   if(step === 3){
     const strasse = document.getElementById('f-strasse').value.trim();
     const plz = document.getElementById('f-plz').value.trim();
@@ -418,8 +744,11 @@ function validateStep(step) {
 // ── SUMMARY (step 4) ─────────────────────
 function renderSummary(){
   const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
+  const objektart = document.getElementById('f-objektart').value;
+  const etagen = document.getElementById('f-etagen').value.trim();
   const flaeche = document.getElementById('f-flaeche').value.trim();
   const haeufigkeit = document.getElementById('f-haeufigkeit').value;
+  const beginn = document.getElementById('f-beginn').value;
   const strasse = document.getElementById('f-strasse').value.trim();
   const plz = document.getElementById('f-plz').value.trim();
   const ort = document.getElementById('f-ort').value.trim();
@@ -427,8 +756,11 @@ function renderSummary(){
 
   const rows = [
     ['Leistungen', names || '–'],
+    ['Objektart', objektart || '–'],
+    ['Etagen', etagen || '–'],
     ['Fläche', flaeche ? flaeche + ' m²' : '–'],
     ['Häufigkeit', haeufigkeit],
+    ['Gewünschter Beginn', beginn],
     ['Adresse', (strasse || ort) ? (strasse + (strasse&&ort?', ':'') + plz + ' ' + ort) : '–'],
     ['Wunschtermin', termin || '–'],
   ];
@@ -449,6 +781,7 @@ function showStep(step){
     document.getElementById('btn-next').textContent = 'Weiter →';
   }
   if(step === TOTAL_STEPS) renderSummary();
+  if(step === 2) buildDynServiceFields();
 }
 
 function nextStep(){
@@ -573,13 +906,29 @@ function submitRequest(){
   const tel = document.getElementById('f-tel').value.trim();
   const nachricht = document.getElementById('f-nachricht').value.trim();
   const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
+
+  const objektart = document.getElementById('f-objektart').value;
+  const etagen = document.getElementById('f-etagen').value.trim();
   const flaeche = document.getElementById('f-flaeche').value.trim();
   const haeufigkeit = document.getElementById('f-haeufigkeit').value;
+  const beginn = document.getElementById('f-beginn').value;
   const anmerkung = document.getElementById('f-anmerkung').value.trim();
   const strasse = document.getElementById('f-strasse').value.trim();
   const plz = document.getElementById('f-plz').value.trim();
   const ort = document.getElementById('f-ort').value.trim();
   const termin = document.getElementById('f-termin').value;
+
+  const park = document.getElementById('f-park').checked;
+  const aufzugAllg = document.getElementById('f-aufzug-allg').checked;
+  const zugang = document.getElementById('f-zugang').value.trim();
+  const verschmutzungAllg = document.getElementById('f-verschmutzung-allg').value.trim();
+  const budget = document.getElementById('f-budget').value.trim();
+  const quelle = document.getElementById('f-quelle').value;
+
+  const serviceDetails = collectServiceDetails();
+  const vollstaendigkeit = computeVollstaendigkeit();
+  const auftragswert = computeAuftragswert();
+  const prioritaet = computePrioritaet(beginn);
 
   function trySubmit(retries){
     if(!window._firebaseReady){
@@ -598,38 +947,65 @@ function submitRequest(){
       createdAt: window._serverTimestamp(),
       status: 'neu',
       leistungen: names,
+      objektart: objektart,
+      etagen: etagen,
       flaeche_m2: flaeche,
       haeufigkeit: haeufigkeit,
+      gewuenschter_beginn: beginn,
       anmerkung_objekt: anmerkung,
       strasse: strasse,
       plz: plz,
       ort: ort,
       wunschtermin: termin,
+      parkmoeglichkeiten: park,
+      aufzug_vorhanden: aufzugAllg,
+      zugang_objekt: zugang,
+      besondere_verschmutzung: verschmutzungAllg,
+      budget: budget,
+      quelle: quelle,
+      service_details: serviceDetails,
       vorname: vorname,
       nachname: nachname,
       email: email,
       telefon: tel,
       nachricht: nachricht,
+      // Strukturierte Backend-Felder
+      geschaetzter_auftragswert: auftragswert,
+      prioritaet: prioritaet,
+      einsatzgebiet_plz: plz,
+      vollstaendigkeit_prozent: vollstaendigkeit,
     };
 
     window._addDoc(window._collection(window._db, 'anfragen'), docData)
       .then(() => {
         // E-Mail-Benachrichtigung an Daniel (best effort, blockiert den Erfolg nicht)
+        const detailsText = Object.keys(serviceDetails).map(sid => {
+          const svc = SERVICES.find(s => s.id === sid);
+          const entries = Object.entries(serviceDetails[sid]).map(([k,v]) => `${k}: ${v}`).join(', ');
+          return `${svc ? svc.name : sid} – ${entries || 'keine weiteren Angaben'}`;
+        }).join(' | ');
+
         const fd = new FormData();
         fd.append('access_key', WEB3FORMS_KEY);
-        fd.append('subject', `Anfrage: ${vorname} ${nachname} · ${names}`);
+        fd.append('subject', `Anfrage: ${vorname} ${nachname} · ${names} · Priorität: ${prioritaet}`);
         fd.append('from_name', 'Waschlurch Anfrage-Assistent');
         fd.append('vorname', vorname);
         fd.append('nachname', nachname);
         fd.append('email', email);
         fd.append('telefon', tel);
         fd.append('leistungen', names);
+        fd.append('objektart', objektart);
+        fd.append('etagen', etagen);
         fd.append('flaeche_m2', flaeche);
         fd.append('haeufigkeit', haeufigkeit);
+        fd.append('gewuenschter_beginn', beginn);
         fd.append('anmerkung_objekt', anmerkung);
         fd.append('adresse', `${strasse}, ${plz} ${ort}`);
         fd.append('wunschtermin', termin);
         fd.append('nachricht', nachricht);
+        fd.append('details_je_leistung', detailsText);
+        fd.append('geschaetzter_auftragswert', auftragswert + ' € (geschätzt)');
+        fd.append('prioritaet', prioritaet);
         fetch('https://api.web3forms.com/submit', { method:'POST', body:fd }).catch(() => {});
 
         showSuccess(vorname);
