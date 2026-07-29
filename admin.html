@@ -33,6 +33,7 @@ a { color:inherit; }
 .login-title { text-align:center; font-size:22px; font-weight:700; margin-bottom:6px; }
 .login-sub { text-align:center; font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:28px; }
 .field { margin-bottom:16px; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
 .field input, .field select, .field textarea {
   width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
@@ -140,6 +141,23 @@ a { color:inherit; }
 .chart-card-title { font-size:13px; font-weight:700; color:rgba(255,255,255,0.6); margin-bottom:16px; }
 .chart-card canvas { max-height:220px; }
 
+/* PAKETE */
+.paket-form { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px; margin-bottom:28px; }
+.paket-form-title { font-size:15px; font-weight:700; margin-bottom:18px; }
+.paket-cb-grid { display:flex; flex-wrap:wrap; gap:8px; }
+.paket-cb-chip { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; font-size:12px; cursor:pointer; }
+.paket-cb-chip input { width:auto; }
+.paket-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:12px; }
+.paket-card.inaktiv { opacity:0.5; }
+.paket-card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+.paket-card-name { font-size:15px; font-weight:700; }
+.paket-card-meta { font-size:12px; color:rgba(255,255,255,0.4); margin-top:2px; }
+.paket-card-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.paket-card-actions button { font-size:11px; font-weight:600; padding:7px 12px; border-radius:100px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:var(--white); font-family:inherit; }
+.paket-card-actions button.pk-active-btn { border-color:rgba(34,197,94,0.3); color:var(--green); }
+.paket-card-actions button.pk-delete-btn { border-color:rgba(248,113,113,0.3); color:#F87171; }
+.paket-card-list { font-size:13px; color:rgba(255,255,255,0.6); line-height:1.7; margin-top:8px; }
+
 /* RECHNUNG / FIRMA */
 .req-actions button.invoice-btn { background:rgba(59,130,246,0.15); color:#3B82F6; border-color:rgba(59,130,246,0.3); }
 .req-actions button.invoice-btn:hover { background:rgba(59,130,246,0.25); }
@@ -187,6 +205,16 @@ a { color:inherit; }
   .fin-table td:before { content:attr(data-label); color:rgba(255,255,255,0.4); font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
   .steuer-cards { grid-template-columns:1fr 1fr; }
   .bericht-grid { grid-template-columns:1fr 1fr; }
+  .req-actions { flex-wrap:wrap; }
+  .req-actions button, .req-actions a { flex:1 1 calc(50% - 5px); text-align:center; }
+  .steuer-satz-box, .mwst-toggle-box { flex-wrap:wrap; }
+  .steuer-satz-box span:last-child { margin-left:0; width:100%; }
+  .paket-form { padding:18px; }
+  .paket-card-actions { width:100%; }
+  .paket-card-actions button { flex:1 1 auto; }
+  .fin-form { grid-template-columns:1fr; }
+  .view-title { font-size:22px; }
+  .field-row { grid-template-columns:1fr; gap:0; }
 }
 
 /* RANGE PICKER */
@@ -268,6 +296,7 @@ a { color:inherit; }
     <div class="nav-item" data-view="steuern" onclick="switchView('steuern')"><span class="ni-icon">🧮</span><span class="ni-label">Steuern</span></div>
     <div class="nav-item" data-view="bericht" onclick="switchView('bericht')"><span class="ni-icon">🖨️</span><span class="ni-label">Bericht</span></div>
     <div class="nav-item" data-view="preise" onclick="switchView('preise')"><span class="ni-icon">🏷️</span><span class="ni-label">Preise</span></div>
+    <div class="nav-item" data-view="pakete" onclick="switchView('pakete')"><span class="ni-icon">📦</span><span class="ni-label">Pakete</span></div>
     <div class="nav-item" data-view="firma" onclick="switchView('firma')"><span class="ni-icon">🏢</span><span class="ni-label">Firma</span></div>
     <div class="sidebar-bottom">
       <button class="logout-btn" onclick="doLogout()">Abmelden</button>
@@ -460,6 +489,55 @@ a { color:inherit; }
       </div>
     </div>
 
+    <!-- PAKETE -->
+    <div class="view" id="view-pakete">
+      <div class="view-head">
+        <div class="view-title">Pakete</div>
+        <div class="view-sub">Erscheinen live im Preise-Bereich deiner Website – Kunden landen beim Klick direkt in der passenden Anfrage</div>
+      </div>
+
+      <div class="paket-form">
+        <div class="paket-form-title">Schnellstart</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:14px">Noch unsicher, wie man Pakete sinnvoll aufbaut? Mit einem Klick werden 12 fertige Pakete angelegt (Privathaushalte, Büros, Kanzleien, Gastronomie, Einzelhandel, Autohaus/Werkstatt, Handwerksbetriebe, Parkplätze, Hausverwaltung u.v.m.) – Preise und Texte kannst du danach jederzeit anpassen.</p>
+        <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="seedDefaultPakete()" id="pk-seed-btn">✨ 12 Standard-Pakete jetzt anlegen</button>
+      </div>
+
+      <div class="paket-form">
+        <div class="paket-form-title" id="paket-form-title">Neues Paket erstellen</div>
+        <input type="hidden" id="pk-edit-id" value="">
+        <div class="field-row">
+          <div class="field"><label>Icon (Emoji)</label><input type="text" id="pk-icon" placeholder="🏠" maxlength="4"></div>
+          <div class="field"><label>Zielgruppe</label><input type="text" id="pk-zielgruppe" placeholder="z. B. Privat, Gewerbe, Handwerk"></div>
+        </div>
+        <div class="field"><label>Paketname</label><input type="text" id="pk-name" placeholder="z. B. Einfamilienhaus-Paket"></div>
+        <div class="field"><label>Kurzbeschreibung</label><input type="text" id="pk-beschreibung" placeholder="z. B. Rundum-Sauberkeit für Ihr Zuhause"></div>
+        <div class="field">
+          <label>Enthaltene Leistungen</label>
+          <div class="paket-cb-grid" id="pk-leistungen-cb"></div>
+        </div>
+        <div class="field">
+          <label>Extras (eine Zeile pro Extra, optional)</label>
+          <textarea id="pk-extras" placeholder="z. B. Kühlschrank reinigen&#10;Betten frisch beziehen"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Preis ab (€)</label><input type="number" id="pk-preis" placeholder="79" step="0.5"></div>
+          <div class="field"><label>Preis-Zusatztext</label><input type="text" id="pk-preis-text" placeholder="je Einsatz · inkl. MwSt."></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Reihenfolge (kleinere Zahl = weiter vorne)</label><input type="number" id="pk-reihenfolge" placeholder="1"></div>
+          <div class="field">
+            <label class="bool-label" style="margin-top:32px"><input type="checkbox" id="pk-beliebt"> Als "Beliebteste Wahl" hervorheben</label>
+          </div>
+        </div>
+        <div class="wizard-nav-inline" style="display:flex;gap:12px;margin-top:10px">
+          <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="savePaket()" id="pk-save-btn">Paket speichern</button>
+          <button class="btn" style="width:auto;padding:13px 24px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)" onclick="resetPaketForm()">Abbrechen / Neues Paket</button>
+        </div>
+      </div>
+
+      <div id="pakete-list"><div class="empty-state">Lade Pakete ...</div></div>
+    </div>
+
     <!-- FIRMA -->
     <div class="view" id="view-firma">
       <div class="view-head">
@@ -526,9 +604,11 @@ const db = getFirestore(app);
 let allRequests = [];
 let allEinnahmen = [];
 let allAusgaben = [];
+let allPakete = [];
 let unsubRequests = null;
 let unsubEinnahmen = null;
 let unsubAusgaben = null;
+let unsubPakete = null;
 
 let anfragenRange = null;
 let finanzenRange = null;
@@ -732,6 +812,7 @@ onAuthStateChanged(auth, (user) => {
     if(unsubRequests) unsubRequests();
     if(unsubEinnahmen) unsubEinnahmen();
     if(unsubAusgaben) unsubAusgaben();
+    if(unsubPakete) unsubPakete();
   }
 });
 
@@ -772,9 +853,16 @@ function startListeners(){
     renderBericht();
   }, err => console.error(err));
 
+  const paketeQuery = query(collection(db, 'pakete'), orderBy('reihenfolge', 'asc'));
+  unsubPakete = onSnapshot(paketeQuery, (snap) => {
+    allPakete = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderPaketeList();
+  }, err => console.error(err));
+
   loadPreise();
   loadSteuersatz();
   loadFirma();
+  renderPaketLeistungenCheckboxes();
 
   renderRangePicker('anfragen-range-picker', (range) => { anfragenRange = range; renderRequestCharts(); }, 14);
   renderRangePicker('finanzen-range-picker', (range) => { finanzenRange = range; renderFinanzenChart(); }, 30);
@@ -1481,6 +1569,175 @@ function renderBericht(){
     </tr>
   `).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,0.4)">Keine Ausgaben im Zeitraum.</td></tr>';
 }
+
+// ── PAKETE ─────────────────────
+function renderPaketLeistungenCheckboxes(){
+  const box = document.getElementById('pk-leistungen-cb');
+  if(!box) return;
+  box.innerHTML = SERVICES.map(s => `
+    <label class="paket-cb-chip">
+      <input type="checkbox" class="pk-leistung-cb" value="${s.id}" data-name="${s.name}"> ${s.icon} ${s.name}
+    </label>
+  `).join('');
+}
+
+function renderPaketeList(){
+  const listEl = document.getElementById('pakete-list');
+  if(!listEl) return;
+  if(allPakete.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Noch keine Pakete angelegt. Leg oben dein erstes Paket an.</div>';
+    return;
+  }
+  listEl.innerHTML = allPakete.map(p => `
+    <div class="paket-card ${p.status !== 'aktiv' ? 'inaktiv' : ''}">
+      <div class="paket-card-top">
+        <div>
+          <div class="paket-card-name">${p.icon||'📦'} ${p.name||''} ${p.beliebt ? '<span style="color:var(--green);font-size:11px">★ Beliebt</span>' : ''}</div>
+          <div class="paket-card-meta">${p.zielgruppe||''} · ${p.status === 'aktiv' ? 'Aktiv – sichtbar auf Website' : 'Außer Betrieb'} · ab ${p.preis_ab!=null?p.preis_ab+' €':'–'}</div>
+        </div>
+        <div class="paket-card-actions">
+          <button onclick="editPaket('${p.id}')">✏️ Bearbeiten</button>
+          <button class="pk-active-btn" onclick="togglePaketStatus('${p.id}','${p.status}')">${p.status==='aktiv' ? '⏸ Außer Betrieb nehmen' : '▶ Aktivieren'}</button>
+          <button class="pk-delete-btn" onclick="deletePaket('${p.id}')">🗑 Löschen</button>
+        </div>
+      </div>
+      <div class="paket-card-list">${(p.leistungen||[]).join(' · ')}${p.extras && p.extras.length ? ' · ' + p.extras.join(' · ') : ''}</div>
+    </div>
+  `).join('');
+}
+
+window.resetPaketForm = function(){
+  document.getElementById('pk-edit-id').value = '';
+  document.getElementById('pk-icon').value = '';
+  document.getElementById('pk-zielgruppe').value = '';
+  document.getElementById('pk-name').value = '';
+  document.getElementById('pk-beschreibung').value = '';
+  document.getElementById('pk-extras').value = '';
+  document.getElementById('pk-preis').value = '';
+  document.getElementById('pk-preis-text').value = 'je Einsatz · inkl. MwSt.';
+  document.getElementById('pk-reihenfolge').value = (allPakete.length + 1);
+  document.getElementById('pk-beliebt').checked = false;
+  document.querySelectorAll('.pk-leistung-cb').forEach(cb => cb.checked = false);
+  document.getElementById('paket-form-title').textContent = 'Neues Paket erstellen';
+  document.getElementById('pk-save-btn').textContent = 'Paket speichern';
+};
+
+window.editPaket = function(id){
+  const p = allPakete.find(x => x.id === id);
+  if(!p) return;
+  document.getElementById('pk-edit-id').value = id;
+  document.getElementById('pk-icon').value = p.icon || '';
+  document.getElementById('pk-zielgruppe').value = p.zielgruppe || '';
+  document.getElementById('pk-name').value = p.name || '';
+  document.getElementById('pk-beschreibung').value = p.beschreibung || '';
+  document.getElementById('pk-extras').value = (p.extras || []).join('\n');
+  document.getElementById('pk-preis').value = p.preis_ab != null ? p.preis_ab : '';
+  document.getElementById('pk-preis-text').value = p.preis_einheit_text || 'je Einsatz · inkl. MwSt.';
+  document.getElementById('pk-reihenfolge').value = p.reihenfolge != null ? p.reihenfolge : '';
+  document.getElementById('pk-beliebt').checked = !!p.beliebt;
+  const ids = Array.isArray(p.services_ids) ? p.services_ids : [];
+  document.querySelectorAll('.pk-leistung-cb').forEach(cb => { cb.checked = ids.includes(cb.value); });
+  document.getElementById('paket-form-title').textContent = 'Paket bearbeiten: ' + (p.name || '');
+  document.getElementById('pk-save-btn').textContent = 'Änderungen speichern';
+  window.switchView('pakete');
+  window.scrollTo({top:0, behavior:'smooth'});
+};
+
+window.savePaket = function(){
+  const btn = document.getElementById('pk-save-btn');
+  const editId = document.getElementById('pk-edit-id').value;
+  const name = document.getElementById('pk-name').value.trim();
+  if(!name){ alert('Bitte einen Paketnamen eingeben.'); return; }
+
+  const checkedBoxes = [...document.querySelectorAll('.pk-leistung-cb:checked')];
+  const services_ids = checkedBoxes.map(cb => cb.value);
+  const leistungen = checkedBoxes.map(cb => cb.dataset.name);
+  const extras = document.getElementById('pk-extras').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  const data = {
+    icon: document.getElementById('pk-icon').value.trim() || '📦',
+    zielgruppe: document.getElementById('pk-zielgruppe').value.trim(),
+    name: name,
+    beschreibung: document.getElementById('pk-beschreibung').value.trim(),
+    services_ids: services_ids,
+    leistungen: leistungen,
+    extras: extras,
+    preis_ab: parseFloat(document.getElementById('pk-preis').value) || null,
+    preis_einheit_text: document.getElementById('pk-preis-text').value.trim() || 'inkl. MwSt.',
+    reihenfolge: parseInt(document.getElementById('pk-reihenfolge').value) || 99,
+    beliebt: document.getElementById('pk-beliebt').checked,
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'Speichere ...';
+
+  const promise = editId
+    ? updateDoc(doc(db, 'pakete', editId), data)
+    : addDoc(collection(db, 'pakete'), { ...data, status: 'aktiv', createdAt: serverTimestamp() });
+
+  promise.then(() => {
+    btn.disabled = false;
+    window.resetPaketForm();
+  }).catch(err => {
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = editId ? 'Änderungen speichern' : 'Paket speichern';
+    alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
+  });
+};
+
+window.togglePaketStatus = function(id, currentStatus){
+  const next = currentStatus === 'aktiv' ? 'inaktiv' : 'aktiv';
+  updateDoc(doc(db, 'pakete', id), { status: next }).catch(err => console.error(err));
+};
+
+window.deletePaket = function(id){
+  if(!confirm('Dieses Paket wirklich endgültig löschen? (Alternativ: "Außer Betrieb nehmen", um es nur auszublenden)')) return;
+  deleteDoc(doc(db, 'pakete', id)).catch(err => console.error(err));
+};
+
+window.seedDefaultPakete = async function(){
+  if(allPakete.length > 0){
+    if(!confirm('Es gibt bereits Pakete. Sollen die 12 Standard-Pakete zusätzlich angelegt werden?')) return;
+  }
+  const btn = document.getElementById('pk-seed-btn');
+  btn.disabled = true;
+  btn.textContent = 'Lege Pakete an ...';
+
+  const defaults = [
+    { icon:'🏠', zielgruppe:'Privat', name:'Einfamilienhaus-Paket', beschreibung:'Rundum-Sauberkeit für Ihr Zuhause', services_ids:['haushalt','fenster'], extras:['Betten frisch beziehen'], preis_ab:79, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:1 },
+    { icon:'🏢', zielgruppe:'Privat', name:'Wohnung-Paket', beschreibung:'Für Wohnungen und Mehrfamilienhäuser', services_ids:['haushalt'], extras:[], preis_ab:54, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:2 },
+    { icon:'🪜', zielgruppe:'Hausverwaltung', name:'Treppenhaus-Paket', beschreibung:'Für Vermieter und Hausverwaltungen', services_ids:['treppe'], extras:['Briefkastenanlage', 'Kellerflur'], preis_ab:29, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:3 },
+    { icon:'💼', zielgruppe:'Gewerbe', name:'Büro-Paket', beschreibung:'Für kleine bis mittlere Büros', services_ids:['buero','fenster','muell'], extras:[], preis_ab:68, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:4 },
+    { icon:'⚖️', zielgruppe:'Kanzlei / Ingenieurbüro', name:'Kanzlei- & Praxis-Paket', beschreibung:'Diskrete, gründliche Reinigung für Kanzleien, Ingenieur- und Architekturbüros', services_ids:['buero','fenster'], extras:['Reinigung außerhalb der Bürozeiten', 'Diskretion & Vertraulichkeit'], preis_ab:89, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:5 },
+    { icon:'🍽️', zielgruppe:'Gastronomie', name:'Gastronomie-Paket', beschreibung:'Für Restaurants, Cafés und Imbisse', services_ids:['buero','fenster','muell'], extras:['Küchen- & Sanitärbereich', 'Hygienekonforme Reinigung'], preis_ab:95, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:6 },
+    { icon:'🛍️', zielgruppe:'Einzelhandel', name:'Laden- & Buchhandlungs-Paket', beschreibung:'Für Geschäfte, Boutiquen und Buchhandlungen', services_ids:['buero','fenster'], extras:['Schaufensterreinigung', 'Verkaufsflächenpflege'], preis_ab:69, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:7 },
+    { icon:'🚗', zielgruppe:'Autohaus / Werkstatt', name:'Autohaus- & Werkstatt-Paket', beschreibung:'Für Autohäuser, KFZ-Werkstätten und Showrooms', services_ids:['grund','fenster','hausmeister'], extras:['Ölfleckenentfernung auf Anfrage'], preis_ab:150, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:8 },
+    { icon:'🔧', zielgruppe:'Handwerk', name:'Handwerker- & Werkstatt-Paket', beschreibung:'Für Werkstätten, Ateliers und kleine Produktionsräume', services_ids:['grund','hausmeister'], extras:['Staub- und Spänebeseitigung'], preis_ab:120, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:9 },
+    { icon:'🅿️', zielgruppe:'Außenanlagen', name:'Parkplatz-Paket', beschreibung:'Kehrservice und Winterdienst für Parkflächen', services_ids:['winter','grund'], extras:['Laub- & Müllbeseitigung'], preis_ab:35, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:10 },
+    { icon:'🧰', zielgruppe:'Hausverwaltung', name:'Hausmeister-Komplettpaket', beschreibung:'Rundum-Betreuung für Immobilien – alles aus einer Hand', services_ids:['hausmeister','garten','winter','muell'], extras:['Ein fester Ansprechpartner für alles'], preis_ab:76, preis_einheit_text:'· 2 Stunden · inkl. MwSt.', beliebt:false, reihenfolge:11 },
+    { icon:'🏗️', zielgruppe:'Neubau / Renovierung', name:'Bauendreinigung-Paket', beschreibung:'Tiefenreinigung nach Umzug, Renovierung oder Neubau', services_ids:['grund','fenster'], extras:['Entfernung von Bauschutt-Resten', 'Fenster inkl. Rahmen'], preis_ab:190, preis_einheit_text:'inkl. MwSt.', beliebt:false, reihenfolge:12 },
+  ];
+
+  try {
+    for(const d of defaults){
+      const leistungen = d.services_ids.map(id => {
+        const svc = SERVICES.find(s => s.id === id);
+        return svc ? svc.name : id;
+      });
+      await addDoc(collection(db, 'pakete'), {
+        ...d, leistungen, status:'aktiv', createdAt: serverTimestamp()
+      });
+    }
+    btn.textContent = '✓ 12 Pakete angelegt!';
+    setTimeout(() => { btn.disabled = false; btn.textContent = '✨ 12 Standard-Pakete jetzt anlegen'; }, 2500);
+  } catch(err) {
+    console.error(err);
+    alert('Fehler beim Anlegen der Pakete. Bitte Firestore-Regeln prüfen.');
+    btn.disabled = false;
+    btn.textContent = '✨ 12 Standard-Pakete jetzt anlegen';
+  }
+};
 
 // ── RECHNUNG (PDF) ─────────────────────
 const LOGO_IMG_EL = document.querySelector('.sidebar-logo img') || document.querySelector('.login-logo img');
