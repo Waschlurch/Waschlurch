@@ -36,6 +36,16 @@
     window._livePreise = snap.data();
     if(window._applyLivePreise) window._applyLivePreise();
   }).catch(err => console.warn('Preise konnten nicht geladen werden:', err));
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const paketId = urlParams.get('paket');
+  if(paketId){
+    getDoc(doc(db, 'pakete', paketId)).then(snap => {
+      if(!snap.exists()) return;
+      window._selectedPaket = snap.data();
+      if(window._applySelectedPaket) window._applySelectedPaket();
+    }).catch(err => console.warn('Paket konnte nicht geladen werden:', err));
+  }
 </script>
 <style>
 :root {
@@ -182,15 +192,23 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .cb-group { display:flex; flex-wrap:wrap; gap:8px; }
 .cb-chip { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; font-size:12px; cursor:pointer; text-transform:none; }
 .cb-chip input { width:auto; }
+.paket-banner {
+  margin-top:20px; display:inline-flex; align-items:center; gap:10px;
+  background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3);
+  border-radius:100px; padding:10px 20px; font-size:13px; font-weight:600; color:var(--green);
+}
 
 @media(max-width:600px) {
   .tiles { grid-template-columns:repeat(2,1fr); }
   .field-row { grid-template-columns:1fr; gap:0; }
-  .wizard-card { padding:24px; }
+  .wizard-card { padding:20px; }
   .progress-dot { width:26px; height:26px; font-size:11px; }
   .progress-line { width:12px; }
   .wizard-nav { flex-direction:column-reverse; }
   .btn-back { width:100%; }
+  .service-block { padding:14px; }
+  .paket-banner { font-size:12px; padding:9px 14px; text-align:left; }
+  .wizard-head { padding:32px 0 24px; }
 }
 </style>
 </head>
@@ -210,6 +228,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
     <div class="tag">Kostenlose Anfrage</div>
     <h1 class="wizard-title">In 4 Schritten zu Ihrem Angebot</h1>
     <p class="wizard-sub">Wählen Sie Ihre Leistungen – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Kein Anruf nötig.</p>
+    <div id="paket-banner" style="display:none"></div>
   </div>
 
   <div class="progress" id="progress"></div>
@@ -555,6 +574,25 @@ window._applyLivePreise = function(){
   });
 };
 window._applyLivePreise();
+
+window._applySelectedPaket = function(){
+  const p = window._selectedPaket;
+  if(!p) return;
+  const ids = Array.isArray(p.services_ids) ? p.services_ids : [];
+  ids.forEach(id => {
+    const tile = tilesEl.querySelector(`.tile[data-id="${id}"]`);
+    if(tile && !selectedServices.has(id)){
+      selectedServices.add(id);
+      tile.classList.add('selected');
+    }
+  });
+  const banner = document.getElementById('paket-banner');
+  if(banner){
+    banner.innerHTML = `<div class="paket-banner">✓ Paket "${p.name || ''}" vorausgewählt – Sie können die Leistungen unten noch anpassen</div>`;
+    banner.style.display = 'block';
+  }
+};
+window._applySelectedPaket();
 
 // ── DYNAMISCHE FELDER RENDERN ─────────────────────
 function fieldHTML(domId, field, required){
