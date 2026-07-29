@@ -10,7 +10,7 @@
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
@@ -33,6 +33,44 @@
       if(preise[id]) el.textContent = preise[id];
     });
   }).catch(err => console.warn('Preise konnten nicht geladen werden:', err));
+
+  // ── Pakete dynamisch laden ─────────────────────
+  const paketeGrid = document.getElementById('pakete-grid');
+  if(paketeGrid){
+    const q = query(collection(db, 'pakete'), where('status', '==', 'aktiv'), orderBy('reihenfolge', 'asc'));
+    getDocs(q).then(snap => {
+      if(snap.empty){
+        paketeGrid.innerHTML = '<p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Aktuell sind keine Pakete verfügbar. Schreiben Sie uns gerne direkt für ein individuelles Angebot.</p>';
+        return;
+      }
+      let html = '';
+      snap.forEach(docSnap => {
+        const p = docSnap.data();
+        const id = docSnap.id;
+        const leistungen = Array.isArray(p.leistungen) ? p.leistungen : [];
+        const extras = Array.isArray(p.extras) ? p.extras : [];
+        html += `
+        <div class="preis-card ${p.beliebt ? 'featured' : ''}">
+          ${p.beliebt ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
+          <div class="preis-icon">${p.icon || '🧹'}</div>
+          <div class="preis-name">${p.zielgruppe || ''}</div>
+          <div class="preis-title">${p.name || ''}</div>
+          ${p.beschreibung ? `<div class="preis-desc">${p.beschreibung}</div>` : ''}
+          <div class="preis-val">${p.preis_ab != null ? 'ab ' + p.preis_ab + ' €' : 'Auf Anfrage'}</div>
+          <div class="preis-unit">${p.preis_einheit_text || 'inkl. MwSt.'}</div>
+          <ul class="preis-features">
+            ${leistungen.map(l => `<li>${l}</li>`).join('')}
+            ${extras.map(e => `<li>${e}</li>`).join('')}
+          </ul>
+          <a href="/anfrage.html?paket=${id}" class="preis-btn">Jetzt anfragen</a>
+        </div>`;
+      });
+      paketeGrid.innerHTML = html;
+    }).catch(err => {
+      console.error('Pakete konnten nicht geladen werden:', err);
+      paketeGrid.innerHTML = '<p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Pakete konnten nicht geladen werden.</p>';
+    });
+  }
 </script>
 <style>
 :root {
@@ -283,18 +321,18 @@ section { padding:96px 5%; }
 /* PREISE */
 #preise { background:var(--gray-100); }
 .preise-grid {
-  max-width:1000px; margin:0 auto;
-  display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+  max-width:1300px; margin:0 auto;
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:20px;
 }
 .preis-card {
   background:var(--white); border:2px solid var(--gray-200);
   border-radius:24px; padding:32px;
   position:relative; transition:all .25s;
+  display:flex; flex-direction:column;
 }
 .preis-card.featured {
   border-color:var(--green);
   background:var(--black);
-  transform:scale(1.04);
   box-shadow:0 20px 60px rgba(34,197,94,0.2);
 }
 .preis-badge {
@@ -303,13 +341,18 @@ section { padding:96px 5%; }
   font-size:12px; font-weight:700; padding:4px 16px; border-radius:100px;
   white-space:nowrap;
 }
-.preis-name { font-size:14px; font-weight:600; color:var(--gray-500); margin-bottom:8px; }
-.preis-card.featured .preis-name { color:rgba(255,255,255,0.6); }
-.preis-val { font-size:40px; font-weight:700; color:var(--black); letter-spacing:-1px; }
+.preis-icon { font-size:32px; margin-bottom:10px; }
+.preis-name { font-size:13px; font-weight:600; color:var(--green-dark); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.preis-card.featured .preis-name { color:var(--green); }
+.preis-title { font-size:19px; font-weight:700; color:var(--black); margin-bottom:8px; letter-spacing:-0.3px; }
+.preis-card.featured .preis-title { color:var(--white); }
+.preis-desc { font-size:13px; color:var(--gray-500); margin-bottom:18px; line-height:1.5; }
+.preis-card.featured .preis-desc { color:rgba(255,255,255,0.5); }
+.preis-val { font-size:34px; font-weight:700; color:var(--black); letter-spacing:-1px; }
 .preis-card.featured .preis-val { color:var(--white); }
 .preis-unit { font-size:14px; color:var(--gray-500); margin-bottom:24px; }
 .preis-card.featured .preis-unit { color:rgba(255,255,255,0.5); }
-.preis-features { list-style:none; display:flex; flex-direction:column; gap:12px; margin-bottom:28px; }
+.preis-features { list-style:none; display:flex; flex-direction:column; gap:12px; margin-bottom:28px; flex:1; }
 .preis-features li {
   display:flex; align-items:center; gap:10px;
   font-size:14px; color:var(--gray-700);
@@ -328,6 +371,12 @@ section { padding:96px 5%; }
 }
 .preis-btn:hover { background:var(--black); color:var(--white); }
 .preis-card.featured .preis-btn:hover { background:var(--green-dark); border-color:var(--green-dark); }
+
+/* SCROLL-ANIMATION */
+.reveal { opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
+.reveal.visible { opacity:1; transform:translateY(0); }
+@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.preis-card { animation:fadeInUp .6s ease both; }
 
 /* REFERENZEN */
 #referenzen { background:var(--white); }
@@ -506,6 +555,8 @@ footer {
   .ueber-inner { grid-template-columns:1fr; gap:32px; }
   .ueber-img { display:none; }
   .preise-grid { grid-template-columns:1fr; gap:16px; }
+  .preis-card { padding:24px; }
+  .preis-val { font-size:28px; }
   .preis-card.featured { transform:none; }
   .ref-grid { grid-template-columns:1fr 1fr; gap:14px; }
   .ref-img { height:140px; font-size:36px; }
@@ -799,46 +850,8 @@ footer {
       <div class="section-title">Transparente Pakete</div>
       <p class="section-sub">Alle Preise inkl. 19% MwSt. Bezahlung per Rechnung nach der Leistungserbringung. Keine versteckten Kosten.</p>
     </div>
-    <div class="preise-grid">
-      <div class="preis-card">
-        <div class="preis-name">Basis</div>
-        <div class="preis-val">ab 54 €</div>
-        <div class="preis-unit">je Einsatz · inkl. MwSt.</div>
-        <ul class="preis-features">
-          <li>Standardreinigung</li>
-          <li>Eigene Reinigungsmittel</li>
-          <li>Zuverlässige Terminplanung</li>
-          <li>Rechnung per E-Mail</li>
-        </ul>
-        <a href="#kontakt" class="preis-btn">Jetzt anfragen</a>
-      </div>
-      <div class="preis-card featured">
-        <div class="preis-badge">⭐ Beliebteste Wahl</div>
-        <div class="preis-name">Komfort</div>
-        <div class="preis-val">ab 62 €</div>
-        <div class="preis-unit">je Einsatz · inkl. MwSt.</div>
-        <ul class="preis-features">
-          <li>Alles aus Basis</li>
-          <li>Intensivere Reinigung</li>
-          <li>Öko-Reinigungsmittel</li>
-          <li>Prioritäts-Terminplanung</li>
-          <li>Abschlussfoto als Nachweis</li>
-        </ul>
-        <a href="#kontakt" class="preis-btn">Jetzt anfragen</a>
-      </div>
-      <div class="preis-card">
-        <div class="preis-name">Premium</div>
-        <div class="preis-val">ab 71 €</div>
-        <div class="preis-unit">je Einsatz · inkl. MwSt.</div>
-        <ul class="preis-features">
-          <li>Alles aus Komfort</li>
-          <li>Premium Reinigungsmittel</li>
-          <li>Wunschtermin garantiert</li>
-          <li>Persönlicher Ansprechpartner</li>
-          <li>Detailreinigung inklusive</li>
-        </ul>
-        <a href="#kontakt" class="preis-btn">Jetzt anfragen</a>
-      </div>
+    <div class="preise-grid" id="pakete-grid">
+      <p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Pakete werden geladen ...</p>
     </div>
     <p style="text-align:center;margin-top:28px;font-size:14px;color:var(--gray-500)">
       Individuelle Angebote auf Anfrage · Zahlung per Rechnung nach Leistung · §35a EStG – bis zu 20% steuerlich absetzbar
@@ -1221,6 +1234,26 @@ function sendForm() {
     err.style.display = 'block';
   });
 }
+
+// ── SCROLL-ANIMATION ─────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const targets = document.querySelectorAll('.section-head, .leistung-card, .ref-card, .trust-item, .kontakt-item, .ueber-punkt');
+  targets.forEach(el => el.classList.add('reveal'));
+
+  if('IntersectionObserver' in window){
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting){
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    targets.forEach(el => observer.observe(el));
+  } else {
+    targets.forEach(el => el.classList.add('visible'));
+  }
+});
 </script>
 
 </body>
