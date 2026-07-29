@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Waschlurch – Reinigung & Hausmeisterservice</title>
+<title>Anfrage stellen – Waschlurch</title>
 <link rel="icon" type="image/png" href="/apple-touch-icon.png?v=5">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=5">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
@@ -25,13 +25,16 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  window._db = db;
+  window._collection = collection;
+  window._addDoc = addDoc;
+  window._serverTimestamp = serverTimestamp;
+  window._firebaseReady = true;
+
   getDoc(doc(db, 'preise', 'aktuell')).then(snap => {
     if(!snap.exists()) return;
-    const preise = snap.data();
-    document.querySelectorAll('[data-price-id]').forEach(el => {
-      const id = el.getAttribute('data-price-id');
-      if(preise[id]) el.textContent = preise[id];
-    });
+    window._livePreise = snap.data();
+    if(window._applyLivePreise) window._applyLivePreise();
   }).catch(err => console.warn('Preise konnten nicht geladen werden:', err));
 </script>
 <style>
@@ -49,1098 +52,810 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
 
 /* NAV */
 nav {
   position:fixed; top:0; left:0; right:0; z-index:1000;
   background:#FFFFFF;
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid rgba(0,0,0,0.08);
-  padding:0 5%;
-  height:64px;
+  padding:0 5%; height:64px;
   display:flex; align-items:center; justify-content:space-between;
 }
 .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
 .nav-logo img { height:36px; width:auto; }
-.nav-logo span { font-size:18px; font-weight:700; color:var(--black); letter-spacing:-0.3px; }
-.nav-links { display:flex; align-items:center; gap:32px; list-style:none; }
-.nav-links a { font-size:14px; font-weight:500; color:var(--gray-700); text-decoration:none; transition:color .2s; }
-.nav-links a:hover { color:var(--green-dark); }
-.nav-cta { background:var(--black); color:var(--white)!important; padding:9px 20px; border-radius:100px; font-size:14px; font-weight:600!important; transition:background .2s!important; }
-.nav-cta:hover { background:var(--green-dark)!important; }
-.hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:4px; }
-.hamburger span { width:24px; height:2px; background:var(--black); border-radius:2px; transition:.3s; }
+.nav-back { font-size:14px; font-weight:600; color:var(--gray-700); text-decoration:none; transition:color .2s; }
+.nav-back:hover { color:var(--green-dark); }
 
-/* MOBILE MENU */
-.mobile-menu {
-  display:none; position:fixed; top:64px; left:0; right:0; bottom:0;
-  background:var(--white); z-index:999; padding:32px 5%;
-  flex-direction:column; gap:24px;
-}
-.mobile-menu.open { display:flex; }
-.mobile-menu a { font-size:22px; font-weight:600; color:var(--black); text-decoration:none; border-bottom:1px solid var(--gray-200); padding-bottom:20px; }
+/* LAYOUT */
+main { padding:64px 5% 80px; min-height:100vh; }
+.wizard-wrap { max-width:680px; margin:0 auto; }
+.wizard-head { text-align:center; padding:48px 0 32px; }
+.tag { font-size:13px; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:12px; }
+.wizard-title { font-size:clamp(28px,4vw,40px); font-weight:700; letter-spacing:-1px; line-height:1.15; margin-bottom:14px; }
+.wizard-sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.6; max-width:480px; margin:0 auto; }
 
-/* SECTIONS */
-section { padding:96px 5%; }
-.section-tag { font-size:13px; font-weight:600; color:var(--green-dark); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:12px; }
-.section-title { font-size:clamp(32px,5vw,52px); font-weight:700; color:var(--black); letter-spacing:-1px; line-height:1.1; margin-bottom:16px; }
-.section-sub { font-size:17px; color:var(--gray-500); line-height:1.7; max-width:560px; }
-.section-head { margin-bottom:56px; }
-.center { text-align:center; }
-.center .section-sub { margin:0 auto; }
-
-/* HERO */
-#hero {
-  min-height:100vh;
-  background:var(--black);
-  display:flex; align-items:center;
-  padding-top:64px;
-  position:relative;
-  overflow:hidden;
-}
-.hero-bg {
-  position:absolute; inset:0;
-  background:radial-gradient(ellipse 80% 60% at 60% 50%, rgba(34,197,94,0.15) 0%, transparent 70%);
-}
-.hero-inner {
-  max-width:1200px; margin:0 auto; width:100%;
-  display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center;
-  position:relative; z-index:1;
-}
-.hero-badge {
-  display:inline-flex; align-items:center; gap:8px;
-  background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3);
-  color:var(--green); padding:6px 14px; border-radius:100px;
-  font-size:13px; font-weight:600; margin-bottom:24px;
-}
-.hero-title {
-  font-size:clamp(40px,6vw,68px); font-weight:700;
-  color:var(--white); letter-spacing:-2px; line-height:1.05;
-  margin-bottom:20px;
-}
-.hero-title span { color:var(--green); }
-.hero-sub {
-  font-size:18px; color:rgba(255,255,255,0.6);
-  line-height:1.7; margin-bottom:36px; max-width:480px;
-}
-.hero-btns { display:flex; gap:12px; flex-wrap:wrap; }
-.btn-primary {
-  background:var(--green); color:var(--white);
-  padding:14px 28px; border-radius:100px;
-  font-size:15px; font-weight:600; text-decoration:none;
-  transition:all .2s; display:inline-flex; align-items:center; gap:8px;
-  border:none; cursor:pointer;
-}
-.btn-primary:hover { background:var(--green-dark); transform:translateY(-1px); }
-.btn-secondary {
-  background:rgba(255,255,255,0.08); color:var(--white);
-  border:1px solid rgba(255,255,255,0.15);
-  padding:14px 28px; border-radius:100px;
-  font-size:15px; font-weight:600; text-decoration:none;
-  transition:all .2s; display:inline-flex; align-items:center; gap:8px;
-}
-.btn-secondary:hover { background:rgba(255,255,255,0.15); }
-.hero-stats {
-  display:flex; gap:32px; margin-top:48px; padding-top:40px;
-  border-top:1px solid rgba(255,255,255,0.1);
-}
-.hero-stat-val { font-size:28px; font-weight:700; color:var(--white); }
-.hero-stat-lbl { font-size:13px; color:rgba(255,255,255,0.5); margin-top:2px; }
-.hero-img-wrap {
-  position:relative;
-}
-.hero-card {
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:20px; padding:28px;
-  backdrop-filter:blur(10px);
-}
-.hero-card-logo {
-  display:flex; align-items:center; gap:12px; margin-bottom:24px;
-}
-.hero-card-logo img { height:52px; }
-.hero-card-logo div { font-size:20px; font-weight:700; color:var(--white); }
-.hero-services { display:flex; flex-direction:column; gap:10px; }
-.hero-svc {
-  display:flex; align-items:center; gap:12px;
-  background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.15);
-  border-radius:12px; padding:12px 16px;
-  font-size:14px; color:var(--white); font-weight:500;
-  transition:background .25s,border-color .25s;
-}
-.hero-svc:hover { background:rgba(34,197,94,0.16); border-color:rgba(34,197,94,0.35); }
-.hero-svc-icon { font-size:20px; transition:filter .25s,transform .25s; }
-.hero-svc:hover .hero-svc-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.9)); transform:scale(1.15); }
-.hero-svc-check { margin-left:auto; color:var(--green); font-size:16px; }
-
-/* TRUST BAR */
-#trust {
-  padding:28px 5%;
-  background:var(--green-light);
-  border-top:1px solid rgba(34,197,94,0.2);
-  border-bottom:1px solid rgba(34,197,94,0.2);
-}
-.trust-inner {
-  max-width:1200px; margin:0 auto;
+/* PROGRESS */
+.progress { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:40px; }
+.progress-dot {
+  width:32px; height:32px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
-  gap:48px; flex-wrap:wrap;
+  font-size:13px; font-weight:700;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.4);
+  transition:all .3s; flex-shrink:0;
 }
-.trust-item {
-  display:flex; align-items:center; gap:10px;
-  font-size:14px; font-weight:600; color:var(--green-dark);
-}
-.trust-item span:first-child { font-size:20px; transition:filter .25s,transform .25s; }
-.trust-item:hover span:first-child { filter:drop-shadow(0 0 10px rgba(34,197,94,0.9)); transform:scale(1.15); }
+.progress-line { width:20px; height:2px; background:rgba(255,255,255,0.12); transition:background .3s; }
+.progress-dot.done { background:var(--green); border-color:var(--green); color:var(--white); }
+.progress-dot.active { border-color:var(--green); color:var(--green); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
+.progress-line.done { background:var(--green); }
 
-/* LEISTUNGEN */
-#leistungen { background:var(--white); }
-.leistungen-scroll {
-  max-width:100%;
-  overflow-x:auto;
-  padding: 0 5% 20px;
-  scrollbar-width:none;
-  -ms-overflow-style:none;
-  -webkit-overflow-scrolling:touch;
-  scroll-snap-type:x proximity;
-  cursor:grab;
-}
-.leistungen-scroll:active { cursor:grabbing; }
-.leistungen-scroll::-webkit-scrollbar { display:none; }
-.leistungen-grid {
-  display:flex; gap:16px;
-  width:max-content;
-}
-.leistung-card {
-  width:280px; flex-shrink:0;
-  border-radius:20px; overflow:hidden;
-  cursor:pointer;
-  transition:transform .25s;
-  position:relative;
-  scroll-snap-align:start;
-}
-.leistung-card:hover { transform:scale(1.02); }
-.leistung-img {
-  height:220px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:72px;
-  position:relative;
-  transition:filter .25s;
-}
-.leistung-card:hover .leistung-img { filter:drop-shadow(0 0 18px rgba(34,197,94,0.7)); }
-.leistung-card:nth-child(1) .leistung-img { background:linear-gradient(145deg,#111,#1a2e1a); }
-.leistung-card:nth-child(2) .leistung-img { background:linear-gradient(145deg,#0a1628,#1a2840); }
-.leistung-card:nth-child(3) .leistung-img { background:linear-gradient(145deg,#1a1a2e,#16213e); }
-.leistung-card:nth-child(4) .leistung-img { background:linear-gradient(145deg,#1c1208,#2d1f0a); }
-.leistung-card:nth-child(5) .leistung-img { background:linear-gradient(145deg,#0d1f2d,#1a3a4a); }
-.leistung-card:nth-child(6) .leistung-img { background:linear-gradient(145deg,#111,#222); }
-.leistung-card:nth-child(7) .leistung-img { background:linear-gradient(145deg,#1a0a0a,#2d1212); }
-.leistung-card:nth-child(8) .leistung-img { background:linear-gradient(145deg,#0a1a2a,#0d2035); }
-.leistung-card:nth-child(9) .leistung-img { background:linear-gradient(145deg,#0a1a0a,#122212); }
-.leistung-body {
-  background:var(--gray-100);
-  padding:18px 20px 20px;
-}
-.leistung-tag { font-size:11px; font-weight:700; color:var(--green-dark); text-transform:uppercase; letter-spacing:.8px; margin-bottom:5px; }
-.leistung-title { font-size:18px; font-weight:700; color:var(--black); margin-bottom:5px; letter-spacing:-0.3px; }
-.leistung-desc { font-size:13px; color:var(--gray-500); line-height:1.5; margin-bottom:10px; }
-.leistung-ab { font-size:13px; font-weight:600; color:var(--gray-700); }
-
-/* ABOUT */
-#ueber { background:var(--black); }
-.ueber-inner {
-  max-width:1200px; margin:0 auto;
-  display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center;
-}
-.ueber-img {
-  background:linear-gradient(135deg,rgba(34,197,94,0.2),rgba(34,197,94,0.05));
-  border:1px solid rgba(34,197,94,0.2);
-  border-radius:24px; padding:48px;
-  display:flex; align-items:center; justify-content:center;
-  aspect-ratio:1; position:relative; overflow:hidden;
-}
-.ueber-img img { width:80%; height:auto; }
-.ueber-img-bg {
-  position:absolute; inset:0;
-  background:radial-gradient(circle at 50% 50%, rgba(34,197,94,0.1), transparent 70%);
-}
-.ueber-text .section-title { color:var(--white); }
-.ueber-text .section-sub { color:rgba(255,255,255,0.6); }
-.ueber-punkte { margin-top:32px; display:flex; flex-direction:column; gap:16px; }
-.ueber-punkt {
-  display:flex; align-items:flex-start; gap:14px;
-  font-size:15px; color:rgba(255,255,255,0.8); line-height:1.5;
-}
-.ueber-punkt-icon {
-  width:28px; height:28px; border-radius:50%;
-  background:rgba(34,197,94,0.2); display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; font-size:13px; margin-top:1px;
-  transition:filter .25s,background .25s;
-}
-.ueber-punkt:hover .ueber-punkt-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.9)); background:rgba(34,197,94,0.35); }
-
-/* PREISE */
-#preise { background:var(--gray-100); }
-.preise-grid {
-  max-width:1000px; margin:0 auto;
-  display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
-}
-.preis-card {
-  background:var(--white); border:2px solid var(--gray-200);
-  border-radius:24px; padding:32px;
-  position:relative; transition:all .25s;
-}
-.preis-card.featured {
-  border-color:var(--green);
-  background:var(--black);
-  transform:scale(1.04);
-  box-shadow:0 20px 60px rgba(34,197,94,0.2);
-}
-.preis-badge {
-  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
-  background:var(--green); color:var(--white);
-  font-size:12px; font-weight:700; padding:4px 16px; border-radius:100px;
-  white-space:nowrap;
-}
-.preis-name { font-size:14px; font-weight:600; color:var(--gray-500); margin-bottom:8px; }
-.preis-card.featured .preis-name { color:rgba(255,255,255,0.6); }
-.preis-val { font-size:40px; font-weight:700; color:var(--black); letter-spacing:-1px; }
-.preis-card.featured .preis-val { color:var(--white); }
-.preis-unit { font-size:14px; color:var(--gray-500); margin-bottom:24px; }
-.preis-card.featured .preis-unit { color:rgba(255,255,255,0.5); }
-.preis-features { list-style:none; display:flex; flex-direction:column; gap:12px; margin-bottom:28px; }
-.preis-features li {
-  display:flex; align-items:center; gap:10px;
-  font-size:14px; color:var(--gray-700);
-}
-.preis-card.featured .preis-features li { color:rgba(255,255,255,0.8); }
-.preis-features li::before { content:'✓'; color:var(--green); font-weight:700; }
-.preis-btn {
-  width:100%; padding:13px; border-radius:100px;
-  font-size:14px; font-weight:600; cursor:pointer;
-  border:2px solid var(--black); background:transparent;
-  color:var(--black); transition:all .2s; font-family:inherit;
-  text-align:center; display:block; text-decoration:none;
-}
-.preis-card.featured .preis-btn {
-  background:var(--green); border-color:var(--green); color:var(--white);
-}
-.preis-btn:hover { background:var(--black); color:var(--white); }
-.preis-card.featured .preis-btn:hover { background:var(--green-dark); border-color:var(--green-dark); }
-
-/* REFERENZEN */
-#referenzen { background:var(--white); }
-.ref-grid {
-  max-width:1200px; margin:0 auto;
-  display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
-}
-.ref-card {
-  border-radius:20px; overflow:hidden;
-  background:var(--gray-100);
-  border:1px solid var(--gray-200);
-  transition:all .25s;
-}
-.ref-card:hover { transform:translateY(-4px); box-shadow:0 16px 48px rgba(0,0,0,0.1); }
-.ref-img {
-  height:200px; 
-  display:flex; align-items:center; justify-content:center;
-  font-size:48px;
-  position:relative; overflow:hidden;
-  transition:filter .25s;
-}
-.ref-card:hover .ref-img { filter:drop-shadow(0 0 14px rgba(34,197,94,0.6)); }
-.ref-img-1 { background:linear-gradient(135deg,#DCFCE7,#BBF7D0); }
-.ref-img-2 { background:linear-gradient(135deg,#D1FAE5,#A7F3D0); }
-.ref-img-3 { background:linear-gradient(135deg,#ECFDF5,#D1FAE5); }
-.ref-img-4 { background:linear-gradient(135deg,#F0FDF4,#DCFCE7); }
-.ref-img-5 { background:linear-gradient(135deg,#BBF7D0,#6EE7B7); }
-.ref-img-6 { background:linear-gradient(135deg,#6EE7B7,#34D399); }
-.ref-body { padding:20px; }
-.ref-title { font-size:15px; font-weight:700; color:var(--black); margin-bottom:4px; }
-.ref-loc { font-size:13px; color:var(--gray-500); }
-.ref-stars { color:var(--green); font-size:13px; margin-top:8px; }
-
-/* FAQ */
-#faq { background:var(--gray-100); }
-.faq-inner { max-width:720px; margin:0 auto; }
-.faq-item {
-  background:var(--white); border:1px solid var(--gray-200);
-  border-radius:16px; margin-bottom:12px; overflow:hidden;
-}
-.faq-q {
-  padding:20px 24px; font-size:15px; font-weight:600;
-  cursor:pointer; display:flex; justify-content:space-between; align-items:center;
-  color:var(--black);
-}
-.faq-icon { font-size:20px; transition:.3s; color:var(--green); font-weight:300; }
-.faq-a {
-  padding:0 24px; max-height:0; overflow:hidden;
-  font-size:14px; color:var(--gray-500); line-height:1.7;
-  transition:all .3s;
-}
-.faq-item.open .faq-a { max-height:200px; padding:0 24px 20px; }
-.faq-item.open .faq-icon { transform:rotate(45deg); }
-
-/* KONTAKT */
-#kontakt { background:var(--black); }
-.kontakt-inner {
-  max-width:1200px; margin:0 auto;
-  display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start;
-}
-.kontakt-info .section-title { color:var(--white); }
-.kontakt-info .section-sub { color:rgba(255,255,255,0.6); margin-bottom:36px; }
-.kontakt-items { display:flex; flex-direction:column; gap:20px; }
-.kontakt-item {
-  display:flex; align-items:center; gap:16px;
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:16px; padding:18px 20px;
-}
-.kontakt-item-icon {
-  width:44px; height:44px; border-radius:12px;
-  background:rgba(34,197,94,0.15);
-  display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
-  transition:filter .25s,background .25s;
-}
-.kontakt-item:hover .kontakt-item-icon { filter:drop-shadow(0 0 10px rgba(34,197,94,0.9)); background:rgba(34,197,94,0.28); }
-.kontakt-item-lbl { font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:3px; text-transform:uppercase; letter-spacing:.8px; }
-.kontakt-item-val { font-size:15px; font-weight:600; color:var(--white); text-decoration:none; }
-.kontakt-item-val:hover { color:var(--green); }
-
-/* FORM */
-.kontakt-form {
+/* CARD */
+.wizard-card {
   background:rgba(255,255,255,0.04);
   border:1px solid rgba(255,255,255,0.1);
   border-radius:24px; padding:36px;
 }
-.form-title { font-size:20px; font-weight:700; color:var(--white); margin-bottom:24px; }
-.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
-.form-field { margin-bottom:14px; }
-.form-field label {
-  display:block; font-size:12px; font-weight:600;
-  color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px;
-}
-.form-field input, .form-field textarea, .form-field select {
-  width:100%; padding:13px 16px;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:12px; font-family:inherit; font-size:14px;
-  color:var(--white); outline:none; transition:border .2s;
-}
-.form-field input::placeholder, .form-field textarea::placeholder {
-  color:rgba(255,255,255,0.25);
-}
-.form-field input:focus, .form-field textarea:focus, .form-field select:focus {
-  border-color:var(--green);
-}
-.form-field select { color:rgba(255,255,255,0.7); }
-.form-field select option { background:var(--gray-900); }
-.form-field textarea { min-height:100px; resize:vertical; }
-.form-submit {
-  width:100%; padding:15px; background:var(--green);
-  border:none; border-radius:100px; color:var(--white);
-  font-size:15px; font-weight:600; cursor:pointer;
-  font-family:inherit; transition:all .2s;
-  margin-top:6px;
-}
-.form-submit:hover { background:var(--green-dark); transform:translateY(-1px); }
-.form-success {
-  display:none; text-align:center; padding:32px;
-}
-.form-success-icon {
-  width:64px; height:64px; border-radius:50%;
-  background:rgba(34,197,94,0.15); display:flex; align-items:center; justify-content:center;
-  font-size:28px; margin:0 auto 16px;
-}
-.form-success h3 { color:var(--white); font-size:20px; margin-bottom:8px; }
-.form-success p { color:rgba(255,255,255,0.5); font-size:14px; }
-.form-error {
-  display:none; color:#F87171; font-size:13px;
-  text-align:center; margin-top:10px;
-}
+.step-panel { display:none; }
+.step-panel.active { display:block; animation:fadein .3s ease; }
+@keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.step-label { font-size:12px; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+.step-heading { font-size:22px; font-weight:700; margin-bottom:24px; letter-spacing:-0.3px; }
 
-/* FOOTER */
-footer {
-  background:var(--black);
-  border-top:1px solid rgba(255,255,255,0.08);
-  padding:48px 5% 32px;
+/* SERVICE TILES */
+.tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.tile {
+  background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:16px; padding:18px 12px; text-align:center; cursor:pointer;
+  transition:all .2s; position:relative;
 }
-.footer-inner {
-  max-width:1200px; margin:0 auto;
-  display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:24px;
+.tile:hover { border-color:rgba(34,197,94,0.4); }
+.tile.selected { background:rgba(34,197,94,0.12); border-color:var(--green); }
+.tile-icon { font-size:28px; margin-bottom:8px; transition:filter .2s; }
+.tile.selected .tile-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.8)); }
+.tile-name { font-size:13px; font-weight:600; margin-bottom:2px; }
+.tile-price { font-size:11px; color:rgba(255,255,255,0.4); }
+.tile-check {
+  position:absolute; top:8px; right:8px; width:18px; height:18px; border-radius:50%;
+  background:var(--green); color:var(--white); font-size:11px; font-weight:700;
+  display:none; align-items:center; justify-content:center;
 }
-.footer-logo { display:flex; align-items:center; gap:10px; }
-.footer-logo img { height:32px; }
-.footer-logo span { font-size:16px; font-weight:700; color:var(--white); }
-.footer-links { display:flex; gap:24px; }
-.footer-links a { font-size:13px; color:rgba(255,255,255,0.4); text-decoration:none; transition:color .2s; }
-.footer-links a:hover { color:var(--white); }
-.footer-copy { font-size:13px; color:rgba(255,255,255,0.3); }
+.tile.selected .tile-check { display:flex; }
 
-/* MOBILE */
-@media(max-width:768px) {
-  nav { padding:0 5%; height:60px; }
-  .nav-logo img { height:32px; }
-  .nav-logo span, .nav-logo span span { font-size:22px!important; }
-  .nav-links { display:none; }
-  .hamburger { display:flex; }
-  section { padding:56px 5%; }
-  .section-head { margin-bottom:36px; }
-  .section-sub { font-size:15px; }
-  #hero { padding-top:60px; min-height:auto; }
-  .hero-inner { grid-template-columns:1fr; gap:32px; padding:32px 0; }
-  .hero-card { display:none; }
-  .hero-title { font-size:36px; }
-  .hero-sub { font-size:16px; margin-bottom:28px; }
-  .hero-btns { flex-direction:column; }
-  .hero-btns a, .hero-btns button { width:100%; justify-content:center; }
-  .hero-stats { gap:16px; flex-wrap:wrap; margin-top:32px; padding-top:28px; }
-  .hero-stat-val { font-size:22px; }
-  .trust-inner { gap:20px 28px; justify-content:flex-start; }
-  .trust-item { font-size:13px; }
-  .leistungen-scroll { padding:0 5% 16px; }
-  .leistung-card { width:78vw; max-width:300px; }
-  .leistung-img { height:180px; font-size:56px; }
-  .ueber-inner { grid-template-columns:1fr; gap:32px; }
-  .ueber-img { display:none; }
-  .preise-grid { grid-template-columns:1fr; gap:16px; }
-  .preis-card.featured { transform:none; }
-  .ref-grid { grid-template-columns:1fr 1fr; gap:14px; }
-  .ref-img { height:140px; font-size:36px; }
-  .kontakt-inner { grid-template-columns:1fr; gap:40px; }
-  .kontakt-form { padding:24px; }
-  .form-row { grid-template-columns:1fr; gap:0; }
-  .footer-inner { flex-direction:column; text-align:center; }
-  .footer-links { flex-wrap:wrap; justify-content:center; gap:16px 20px; }
+/* FIELDS */
+.field { margin-bottom:18px; }
+.field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
+.field input, .field select, .field textarea {
+  width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  font-family:inherit; font-size:14px; color:var(--white); outline:none; transition:border .2s;
 }
-@media(max-width:480px) {
-  section { padding:44px 5%; }
-  .hero-title { font-size:30px; }
-  .ref-grid { grid-template-columns:1fr; }
-  .ref-img { height:170px; }
-  .trust-item { font-size:12px; }
-  .kontakt-item { padding:14px 16px; }
-  .kontakt-form { padding:20px; }
-  .form-title { font-size:18px; }
-  .leistung-card { width:82vw; }
-  .faq-q { padding:16px 18px; font-size:14px; }
+.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.25); }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green); }
+.field select option { background:var(--gray-900); }
+.field textarea { min-height:90px; resize:vertical; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field-error { display:none; color:#F87171; font-size:12px; margin-top:6px; }
+
+/* SUMMARY */
+.summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:24px; }
+.summary-row { display:flex; justify-content:space-between; gap:12px; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.summary-row:last-child { border-bottom:none; }
+.summary-row span:first-child { color:rgba(255,255,255,0.45); }
+.summary-row span:last-child { font-weight:600; text-align:right; }
+
+/* NAV BUTTONS */
+.wizard-nav { display:flex; gap:12px; margin-top:32px; }
+.btn { flex:1; padding:15px; border-radius:100px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; border:none; text-align:center; }
+.btn-back { background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); flex:0 0 auto; padding:15px 24px; }
+.btn-back:hover { background:rgba(255,255,255,0.06); }
+.btn-next { background:var(--green); color:var(--white); }
+.btn-next:hover { background:var(--green-dark); }
+.btn-next:disabled { opacity:.5; cursor:not-allowed; }
+
+/* SUCCESS */
+.success-icon { width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,0.15); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 20px; }
+.success-title { font-size:24px; font-weight:700; text-align:center; margin-bottom:10px; }
+.success-text { font-size:15px; color:rgba(255,255,255,0.6); text-align:center; line-height:1.6; margin-bottom:28px; }
+.success-link { display:block; text-align:center; color:var(--green); font-size:14px; font-weight:600; text-decoration:none; }
+.submit-error { display:none; color:#F87171; font-size:13px; text-align:center; margin-top:14px; }
+.code-input {
+  width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  font-family:inherit; color:var(--white); outline:none; transition:border .2s;
+}
+.code-input:focus { border-color:var(--green); }
+.code-hint { font-size:13px; color:rgba(255,255,255,0.5); text-align:center; margin-bottom:16px; }
+.code-resend { text-align:center; margin-top:16px; font-size:13px; }
+.code-resend button { background:transparent; border:none; color:var(--green); font-size:13px; cursor:pointer; font-family:inherit; font-weight:600; }
+.code-resend span { color:rgba(255,255,255,0.4); }
+
+/* DYNAMIC SERVICE FIELDS */
+.service-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px; margin-bottom:16px; }
+.service-block-title { font-size:14px; font-weight:700; color:var(--green); margin-bottom:14px; }
+.optional-toggle { font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); cursor:pointer; padding:8px 0; user-select:none; }
+.optional-toggle:hover { color:var(--white); }
+.optional-box { margin-top:10px; }
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:14px; color:var(--white); display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0; font-weight:500; }
+.field label.bool-label input { width:auto; }
+.cb-group { display:flex; flex-wrap:wrap; gap:8px; }
+.cb-chip { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; font-size:12px; cursor:pointer; text-transform:none; }
+.cb-chip input { width:auto; }
+
+@media(max-width:600px) {
+  .tiles { grid-template-columns:repeat(2,1fr); }
+  .field-row { grid-template-columns:1fr; gap:0; }
+  .wizard-card { padding:24px; }
+  .progress-dot { width:26px; height:26px; font-size:11px; }
+  .progress-line { width:12px; }
+  .wizard-nav { flex-direction:column-reverse; }
+  .btn-back { width:100%; }
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <a href="/" class="nav-logo">
-    <img src="/logo.png?v=5" alt="Waschlurch" style="height:40px;width:auto">
-    <span style="font-size:28px;font-weight:800;color:var(--black);letter-spacing:-0.5px">Wasch<span style="font-size:28px;font-weight:800;color:var(--green);letter-spacing:-0.5px">lurch</span></span>
+    <img src="/logo.png?v=5" alt="Waschlurch" style="height:36px;width:auto">
   </a>
-  <ul class="nav-links">
-    <li><a href="#leistungen">Leistungen</a></li>
-    <li><a href="#ueber">Über uns</a></li>
-    <li><a href="#preise">Preise</a></li>
-    <li><a href="#referenzen">Referenzen</a></li>
-    <li><a href="#faq">FAQ</a></li>
-    <li><a href="/anfrage.html" class="nav-cta">Jetzt anfragen</a></li>
-  </ul>
-  <div class="hamburger" onclick="toggleMenu()" id="hamburger">
-    <span></span><span></span><span></span>
-  </div>
+  <a href="/" class="nav-back">← Zur Startseite</a>
 </nav>
 
-<!-- MOBILE MENU -->
-<div class="mobile-menu" id="mobile-menu">
-  <a href="#leistungen" onclick="toggleMenu()">Leistungen</a>
-  <a href="#ueber" onclick="toggleMenu()">Über uns</a>
-  <a href="#preise" onclick="toggleMenu()">Preise</a>
-  <a href="#referenzen" onclick="toggleMenu()">Referenzen</a>
-  <a href="#faq" onclick="toggleMenu()">FAQ</a>
-  <a href="/anfrage.html" style="color:var(--green)">Jetzt anfragen →</a>
-</div>
+<main>
+<div class="wizard-wrap">
 
-<!-- HERO -->
-<section id="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-inner">
-    <div>
-      <div class="hero-badge">Ihr Reinigungsprofi im Rhein-Sieg-Kreis</div>
-      <h1 class="hero-title">Sauber.<br><span>Zuverlässig.</span><br>Vor Ort.</h1>
-      <p class="hero-sub">Professionelle Reinigung & Hausmeisterservice für Privat und Gewerbe – in Eitorf und der gesamten Region.</p>
-      <div class="hero-btns">
-        <a href="/anfrage.html" class="btn-primary">Kostenlos anfragen →</a>
-        <a href="tel:+490000000000" class="btn-secondary">📞 Jetzt anrufen</a>
-      </div>
-      <div class="hero-stats">
-        <div><div class="hero-stat-val">100+</div><div class="hero-stat-lbl">Zufriedene Kunden</div></div>
-        <div><div class="hero-stat-val">4,9★</div><div class="hero-stat-lbl">Bewertung</div></div>
-        <div><div class="hero-stat-val">24h</div><div class="hero-stat-lbl">Antwortzeit</div></div>
-      </div>
-    </div>
-    <div class="hero-img-wrap">
-      <div style="display:flex;flex-direction:column;gap:16px">
-        <!-- Big number card -->
-        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);border-radius:24px;padding:28px 32px;display:flex;align-items:center;gap:24px">
-          <img src="/logo.png?v=5" alt="Waschlurch" style="height:120px;width:auto;flex-shrink:0">
-          <div>
-            <div style="font-size:32px;font-weight:900;color:var(--green);letter-spacing:-1px;line-height:1">100+</div>
-            <div style="font-size:15px;font-weight:700;color:var(--white);margin-top:4px">Zufriedene Kunden</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:3px">im Rhein-Sieg-Kreis</div>
-          </div>
-        </div>
-        <!-- Services list - clean pill style -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;text-align:center">
-            <div style="font-size:24px;margin-bottom:6px">🏠</div>
-            <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.7)">Hausreinigung</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;text-align:center">
-            <div style="font-size:24px;margin-bottom:6px">🏢</div>
-            <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.7)">Büroreinigung</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;text-align:center">
-            <div style="font-size:24px;margin-bottom:6px">🪟</div>
-            <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.7)">Fenster</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;text-align:center">
-            <div style="font-size:24px;margin-bottom:6px">🔧</div>
-            <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.7)">Hausmeister</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;text-align:center">
-            <div style="font-size:24px;margin-bottom:6px">❄️</div>
-            <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.7)">Winterdienst</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;text-align:center">
-            <div style="font-size:24px;margin-bottom:6px">🌿</div>
-            <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.7)">Gartenpflege</div>
-          </div>
-        </div>
-        <!-- Rating -->
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:13px;color:rgba(255,255,255,0.5)">Kundenbewertung</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="color:#FBBF24;font-size:16px">★★★★★</span>
-            <span style="font-size:15px;font-weight:700;color:var(--white)">4,9</span>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="wizard-head">
+    <div class="tag">Kostenlose Anfrage</div>
+    <h1 class="wizard-title">In 4 Schritten zu Ihrem Angebot</h1>
+    <p class="wizard-sub">Wählen Sie Ihre Leistungen – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Kein Anruf nötig.</p>
   </div>
-</section>
 
-<!-- TRUST BAR -->
-<div id="trust">
-  <div class="trust-inner">
-    <div class="trust-item"><span>✓</span><span>Geprüfte Qualität</span></div>
-    <div class="trust-item"><span>🛡️</span><span>Haftpflichtversichert</span></div>
-    <div class="trust-item"><span>📍</span><span>Rhein-Sieg-Kreis</span></div>
-    <div class="trust-item"><span>🌿</span><span>Öko-Reinigungsmittel</span></div>
-    <div class="trust-item"><span>§</span><span>§35a EStG absetzbar</span></div>
-  </div>
-</div>
+  <div class="progress" id="progress"></div>
 
-<!-- LEISTUNGEN -->
-<section id="leistungen">
-  <div>
-    <div class="section-head center" style="max-width:1200px;margin:0 auto 56px">
-      <div class="section-tag">Leistungen</div>
-      <div class="section-title">Was wir für Sie tun</div>
-      <p class="section-sub">Von der regelmäßigen Haushaltsreinigung bis zum kompletten Hausmeisterservice – alles aus einer Hand.</p>
+  <div class="wizard-card">
+
+    <!-- STEP 1: LEISTUNGEN -->
+    <div class="step-panel active" data-step="1">
+      <div class="step-label">Schritt 1 von 4</div>
+      <div class="step-heading">Welche Leistung(en) benötigen Sie?</div>
+      <div class="tiles" id="tiles"></div>
+      <div class="field-error" id="err-1">Bitte wählen Sie mindestens eine Leistung aus.</div>
     </div>
-    <div class="leistungen-scroll">
-      <div class="leistungen-grid">
 
-        <div class="leistung-card">
-          <div class="leistung-img">🏠</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Privat & Gewerbe</div>
-            <div class="leistung-title">Haushaltsreinigung</div>
-            <div class="leistung-desc">Gründlich, zuverlässig, regelmäßig oder einmalig.</div>
-            <div class="leistung-ab" data-price-id="haushalt">ab 54 € inkl. MwSt.</div>
-          </div>
-        </div>
+    <!-- STEP 2: OBJEKT & UMFANG -->
+    <div class="step-panel" data-step="2">
+      <div class="step-label">Schritt 2 von 4</div>
+      <div class="step-heading">Objekt & Umfang</div>
 
-        <div class="leistung-card">
-          <div class="leistung-img">🏢</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Gewerbe</div>
-            <div class="leistung-title">Büroreinigung</div>
-            <div class="leistung-desc">Für Büros, Praxen und Gewerberäume aller Größen.</div>
-            <div class="leistung-ab" data-price-id="buero">ab 68 € inkl. MwSt.</div>
-          </div>
-        </div>
-
-        <div class="leistung-card">
-          <div class="leistung-img">🪟</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Innen & Außen</div>
-            <div class="leistung-title">Fensterreinigung</div>
-            <div class="leistung-desc">Kristallklar – innen und außen, Rahmen inklusive.</div>
-            <div class="leistung-ab" data-price-id="fenster">ab 52 € inkl. MwSt.</div>
-          </div>
-        </div>
-
-        <div class="leistung-card">
-          <div class="leistung-img">🧹</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Intensiv</div>
-            <div class="leistung-title">Grundreinigung</div>
-            <div class="leistung-desc">Tiefenreinigung nach Umzug oder Renovierung.</div>
-            <div class="leistung-ab" data-price-id="grund">ab 190 € inkl. MwSt.</div>
-          </div>
-        </div>
-
-        <div class="leistung-card">
-          <div class="leistung-img">🔧</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Rundum-Service</div>
-            <div class="leistung-title">Hausmeisterservice</div>
-            <div class="leistung-desc">Reparaturen, Kontrollen und Handwerk rund ums Objekt.</div>
-            <div class="leistung-ab" data-price-id="hausmeister">ab 76 € · 2 Stunden</div>
-          </div>
-        </div>
-
-        <div class="leistung-card">
-          <div class="leistung-img">↕️</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Wohnanlagen</div>
-            <div class="leistung-title">Treppenhausreinigung</div>
-            <div class="leistung-desc">Regelmäßig und zuverlässig für Mehrfamilienhäuser.</div>
-            <div class="leistung-ab" data-price-id="treppe">ab 29 € je Einsatz</div>
-          </div>
-        </div>
-
-        <div class="leistung-card">
-          <div class="leistung-img">❄️</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Saison</div>
-            <div class="leistung-title">Winterdienst</div>
-            <div class="leistung-desc">Räumen und Streuen – pünktlich, auch früh morgens.</div>
-            <div class="leistung-ab" data-price-id="winter">ab 35 € je Einsatz</div>
-          </div>
-        </div>
-
-        <div class="leistung-card">
-          <div class="leistung-img">🌿</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Ganzjährig</div>
-            <div class="leistung-title">Gartenpflege</div>
-            <div class="leistung-desc">Rasen, Hecken, Beete – Ihr Garten in besten Händen.</div>
-            <div class="leistung-ab" data-price-id="garten">ab 82 € · 2 Stunden</div>
-          </div>
-        </div>
-
-        <div class="leistung-card">
-          <div class="leistung-img">🗑️</div>
-          <div class="leistung-body">
-            <div class="leistung-tag">Monatlich</div>
-            <div class="leistung-title">Mülltonnenservice</div>
-            <div class="leistung-desc">Raus- und Reinstellen pünktlich zum Abfuhrtag.</div>
-            <div class="leistung-ab" data-price-id="muell">ab 9 € je Tonne/Mo.</div>
-          </div>
-        </div>
-
+      <div class="field">
+        <label>Objektart *</label>
+        <select id="f-objektart">
+          <option value="">– Bitte wählen –</option>
+          <option>Einfamilienhaus</option>
+          <option>Mehrfamilienhaus</option>
+          <option>Büro</option>
+          <option>Praxis</option>
+          <option>Gewerbe</option>
+          <option>Sonstiges</option>
+        </select>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- ÜBER UNS -->
-<section id="ueber">
-  <div class="ueber-inner">
-    <div class="ueber-img">
-      <div class="ueber-img-bg"></div>
-      <div style="display:flex;flex-direction:column;gap:16px;width:100%">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">100+</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Kunden</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">4,9★</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Bewertung</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">9</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Leistungen</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">24h</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Antwortzeit</div>
-          </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Anzahl Etagen *</label>
+          <input type="number" id="f-etagen" min="0" placeholder="z. B. 2">
         </div>
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;text-align:center">
-          <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:6px">Einsatzgebiet</div>
-          <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.8)">Eitorf · Siegburg · Hennef · Troisdorf · Bad Honnef · Lohmar</div>
+        <div class="field">
+          <label>Fläche in m² *</label>
+          <input type="number" id="f-flaeche" min="0" placeholder="z. B. 85">
         </div>
       </div>
-    </div>
-    <div class="ueber-text">
-      <div class="section-tag" style="color:var(--green)">Über uns</div>
-      <div class="section-title">Ihre<br>Reinigungsprofis</div>
-      <p class="section-sub">Waschlurch steht für Verlässlichkeit, Qualität und persönlichen Service. Als lokales Unternehmen aus Eitorf kennen wir die Region und unsere Kunden persönlich.</p>
-      <div class="ueber-punkte">
-        <div class="ueber-punkt"><div class="ueber-punkt-icon" style="color:var(--green)">✓</div><div>Inhabergeführt & persönlich – Sie haben immer einen direkten Ansprechpartner</div></div>
-        <div class="ueber-punkt"><div class="ueber-punkt-icon" style="color:var(--green)">✓</div><div>Haftpflichtversichert – für Ihre Sicherheit und Ihr Vertrauen</div></div>
-        <div class="ueber-punkt"><div class="ueber-punkt-icon" style="color:var(--green)">✓</div><div>Öko-Reinigungsmittel – umweltbewusst und schonend für Mensch und Natur</div></div>
-        <div class="ueber-punkt"><div class="ueber-punkt-icon" style="color:var(--green)">✓</div><div>Regional verwurzelt – Eitorf, Siegburg, Hennef und die gesamte Region</div></div>
-      </div>
-      <a href="#kontakt" class="btn-primary" style="margin-top:32px;display:inline-flex">Kontakt aufnehmen →</a>
-    </div>
-  </div>
-</section>
-
-<!-- PREISE -->
-<section id="preise">
-  <div>
-    <div class="section-head center" style="max-width:1200px;margin:0 auto 56px">
-      <div class="section-tag">Preise</div>
-      <div class="section-title">Transparente Pakete</div>
-      <p class="section-sub">Alle Preise inkl. 19% MwSt. Bezahlung per Rechnung nach der Leistungserbringung. Keine versteckten Kosten.</p>
-    </div>
-    <div class="preise-grid">
-      <div class="preis-card">
-        <div class="preis-name">Basis</div>
-        <div class="preis-val">ab 54 €</div>
-        <div class="preis-unit">je Einsatz · inkl. MwSt.</div>
-        <ul class="preis-features">
-          <li>Standardreinigung</li>
-          <li>Eigene Reinigungsmittel</li>
-          <li>Zuverlässige Terminplanung</li>
-          <li>Rechnung per E-Mail</li>
-        </ul>
-        <a href="#kontakt" class="preis-btn">Jetzt anfragen</a>
-      </div>
-      <div class="preis-card featured">
-        <div class="preis-badge">⭐ Beliebteste Wahl</div>
-        <div class="preis-name">Komfort</div>
-        <div class="preis-val">ab 62 €</div>
-        <div class="preis-unit">je Einsatz · inkl. MwSt.</div>
-        <ul class="preis-features">
-          <li>Alles aus Basis</li>
-          <li>Intensivere Reinigung</li>
-          <li>Öko-Reinigungsmittel</li>
-          <li>Prioritäts-Terminplanung</li>
-          <li>Abschlussfoto als Nachweis</li>
-        </ul>
-        <a href="#kontakt" class="preis-btn">Jetzt anfragen</a>
-      </div>
-      <div class="preis-card">
-        <div class="preis-name">Premium</div>
-        <div class="preis-val">ab 71 €</div>
-        <div class="preis-unit">je Einsatz · inkl. MwSt.</div>
-        <ul class="preis-features">
-          <li>Alles aus Komfort</li>
-          <li>Premium Reinigungsmittel</li>
-          <li>Wunschtermin garantiert</li>
-          <li>Persönlicher Ansprechpartner</li>
-          <li>Detailreinigung inklusive</li>
-        </ul>
-        <a href="#kontakt" class="preis-btn">Jetzt anfragen</a>
-      </div>
-    </div>
-    <p style="text-align:center;margin-top:28px;font-size:14px;color:var(--gray-500)">
-      Individuelle Angebote auf Anfrage · Zahlung per Rechnung nach Leistung · §35a EStG – bis zu 20% steuerlich absetzbar
-    </p>
-  </div>
-</section>
-
-<!-- REFERENZEN -->
-<section id="referenzen">
-  <div>
-    <div class="section-head center" style="max-width:1200px;margin:0 auto 56px">
-      <div class="section-tag">Referenzen</div>
-      <div class="section-title">Unsere Arbeit spricht für sich</div>
-      <p class="section-sub">Echte Ergebnisse aus dem Rhein-Sieg-Kreis – von Privathaushalten bis zu Gewerbeimmobilien.</p>
-    </div>
-    <div class="ref-grid">
-      <div class="ref-card"><div class="ref-img ref-img-1">🏠</div><div class="ref-body"><div class="ref-title">Haushaltsreinigung · Eitorf</div><div class="ref-loc">Privathaushalt · 85m²</div><div class="ref-stars">★★★★★ "Immer zuverlässig und gründlich!"</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-2">🏢</div><div class="ref-body"><div class="ref-title">Büroreinigung · Siegburg</div><div class="ref-loc">Gewerbe · 120m²</div><div class="ref-stars">★★★★★ "Perfekte Arbeit, absolut empfehlenswert."</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-3">🪟</div><div class="ref-body"><div class="ref-title">Fensterreinigung · Hennef</div><div class="ref-loc">Einfamilienhaus · 14 Fenster</div><div class="ref-stars">★★★★★ "Kristallklar – super Ergebnis!"</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-4">🌿</div><div class="ref-body"><div class="ref-title">Gartenpflege · Bad Honnef</div><div class="ref-loc">Privatgarten · 400m²</div><div class="ref-stars">★★★★★ "Schnell, sauber, faire Preise."</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-5">❄️</div><div class="ref-body"><div class="ref-title">Winterdienst · Troisdorf</div><div class="ref-loc">Wohnanlage · Saison 2024/25</div><div class="ref-stars">★★★★★ "Immer pünktlich, nie Probleme!"</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-6">🔧</div><div class="ref-body"><div class="ref-title">Hausmeisterservice · Lohmar</div><div class="ref-loc">Mehrfamilienhaus</div><div class="ref-stars">★★★★★ "Rundum-Service, sehr zufrieden."</div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section id="faq">
-  <div>
-    <div class="section-head center" style="max-width:1200px;margin:0 auto 56px">
-      <div class="section-tag">FAQ</div>
-      <div class="section-title">Häufige Fragen</div>
-    </div>
-    <div class="faq-inner">
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Wie läuft eine Anfrage ab? <span class="faq-icon">+</span></div><div class="faq-a">Sie füllen unser Kontaktformular aus oder rufen an. Wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Nach Ihrer Bestätigung vereinbaren wir einen Termin.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Wie bezahle ich? <span class="faq-icon">+</span></div><div class="faq-a">Die Bezahlung erfolgt bequem per Rechnung nach der erbrachten Leistung. Sie erhalten die Rechnung per E-Mail mit einer Zahlungsfrist von 14 Tagen.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">In welcher Region sind Sie tätig? <span class="faq-icon">+</span></div><div class="faq-a">Wir sind hauptsächlich im Rhein-Sieg-Kreis tätig – darunter Eitorf, Siegburg, Hennef, Troisdorf, Bad Honnef, Lohmar und Umgebung. Auf Anfrage auch in ganz NRW.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Sind die Kosten steuerlich absetzbar? <span class="faq-icon">+</span></div><div class="faq-a">Ja! Haushaltsnahe Dienstleistungen können nach §35a EStG bis zu 20% (max. 4.000 €/Jahr) von der Steuer abgesetzt werden. Wir stellen Ihnen eine entsprechende Rechnung aus.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Bringen Sie eigene Reinigungsmittel mit? <span class="faq-icon">+</span></div><div class="faq-a">Ja, wir bringen alle notwendigen Reinigungsmittel und Geräte mit. Auf Wunsch verwenden wir ausschließlich umweltfreundliche Öko-Reinigungsmittel.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Kann ich eine regelmäßige Reinigung buchen? <span class="faq-icon">+</span></div><div class="faq-a">Selbstverständlich! Wir bieten wöchentliche, 14-tägige und monatliche Reinigungsintervalle an. Stammkunden profitieren von festen Terminen und bevorzugter Behandlung.</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- KONTAKT -->
-<section id="kontakt">
-  <div class="kontakt-inner">
-    <div class="kontakt-info">
-      <div class="section-tag" style="color:var(--green)">Kontakt</div>
-      <div class="section-title" style="color:var(--white)">Sprechen Sie<br>uns an</div>
-      <p class="section-sub" style="color:rgba(255,255,255,0.6);margin-bottom:36px">Kostenlos anfragen – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot.</p>
-      <div class="kontakt-items">
-        <div class="kontakt-item"><div class="kontakt-item-icon">📞</div><div><div class="kontakt-item-lbl">Telefon</div><a href="tel:+490000000000" class="kontakt-item-val">+49 (0) XXX – XXX XXXX</a></div></div>
-        <div class="kontakt-item"><div class="kontakt-item-icon">📧</div><div><div class="kontakt-item-lbl">E-Mail</div><a href="mailto:waschlurch@gmail.com" class="kontakt-item-val">waschlurch@gmail.com</a></div></div>
-        <div class="kontakt-item"><div class="kontakt-item-icon">📍</div><div><div class="kontakt-item-lbl">Standort</div><div class="kontakt-item-val">Eitorf/Sieg · 53783</div></div></div>
-        <div class="kontakt-item"><div class="kontakt-item-icon">🕐</div><div><div class="kontakt-item-lbl">Erreichbar</div><div class="kontakt-item-val">Mo – Fr · 08:00 – 18:00 Uhr</div></div></div>
-      </div>
-    </div>
-    <div class="kontakt-form">
-      <div class="form-title">📬 Anfrage senden</div>
-
-      <!-- SCHRITT 1: Formular -->
-      <div id="step-1">
-        <div class="form-row">
-          <div class="form-field"><label>Vorname *</label><input type="text" id="f-vorname" placeholder="Max"></div>
-          <div class="form-field"><label>Nachname *</label><input type="text" id="f-nachname" placeholder="Mustermann"></div>
-        </div>
-        <div class="form-field">
-          <label>E-Mail *</label>
-          <input type="email" id="f-email" placeholder="ihre@email.de">
-        </div>
-        <div class="form-field">
-          <label>Telefon * <span style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:400">(muss mit 0 oder +49 beginnen)</span></label>
-          <input type="tel" id="f-tel" placeholder="0176 12345678 oder +49 176 12345678">
-          <div id="tel-error" style="display:none;color:#F87171;font-size:12px;margin-top:5px">⚠️ Bitte eine gültige deutsche Nummer eingeben (beginnt mit 0 oder +49)</div>
-        </div>
-        <div class="form-field"><label>Gewünschte Leistung</label>
-          <select id="f-leistung">
-            <option value="">Bitte wählen ...</option>
-            <option>Haushaltsreinigung</option>
-            <option>Büroreinigung</option>
-            <option>Fensterreinigung</option>
-            <option>Treppenhausreinigung</option>
-            <option>Grundreinigung</option>
-            <option>Hausmeisterservice</option>
-            <option>Mülltonnenservice</option>
-            <option>Winterdienst</option>
-            <option>Gartenpflege</option>
-            <option>Sonstiges / Mehreres</option>
+      <div class="field-row">
+        <div class="field">
+          <label>Häufigkeit *</label>
+          <select id="f-haeufigkeit">
+            <option value="Einmalig">Einmalig</option>
+            <option value="Wöchentlich">Wöchentlich</option>
+            <option value="14-tägig">14-tägig</option>
+            <option value="Monatlich">Monatlich</option>
+            <option value="Quartalsweise">Quartalsweise</option>
           </select>
         </div>
-        <div class="form-field"><label>Nachricht *</label><textarea id="f-nachricht" placeholder="Beschreiben Sie kurz Ihr Anliegen ..."></textarea></div>
-        <button class="form-submit" id="send-code-btn" onclick="sendVerificationCode()">E-Mail verifizieren & weiter →</button>
-        <p id="f-error" style="display:none;color:#F87171;font-size:13px;text-align:center;margin-top:10px"></p>
-      </div>
-
-      <!-- SCHRITT 2: Code eingeben -->
-      <div id="step-2" style="display:none">
-        <div style="text-align:center;margin-bottom:24px">
-          <div style="font-size:32px;margin-bottom:12px">📧</div>
-          <div style="font-size:16px;font-weight:700;color:var(--white);margin-bottom:8px">Code eingeben</div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.5)" id="code-hint">Wir haben einen 6-stelligen Code an Ihre E-Mail gesendet.</div>
-        </div>
-        <div class="form-field">
-          <label>Bestätigungscode *</label>
-          <input type="text" id="f-code" placeholder="123456" maxlength="6" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:8px">
-          <div id="code-error" style="display:none;color:#F87171;font-size:12px;margin-top:5px;text-align:center">⚠️ Falscher Code. Bitte erneut versuchen.</div>
-        </div>
-        <button class="form-submit" onclick="verifyCode()">Code bestätigen & Anfrage senden →</button>
-        <button onclick="document.getElementById('step-1').style.display='';document.getElementById('step-2').style.display='none'" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:100px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;margin-top:10px;font-family:inherit">← Zurück</button>
-        <div style="text-align:center;margin-top:14px">
-          <span id="resend-timer" style="font-size:12px;color:rgba(255,255,255,0.4)">Code erneut senden in <span id="countdown">60</span>s</span>
-          <button id="resend-btn" onclick="resendCode()" style="display:none;background:transparent;border:none;color:var(--green);font-size:13px;cursor:pointer;font-family:inherit">Code erneut senden</button>
+        <div class="field">
+          <label>Gewünschter Beginn *</label>
+          <select id="f-beginn">
+            <option value="Sofort">Sofort</option>
+            <option value="Innerhalb einer Woche">Innerhalb einer Woche</option>
+            <option value="Innerhalb eines Monats">Innerhalb eines Monats</option>
+            <option value="Flexibel">Flexibel</option>
+          </select>
         </div>
       </div>
 
-      <!-- SCHRITT 3: Erfolg -->
-      <div class="form-success" id="form-success" style="display:none">
-        <div class="form-success-icon">✅</div>
-        <h3>Anfrage gesendet!</h3>
-        <p>Vielen Dank! Wir melden uns innerhalb von 24 Stunden bei Ihnen zurück.</p>
-      </div>
+      <div id="dyn-service-fields"></div>
 
-      <!-- Verstecktes Web3Forms Formular -->
-      <form id="real-form" action="https://api.web3forms.com/submit" method="POST" style="display:none">
-        <input type="hidden" name="access_key" value="24205589-1aa2-44d0-a816-6bcba6b1e810">
-        <input type="hidden" name="subject" id="real-subject" value="">
-        <input type="hidden" name="from_name" value="Waschlurch Website">
-        <input type="hidden" name="vorname" id="r-vorname">
-        <input type="hidden" name="nachname" id="r-nachname">
-        <input type="hidden" name="email" id="r-email">
-        <input type="hidden" name="telefon" id="r-tel">
-        <input type="hidden" name="leistung" id="r-leistung">
-        <input type="hidden" name="nachricht" id="r-nachricht">
-        <input type="checkbox" name="botcheck" style="display:none">
-      </form>
+      <div class="field">
+        <label>Anmerkungen zum Objekt (optional)</label>
+        <textarea id="f-anmerkung" placeholder="z. B. Zugang, Besonderheiten ..."></textarea>
+      </div>
+      <div class="field-error" id="err-2">Bitte alle Pflichtfelder ausfüllen.</div>
     </div>
+
+    <!-- STEP 3: ADRESSE -->
+    <div class="step-panel" data-step="3">
+      <div class="step-label">Schritt 3 von 4</div>
+      <div class="step-heading">Adresse & Wunschtermin</div>
+      <div class="field">
+        <label>Straße & Hausnummer *</label>
+        <input type="text" id="f-strasse" placeholder="Musterstraße 12">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>PLZ *</label>
+          <input type="text" id="f-plz" placeholder="53783" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Ort *</label>
+          <input type="text" id="f-ort" placeholder="Eitorf">
+        </div>
+      </div>
+      <div class="field">
+        <label>Wunschtermin (optional)</label>
+        <input type="date" id="f-termin">
+      </div>
+      <div class="field-error" id="err-3">Bitte Straße, PLZ und Ort ausfüllen.</div>
+
+      <div class="optional-toggle" onclick="toggleOptional('allg-optional-box')">+ Weitere Angaben (optional)</div>
+      <div class="optional-box" id="allg-optional-box" style="display:none">
+        <div class="field"><label class="bool-label"><input type="checkbox" id="f-park"> Parkmöglichkeiten vorhanden</label></div>
+        <div class="field"><label class="bool-label"><input type="checkbox" id="f-aufzug-allg"> Aufzug im Gebäude vorhanden</label></div>
+        <div class="field">
+          <label>Zugang zum Objekt</label>
+          <input type="text" id="f-zugang" placeholder="z. B. Schlüssel bei Nachbarn, Code fürs Tor ...">
+        </div>
+        <div class="field">
+          <label>Besondere Verschmutzungen</label>
+          <input type="text" id="f-verschmutzung-allg" placeholder="z. B. Baustaub, Fettflecken ...">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Budget (optional)</label>
+            <input type="text" id="f-budget" placeholder="z. B. bis 100 €">
+          </div>
+          <div class="field">
+            <label>Wie sind Sie auf uns aufmerksam geworden?</label>
+            <select id="f-quelle">
+              <option value="">– Bitte wählen –</option>
+              <option>Google</option>
+              <option>Empfehlung</option>
+              <option>Social Media</option>
+              <option>Sonstiges</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: KONTAKT -->
+    <div class="step-panel" data-step="4">
+      <div class="step-label">Schritt 4 von 4</div>
+      <div class="step-heading">Ihre Kontaktdaten</div>
+      <div class="summary" id="summary"></div>
+
+      <div id="contact-fields">
+        <div class="field-row">
+          <div class="field">
+            <label>Vorname *</label>
+            <input type="text" id="f-vorname" placeholder="Max">
+          </div>
+          <div class="field">
+            <label>Nachname *</label>
+            <input type="text" id="f-nachname" placeholder="Mustermann">
+          </div>
+        </div>
+        <div class="field">
+          <label>E-Mail *</label>
+          <input type="email" id="f-email" placeholder="max@beispiel.de">
+        </div>
+        <div class="field">
+          <label>Telefon * <span style="text-transform:none;font-weight:400">(muss mit 0 oder +49 beginnen)</span></label>
+          <input type="tel" id="f-tel" placeholder="0172 1234567">
+        </div>
+        <div class="field">
+          <label>Nachricht (optional)</label>
+          <textarea id="f-nachricht" placeholder="Weitere Wünsche oder Hinweise ..."></textarea>
+        </div>
+        <div class="field-error" id="err-4">Bitte alle Pflichtfelder korrekt ausfüllen.</div>
+      </div>
+
+      <div id="code-panel" style="display:none">
+        <div class="code-hint" id="code-hint">Wir haben einen 6-stelligen Code an Ihre E-Mail gesendet.</div>
+        <input type="text" class="code-input" id="f-code" placeholder="123456" maxlength="6" inputmode="numeric">
+        <div class="field-error" id="code-error">Der Code ist leider falsch. Bitte erneut versuchen.</div>
+        <div class="code-resend">
+          <span id="resend-timer">Erneut senden in <span id="countdown">60</span>s</span>
+          <button type="button" id="resend-btn" onclick="resendCode()" style="display:none">Code erneut senden</button>
+        </div>
+      </div>
+
+      <div class="submit-error" id="submit-error">Fehler beim Senden. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt an waschlurch@gmail.com.</div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="step-panel" data-step="success">
+      <div class="success-icon">✓</div>
+      <div class="success-title" id="success-title">Vielen Dank!</div>
+      <div class="success-text">Ihre Anfrage ist bei uns eingegangen. Wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot.</div>
+      <a href="/" class="success-link">← Zurück zur Startseite</a>
+    </div>
+
   </div>
-</section>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-logo">
-      <img src="/logo.png?v=5" alt="Logo" style="height:32px;width:auto;margin-right:8px">
-      <span style="font-size:18px;font-weight:800;color:var(--white);letter-spacing:-0.5px">Wasch<span style="font-size:18px;font-weight:800;color:var(--green)">lurch</span></span>
-    </div>
-    <div class="footer-links">
-      <a href="#leistungen">Leistungen</a>
-      <a href="#preise">Preise</a>
-      <a href="#kontakt">Kontakt</a>
-      <a href="#">Impressum</a>
-      <a href="#">Datenschutz</a>
-      <a href="/admin.html" style="opacity:0.5;font-size:12px">Login</a>
-    </div>
-    <div class="footer-copy">© 2026 Waschlurch · Daniel Lurch · Eitorf</div>
+  <div class="wizard-nav" id="wizard-nav">
+    <button type="button" class="btn btn-back" id="btn-back" onclick="prevStep()">← Zurück</button>
+    <button type="button" class="btn btn-next" id="btn-next" onclick="nextStep()">Weiter →</button>
   </div>
-</footer>
+
+</div>
+</main>
 
 <script>
-// NAV
-function toggleMenu() {
-  const menu = document.getElementById('mobile-menu');
-  const ham = document.getElementById('hamburger');
-  menu.classList.toggle('open');
-}
+const WEB3FORMS_KEY = '24205589-1aa2-44d0-a816-6bcba6b1e810';
+const TOTAL_STEPS = 4;
 
-// NAV scroll effect
-window.addEventListener('scroll', () => {
-  const nav = document.querySelector('nav');
-  nav.style.boxShadow = window.scrollY > 20 ? '0 2px 20px rgba(0,0,0,0.08)' : 'none';
-});
+const SERVICES = [
+  { id:'haushalt',   icon:'🏠', name:'Haushaltsreinigung',   price:'ab 54 €' },
+  { id:'buero',      icon:'🏢', name:'Büroreinigung',        price:'ab 68 €' },
+  { id:'fenster',    icon:'🪟', name:'Fensterreinigung',     price:'ab 52 €' },
+  { id:'grund',      icon:'🧹', name:'Grundreinigung',       price:'ab 190 €' },
+  { id:'hausmeister',icon:'🔧', name:'Hausmeisterservice',   price:'ab 76 € · 2 Std.' },
+  { id:'treppe',     icon:'↕️', name:'Treppenhausreinigung', price:'ab 29 €' },
+  { id:'winter',     icon:'❄️', name:'Winterdienst',         price:'ab 35 €' },
+  { id:'garten',     icon:'🌿', name:'Gartenpflege',         price:'ab 82 € · 2 Std.' },
+  { id:'muell',      icon:'🗑️', name:'Mülltonnenservice',    price:'ab 9 €/Mo.' },
+];
 
-// FAQ
-function toggleFaq(el) {
-  const item = el.parentElement;
-  const isOpen = item.classList.contains('open');
-  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-  if(!isOpen) item.classList.add('open');
-}
+// ── DYNAMISCHE FELDER JE LEISTUNG (Schritt 2) ─────────────────────
+const SERVICE_FIELDS = {
+  haushalt: {
+    required: [
+      { id:'badezimmer', label:'Anzahl Badezimmer', type:'number' },
+      { id:'bewohner', label:'Anzahl Bewohner', type:'number' },
+    ],
+    optional: [
+      { id:'zimmer', label:'Anzahl Zimmer', type:'number' },
+      { id:'haustiere', label:'Haustiere vorhanden', type:'bool' },
+      { id:'kinder', label:'Kinder im Haushalt', type:'bool' },
+      { id:'verschmutzung', label:'Verschmutzungsgrad', type:'select', options:['Leicht','Mittel','Stark'] },
+      { id:'leistungen', label:'Gewünschte Leistungen', type:'multi', options:['Staubsaugen','Wischen','Küche reinigen','Badezimmer reinigen','Betten beziehen','Bügeln','Fenster reinigen'] },
+      { id:'tag', label:'Bevorzugter Reinigungstag', type:'select', options:['Egal','Montag','Dienstag','Mittwoch','Donnerstag','Freitag'] },
+    ]
+  },
+  buero: {
+    required: [ { id:'arbeitsplaetze', label:'Anzahl Arbeitsplätze', type:'number' } ],
+    optional: [
+      { id:'wcs', label:'Anzahl WCs', type:'number' },
+      { id:'kueche', label:'Küche vorhanden', type:'bool' },
+      { id:'konferenz', label:'Konferenzräume vorhanden', type:'bool' },
+      { id:'empfang', label:'Empfangsbereich vorhanden', type:'bool' },
+      { id:'glas_innen', label:'Glasflächen innen', type:'bool' },
+      { id:'ausserhalb', label:'Reinigung außerhalb der Arbeitszeiten', type:'bool' },
+      { id:'schluessel', label:'Schlüssel vorhanden', type:'bool' },
+      { id:'hygiene', label:'Besondere Hygieneanforderungen', type:'text' },
+    ]
+  },
+  fenster: {
+    required: [ { id:'seiten', label:'Innen, Außen oder Beides', type:'select', options:['Innen','Außen','Beides'] } ],
+    optional: [
+      { id:'anzahl_fenster', label:'Anzahl Fenster (ca.)', type:'number' },
+      { id:'bodentief', label:'Bodentiefe Fenster', type:'bool' },
+      { id:'dachfenster', label:'Dachfenster vorhanden', type:'bool' },
+      { id:'wintergarten', label:'Wintergarten vorhanden', type:'bool' },
+      { id:'glasdach', label:'Glasdach vorhanden', type:'bool' },
+      { id:'schaufenster', label:'Schaufenster vorhanden', type:'bool' },
+      { id:'sprossen', label:'Sprossenfenster', type:'bool' },
+      { id:'leiter', label:'Leiter erforderlich', type:'bool' },
+      { id:'hebebuehne', label:'Hebebühne erforderlich', type:'bool' },
+      { id:'verschmutzung', label:'Verschmutzungsgrad', type:'select', options:['Leicht','Mittel','Stark'] },
+    ]
+  },
+  grund: {
+    required: [ { id:'gebaeudetyp', label:'Gebäudetyp', type:'select', options:['Wohnung','Haus','Büro','Gewerbe'] } ],
+    optional: [
+      { id:'letzte', label:'Letzte Grundreinigung', type:'select', options:['Weniger als 6 Monate','6–12 Monate','Über 1 Jahr','Noch nie'] },
+      { id:'boden', label:'Bodenbeläge', type:'multi', options:['Fliesen','Parkett','PVC','Teppich'] },
+      { id:'kueche', label:'Küche vorhanden', type:'bool' },
+      { id:'sanitaer', label:'Sanitärbereiche vorhanden', type:'bool' },
+      { id:'moebel', label:'Möbel vorhanden', type:'bool' },
+      { id:'bauend', label:'Bauendreinigung', type:'bool' },
+      { id:'stark', label:'Starke Verschmutzungen', type:'bool' },
+    ]
+  },
+  hausmeister: {
+    required: [ { id:'art_arbeiten', label:'Art der Arbeiten', type:'text' } ],
+    optional: [
+      { id:'aufgaben', label:'Aufgaben', type:'multi', options:['Kleinreparaturen','Lampenwechsel','Objektkontrolle','Gartenpflege','Winterdienst','Mülltonnenservice','Entrümpelung','Sonstiges'] },
+      { id:'regelmaessig', label:'Regelmäßig oder einmalig', type:'select', options:['Regelmäßig','Einmalig'] },
+      { id:'zeitaufwand', label:'Geschätzter Zeitaufwand', type:'text' },
+      { id:'material', label:'Material vorhanden', type:'bool' },
+    ]
+  },
+  treppe: {
+    required: [ { id:'wohnungen', label:'Anzahl Wohnungen', type:'number' } ],
+    optional: [
+      { id:'aufzug', label:'Aufzug vorhanden', type:'bool' },
+      { id:'handlaeufe', label:'Handläufe reinigen', type:'bool' },
+      { id:'fenster_th', label:'Fenster im Treppenhaus', type:'bool' },
+      { id:'kellerflur', label:'Kellerflur reinigen', type:'bool' },
+      { id:'eingang', label:'Eingangsbereich reinigen', type:'bool' },
+      { id:'aussen', label:'Außenbereich reinigen', type:'bool' },
+      { id:'briefkasten', label:'Briefkastenanlage reinigen', type:'bool' },
+      { id:'glas_th', label:'Glasflächen reinigen', type:'bool' },
+    ]
+  },
+  winter: {
+    required: [ { id:'flaechenart', label:'Art der Fläche', type:'multi', options:['Gehweg','Parkplatz','Hof','Einfahrt','Privatweg'] } ],
+    optional: [
+      { id:'stellplaetze', label:'Anzahl Stellplätze', type:'number' },
+      { id:'treppen', label:'Treppen vorhanden', type:'bool' },
+      { id:'streugut', label:'Streugut gewünscht', type:'bool' },
+      { id:'raeumung', label:'Schneeräumung gewünscht', type:'bool' },
+      { id:'nur_streuen', label:'Nur Streuen', type:'bool' },
+      { id:'zugaenglich', label:'Objekt jederzeit zugänglich', type:'bool' },
+    ]
+  },
+  garten: {
+    required: [],
+    optional: [
+      { id:'arbeiten', label:'Gewünschte Arbeiten', type:'multi', options:['Rasen mähen','Heckenschnitt','Unkraut entfernen','Beetpflege','Baumschnitt','Laub entfernen','Bewässerung','Entsorgung Grünschnitt'] },
+      { id:'heckenlaenge', label:'Heckenlänge (m)', type:'number' },
+      { id:'baeume', label:'Anzahl Bäume', type:'number' },
+      { id:'hanglage', label:'Hanglage vorhanden', type:'bool' },
+      { id:'maehroboter', label:'Mähroboter vorhanden', type:'bool' },
+    ]
+  },
+  muell: {
+    required: [ { id:'anzahl_tonnen', label:'Anzahl Tonnen', type:'number' } ],
+    optional: [
+      { id:'tonnenarten', label:'Tonnenarten', type:'multi', options:['Restmüll','Biomüll','Papier','Gelbe Tonne'] },
+      { id:'entfernung', label:'Entfernung zur Straße', type:'text' },
+      { id:'treppen_m', label:'Treppen vorhanden', type:'bool' },
+      { id:'verschlossen', label:'Müllplatz verschlossen', type:'bool' },
+      { id:'rueckstellung', label:'Rückstellung der Tonnen nach Leerung', type:'bool' },
+    ]
+  },
+};
 
-// ── FORMULAR MIT EMAIL-VERIFIZIERUNG ─────────────────────
+let currentStep = 1;
+let selectedServices = new Set();
 let _verifyCode = '';
 let _countdownInterval;
+let codeStageActive = false;
 
+// ── RENDER TILES ─────────────────────
+const tilesEl = document.getElementById('tiles');
+SERVICES.forEach(svc => {
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.dataset.id = svc.id;
+  el.innerHTML = `<div class="tile-check">✓</div><div class="tile-icon">${svc.icon}</div><div class="tile-name">${svc.name}</div><div class="tile-price" data-price-id="${svc.id}">${svc.price}</div>`;
+  el.onclick = () => {
+    if(selectedServices.has(svc.id)) { selectedServices.delete(svc.id); el.classList.remove('selected'); }
+    else { selectedServices.add(svc.id); el.classList.add('selected'); }
+  };
+  tilesEl.appendChild(el);
+});
+
+window._applyLivePreise = function(){
+  if(!window._livePreise) return;
+  document.querySelectorAll('.tile-price[data-price-id]').forEach(el => {
+    const id = el.getAttribute('data-price-id');
+    if(window._livePreise[id]) el.textContent = window._livePreise[id];
+  });
+};
+window._applyLivePreise();
+
+// ── DYNAMISCHE FELDER RENDERN ─────────────────────
+function fieldHTML(domId, field, required){
+  const reqMark = required ? ' *' : '';
+  if(field.type === 'number'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="number" id="${domId}" min="0"></div>`;
+  }
+  if(field.type === 'text'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="text" id="${domId}"></div>`;
+  }
+  if(field.type === 'select'){
+    const opts = field.options.map(o => `<option value="${o}">${o}</option>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><select id="${domId}"><option value="">– Bitte wählen –</option>${opts}</select></div>`;
+  }
+  if(field.type === 'bool'){
+    return `<div class="field"><label class="bool-label"><input type="checkbox" id="${domId}"> ${field.label}</label></div>`;
+  }
+  if(field.type === 'multi'){
+    const opts = field.options.map(o => `<label class="cb-chip"><input type="checkbox" class="cb-option" data-value="${o}"> ${o}</label>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><div class="cb-group" id="${domId}">${opts}</div></div>`;
+  }
+  return '';
+}
+
+let step2BuiltForServices = null;
+function buildDynServiceFields(){
+  const key = Array.from(selectedServices).sort().join(',');
+  if(key === step2BuiltForServices) return;
+  step2BuiltForServices = key;
+
+  const container = document.getElementById('dyn-service-fields');
+  let html = '';
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    const svc = SERVICES.find(s => s.id === sid);
+    if(!cfg || !svc) return;
+    html += `<div class="service-block"><div class="service-block-title">${svc.icon} ${svc.name}</div>`;
+    cfg.required.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, true); });
+    if(cfg.optional.length){
+      const boxId = 'dyn_'+sid+'_optional';
+      html += `<div class="optional-toggle" onclick="toggleOptional('${boxId}')">+ Weitere Details zu ${svc.name} (optional)</div>`;
+      html += `<div class="optional-box" id="${boxId}" style="display:none">`;
+      cfg.optional.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, false); });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+window.toggleOptional = function(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+};
+
+function collectFieldValue(domId, field){
+  const el = document.getElementById(domId);
+  if(!el) return '';
+  if(field.type === 'bool') return el.checked;
+  if(field.type === 'multi'){
+    const vals = [...el.querySelectorAll('.cb-option:checked')].map(cb => cb.dataset.value);
+    return vals.join(', ');
+  }
+  return el.value ? el.value.trim() : '';
+}
+
+function collectServiceDetails(){
+  const details = {};
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    if(!cfg) return;
+    const data = {};
+    [...cfg.required, ...cfg.optional].forEach(f => {
+      const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+      if(val !== '' && val !== false) data[f.id] = val;
+    });
+    details[sid] = data;
+  });
+  return details;
+}
+
+function computeVollstaendigkeit(){
+  let total = 0, filled = 0;
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    if(!cfg) return;
+    cfg.optional.forEach(f => {
+      total++;
+      const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+      if(val !== '' && val !== false) filled++;
+    });
+  });
+  const generalOptionalIds = ['f-park','f-aufzug-allg','f-zugang','f-verschmutzung-allg','f-budget','f-quelle'];
+  generalOptionalIds.forEach(id => {
+    total++;
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = el.type === 'checkbox' ? el.checked : el.value.trim();
+    if(val) filled++;
+  });
+  if(total === 0) return 100;
+  return Math.round((filled/total)*100);
+}
+
+function computeAuftragswert(){
+  let sum = 0;
+  selectedServices.forEach(sid => {
+    const svc = SERVICES.find(s => s.id === sid);
+    if(!svc) return;
+    const text = (window._livePreise && window._livePreise[sid]) || svc.price;
+    const match = text.match(/(\d+(?:[.,]\d+)?)/);
+    if(match) sum += parseFloat(match[1].replace(',','.'));
+  });
+  return Math.round(sum * 100) / 100;
+}
+
+function computePrioritaet(beginn){
+  if(beginn === 'Sofort') return 'Sofort';
+  if(beginn === 'Innerhalb einer Woche') return 'Diese Woche';
+  return 'Flexibel';
+}
+
+// ── PROGRESS BAR ─────────────────────
+const progressEl = document.getElementById('progress');
+function renderProgress() {
+  progressEl.innerHTML = '';
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i < currentStep ? ' done' : '') + (i === currentStep ? ' active' : '');
+    dot.textContent = i < currentStep ? '✓' : i;
+    progressEl.appendChild(dot);
+    if(i < TOTAL_STEPS){
+      const line = document.createElement('div');
+      line.className = 'progress-line' + (i < currentStep ? ' done' : '');
+      progressEl.appendChild(line);
+    }
+  }
+}
+
+// ── VALIDATION ─────────────────────
 function validateTel(tel) {
   const cleaned = tel.replace(/\s/g,'');
   return cleaned.startsWith('0') || cleaned.startsWith('+49') || cleaned.startsWith('0049');
 }
 
-function sendVerificationCode() {
-  const vorname  = document.getElementById('f-vorname').value.trim();
-  const nachname = document.getElementById('f-nachname').value.trim();
-  const email    = document.getElementById('f-email').value.trim();
-  const tel      = document.getElementById('f-tel').value.trim();
-  const nachricht= document.getElementById('f-nachricht').value.trim();
-  const err      = document.getElementById('f-error');
-  const telErr   = document.getElementById('tel-error');
-
-  // Validate
-  err.style.display = 'none';
-  telErr.style.display = 'none';
-
-  if(!vorname || !nachname || !email || !tel || !nachricht) {
-    err.textContent = 'Bitte alle Pflichtfelder ausfüllen.';
-    err.style.display = 'block'; return;
+function validateStep(step) {
+  if(step === 1){
+    const ok = selectedServices.size > 0;
+    document.getElementById('err-1').style.display = ok ? 'none' : 'block';
+    return ok;
   }
-
-  if(!email.includes('@') || !email.includes('.')) {
-    err.textContent = 'Bitte eine gültige E-Mail-Adresse eingeben.';
-    err.style.display = 'block'; return;
+  if(step === 2){
+    const objektart = document.getElementById('f-objektart').value;
+    const etagen = document.getElementById('f-etagen').value.trim();
+    const flaeche = document.getElementById('f-flaeche').value.trim();
+    let ok = !!objektart && !!etagen && !!flaeche;
+    selectedServices.forEach(sid => {
+      const cfg = SERVICE_FIELDS[sid];
+      if(!cfg) return;
+      cfg.required.forEach(f => {
+        const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+        if(val === '' || val === false) ok = false;
+      });
+    });
+    document.getElementById('err-2').style.display = ok ? 'none' : 'block';
+    return ok;
   }
-
-  if(!validateTel(tel)) {
-    telErr.style.display = 'block'; return;
+  if(step === 3){
+    const strasse = document.getElementById('f-strasse').value.trim();
+    const plz = document.getElementById('f-plz').value.trim();
+    const ort = document.getElementById('f-ort').value.trim();
+    const ok = strasse && plz && ort;
+    document.getElementById('err-3').style.display = ok ? 'none' : 'block';
+    return ok;
   }
+  if(step === 4){
+    const vorname = document.getElementById('f-vorname').value.trim();
+    const nachname = document.getElementById('f-nachname').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const tel = document.getElementById('f-tel').value.trim();
+    const ok = vorname && nachname && email.includes('@') && email.includes('.') && validateTel(tel);
+    document.getElementById('err-4').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+  return true;
+}
 
-  // Generate 6-digit code
+// ── SUMMARY (step 4) ─────────────────────
+function renderSummary(){
+  const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
+  const objektart = document.getElementById('f-objektart').value;
+  const etagen = document.getElementById('f-etagen').value.trim();
+  const flaeche = document.getElementById('f-flaeche').value.trim();
+  const haeufigkeit = document.getElementById('f-haeufigkeit').value;
+  const beginn = document.getElementById('f-beginn').value;
+  const strasse = document.getElementById('f-strasse').value.trim();
+  const plz = document.getElementById('f-plz').value.trim();
+  const ort = document.getElementById('f-ort').value.trim();
+  const termin = document.getElementById('f-termin').value;
+
+  const rows = [
+    ['Leistungen', names || '–'],
+    ['Objektart', objektart || '–'],
+    ['Etagen', etagen || '–'],
+    ['Fläche', flaeche ? flaeche + ' m²' : '–'],
+    ['Häufigkeit', haeufigkeit],
+    ['Gewünschter Beginn', beginn],
+    ['Adresse', (strasse || ort) ? (strasse + (strasse&&ort?', ':'') + plz + ' ' + ort) : '–'],
+    ['Wunschtermin', termin || '–'],
+  ];
+  document.getElementById('summary').innerHTML = rows.map(r =>
+    `<div class="summary-row"><span>${r[0]}</span><span>${r[1]}</span></div>`
+  ).join('');
+}
+
+// ── NAVIGATION ─────────────────────
+function showStep(step){
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.step-panel[data-step="${step}"]`).classList.add('active');
+  renderProgress();
+  document.getElementById('btn-back').style.display = step === 1 ? 'none' : 'block';
+  if(step === TOTAL_STEPS){
+    document.getElementById('btn-next').textContent = 'Code senden →';
+  } else {
+    document.getElementById('btn-next').textContent = 'Weiter →';
+  }
+  if(step === TOTAL_STEPS) renderSummary();
+  if(step === 2) buildDynServiceFields();
+}
+
+function nextStep(){
+  if(currentStep === TOTAL_STEPS){
+    if(!codeStageActive){
+      if(!validateStep(TOTAL_STEPS)) return;
+      sendVerificationCode();
+    } else {
+      verifyCodeAndSubmit();
+    }
+    return;
+  }
+  if(!validateStep(currentStep)) return;
+  currentStep++;
+  showStep(currentStep);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function prevStep(){
+  if(currentStep === TOTAL_STEPS && codeStageActive){
+    codeStageActive = false;
+    clearInterval(_countdownInterval);
+    document.getElementById('code-panel').style.display = 'none';
+    document.getElementById('contact-fields').style.display = 'block';
+    document.getElementById('btn-next').textContent = 'Code senden →';
+    return;
+  }
+  if(currentStep === 1) return;
+  currentStep--;
+  showStep(currentStep);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function sendVerificationCode(){
+  const email = document.getElementById('f-email').value.trim();
+  const vorname = document.getElementById('f-vorname').value.trim();
+  const btn = document.getElementById('btn-next');
+
   _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+  btn.disabled = true;
+  btn.textContent = 'Code wird gesendet ...';
 
-  // Send code via Web3Forms to customer email
   emailjs.send('service_vp2kavs', 'template_lc0ucul', {
     email: email,
     to_name: vorname,
     passcode: _verifyCode,
-  }).then(function(response) {
-    // Show step 2
-    document.getElementById('step-1').style.display = 'none';
-    document.getElementById('step-2').style.display = '';
+  }).then(function(){
+    codeStageActive = true;
+    document.getElementById('contact-fields').style.display = 'none';
+    document.getElementById('code-panel').style.display = 'block';
     document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
+    document.getElementById('f-code').value = '';
+    document.getElementById('code-error').style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = 'Code bestätigen & Anfrage senden →';
     startCountdown();
-  }).catch(function(error) {
-    err.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
-    err.style.display = 'block';
+  }).catch(function(error){
     console.error('EmailJS error:', error);
-  });
-
-  // Button loading
-  const btn = document.getElementById('send-code-btn');
-  btn.textContent = 'Code wird gesendet ...';
-  btn.disabled = true;
-  setTimeout(() => { btn.textContent = 'E-Mail verifizieren & weiter →'; btn.disabled = false; }, 3000);
-}
-
-function verifyCode() {
-  const entered = document.getElementById('f-code').value.trim();
-  const codeErr = document.getElementById('code-error');
-
-  if(entered !== _verifyCode) {
-    codeErr.style.display = 'block';
-    document.getElementById('f-code').style.borderColor = '#F87171';
-    return;
-  }
-  codeErr.style.display = 'none';
-
-  // Fill hidden form and submit
-  const vorname  = document.getElementById('f-vorname').value.trim();
-  const nachname = document.getElementById('f-nachname').value.trim();
-  const email    = document.getElementById('f-email').value.trim();
-  const tel      = document.getElementById('f-tel').value.trim();
-  const leistung = document.getElementById('f-leistung').value || 'Nicht angegeben';
-  const nachricht= document.getElementById('f-nachricht').value.trim();
-
-  document.getElementById('r-vorname').value  = vorname;
-  document.getElementById('r-nachname').value = nachname;
-  document.getElementById('r-email').value    = email;
-  document.getElementById('r-tel').value      = tel;
-  document.getElementById('r-leistung').value = leistung;
-  document.getElementById('r-nachricht').value= nachricht;
-  document.getElementById('real-subject').value = 'Anfrage: ' + vorname + ' ' + nachname + ' · ' + leistung;
-
-  // Submit via fetch
-  fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','Accept':'application/json'},
-    body: JSON.stringify({
-      access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
-      subject: 'Anfrage: ' + vorname + ' ' + nachname + ' · ' + leistung,
-      from_name: 'Waschlurch Website',
-      name: vorname + ' ' + nachname,
-      email: email,
-      telefon: tel,
-      leistung: leistung,
-      nachricht: nachricht,
-    })
-  }).then(r => r.json()).then(d => {
-    if(d.success) {
-      clearInterval(_countdownInterval);
-      document.getElementById('step-2').style.display = 'none';
-      document.getElementById('form-success').style.display = 'block';
-    }
+    document.getElementById('err-4').textContent = 'Fehler beim Senden des Codes. Bitte versuchen Sie es erneut.';
+    document.getElementById('err-4').style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Code senden →';
   });
 }
 
-function resendCode() {
+function resendCode(){
   document.getElementById('resend-btn').style.display = 'none';
   document.getElementById('resend-timer').style.display = '';
   sendVerificationCode();
-  startCountdown();
 }
 
-function startCountdown() {
+function startCountdown(){
   let secs = 60;
   document.getElementById('countdown').textContent = secs;
   document.getElementById('resend-timer').style.display = '';
@@ -1149,7 +864,7 @@ function startCountdown() {
   _countdownInterval = setInterval(() => {
     secs--;
     document.getElementById('countdown').textContent = secs;
-    if(secs <= 0) {
+    if(secs <= 0){
       clearInterval(_countdownInterval);
       document.getElementById('resend-timer').style.display = 'none';
       document.getElementById('resend-btn').style.display = '';
@@ -1157,70 +872,158 @@ function startCountdown() {
   }, 1000);
 }
 
-// Telefon live validieren
-document.addEventListener('DOMContentLoaded', function() {
-  const telInput = document.getElementById('f-tel');
-  if(telInput) {
-    telInput.addEventListener('input', function() {
-      const telErr = document.getElementById('tel-error');
-      if(this.value.length > 3) {
-        telErr.style.display = validateTel(this.value) ? 'none' : 'block';
-      }
-    });
-  }
-});
-
-function sendForm() {
-  const vorname   = document.getElementById('f-vorname').value.trim();
-  const nachname  = document.getElementById('f-nachname').value.trim();
-  const email     = document.getElementById('f-email').value.trim();
-  const tel       = document.getElementById('f-tel').value.trim();
-  const leistung  = document.getElementById('f-leistung').value;
-  const nachricht = document.getElementById('f-nachricht').value.trim();
-  const err = document.getElementById('f-error');
-  const btn = document.getElementById('send-btn');
-
-  if(!vorname || !email || !tel || !nachricht) {
-    err.style.display = 'block';
+function verifyCodeAndSubmit(){
+  const entered = document.getElementById('f-code').value.trim();
+  const codeErr = document.getElementById('code-error');
+  if(entered !== _verifyCode){
+    codeErr.style.display = 'block';
+    document.getElementById('f-code').style.borderColor = '#F87171';
     return;
   }
-  err.style.display = 'none';
-  btn.textContent = 'Wird gesendet ...';
-  btn.disabled = true;
+  codeErr.style.display = 'none';
+  clearInterval(_countdownInterval);
+  submitRequest();
+}
 
-  fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({
-      access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
-      subject: 'Neue Anfrage – ' + vorname + ' ' + nachname + (leistung ? ' · ' + leistung : ''),
-      from_name: 'Waschlurch Website',
-      name: vorname + ' ' + nachname,
+function showSuccess(vorname){
+  document.getElementById('success-title').textContent = `Vielen Dank, ${vorname}!`;
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.step-panel[data-step="success"]').classList.add('active');
+  document.getElementById('wizard-nav').style.display = 'none';
+  document.getElementById('progress').style.display = 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── SUBMIT: Firestore ist die Quelle der Wahrheit, Web3Forms nur als E-Mail-Benachrichtigung ─────────────────────
+function submitRequest(){
+  const btn = document.getElementById('btn-next');
+  const errBox = document.getElementById('submit-error');
+  errBox.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Wird gesendet ...';
+
+  const vorname = document.getElementById('f-vorname').value.trim();
+  const nachname = document.getElementById('f-nachname').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  const nachricht = document.getElementById('f-nachricht').value.trim();
+  const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
+
+  const objektart = document.getElementById('f-objektart').value;
+  const etagen = document.getElementById('f-etagen').value.trim();
+  const flaeche = document.getElementById('f-flaeche').value.trim();
+  const haeufigkeit = document.getElementById('f-haeufigkeit').value;
+  const beginn = document.getElementById('f-beginn').value;
+  const anmerkung = document.getElementById('f-anmerkung').value.trim();
+  const strasse = document.getElementById('f-strasse').value.trim();
+  const plz = document.getElementById('f-plz').value.trim();
+  const ort = document.getElementById('f-ort').value.trim();
+  const termin = document.getElementById('f-termin').value;
+
+  const park = document.getElementById('f-park').checked;
+  const aufzugAllg = document.getElementById('f-aufzug-allg').checked;
+  const zugang = document.getElementById('f-zugang').value.trim();
+  const verschmutzungAllg = document.getElementById('f-verschmutzung-allg').value.trim();
+  const budget = document.getElementById('f-budget').value.trim();
+  const quelle = document.getElementById('f-quelle').value;
+
+  const serviceDetails = collectServiceDetails();
+  const vollstaendigkeit = computeVollstaendigkeit();
+  const auftragswert = computeAuftragswert();
+  const prioritaet = computePrioritaet(beginn);
+
+  function trySubmit(retries){
+    if(!window._firebaseReady){
+      if(retries <= 0){
+        errBox.textContent = 'Verbindung zur Datenbank konnte nicht hergestellt werden. Bitte laden Sie die Seite neu und versuchen Sie es erneut.';
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Code bestätigen & Anfrage senden →';
+        return;
+      }
+      setTimeout(() => trySubmit(retries - 1), 300);
+      return;
+    }
+
+    const docData = {
+      createdAt: window._serverTimestamp(),
+      status: 'neu',
+      leistungen: names,
+      objektart: objektart,
+      etagen: etagen,
+      flaeche_m2: flaeche,
+      haeufigkeit: haeufigkeit,
+      gewuenschter_beginn: beginn,
+      anmerkung_objekt: anmerkung,
+      strasse: strasse,
+      plz: plz,
+      ort: ort,
+      wunschtermin: termin,
+      parkmoeglichkeiten: park,
+      aufzug_vorhanden: aufzugAllg,
+      zugang_objekt: zugang,
+      besondere_verschmutzung: verschmutzungAllg,
+      budget: budget,
+      quelle: quelle,
+      service_details: serviceDetails,
+      vorname: vorname,
+      nachname: nachname,
       email: email,
       telefon: tel,
-      leistung: leistung || 'Nicht angegeben',
       nachricht: nachricht,
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if(data.success) {
-      document.getElementById('form-wrap').style.display = 'none';
-      document.getElementById('form-success').style.display = 'block';
-    } else {
-      btn.textContent = 'Anfrage absenden →';
-      btn.disabled = false;
-      err.textContent = 'Fehler beim Senden. Bitte erneut versuchen.';
-      err.style.display = 'block';
-    }
-  })
-  .catch(() => {
-    btn.textContent = 'Anfrage absenden →';
-    btn.disabled = false;
-    err.textContent = 'Verbindungsfehler. Bitte erneut versuchen.';
-    err.style.display = 'block';
-  });
+      // Strukturierte Backend-Felder
+      geschaetzter_auftragswert: auftragswert,
+      prioritaet: prioritaet,
+      einsatzgebiet_plz: plz,
+      vollstaendigkeit_prozent: vollstaendigkeit,
+    };
+
+    window._addDoc(window._collection(window._db, 'anfragen'), docData)
+      .then(() => {
+        // E-Mail-Benachrichtigung an Daniel (best effort, blockiert den Erfolg nicht)
+        const detailsText = Object.keys(serviceDetails).map(sid => {
+          const svc = SERVICES.find(s => s.id === sid);
+          const entries = Object.entries(serviceDetails[sid]).map(([k,v]) => `${k}: ${v}`).join(', ');
+          return `${svc ? svc.name : sid} – ${entries || 'keine weiteren Angaben'}`;
+        }).join(' | ');
+
+        const fd = new FormData();
+        fd.append('access_key', WEB3FORMS_KEY);
+        fd.append('subject', `Anfrage: ${vorname} ${nachname} · ${names} · Priorität: ${prioritaet}`);
+        fd.append('from_name', 'Waschlurch Anfrage-Assistent');
+        fd.append('vorname', vorname);
+        fd.append('nachname', nachname);
+        fd.append('email', email);
+        fd.append('telefon', tel);
+        fd.append('leistungen', names);
+        fd.append('objektart', objektart);
+        fd.append('etagen', etagen);
+        fd.append('flaeche_m2', flaeche);
+        fd.append('haeufigkeit', haeufigkeit);
+        fd.append('gewuenschter_beginn', beginn);
+        fd.append('anmerkung_objekt', anmerkung);
+        fd.append('adresse', `${strasse}, ${plz} ${ort}`);
+        fd.append('wunschtermin', termin);
+        fd.append('nachricht', nachricht);
+        fd.append('details_je_leistung', detailsText);
+        fd.append('geschaetzter_auftragswert', auftragswert + ' € (geschätzt)');
+        fd.append('prioritaet', prioritaet);
+        fetch('https://api.web3forms.com/submit', { method:'POST', body:fd }).catch(() => {});
+
+        showSuccess(vorname);
+      })
+      .catch(err => {
+        console.error('Firestore error:', err);
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Code bestätigen & Anfrage senden →';
+      });
+  }
+
+  trySubmit(10);
 }
+
+showStep(1);
 </script>
 
 </body>
