@@ -82,7 +82,25 @@ a { color:inherit; }
 .stat-lbl { font-size:12px; color:rgba(255,255,255,0.45); margin-top:4px; }
 
 /* REQUEST CARDS */
-.req-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:14px; }
+.req-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:14px; position:relative; }
+@keyframes flashGreen {
+  0% { box-shadow:0 0 0 0 rgba(34,197,94,0); background:rgba(255,255,255,0.04); }
+  35% { box-shadow:0 0 0 3px rgba(34,197,94,0.5); background:rgba(34,197,94,0.1); }
+  100% { box-shadow:0 0 0 0 rgba(34,197,94,0); background:rgba(255,255,255,0.04); }
+}
+.req-card.flash-green { animation:flashGreen .6s ease; }
+.req-longpress-overlay {
+  position:absolute; inset:0; background:rgba(10,10,10,0.95); backdrop-filter:blur(6px);
+  border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; z-index:20;
+}
+.req-longpress-overlay button {
+  padding:13px 24px; border-radius:100px; font-weight:600; font-size:14px;
+  border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.08); color:var(--white);
+  cursor:pointer; font-family:inherit; width:82%; max-width:260px;
+}
+.req-longpress-overlay button.lp-archive { border-color:rgba(34,197,94,0.35); color:var(--green); background:rgba(34,197,94,0.1); }
+.req-longpress-overlay button.lp-delete { border-color:rgba(248,113,113,0.35); color:#F87171; background:rgba(248,113,113,0.1); }
+.req-longpress-overlay button.lp-cancel { opacity:.55; }
 .req-top { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:12px; }
 .req-name { font-size:16px; font-weight:700; }
 .req-meta { font-size:12px; color:rgba(255,255,255,0.4); margin-top:3px; }
@@ -94,7 +112,7 @@ a { color:inherit; }
 .req-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px 20px; font-size:13px; margin-bottom:12px; }
 .req-grid div span:first-child { color:rgba(255,255,255,0.4); margin-right:6px; }
 .req-msg { font-size:13px; color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.03); border-radius:10px; padding:10px 14px; margin-bottom:12px; line-height:1.5; }
-.req-actions { display:flex; gap:10px; }
+.req-actions { display:flex; gap:10px; flex-wrap:wrap; }
 .req-actions button, .req-actions a {
   font-size:12px; font-weight:600; padding:8px 14px; border-radius:100px; cursor:pointer;
   background:rgba(34,197,94,0.12); color:var(--green); border:1px solid rgba(34,197,94,0.25); text-decoration:none; font-family:inherit;
@@ -157,6 +175,14 @@ a { color:inherit; }
 .paket-card-actions button.pk-active-btn { border-color:rgba(34,197,94,0.3); color:var(--green); }
 .paket-card-actions button.pk-delete-btn { border-color:rgba(248,113,113,0.3); color:#F87171; }
 .paket-card-list { font-size:13px; color:rgba(255,255,255,0.6); line-height:1.7; margin-top:8px; }
+.custom-field-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px; }
+.custom-field-row input[type="text"] { flex:1; min-width:120px; padding:9px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--white); font-family:inherit; font-size:13px; }
+.custom-field-row select { padding:9px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--white); font-family:inherit; font-size:13px; }
+.custom-field-row select option { background:var(--gray-900); }
+.custom-field-row label.bool-label { font-size:12px; text-transform:none; white-space:nowrap; }
+.custom-field-row .cf-remove { background:none; border:none; color:rgba(255,255,255,0.3); cursor:pointer; font-size:16px; flex-shrink:0; }
+.custom-field-row .cf-remove:hover { color:#F87171; }
+.custom-field-row .cf-options { width:100%; margin-top:6px; }
 
 /* RECHNUNG / FIRMA */
 .req-actions button.invoice-btn { background:rgba(59,130,246,0.15); color:#3B82F6; border-color:rgba(59,130,246,0.3); }
@@ -202,6 +228,15 @@ a { color:inherit; }
   .fin-table tbody { display:block; }
   .fin-table tr { display:block; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px; margin-bottom:10px; }
   .fin-table td { display:flex; justify-content:space-between; padding:6px 0; border-bottom:none; font-size:13px; }
+  .range-picker { gap:6px; }
+  .range-btn { padding:8px 12px; font-size:12px; }
+  .range-custom { width:100%; }
+  .range-custom input { flex:1; min-width:0; }
+  .chart-card { padding:16px; }
+  .chart-card-title { font-size:12px; }
+  .bericht-print-btn { width:100%; }
+  .bericht-summary { padding:18px; }
+  .bericht-section-title { font-size:14px; }
   .fin-table td:before { content:attr(data-label); color:rgba(255,255,255,0.4); font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
   .steuer-cards { grid-template-columns:1fr 1fr; }
   .bericht-grid { grid-template-columns:1fr 1fr; }
@@ -518,6 +553,12 @@ a { color:inherit; }
         <div class="field">
           <label>Extras (eine Zeile pro Extra, optional)</label>
           <textarea id="pk-extras" placeholder="z. B. Kühlschrank reinigen&#10;Betten frisch beziehen"></textarea>
+        </div>
+        <div class="field">
+          <label>Eigene Analysefragen für dieses Paket (optional)</label>
+          <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px">Erscheinen nur bei diesem Paket in der Anfrage-Seite – z. B. "Anzahl Büroarbeitsplätze" fürs Büro-Paket oder "Anzahl Sitzplätze" fürs Gastronomie-Paket.</p>
+          <div id="pk-custom-fields-list"></div>
+          <button type="button" onclick="addCustomFieldRow()" style="margin-top:8px;padding:9px 18px;border-radius:100px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:var(--white);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Frage hinzufügen</button>
         </div>
         <div class="field-row">
           <div class="field"><label>Preis ab (€)</label><input type="number" id="pk-preis" placeholder="79" step="0.5"></div>
@@ -880,26 +921,28 @@ function formatDate(ts){
 function renderRequests(){
   const listEl = document.getElementById('anfragen-list');
   const statsEl = document.getElementById('anfragen-stats');
+  const visibleRequests = allRequests.filter(r => !r.archiviert);
 
   const counts = {};
   STATUS_OPTIONS.forEach(s => counts[s] = 0);
-  allRequests.forEach(r => { if(counts[r.status] !== undefined) counts[r.status]++; });
+  visibleRequests.forEach(r => { if(counts[r.status] !== undefined) counts[r.status]++; });
 
+  const archivedCount = allRequests.length - visibleRequests.length;
   statsEl.innerHTML = `
-    <div class="stat-card"><div class="stat-val">${allRequests.length}</div><div class="stat-lbl">Gesamt</div></div>
+    <div class="stat-card"><div class="stat-val">${visibleRequests.length}</div><div class="stat-lbl">Gesamt</div></div>
     <div class="stat-card"><div class="stat-val">${counts['neu']||0}</div><div class="stat-lbl">Neu</div></div>
     <div class="stat-card"><div class="stat-val">${counts['angebot gesendet']||0}</div><div class="stat-lbl">Angebot gesendet</div></div>
     <div class="stat-card"><div class="stat-val">${counts['gebucht']||0}</div><div class="stat-lbl">Gebucht</div></div>
   `;
 
-  if(allRequests.length === 0){
-    listEl.innerHTML = '<div class="empty-state">Noch keine Anfragen eingegangen.</div>';
+  if(visibleRequests.length === 0){
+    listEl.innerHTML = `<div class="empty-state">Noch keine Anfragen eingegangen.${archivedCount ? ' ('+archivedCount+' archiviert)' : ''}</div>`;
     renderRequestCharts();
     return;
   }
 
-  listEl.innerHTML = allRequests.map(r => `
-    <div class="req-card">
+  listEl.innerHTML = visibleRequests.map(r => `
+    <div class="req-card" id="req-card-${r.id}">
       <div class="req-top">
         <div>
           <div class="req-name">${r.vorname||''} ${r.nachname||''} ${r.prioritaet==='Sofort' ? '<span style="color:#F87171;font-size:11px;font-weight:700;margin-left:6px">● SOFORT</span>' : ''}</div>
@@ -911,6 +954,7 @@ function renderRequests(){
       </div>
       <div class="req-grid">
         <div><span>Leistungen:</span>${r.leistungen||'–'}</div>
+        <div><span>Gewähltes Paket:</span>${r.gewaehltes_paket||'–'}</div>
         <div><span>Objektart:</span>${r.objektart||'–'}</div>
         <div><span>Häufigkeit:</span>${r.haeufigkeit||'–'}</div>
         <div><span>Etagen:</span>${r.etagen||'–'}</div>
@@ -923,6 +967,7 @@ function renderRequests(){
         <div><span>Geschätzter Wert:</span>${r.geschaetzter_auftragswert!=null ? r.geschaetzter_auftragswert.toFixed(2) + ' €' : '–'}</div>
         <div><span>Priorität:</span>${r.prioritaet||'–'}</div>
       </div>
+      ${r.paket_antworten && Object.keys(r.paket_antworten).length ? `<div class="req-msg"><strong>Paket-Fragen:</strong> ${Object.entries(r.paket_antworten).map(([k,v]) => `${k}: ${v}`).join(' · ')}</div>` : ''}
       ${r.service_details && Object.keys(r.service_details).length ? `<div class="req-msg">${Object.entries(r.service_details).map(([sid, data]) => {
         const svc = SERVICES.find(s => s.id === sid);
         const entries = Object.entries(data).map(([k,v]) => `${k}: ${v}`).join(' · ');
@@ -936,11 +981,21 @@ function renderRequests(){
       <div class="req-actions">
         <button onclick="prepareReply('${r.id}')">✉️ Antwort vorbereiten</button>
         <a href="tel:${r.telefon||''}">📞 Anrufen</a>
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((r.strasse||'')+', '+(r.plz||'')+' '+(r.ort||''))}" target="_blank" rel="noopener">📍 In Maps öffnen</a>
         <button class="invoice-btn" onclick="generateInvoice('${r.id}', false)">📄 Rechnung</button>
         <button class="invoice-btn" onclick="generateInvoice('${r.id}', true)">✉️ Rechnung senden</button>
+        <button onclick="addToGoogleCalendar('${r.id}')">📅 Google Kalender</button>
+        <button onclick="downloadICS('${r.id}')">📅 Kalender-Datei (.ics)</button>
+        <button onclick="showArchiveMenu('${r.id}')" style="flex:0 0 auto">⋯</button>
       </div>
     </div>
   `).join('');
+
+  visibleRequests.forEach(r => {
+    const cardEl = document.getElementById('req-card-'+r.id);
+    if(cardEl) attachLongPress(cardEl, r.id);
+  });
+
   renderRequestCharts();
 }
 
@@ -958,6 +1013,133 @@ window.prepareReply = function(id){
   document.getElementById('tpl-request-select').value = id;
   switchView('textbausteine');
   renderTemplate();
+};
+
+// ── LONG-PRESS ARCHIVIEREN/LÖSCHEN ─────────────────────
+function attachLongPress(el, requestId){
+  let timer = null;
+  const start = () => {
+    timer = setTimeout(() => { window.showArchiveMenu(requestId); }, 550);
+  };
+  const cancel = () => { if(timer) clearTimeout(timer); };
+  el.addEventListener('touchstart', start, { passive:true });
+  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchmove', cancel);
+  el.addEventListener('touchcancel', cancel);
+}
+
+window.showArchiveMenu = function(requestId){
+  const cardEl = document.getElementById('req-card-'+requestId);
+  if(!cardEl) return;
+
+  const existing = cardEl.querySelector('.req-longpress-overlay');
+  if(existing){ existing.remove(); return; }
+
+  cardEl.classList.add('flash-green');
+  setTimeout(() => cardEl.classList.remove('flash-green'), 600);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'req-longpress-overlay';
+  overlay.innerHTML = `
+    <button class="lp-archive" onclick="archiveRequest('${requestId}')">📥 Anfrage archivieren</button>
+    <button class="lp-delete" onclick="deleteRequestConfirm('${requestId}')">🗑 Anfrage löschen</button>
+    <button class="lp-cancel" onclick="this.closest('.req-longpress-overlay').remove()">✕ Abbrechen</button>
+  `;
+  cardEl.appendChild(overlay);
+};
+
+window.archiveRequest = function(id){
+  updateDoc(doc(db, 'anfragen', id), { archiviert: true }).catch(err => console.error(err));
+};
+
+window.deleteRequestConfirm = function(id){
+  if(!confirm('Diese Anfrage wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  deleteDoc(doc(db, 'anfragen', id)).catch(err => console.error(err));
+};
+
+document.addEventListener('click', (e) => {
+  if(e.target.closest('.req-longpress-overlay') || e.target.closest('[onclick*="showArchiveMenu"]')) return;
+  document.querySelectorAll('.req-longpress-overlay').forEach(o => o.remove());
+});
+
+// ── KALENDER-EXPORT ─────────────────────
+function buildEventFromRequest(r){
+  const defaultDate = r.wunschtermin || new Date().toISOString().slice(0,10);
+  const dateStr = prompt('Termin-Datum (JJJJ-MM-TT):', defaultDate);
+  if(!dateStr) return null;
+  const timeStr = prompt('Uhrzeit (HH:MM):', '09:00');
+  if(!timeStr) return null;
+
+  const start = new Date(`${dateStr}T${timeStr}:00`);
+  if(isNaN(start.getTime())){ alert('Datum oder Uhrzeit ungültig.'); return null; }
+  const end = new Date(start.getTime() + 2*60*60*1000);
+
+  const title = `Waschlurch: ${r.leistungen||'Reinigung'} – ${r.vorname||''} ${r.nachname||''}`;
+  const location = `${r.strasse||''}, ${r.plz||''} ${r.ort||''}`;
+  const description = [
+    `Leistungen: ${r.leistungen||'–'}`,
+    `Preis: ${r.geschaetzter_auftragswert!=null ? r.geschaetzter_auftragswert.toFixed(2)+' €' : '–'}`,
+    `Kunde: ${r.vorname||''} ${r.nachname||''}`,
+    `Telefon: ${r.telefon||'–'}`,
+    `E-Mail: ${r.email||'–'}`,
+    r.nachricht ? `Nachricht: ${r.nachricht}` : '',
+  ].filter(Boolean).join('\n');
+
+  return { start, end, title, location, description };
+}
+
+function formatGCalDate(d){
+  return d.toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+}
+
+window.addToGoogleCalendar = function(id){
+  const r = allRequests.find(x => x.id === id);
+  if(!r) return;
+  const ev = buildEventFromRequest(r);
+  if(!ev) return;
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(ev.title)}&dates=${formatGCalDate(ev.start)}/${formatGCalDate(ev.end)}&details=${encodeURIComponent(ev.description)}&location=${encodeURIComponent(ev.location)}`;
+  window.open(url, '_blank');
+};
+
+function escapeICS(text){
+  return String(text).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+
+function formatICSDate(d){
+  return d.toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+}
+
+window.downloadICS = function(id){
+  const r = allRequests.find(x => x.id === id);
+  if(!r) return;
+  const ev = buildEventFromRequest(r);
+  if(!ev) return;
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Waschlurch//Termine//DE',
+    'BEGIN:VEVENT',
+    `UID:${id}-${Date.now()}@waschlurch.com`,
+    `DTSTAMP:${formatICSDate(new Date())}`,
+    `DTSTART:${formatICSDate(ev.start)}`,
+    `DTEND:${formatICSDate(ev.end)}`,
+    `SUMMARY:${escapeICS(ev.title)}`,
+    `LOCATION:${escapeICS(ev.location)}`,
+    `DESCRIPTION:${escapeICS(ev.description)}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type:'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Termin_${(r.nachname||'Kunde').replace(/[^a-zA-Z0-9]/g,'')}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 };
 
 // ── TEXTBAUSTEINE ─────────────────────
@@ -1365,7 +1547,8 @@ const CHART_GRID = 'rgba(255,255,255,0.08)';
 function renderRequestCharts(){
   const range = anfragenRange || computeRangeFromPreset(14);
   const buckets = buildBuckets(range);
-  const counts = buckets.map(b => allRequests.filter(r => {
+  const chartRequests = allRequests.filter(r => !r.archiviert);
+  const counts = buckets.map(b => chartRequests.filter(r => {
     if(!r.createdAt || !r.createdAt.toDate) return false;
     const rd = r.createdAt.toDate();
     return rd >= b.start && rd <= b.end;
@@ -1391,7 +1574,7 @@ function renderRequestCharts(){
   });
 
   // Status-Verteilung im gewählten Zeitraum
-  const inRange = allRequests.filter(r => {
+  const inRange = chartRequests.filter(r => {
     if(!r.createdAt || !r.createdAt.toDate) return false;
     const rd = r.createdAt.toDate();
     return rd >= range.start && rd <= range.end;
@@ -1571,6 +1754,57 @@ function renderBericht(){
 }
 
 // ── PAKETE ─────────────────────
+let customFieldRowCounter = 0;
+
+function customFieldRowHTML(rowId, field){
+  field = field || {};
+  const type = field.type || 'text';
+  return `
+    <div class="custom-field-row" id="cf-row-${rowId}">
+      <input type="text" class="cf-label" placeholder="Frage, z. B. Anzahl Büroarbeitsplätze" value="${(field.label||'').replace(/"/g,'&quot;')}">
+      <select class="cf-type" onchange="toggleCfOptions(${rowId})">
+        <option value="text" ${type==='text'?'selected':''}>Text</option>
+        <option value="number" ${type==='number'?'selected':''}>Zahl</option>
+        <option value="select" ${type==='select'?'selected':''}>Auswahl</option>
+        <option value="bool" ${type==='bool'?'selected':''}>Ja/Nein</option>
+      </select>
+      <label class="bool-label"><input type="checkbox" class="cf-required" ${field.required?'checked':''}> Pflichtfeld</label>
+      <button type="button" class="cf-remove" onclick="document.getElementById('cf-row-${rowId}').remove()">✕</button>
+      <input type="text" class="cf-options" placeholder="Optionen, kommagetrennt (nur bei Auswahl)" value="${(field.options||[]).join(', ')}" style="display:${type==='select'?'block':'none'}">
+    </div>
+  `;
+}
+
+window.addCustomFieldRow = function(field){
+  customFieldRowCounter++;
+  const id = customFieldRowCounter;
+  document.getElementById('pk-custom-fields-list').insertAdjacentHTML('beforeend', customFieldRowHTML(id, field));
+};
+
+window.toggleCfOptions = function(rowId){
+  const row = document.getElementById('cf-row-'+rowId);
+  const type = row.querySelector('.cf-type').value;
+  row.querySelector('.cf-options').style.display = type === 'select' ? 'block' : 'none';
+};
+
+function collectCustomFields(){
+  const rows = document.querySelectorAll('#pk-custom-fields-list .custom-field-row');
+  const fields = [];
+  rows.forEach(row => {
+    const label = row.querySelector('.cf-label').value.trim();
+    if(!label) return;
+    const type = row.querySelector('.cf-type').value;
+    const required = row.querySelector('.cf-required').checked;
+    const optionsRaw = row.querySelector('.cf-options').value.trim();
+    const field = { label, type, required };
+    if(type === 'select'){
+      field.options = optionsRaw.split(',').map(o => o.trim()).filter(Boolean);
+    }
+    fields.push(field);
+  });
+  return fields;
+}
+
 function renderPaketLeistungenCheckboxes(){
   const box = document.getElementById('pk-leistungen-cb');
   if(!box) return;
@@ -1618,6 +1852,7 @@ window.resetPaketForm = function(){
   document.getElementById('pk-reihenfolge').value = (allPakete.length + 1);
   document.getElementById('pk-beliebt').checked = false;
   document.querySelectorAll('.pk-leistung-cb').forEach(cb => cb.checked = false);
+  document.getElementById('pk-custom-fields-list').innerHTML = '';
   document.getElementById('paket-form-title').textContent = 'Neues Paket erstellen';
   document.getElementById('pk-save-btn').textContent = 'Paket speichern';
 };
@@ -1637,6 +1872,8 @@ window.editPaket = function(id){
   document.getElementById('pk-beliebt').checked = !!p.beliebt;
   const ids = Array.isArray(p.services_ids) ? p.services_ids : [];
   document.querySelectorAll('.pk-leistung-cb').forEach(cb => { cb.checked = ids.includes(cb.value); });
+  document.getElementById('pk-custom-fields-list').innerHTML = '';
+  (Array.isArray(p.custom_fields) ? p.custom_fields : []).forEach(f => window.addCustomFieldRow(f));
   document.getElementById('paket-form-title').textContent = 'Paket bearbeiten: ' + (p.name || '');
   document.getElementById('pk-save-btn').textContent = 'Änderungen speichern';
   window.switchView('pakete');
@@ -1662,6 +1899,7 @@ window.savePaket = function(){
     services_ids: services_ids,
     leistungen: leistungen,
     extras: extras,
+    custom_fields: collectCustomFields(),
     preis_ab: parseFloat(document.getElementById('pk-preis').value) || null,
     preis_einheit_text: document.getElementById('pk-preis-text').value.trim() || 'inkl. MwSt.',
     reihenfolge: parseInt(document.getElementById('pk-reihenfolge').value) || 99,
@@ -1705,18 +1943,18 @@ window.seedDefaultPakete = async function(){
   btn.textContent = 'Lege Pakete an ...';
 
   const defaults = [
-    { icon:'🏠', zielgruppe:'Privat', name:'Einfamilienhaus-Paket', beschreibung:'Rundum-Sauberkeit für Ihr Zuhause', services_ids:['haushalt','fenster'], extras:['Betten frisch beziehen'], preis_ab:79, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:1 },
-    { icon:'🏢', zielgruppe:'Privat', name:'Wohnung-Paket', beschreibung:'Für Wohnungen und Mehrfamilienhäuser', services_ids:['haushalt'], extras:[], preis_ab:54, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:2 },
-    { icon:'🪜', zielgruppe:'Hausverwaltung', name:'Treppenhaus-Paket', beschreibung:'Für Vermieter und Hausverwaltungen', services_ids:['treppe'], extras:['Briefkastenanlage', 'Kellerflur'], preis_ab:29, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:3 },
-    { icon:'💼', zielgruppe:'Gewerbe', name:'Büro-Paket', beschreibung:'Für kleine bis mittlere Büros', services_ids:['buero','fenster','muell'], extras:[], preis_ab:68, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:4 },
-    { icon:'⚖️', zielgruppe:'Kanzlei / Ingenieurbüro', name:'Kanzlei- & Praxis-Paket', beschreibung:'Diskrete, gründliche Reinigung für Kanzleien, Ingenieur- und Architekturbüros', services_ids:['buero','fenster'], extras:['Reinigung außerhalb der Bürozeiten', 'Diskretion & Vertraulichkeit'], preis_ab:89, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:5 },
-    { icon:'🍽️', zielgruppe:'Gastronomie', name:'Gastronomie-Paket', beschreibung:'Für Restaurants, Cafés und Imbisse', services_ids:['buero','fenster','muell'], extras:['Küchen- & Sanitärbereich', 'Hygienekonforme Reinigung'], preis_ab:95, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:6 },
-    { icon:'🛍️', zielgruppe:'Einzelhandel', name:'Laden- & Buchhandlungs-Paket', beschreibung:'Für Geschäfte, Boutiquen und Buchhandlungen', services_ids:['buero','fenster'], extras:['Schaufensterreinigung', 'Verkaufsflächenpflege'], preis_ab:69, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:7 },
-    { icon:'🚗', zielgruppe:'Autohaus / Werkstatt', name:'Autohaus- & Werkstatt-Paket', beschreibung:'Für Autohäuser, KFZ-Werkstätten und Showrooms', services_ids:['grund','fenster','hausmeister'], extras:['Ölfleckenentfernung auf Anfrage'], preis_ab:150, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:8 },
-    { icon:'🔧', zielgruppe:'Handwerk', name:'Handwerker- & Werkstatt-Paket', beschreibung:'Für Werkstätten, Ateliers und kleine Produktionsräume', services_ids:['grund','hausmeister'], extras:['Staub- und Spänebeseitigung'], preis_ab:120, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:9 },
-    { icon:'🅿️', zielgruppe:'Außenanlagen', name:'Parkplatz-Paket', beschreibung:'Kehrservice und Winterdienst für Parkflächen', services_ids:['winter','grund'], extras:['Laub- & Müllbeseitigung'], preis_ab:35, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:10 },
-    { icon:'🧰', zielgruppe:'Hausverwaltung', name:'Hausmeister-Komplettpaket', beschreibung:'Rundum-Betreuung für Immobilien – alles aus einer Hand', services_ids:['hausmeister','garten','winter','muell'], extras:['Ein fester Ansprechpartner für alles'], preis_ab:76, preis_einheit_text:'· 2 Stunden · inkl. MwSt.', beliebt:false, reihenfolge:11 },
-    { icon:'🏗️', zielgruppe:'Neubau / Renovierung', name:'Bauendreinigung-Paket', beschreibung:'Tiefenreinigung nach Umzug, Renovierung oder Neubau', services_ids:['grund','fenster'], extras:['Entfernung von Bauschutt-Resten', 'Fenster inkl. Rahmen'], preis_ab:190, preis_einheit_text:'inkl. MwSt.', beliebt:false, reihenfolge:12 },
+    { icon:'🏠', zielgruppe:'Privat', name:'Einfamilienhaus-Paket', beschreibung:'Rundum-Sauberkeit für Ihr Zuhause', services_ids:['haushalt','fenster'], extras:['Betten frisch beziehen'], custom_fields:[{label:'Anzahl Bewohner',type:'number',required:true},{label:'Haustiere vorhanden',type:'bool',required:false}], preis_ab:79, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:1 },
+    { icon:'🏢', zielgruppe:'Privat', name:'Wohnung-Paket', beschreibung:'Für Wohnungen und Mehrfamilienhäuser', services_ids:['haushalt'], extras:[], custom_fields:[{label:'Anzahl Zimmer',type:'number',required:true},{label:'Etage',type:'text',required:false}], preis_ab:54, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:2 },
+    { icon:'🪜', zielgruppe:'Hausverwaltung', name:'Treppenhaus-Paket', beschreibung:'Für Vermieter und Hausverwaltungen', services_ids:['treppe'], extras:['Briefkastenanlage', 'Kellerflur'], custom_fields:[{label:'Anzahl Wohnungen im Haus',type:'number',required:true},{label:'Aufzug vorhanden',type:'bool',required:false}], preis_ab:29, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:3 },
+    { icon:'💼', zielgruppe:'Gewerbe', name:'Büro-Paket', beschreibung:'Für kleine bis mittlere Büros', services_ids:['buero','fenster','muell'], extras:[], custom_fields:[{label:'Anzahl Büroarbeitsplätze',type:'number',required:true},{label:'Mitarbeiteranzahl',type:'number',required:true},{label:'Anzahl Toiletten',type:'number',required:false}], preis_ab:68, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:4 },
+    { icon:'⚖️', zielgruppe:'Kanzlei / Ingenieurbüro', name:'Kanzlei- & Praxis-Paket', beschreibung:'Diskrete, gründliche Reinigung für Kanzleien, Ingenieur- und Architekturbüros', services_ids:['buero','fenster'], extras:['Reinigung außerhalb der Bürozeiten', 'Diskretion & Vertraulichkeit'], custom_fields:[{label:'Anzahl Arbeitsplätze',type:'number',required:true},{label:'Reinigung nur außerhalb der Öffnungszeiten',type:'bool',required:false}], preis_ab:89, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:5 },
+    { icon:'🍽️', zielgruppe:'Gastronomie', name:'Gastronomie-Paket', beschreibung:'Für Restaurants, Cafés und Imbisse', services_ids:['buero','fenster','muell'], extras:['Küchen- & Sanitärbereich', 'Hygienekonforme Reinigung'], custom_fields:[{label:'Anzahl Sitzplätze',type:'number',required:true},{label:'Küchenbereich enthalten',type:'bool',required:true},{label:'Öffnungszeiten',type:'text',required:false}], preis_ab:95, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:6 },
+    { icon:'🛍️', zielgruppe:'Einzelhandel', name:'Laden- & Buchhandlungs-Paket', beschreibung:'Für Geschäfte, Boutiquen und Buchhandlungen', services_ids:['buero','fenster'], extras:['Schaufensterreinigung', 'Verkaufsflächenpflege'], custom_fields:[{label:'Verkaufsfläche in m²',type:'number',required:true},{label:'Schaufenster vorhanden',type:'bool',required:false}], preis_ab:69, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:7 },
+    { icon:'🚗', zielgruppe:'Autohaus / Werkstatt', name:'Autohaus- & Werkstatt-Paket', beschreibung:'Für Autohäuser, KFZ-Werkstätten und Showrooms', services_ids:['grund','fenster','hausmeister'], extras:['Ölfleckenentfernung auf Anfrage'], custom_fields:[{label:'Anzahl Stellplätze/Hebebühnen',type:'number',required:true},{label:'Ölflecken vorhanden',type:'bool',required:false}], preis_ab:150, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:8 },
+    { icon:'🔧', zielgruppe:'Handwerk', name:'Handwerker- & Werkstatt-Paket', beschreibung:'Für Werkstätten, Ateliers und kleine Produktionsräume', services_ids:['grund','hausmeister'], extras:['Staub- und Spänebeseitigung'], custom_fields:[{label:'Werkstattfläche in m²',type:'number',required:true},{label:'Art der Verschmutzung',type:'select',options:['Staub','Späne','Öl/Fett','Sonstiges'],required:false}], preis_ab:120, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:9 },
+    { icon:'🅿️', zielgruppe:'Außenanlagen', name:'Parkplatz-Paket', beschreibung:'Kehrservice und Winterdienst für Parkflächen', services_ids:['winter','grund'], extras:['Laub- & Müllbeseitigung'], custom_fields:[{label:'Anzahl Stellplätze',type:'number',required:true},{label:'Fläche in m²',type:'number',required:false}], preis_ab:35, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:10 },
+    { icon:'🧰', zielgruppe:'Hausverwaltung', name:'Hausmeister-Komplettpaket', beschreibung:'Rundum-Betreuung für Immobilien – alles aus einer Hand', services_ids:['hausmeister','garten','winter','muell'], extras:['Ein fester Ansprechpartner für alles'], custom_fields:[{label:'Anzahl Einheiten/Wohnungen',type:'number',required:true},{label:'Gewünschte Besuchsfrequenz',type:'select',options:['Wöchentlich','14-tägig','Monatlich'],required:false}], preis_ab:76, preis_einheit_text:'· 2 Stunden · inkl. MwSt.', beliebt:false, reihenfolge:11 },
+    { icon:'🏗️', zielgruppe:'Neubau / Renovierung', name:'Bauendreinigung-Paket', beschreibung:'Tiefenreinigung nach Umzug, Renovierung oder Neubau', services_ids:['grund','fenster'], extras:['Entfernung von Bauschutt-Resten', 'Fenster inkl. Rahmen'], custom_fields:[{label:'Fläche in m²',type:'number',required:true},{label:'Bauschutt-Reste vorhanden',type:'bool',required:false}], preis_ab:190, preis_einheit_text:'inkl. MwSt.', beliebt:false, reihenfolge:12 },
   ];
 
   try {
