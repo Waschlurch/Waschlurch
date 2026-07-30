@@ -619,12 +619,22 @@ function fieldHTML(domId, field, required){
 
 let step2BuiltForServices = null;
 function buildDynServiceFields(){
-  const key = Array.from(selectedServices).sort().join(',');
+  const key = Array.from(selectedServices).sort().join(',') + '|' + (window._selectedPaket ? window._selectedPaket.name : '');
   if(key === step2BuiltForServices) return;
   step2BuiltForServices = key;
 
   const container = document.getElementById('dyn-service-fields');
   let html = '';
+
+  const paket = window._selectedPaket;
+  if(paket && Array.isArray(paket.custom_fields) && paket.custom_fields.length){
+    html += `<div class="service-block"><div class="service-block-title">${paket.icon||'📦'} Fragen zu Ihrem ${paket.name||'Paket'}</div>`;
+    paket.custom_fields.forEach((f, idx) => {
+      html += fieldHTML('dyn_paket_custom_'+idx, f, !!f.required);
+    });
+    html += `</div>`;
+  }
+
   selectedServices.forEach(sid => {
     const cfg = SERVICE_FIELDS[sid];
     const svc = SERVICES.find(s => s.id === sid);
@@ -673,6 +683,17 @@ function collectServiceDetails(){
     details[sid] = data;
   });
   return details;
+}
+
+function collectPaketCustomAnswers(){
+  const paket = window._selectedPaket;
+  if(!paket || !Array.isArray(paket.custom_fields)) return {};
+  const answers = {};
+  paket.custom_fields.forEach((f, idx) => {
+    const val = collectFieldValue('dyn_paket_custom_'+idx, f);
+    if(val !== '' && val !== false) answers[f.label] = val;
+  });
+  return answers;
 }
 
 function computeVollstaendigkeit(){
@@ -758,6 +779,14 @@ function validateStep(step) {
         if(val === '' || val === false) ok = false;
       });
     });
+    const paket = window._selectedPaket;
+    if(paket && Array.isArray(paket.custom_fields)){
+      paket.custom_fields.forEach((f, idx) => {
+        if(!f.required) return;
+        const val = collectFieldValue('dyn_paket_custom_'+idx, f);
+        if(val === '' || val === false) ok = false;
+      });
+    }
     document.getElementById('err-2').style.display = ok ? 'none' : 'block';
     return ok;
   }
@@ -966,9 +995,11 @@ function submitRequest(){
   const quelle = document.getElementById('f-quelle').value;
 
   const serviceDetails = collectServiceDetails();
+  const paketAntworten = collectPaketCustomAnswers();
   const vollstaendigkeit = computeVollstaendigkeit();
   const auftragswert = computeAuftragswert();
   const prioritaet = computePrioritaet(beginn);
+  const gewaehltesPaket = window._selectedPaket ? window._selectedPaket.name : '';
 
   function trySubmit(retries){
     if(!window._firebaseReady){
@@ -1004,6 +1035,8 @@ function submitRequest(){
       budget: budget,
       quelle: quelle,
       service_details: serviceDetails,
+      gewaehltes_paket: gewaehltesPaket,
+      paket_antworten: paketAntworten,
       vorname: vorname,
       nachname: nachname,
       email: email,
@@ -1044,6 +1077,8 @@ function submitRequest(){
         fd.append('wunschtermin', termin);
         fd.append('nachricht', nachricht);
         fd.append('details_je_leistung', detailsText);
+        fd.append('gewaehltes_paket', gewaehltesPaket);
+        fd.append('paket_antworten', Object.entries(paketAntworten).map(([k,v]) => `${k}: ${v}`).join(' · '));
         fd.append('geschaetzter_auftragswert', auftragswert + ' € (geschätzt)');
         fd.append('prioritaet', prioritaet);
         fetch('https://api.web3forms.com/submit', { method:'POST', body:fd }).catch(() => {});
