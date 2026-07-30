@@ -764,7 +764,11 @@ a { color:inherit; }
           </div>
           <input type="hidden" id="pk-bild-data" value="">
         </div>
-        <div class="field"><label>Paketname</label><input type="text" id="pk-name" placeholder="z. B. Einfamilienhaus-Paket"></div>
+        <div class="field"><label>Paketname</label><input type="text" id="pk-name" placeholder="z. B. Einfamilienhaus-Paket" oninput="suggestPaketSlug()"></div>
+        <div class="field">
+          <label>URL-Kürzel (für saubere Adresse, z. B. waschlurch.com/pakete/buero)</label>
+          <input type="text" id="pk-slug" placeholder="buero" oninput="this.dataset.manuallyEdited='1'">
+        </div>
         <div class="field"><label>Kurzbeschreibung</label><input type="text" id="pk-beschreibung" placeholder="z. B. Rundum-Sauberkeit für Ihr Zuhause"></div>
         <div class="field">
           <label>Enthaltene Leistungen</label>
@@ -1318,7 +1322,12 @@ function renderRequests(){
           </select>
         </div>
       </div>
-      ${r.paket_antworten && Object.keys(r.paket_antworten).length ? `<div class="req-msg"><strong>Paket-Fragen:</strong> ${Object.entries(r.paket_antworten).map(([k,v]) => `${k}: ${v}`).join(' · ')}</div>` : ''}
+      ${r.paket_antworten && Object.keys(r.paket_antworten).length ? `<div class="req-msg"><strong>Paket-Fragen:</strong> ${Object.entries(r.paket_antworten).map(([k,v]) => {
+        if(typeof v === 'string' && v.startsWith('data:image')){
+          return `${k}: <br><img src="${v}" style="max-width:160px;border-radius:8px;margin-top:4px">`;
+        }
+        return `${k}: ${v}`;
+      }).join(' · ')}</div>` : ''}
       ${r.service_details && Object.keys(r.service_details).length ? `<div class="req-msg">${Object.entries(r.service_details).map(([sid, data]) => {
         const svc = SERVICES.find(s => s.id === sid);
         const entries = Object.entries(data).map(([k,v]) => `${k}: ${v}`).join(' · ');
@@ -2156,18 +2165,23 @@ let customFieldRowCounter = 0;
 function customFieldRowHTML(rowId, field){
   field = field || {};
   const type = field.type || 'text';
+  const needsOptions = type === 'select' || type === 'radio';
   return `
     <div class="custom-field-row" id="cf-row-${rowId}">
       <input type="text" class="cf-label" placeholder="Frage, z. B. Anzahl Büroarbeitsplätze" value="${(field.label||'').replace(/"/g,'&quot;')}">
       <select class="cf-type" onchange="toggleCfOptions(${rowId})">
         <option value="text" ${type==='text'?'selected':''}>Text</option>
         <option value="number" ${type==='number'?'selected':''}>Zahl</option>
-        <option value="select" ${type==='select'?'selected':''}>Auswahl</option>
+        <option value="date" ${type==='date'?'selected':''}>Datum</option>
+        <option value="select" ${type==='select'?'selected':''}>Auswahl (Dropdown)</option>
+        <option value="radio" ${type==='radio'?'selected':''}>Auswahl (Radio-Buttons)</option>
         <option value="bool" ${type==='bool'?'selected':''}>Ja/Nein</option>
+        <option value="multi" ${type==='multi'?'selected':''}>Mehrfachauswahl</option>
+        <option value="file" ${type==='file'?'selected':''}>Foto-Upload (durch Kunden)</option>
       </select>
       <label class="bool-label"><input type="checkbox" class="cf-required" ${field.required?'checked':''}> Pflichtfeld</label>
       <button type="button" class="cf-remove" onclick="document.getElementById('cf-row-${rowId}').remove()">✕</button>
-      <input type="text" class="cf-options" placeholder="Optionen, kommagetrennt (nur bei Auswahl)" value="${(field.options||[]).join(', ')}" style="display:${type==='select'?'block':'none'}">
+      <input type="text" class="cf-options" placeholder="Optionen, kommagetrennt (bei Auswahl/Mehrfachauswahl)" value="${(field.options||[]).join(', ')}" style="display:${(needsOptions||type==='multi')?'block':'none'}">
     </div>
   `;
 }
@@ -2181,7 +2195,7 @@ window.addCustomFieldRow = function(field){
 window.toggleCfOptions = function(rowId){
   const row = document.getElementById('cf-row-'+rowId);
   const type = row.querySelector('.cf-type').value;
-  row.querySelector('.cf-options').style.display = type === 'select' ? 'block' : 'none';
+  row.querySelector('.cf-options').style.display = ['select','radio','multi'].includes(type) ? 'block' : 'none';
 };
 
 function collectCustomFields(){
@@ -2194,7 +2208,7 @@ function collectCustomFields(){
     const required = row.querySelector('.cf-required').checked;
     const optionsRaw = row.querySelector('.cf-options').value.trim();
     const field = { label, type, required };
-    if(type === 'select'){
+    if(['select','radio','multi'].includes(type)){
       field.options = optionsRaw.split(',').map(o => o.trim()).filter(Boolean);
     }
     fields.push(field);
@@ -2238,11 +2252,22 @@ function renderPaketeList(){
   `).join('');
 }
 
+window.suggestPaketSlug = function(){
+  const slugEl = document.getElementById('pk-slug');
+  if(slugEl.dataset.manuallyEdited === '1') return;
+  const name = document.getElementById('pk-name').value;
+  slugEl.value = name.toLowerCase()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+};
+
 window.resetPaketForm = function(){
   document.getElementById('pk-edit-id').value = '';
   document.getElementById('pk-icon').value = '';
   document.getElementById('pk-zielgruppe').value = '';
   document.getElementById('pk-name').value = '';
+  document.getElementById('pk-slug').value = '';
+  document.getElementById('pk-slug').dataset.manuallyEdited = '0';
   document.getElementById('pk-beschreibung').value = '';
   document.getElementById('pk-extras').value = '';
   document.getElementById('pk-preis').value = '';
@@ -2265,6 +2290,8 @@ window.editPaket = function(id){
   document.getElementById('pk-icon').value = p.icon || '';
   document.getElementById('pk-zielgruppe').value = p.zielgruppe || '';
   document.getElementById('pk-name').value = p.name || '';
+  document.getElementById('pk-slug').value = p.slug || '';
+  document.getElementById('pk-slug').dataset.manuallyEdited = '1';
   document.getElementById('pk-beschreibung').value = p.beschreibung || '';
   document.getElementById('pk-extras').value = (p.extras || []).join('\n');
   document.getElementById('pk-preis').value = p.preis_ab != null ? p.preis_ab : '';
@@ -2304,6 +2331,7 @@ window.savePaket = function(){
     icon: document.getElementById('pk-icon').value.trim() || '📦',
     zielgruppe: document.getElementById('pk-zielgruppe').value.trim(),
     name: name,
+    slug: document.getElementById('pk-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'') || null,
     beschreibung: document.getElementById('pk-beschreibung').value.trim(),
     services_ids: services_ids,
     leistungen: leistungen,
@@ -2353,18 +2381,18 @@ window.seedDefaultPakete = async function(){
   btn.textContent = 'Lege Pakete an ...';
 
   const defaults = [
-    { icon:'🏠', zielgruppe:'Privat', name:'Einfamilienhaus-Paket', beschreibung:'Rundum-Sauberkeit für Ihr Zuhause', services_ids:['haushalt','fenster'], extras:['Betten frisch beziehen'], custom_fields:[{label:'Anzahl Bewohner',type:'number',required:true},{label:'Haustiere vorhanden',type:'bool',required:false}], preis_ab:79, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:1 },
-    { icon:'🏢', zielgruppe:'Privat', name:'Wohnung-Paket', beschreibung:'Für Wohnungen und Mehrfamilienhäuser', services_ids:['haushalt'], extras:[], custom_fields:[{label:'Anzahl Zimmer',type:'number',required:true},{label:'Etage',type:'text',required:false}], preis_ab:54, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:2 },
-    { icon:'🪜', zielgruppe:'Hausverwaltung', name:'Treppenhaus-Paket', beschreibung:'Für Vermieter und Hausverwaltungen', services_ids:['treppe'], extras:['Briefkastenanlage', 'Kellerflur'], custom_fields:[{label:'Anzahl Wohnungen im Haus',type:'number',required:true},{label:'Aufzug vorhanden',type:'bool',required:false}], preis_ab:29, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:3 },
-    { icon:'💼', zielgruppe:'Gewerbe', name:'Büro-Paket', beschreibung:'Für kleine bis mittlere Büros', services_ids:['buero','fenster','muell'], extras:[], custom_fields:[{label:'Anzahl Büroarbeitsplätze',type:'number',required:true},{label:'Mitarbeiteranzahl',type:'number',required:true},{label:'Anzahl Toiletten',type:'number',required:false}], preis_ab:68, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:4 },
-    { icon:'⚖️', zielgruppe:'Kanzlei / Ingenieurbüro', name:'Kanzlei- & Praxis-Paket', beschreibung:'Diskrete, gründliche Reinigung für Kanzleien, Ingenieur- und Architekturbüros', services_ids:['buero','fenster'], extras:['Reinigung außerhalb der Bürozeiten', 'Diskretion & Vertraulichkeit'], custom_fields:[{label:'Anzahl Arbeitsplätze',type:'number',required:true},{label:'Reinigung nur außerhalb der Öffnungszeiten',type:'bool',required:false}], preis_ab:89, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:5 },
-    { icon:'🍽️', zielgruppe:'Gastronomie', name:'Gastronomie-Paket', beschreibung:'Für Restaurants, Cafés und Imbisse', services_ids:['buero','fenster','muell'], extras:['Küchen- & Sanitärbereich', 'Hygienekonforme Reinigung'], custom_fields:[{label:'Anzahl Sitzplätze',type:'number',required:true},{label:'Küchenbereich enthalten',type:'bool',required:true},{label:'Öffnungszeiten',type:'text',required:false}], preis_ab:95, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:6 },
-    { icon:'🛍️', zielgruppe:'Einzelhandel', name:'Laden- & Buchhandlungs-Paket', beschreibung:'Für Geschäfte, Boutiquen und Buchhandlungen', services_ids:['buero','fenster'], extras:['Schaufensterreinigung', 'Verkaufsflächenpflege'], custom_fields:[{label:'Verkaufsfläche in m²',type:'number',required:true},{label:'Schaufenster vorhanden',type:'bool',required:false}], preis_ab:69, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:7 },
-    { icon:'🚗', zielgruppe:'Autohaus / Werkstatt', name:'Autohaus- & Werkstatt-Paket', beschreibung:'Für Autohäuser, KFZ-Werkstätten und Showrooms', services_ids:['grund','fenster','hausmeister'], extras:['Ölfleckenentfernung auf Anfrage'], custom_fields:[{label:'Anzahl Stellplätze/Hebebühnen',type:'number',required:true},{label:'Ölflecken vorhanden',type:'bool',required:false}], preis_ab:150, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:8 },
-    { icon:'🔧', zielgruppe:'Handwerk', name:'Handwerker- & Werkstatt-Paket', beschreibung:'Für Werkstätten, Ateliers und kleine Produktionsräume', services_ids:['grund','hausmeister'], extras:['Staub- und Spänebeseitigung'], custom_fields:[{label:'Werkstattfläche in m²',type:'number',required:true},{label:'Art der Verschmutzung',type:'select',options:['Staub','Späne','Öl/Fett','Sonstiges'],required:false}], preis_ab:120, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:9 },
-    { icon:'🅿️', zielgruppe:'Außenanlagen', name:'Parkplatz-Paket', beschreibung:'Kehrservice und Winterdienst für Parkflächen', services_ids:['winter','grund'], extras:['Laub- & Müllbeseitigung'], custom_fields:[{label:'Anzahl Stellplätze',type:'number',required:true},{label:'Fläche in m²',type:'number',required:false}], preis_ab:35, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:10 },
-    { icon:'🧰', zielgruppe:'Hausverwaltung', name:'Hausmeister-Komplettpaket', beschreibung:'Rundum-Betreuung für Immobilien – alles aus einer Hand', services_ids:['hausmeister','garten','winter','muell'], extras:['Ein fester Ansprechpartner für alles'], custom_fields:[{label:'Anzahl Einheiten/Wohnungen',type:'number',required:true},{label:'Gewünschte Besuchsfrequenz',type:'select',options:['Wöchentlich','14-tägig','Monatlich'],required:false}], preis_ab:76, preis_einheit_text:'· 2 Stunden · inkl. MwSt.', beliebt:false, reihenfolge:11 },
-    { icon:'🏗️', zielgruppe:'Neubau / Renovierung', name:'Bauendreinigung-Paket', beschreibung:'Tiefenreinigung nach Umzug, Renovierung oder Neubau', services_ids:['grund','fenster'], extras:['Entfernung von Bauschutt-Resten', 'Fenster inkl. Rahmen'], custom_fields:[{label:'Fläche in m²',type:'number',required:true},{label:'Bauschutt-Reste vorhanden',type:'bool',required:false}], preis_ab:190, preis_einheit_text:'inkl. MwSt.', beliebt:false, reihenfolge:12 },
+    { icon:'🏠', zielgruppe:'Privat', name:'Einfamilienhaus-Paket', slug:'einfamilienhaus', beschreibung:'Rundum-Sauberkeit für Ihr Zuhause', services_ids:['haushalt','fenster'], extras:['Betten frisch beziehen'], custom_fields:[{label:'Anzahl Bewohner',type:'number',required:true},{label:'Haustiere vorhanden',type:'bool',required:false}], preis_ab:79, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:1 },
+    { icon:'🏢', zielgruppe:'Privat', name:'Wohnung-Paket', slug:'wohnung', beschreibung:'Für Wohnungen und Mehrfamilienhäuser', services_ids:['haushalt'], extras:[], custom_fields:[{label:'Anzahl Zimmer',type:'number',required:true},{label:'Etage',type:'text',required:false}], preis_ab:54, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:2 },
+    { icon:'🪜', zielgruppe:'Hausverwaltung', name:'Treppenhaus-Paket', slug:'treppenhaus', beschreibung:'Für Vermieter und Hausverwaltungen', services_ids:['treppe'], extras:['Briefkastenanlage', 'Kellerflur'], custom_fields:[{label:'Anzahl Wohnungen im Haus',type:'number',required:true},{label:'Aufzug vorhanden',type:'bool',required:false}], preis_ab:29, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:3 },
+    { icon:'💼', zielgruppe:'Gewerbe', name:'Büro-Paket', slug:'buero', beschreibung:'Für kleine bis mittlere Büros', services_ids:['buero','fenster','muell'], extras:[], custom_fields:[{label:'Anzahl Büroarbeitsplätze',type:'number',required:true},{label:'Mitarbeiteranzahl',type:'number',required:true},{label:'Anzahl Toiletten',type:'number',required:false}], preis_ab:68, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:true, reihenfolge:4 },
+    { icon:'⚖️', zielgruppe:'Kanzlei / Ingenieurbüro', name:'Kanzlei- & Praxis-Paket', slug:'kanzlei-praxis', beschreibung:'Diskrete, gründliche Reinigung für Kanzleien, Ingenieur- und Architekturbüros', services_ids:['buero','fenster'], extras:['Reinigung außerhalb der Bürozeiten', 'Diskretion & Vertraulichkeit'], custom_fields:[{label:'Anzahl Arbeitsplätze',type:'number',required:true},{label:'Reinigung nur außerhalb der Öffnungszeiten',type:'bool',required:false}], preis_ab:89, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:5 },
+    { icon:'🍽️', zielgruppe:'Gastronomie', name:'Gastronomie-Paket', slug:'gastronomie', beschreibung:'Für Restaurants, Cafés und Imbisse', services_ids:['buero','fenster','muell'], extras:['Küchen- & Sanitärbereich', 'Hygienekonforme Reinigung'], custom_fields:[{label:'Anzahl Sitzplätze',type:'number',required:true},{label:'Küchenbereich enthalten',type:'bool',required:true},{label:'Öffnungszeiten',type:'text',required:false}], preis_ab:95, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:6 },
+    { icon:'🛍️', zielgruppe:'Einzelhandel', name:'Laden- & Buchhandlungs-Paket', slug:'laden-buchhandlung', beschreibung:'Für Geschäfte, Boutiquen und Buchhandlungen', services_ids:['buero','fenster'], extras:['Schaufensterreinigung', 'Verkaufsflächenpflege'], custom_fields:[{label:'Verkaufsfläche in m²',type:'number',required:true},{label:'Schaufenster vorhanden',type:'bool',required:false}], preis_ab:69, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:7 },
+    { icon:'🚗', zielgruppe:'Autohaus / Werkstatt', name:'Autohaus- & Werkstatt-Paket', slug:'autowerkstatt', beschreibung:'Für Autohäuser, KFZ-Werkstätten und Showrooms', services_ids:['grund','fenster','hausmeister'], extras:['Ölfleckenentfernung auf Anfrage'], custom_fields:[{label:'Anzahl Stellplätze/Hebebühnen',type:'number',required:true},{label:'Ölflecken vorhanden',type:'bool',required:false}], preis_ab:150, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:8 },
+    { icon:'🔧', zielgruppe:'Handwerk', name:'Handwerker- & Werkstatt-Paket', slug:'handwerker-werkstatt', beschreibung:'Für Werkstätten, Ateliers und kleine Produktionsräume', services_ids:['grund','hausmeister'], extras:['Staub- und Spänebeseitigung'], custom_fields:[{label:'Werkstattfläche in m²',type:'number',required:true},{label:'Art der Verschmutzung',type:'select',options:['Staub','Späne','Öl/Fett','Sonstiges'],required:false}], preis_ab:120, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:9 },
+    { icon:'🅿️', zielgruppe:'Außenanlagen', name:'Parkplatz-Paket', slug:'parkplatz', beschreibung:'Kehrservice und Winterdienst für Parkflächen', services_ids:['winter','grund'], extras:['Laub- & Müllbeseitigung'], custom_fields:[{label:'Anzahl Stellplätze',type:'number',required:true},{label:'Fläche in m²',type:'number',required:false}], preis_ab:35, preis_einheit_text:'je Einsatz · inkl. MwSt.', beliebt:false, reihenfolge:10 },
+    { icon:'🧰', zielgruppe:'Hausverwaltung', name:'Hausmeister-Komplettpaket', slug:'hausmeister-komplett', beschreibung:'Rundum-Betreuung für Immobilien – alles aus einer Hand', services_ids:['hausmeister','garten','winter','muell'], extras:['Ein fester Ansprechpartner für alles'], custom_fields:[{label:'Anzahl Einheiten/Wohnungen',type:'number',required:true},{label:'Gewünschte Besuchsfrequenz',type:'select',options:['Wöchentlich','14-tägig','Monatlich'],required:false}], preis_ab:76, preis_einheit_text:'· 2 Stunden · inkl. MwSt.', beliebt:false, reihenfolge:11 },
+    { icon:'🏗️', zielgruppe:'Neubau / Renovierung', name:'Bauendreinigung-Paket', slug:'bauendreinigung', beschreibung:'Tiefenreinigung nach Umzug, Renovierung oder Neubau', services_ids:['grund','fenster'], extras:['Entfernung von Bauschutt-Resten', 'Fenster inkl. Rahmen'], custom_fields:[{label:'Fläche in m²',type:'number',required:true},{label:'Bauschutt-Reste vorhanden',type:'bool',required:false}], preis_ab:190, preis_einheit_text:'inkl. MwSt.', beliebt:false, reihenfolge:12 },
   ];
 
   try {
