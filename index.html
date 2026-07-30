@@ -62,7 +62,7 @@
             ${leistungen.map(l => `<li>${l}</li>`).join('')}
             ${extras.map(e => `<li>${e}</li>`).join('')}
           </ul>
-          <a href="/anfrage.html?paket=${id}" class="preis-btn">Bitte auswählen →</a>
+          <a href="${p.slug ? '/pakete/'+p.slug : '/anfrage.html?paket='+id}" class="preis-btn">Bitte auswählen →</a>
         </div>`;
       });
       paketeGrid.innerHTML = html;
