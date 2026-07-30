@@ -10,7 +10,7 @@
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
@@ -37,14 +37,24 @@
     if(window._applyLivePreise) window._applyLivePreise();
   }).catch(err => console.warn('Preise konnten nicht geladen werden:', err));
 
+  function applyPaketDoc(snap){
+    if(!snap.exists()) return;
+    window._selectedPaket = snap.data();
+    if(window._applySelectedPaket) window._applySelectedPaket();
+  }
+
+  // Bevorzugt: saubere URL /pakete/<slug> – Fallback: ?paket=<Firestore-ID> (bestehende Links bleiben funktionsfähig)
+  const pathMatch = window.location.pathname.match(/\/pakete\/([a-z0-9-]+)/i);
+  const slug = pathMatch ? pathMatch[1] : null;
   const urlParams = new URLSearchParams(window.location.search);
   const paketId = urlParams.get('paket');
-  if(paketId){
-    getDoc(doc(db, 'pakete', paketId)).then(snap => {
-      if(!snap.exists()) return;
-      window._selectedPaket = snap.data();
-      if(window._applySelectedPaket) window._applySelectedPaket();
+
+  if(slug){
+    getDocs(query(collection(db, 'pakete'), where('slug', '==', slug))).then(snap => {
+      if(!snap.empty) applyPaketDoc(snap.docs[0]);
     }).catch(err => console.warn('Paket konnte nicht geladen werden:', err));
+  } else if(paketId){
+    getDoc(doc(db, 'pakete', paketId)).then(applyPaketDoc).catch(err => console.warn('Paket konnte nicht geladen werden:', err));
   }
 </script>
 <style>
@@ -603,9 +613,16 @@ function fieldHTML(domId, field, required){
   if(field.type === 'text'){
     return `<div class="field"><label>${field.label}${reqMark}</label><input type="text" id="${domId}"></div>`;
   }
+  if(field.type === 'date'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="date" id="${domId}"></div>`;
+  }
   if(field.type === 'select'){
     const opts = field.options.map(o => `<option value="${o}">${o}</option>`).join('');
     return `<div class="field"><label>${field.label}${reqMark}</label><select id="${domId}"><option value="">– Bitte wählen –</option>${opts}</select></div>`;
+  }
+  if(field.type === 'radio'){
+    const opts = field.options.map((o,i) => `<label class="cb-chip"><input type="radio" name="${domId}" class="radio-option" value="${o}" ${i===0?'':''}> ${o}</label>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><div class="cb-group" id="${domId}">${opts}</div></div>`;
   }
   if(field.type === 'bool'){
     return `<div class="field"><label class="bool-label"><input type="checkbox" id="${domId}"> ${field.label}</label></div>`;
@@ -614,8 +631,56 @@ function fieldHTML(domId, field, required){
     const opts = field.options.map(o => `<label class="cb-chip"><input type="checkbox" class="cb-option" data-value="${o}"> ${o}</label>`).join('');
     return `<div class="field"><label>${field.label}${reqMark}</label><div class="cb-group" id="${domId}">${opts}</div></div>`;
   }
+  if(field.type === 'file'){
+    return `<div class="field">
+      <label>${field.label}${reqMark}</label>
+      <input type="file" id="${domId}_input" accept="image/*" onchange="handleDynFileUpload('${domId}', this)">
+      <div id="${domId}_preview" style="margin-top:8px;display:none">
+        <img id="${domId}_preview_img" style="max-width:160px;border-radius:10px;display:block;margin-bottom:6px">
+        <button type="button" onclick="removeDynFile('${domId}')" style="padding:6px 12px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:11px;cursor:pointer;font-family:inherit">Entfernen</button>
+      </div>
+      <input type="hidden" id="${domId}" value="">
+    </div>`;
+  }
   return '';
 }
+
+window.handleDynFileUpload = function(domId, input){
+  const file = input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ alert('Bitte eine Bilddatei auswählen.'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 640;
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      let quality = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while(dataUrl.length > 500000 && quality > 0.3){
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      document.getElementById(domId).value = dataUrl;
+      document.getElementById(domId+'_preview_img').src = dataUrl;
+      document.getElementById(domId+'_preview').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removeDynFile = function(domId){
+  document.getElementById(domId).value = '';
+  document.getElementById(domId+'_input').value = '';
+  document.getElementById(domId+'_preview').style.display = 'none';
+};
 
 let step2BuiltForServices = null;
 function buildDynServiceFields(){
@@ -660,6 +725,14 @@ window.toggleOptional = function(id){
 };
 
 function collectFieldValue(domId, field){
+  if(field.type === 'radio'){
+    const checked = document.querySelector(`input[name="${domId}"].radio-option:checked`);
+    return checked ? checked.value : '';
+  }
+  if(field.type === 'file'){
+    const el = document.getElementById(domId);
+    return el && el.value ? el.value : '';
+  }
   const el = document.getElementById(domId);
   if(!el) return '';
   if(field.type === 'bool') return el.checked;
@@ -694,6 +767,14 @@ function collectPaketCustomAnswers(){
     if(val !== '' && val !== false) answers[f.label] = val;
   });
   return answers;
+}
+
+function paketAntwortenEmailText(paketAntworten){
+  const paket = window._selectedPaket;
+  const fileLabels = new Set((paket && Array.isArray(paket.custom_fields) ? paket.custom_fields : []).filter(f => f.type === 'file').map(f => f.label));
+  return Object.entries(paketAntworten)
+    .map(([k,v]) => `${k}: ${fileLabels.has(k) ? '[Foto beigefügt – siehe Dashboard]' : v}`)
+    .join(' · ');
 }
 
 function computeVollstaendigkeit(){
@@ -1078,7 +1159,7 @@ function submitRequest(){
         fd.append('nachricht', nachricht);
         fd.append('details_je_leistung', detailsText);
         fd.append('gewaehltes_paket', gewaehltesPaket);
-        fd.append('paket_antworten', Object.entries(paketAntworten).map(([k,v]) => `${k}: ${v}`).join(' · '));
+        fd.append('paket_antworten', paketAntwortenEmailText(paketAntworten));
         fd.append('geschaetzter_auftragswert', auftragswert + ' € (geschätzt)');
         fd.append('prioritaet', prioritaet);
         fetch('https://api.web3forms.com/submit', { method:'POST', body:fd }).catch(() => {});
