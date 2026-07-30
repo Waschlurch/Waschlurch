@@ -746,6 +746,7 @@ a { color:inherit; }
         <div class="paket-form-title">Schnellstart</div>
         <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:14px">Noch unsicher, wie man Pakete sinnvoll aufbaut? Mit einem Klick werden 12 fertige Pakete angelegt (Privathaushalte, Büros, Kanzleien, Gastronomie, Einzelhandel, Autohaus/Werkstatt, Handwerksbetriebe, Parkplätze, Hausverwaltung u.v.m.) – Preise und Texte kannst du danach jederzeit anpassen.</p>
         <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="seedDefaultPakete()" id="pk-seed-btn">✨ 12 Standard-Pakete jetzt anlegen</button>
+        <button class="btn" style="width:auto;padding:13px 24px;margin-left:10px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#3B82F6" onclick="fixMissingSlugs()" id="pk-fix-slugs-btn">🔗 Fehlende URL-Kürzel für alle Pakete automatisch vergeben</button>
       </div>
 
       <div class="paket-form">
@@ -2256,9 +2257,7 @@ window.suggestPaketSlug = function(){
   const slugEl = document.getElementById('pk-slug');
   if(slugEl.dataset.manuallyEdited === '1') return;
   const name = document.getElementById('pk-name').value;
-  slugEl.value = name.toLowerCase()
-    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
-    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  slugEl.value = slugify(name);
 };
 
 window.resetPaketForm = function(){
@@ -2370,6 +2369,45 @@ window.togglePaketStatus = function(id, currentStatus){
 window.deletePaket = function(id){
   if(!confirm('Dieses Paket wirklich endgültig löschen? (Alternativ: "Außer Betrieb nehmen", um es nur auszublenden)')) return;
   deleteDoc(doc(db, 'pakete', id)).catch(err => console.error(err));
+};
+
+function slugify(text){
+  return text.toLowerCase()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+
+window.fixMissingSlugs = async function(){
+  const btn = document.getElementById('pk-fix-slugs-btn');
+  const missing = allPakete.filter(p => !p.slug);
+  if(missing.length === 0){
+    alert('Alle Pakete haben bereits ein URL-Kürzel.');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Vergebe URL-Kürzel ...';
+
+  const usedSlugs = new Set(allPakete.filter(p => p.slug).map(p => p.slug));
+  try {
+    for(const p of missing){
+      let base = slugify(p.name || 'paket');
+      let slug = base;
+      let i = 2;
+      while(usedSlugs.has(slug)){
+        slug = base + '-' + i;
+        i++;
+      }
+      usedSlugs.add(slug);
+      await updateDoc(doc(db, 'pakete', p.id), { slug });
+    }
+    btn.textContent = `✓ ${missing.length} URL-Kürzel vergeben!`;
+    setTimeout(() => { btn.disabled = false; btn.textContent = '🔗 Fehlende URL-Kürzel für alle Pakete automatisch vergeben'; }, 2500);
+  } catch(err) {
+    console.error(err);
+    alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
+    btn.disabled = false;
+    btn.textContent = '🔗 Fehlende URL-Kürzel für alle Pakete automatisch vergeben';
+  }
 };
 
 window.seedDefaultPakete = async function(){
