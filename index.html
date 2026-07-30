@@ -52,7 +52,7 @@
         html += `
         <div class="preis-card ${p.beliebt ? 'featured' : ''}">
           ${p.beliebt ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
-          <div class="preis-icon">${p.icon || '🧹'}</div>
+          ${p.bild_base64 ? `<img src="${p.bild_base64}" class="preis-img" alt="${p.name||''}">` : `<div class="preis-icon">${p.icon || '🧹'}</div>`}
           <div class="preis-name">${p.zielgruppe || ''}</div>
           <div class="preis-title">${p.name || ''}</div>
           ${p.beschreibung ? `<div class="preis-desc">${p.beschreibung}</div>` : ''}
@@ -351,6 +351,7 @@ section { padding:96px 5%; }
   white-space:nowrap;
 }
 .preis-icon { font-size:32px; margin-bottom:10px; }
+.preis-img { width:100%; height:140px; object-fit:cover; border-radius:16px; margin-bottom:14px; }
 .preis-name { font-size:13px; font-weight:600; color:var(--green-dark); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
 .preis-card.featured .preis-name { color:var(--green); }
 .preis-title { font-size:19px; font-weight:700; color:var(--black); margin-bottom:8px; letter-spacing:-0.3px; }
