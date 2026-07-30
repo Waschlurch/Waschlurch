@@ -755,6 +755,15 @@ a { color:inherit; }
           <div class="field"><label>Icon (Emoji)</label><input type="text" id="pk-icon" placeholder="🏠" maxlength="4"></div>
           <div class="field"><label>Zielgruppe</label><input type="text" id="pk-zielgruppe" placeholder="z. B. Privat, Gewerbe, Handwerk"></div>
         </div>
+        <div class="field">
+          <label>Paket-Bild (optional, wird automatisch komprimiert)</label>
+          <input type="file" id="pk-bild-input" accept="image/*" onchange="handlePaketBildUpload(this)">
+          <div id="pk-bild-preview" style="margin-top:10px;display:none">
+            <img id="pk-bild-preview-img" style="max-width:200px;border-radius:12px;display:block;margin-bottom:8px">
+            <button type="button" onclick="removePaketBild()" style="padding:7px 14px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:12px;cursor:pointer;font-family:inherit">Bild entfernen</button>
+          </div>
+          <input type="hidden" id="pk-bild-data" value="">
+        </div>
         <div class="field"><label>Paketname</label><input type="text" id="pk-name" placeholder="z. B. Einfamilienhaus-Paket"></div>
         <div class="field"><label>Kurzbeschreibung</label><input type="text" id="pk-beschreibung" placeholder="z. B. Rundum-Sauberkeit für Ihr Zuhause"></div>
         <div class="field">
@@ -2100,8 +2109,49 @@ function renderBericht(){
   `).join('') : '<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,0.4)">Keine Ausgaben im Zeitraum.</td></tr>';
 }
 
+// ── PAKET-BILD UPLOAD (komprimiert, in Firestore gespeichert) ─────────────────────
+window.handlePaketBildUpload = function(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ alert('Bitte eine Bilddatei auswählen.'); return; }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 640;
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      let quality = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      // Iterativ nachjustieren, damit das Dokument klein genug für Firestore bleibt (< 700 KB)
+      while(dataUrl.length > 700000 && quality > 0.3){
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      document.getElementById('pk-bild-data').value = dataUrl;
+      document.getElementById('pk-bild-preview-img').src = dataUrl;
+      document.getElementById('pk-bild-preview').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removePaketBild = function(){
+  document.getElementById('pk-bild-data').value = '';
+  document.getElementById('pk-bild-input').value = '';
+  document.getElementById('pk-bild-preview').style.display = 'none';
+};
+
 // ── PAKETE ─────────────────────
 let customFieldRowCounter = 0;
+
 
 function customFieldRowHTML(rowId, field){
   field = field || {};
@@ -2172,6 +2222,7 @@ function renderPaketeList(){
   listEl.innerHTML = allPakete.map(p => `
     <div class="paket-card ${p.status !== 'aktiv' ? 'inaktiv' : ''}">
       <div class="paket-card-top">
+        ${p.bild_base64 ? `<img src="${p.bild_base64}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0">` : ''}
         <div>
           <div class="paket-card-name">${p.icon||'📦'} ${p.name||''} ${p.beliebt ? '<span style="color:var(--green);font-size:11px">★ Beliebt</span>' : ''}</div>
           <div class="paket-card-meta">${p.zielgruppe||''} · ${p.status === 'aktiv' ? 'Aktiv – sichtbar auf Website' : 'Außer Betrieb'} · ab ${p.preis_ab!=null?p.preis_ab+' €':'–'}</div>
@@ -2200,6 +2251,9 @@ window.resetPaketForm = function(){
   document.getElementById('pk-beliebt').checked = false;
   document.querySelectorAll('.pk-leistung-cb').forEach(cb => cb.checked = false);
   document.getElementById('pk-custom-fields-list').innerHTML = '';
+  document.getElementById('pk-bild-data').value = '';
+  document.getElementById('pk-bild-input').value = '';
+  document.getElementById('pk-bild-preview').style.display = 'none';
   document.getElementById('paket-form-title').textContent = 'Neues Paket erstellen';
   document.getElementById('pk-save-btn').textContent = 'Paket speichern';
 };
@@ -2221,6 +2275,14 @@ window.editPaket = function(id){
   document.querySelectorAll('.pk-leistung-cb').forEach(cb => { cb.checked = ids.includes(cb.value); });
   document.getElementById('pk-custom-fields-list').innerHTML = '';
   (Array.isArray(p.custom_fields) ? p.custom_fields : []).forEach(f => window.addCustomFieldRow(f));
+  document.getElementById('pk-bild-data').value = p.bild_base64 || '';
+  document.getElementById('pk-bild-input').value = '';
+  if(p.bild_base64){
+    document.getElementById('pk-bild-preview-img').src = p.bild_base64;
+    document.getElementById('pk-bild-preview').style.display = 'block';
+  } else {
+    document.getElementById('pk-bild-preview').style.display = 'none';
+  }
   document.getElementById('paket-form-title').textContent = 'Paket bearbeiten: ' + (p.name || '');
   document.getElementById('pk-save-btn').textContent = 'Änderungen speichern';
   window.switchView('pakete');
@@ -2247,6 +2309,7 @@ window.savePaket = function(){
     leistungen: leistungen,
     extras: extras,
     custom_fields: collectCustomFields(),
+    bild_base64: document.getElementById('pk-bild-data').value || null,
     preis_ab: parseFloat(document.getElementById('pk-preis').value) || null,
     preis_einheit_text: document.getElementById('pk-preis-text').value.trim() || 'inkl. MwSt.',
     reihenfolge: parseInt(document.getElementById('pk-reihenfolge').value) || 99,
