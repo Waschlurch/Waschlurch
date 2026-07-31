@@ -138,7 +138,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .tile-icon { font-size:28px; margin-bottom:8px; transition:filter .2s; }
 .tile.selected .tile-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.8)); }
 .tile-name { font-size:13px; font-weight:600; margin-bottom:2px; }
-.tile-price { font-size:11px; color:rgba(255,255,255,0.4); }
+.tile-price { font-size:11px; color:rgba(255,255,255,0.4); display:none; }
 .tile-check {
   position:absolute; top:8px; right:8px; width:18px; height:18px; border-radius:50%;
   background:var(--green); color:var(--white); font-size:11px; font-weight:700;
@@ -248,6 +248,29 @@ main { padding:64px 5% 80px; min-height:100vh; }
   .paket-banner { font-size:12px; padding:9px 14px; text-align:left; }
   .wizard-head { padding:32px 0 24px; }
 }
+
+/* COOKIE BANNER */
+.cookie-banner {
+  display:none; position:fixed; bottom:16px; left:16px; right:16px; z-index:2000;
+  max-width:640px; margin:0 auto;
+  background:var(--black); border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px; padding:20px 24px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  flex-direction:column; gap:16px;
+}
+.cookie-banner.visible { display:flex; }
+.cookie-banner-text { font-size:13px; line-height:1.6; color:rgba(255,255,255,0.7); }
+.cookie-banner-text strong { color:var(--white); }
+.cookie-banner-text a { color:var(--green); }
+.cookie-banner-actions { display:flex; gap:10px; }
+.cookie-btn-primary, .cookie-btn-secondary {
+  flex:1; padding:12px; border-radius:100px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family:inherit; border:none;
+}
+.cookie-btn-primary { background:var(--green); color:var(--white); }
+.cookie-btn-primary:hover { background:var(--green-dark); }
+.cookie-btn-secondary { background:rgba(255,255,255,0.08); color:var(--white); border:1px solid rgba(255,255,255,0.15); }
+.cookie-btn-secondary:hover { background:rgba(255,255,255,0.14); }
 </style>
 </head>
 <body>
@@ -1347,7 +1370,29 @@ document.getElementById('f-ort').addEventListener('input', function(){
 });
 
 showStep(1);
+
+window.acceptAllCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:true, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+window.acceptNecessaryCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:false, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+document.addEventListener('DOMContentLoaded', function(){
+  if(!localStorage.getItem('waschlurch_cookie_consent')) document.getElementById('cookie-banner').classList.add('visible');
+});
 </script>
 
+
+<div id="cookie-banner" class="cookie-banner">
+  <div class="cookie-banner-text">
+    🍪 <strong>Cookie-Hinweis:</strong> Wir verwenden nur technisch notwendige Speicherfunktionen – keine Werbe- oder Analyse-Cookies. Mehr dazu in unserer <a href="/datenschutz.html">Datenschutzerklärung</a>.
+  </div>
+  <div class="cookie-banner-actions">
+    <button onclick="acceptNecessaryCookies()" class="cookie-btn-secondary">Nur notwendige</button>
+    <button onclick="acceptAllCookies()" class="cookie-btn-primary">Alle akzeptieren</button>
+  </div>
+</div>
 </body>
 </html>
