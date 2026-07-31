@@ -37,7 +37,7 @@
   // ── Pakete dynamisch laden ─────────────────────
   const paketeGrid = document.getElementById('pakete-grid');
   if(paketeGrid){
-    const q = query(collection(db, 'pakete'), where('status', '==', 'aktiv'), orderBy('reihenfolge', 'asc'));
+    const q = query(collection(db, 'pakete'), orderBy('reihenfolge', 'asc'));
     getDocs(q).then(snap => {
       if(snap.empty){
         paketeGrid.innerHTML = '<p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Aktuell sind keine Pakete verfügbar. Schreiben Sie uns gerne direkt für ein individuelles Angebot.</p>';
@@ -49,9 +49,11 @@
         const id = docSnap.id;
         const leistungen = Array.isArray(p.leistungen) ? p.leistungen : [];
         const extras = Array.isArray(p.extras) ? p.extras : [];
+        const isInactive = p.status !== 'aktiv';
+        const link = p.slug ? '/pakete/'+p.slug : '/anfrage.html?paket='+id;
         html += `
-        <div class="preis-card ${p.beliebt ? 'featured' : ''}">
-          ${p.beliebt ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
+        <div class="preis-card ${p.beliebt && !isInactive ? 'featured' : ''} ${isInactive ? 'inaktiv' : ''}">
+          ${p.beliebt && !isInactive ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
           ${p.bild_base64 ? `<img src="${p.bild_base64}" class="preis-img" alt="${p.name||''}">` : `<div class="preis-icon">${p.icon || '🧹'}</div>`}
           <div class="preis-name">${p.zielgruppe || ''}</div>
           <div class="preis-title">${p.name || ''}</div>
@@ -62,7 +64,9 @@
             ${leistungen.map(l => `<li>${l}</li>`).join('')}
             ${extras.map(e => `<li>${e}</li>`).join('')}
           </ul>
-          <a href="${p.slug ? '/pakete/'+p.slug : '/anfrage.html?paket='+id}" class="preis-btn">Bitte auswählen →</a>
+          ${isInactive
+            ? `<span class="preis-btn preis-btn-disabled">Aktuell nicht verfügbar</span>`
+            : `<a href="${link}" class="preis-btn">Bitte auswählen →</a>`}
         </div>`;
       });
       paketeGrid.innerHTML = html;
@@ -381,6 +385,9 @@ section { padding:96px 5%; }
 }
 .preis-btn:hover { background:var(--black); color:var(--white); }
 .preis-card.featured .preis-btn:hover { background:var(--green-dark); border-color:var(--green-dark); }
+.preis-card.inaktiv { filter:grayscale(1); opacity:0.55; cursor:not-allowed; }
+.preis-card.inaktiv:hover { transform:none; box-shadow:none; border-color:var(--gray-200); }
+.preis-btn-disabled { background:var(--gray-200); color:var(--gray-500); border-color:var(--gray-200); cursor:not-allowed; pointer-events:none; }
 
 /* SCROLL-ANIMATION */
 .reveal { opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
