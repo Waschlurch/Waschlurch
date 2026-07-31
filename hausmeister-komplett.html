@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anfrage: Hausmeister-Komplettpaket – Waschlurch</title>
+<script>window._selectedPaket = {"name": "Hausmeister-Komplettpaket", "icon": "🧰", "services_ids": ["hausmeister", "garten", "winter", "muell"], "custom_fields": [{"label": "Anzahl Einheiten/Wohnungen", "type": "number", "required": true}, {"label": "Gewünschte Besuchsfrequenz", "type": "select", "options": ["Wöchentlich", "14-tägig", "Monatlich"], "required": false}]};</script>
+
+<link rel="icon" type="image/png" href="/apple-touch-icon.png?v=5">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=5">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window._db = db;
+  window._collection = collection;
+  window._addDoc = addDoc;
+  window._serverTimestamp = serverTimestamp;
+  window._firebaseReady = true;
+
+  getDoc(doc(db, 'preise', 'aktuell')).then(snap => {
+    if(!snap.exists()) return;
+    window._livePreise = snap.data();
+    if(window._applyLivePreise) window._applyLivePreise();
+  }).catch(err => console.warn('Preise konnten nicht geladen werden:', err));
+
+  getDocs(query(collection(db, 'pakete'), where('slug', '==', 'hausmeister-komplett'))).then(snap => {
+    if(!snap.empty && snap.docs[0].data().status === 'inaktiv'){
+      window._selectedPaket.status = 'inaktiv';
+      if(window._applySelectedPaket) window._applySelectedPaket();
+    }
+  }).catch(err => console.warn('Status konnte nicht geprüft werden:', err));
+</script>
+<style>
+:root {
+  --green: #22C55E;
+  --green-dark: #15803D;
+  --green-light: #DCFCE7;
+  --black: #0A0A0A;
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-500: #6B7280;
+  --gray-200: #E5E7EB;
+  --gray-100: #F9FAFB;
+  --white: #FFFFFF;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
+
+/* NAV */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  background:#FFFFFF;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  padding:0 5%; height:64px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-logo img { height:36px; width:auto; }
+.nav-back { font-size:14px; font-weight:600; color:var(--gray-700); text-decoration:none; transition:color .2s; }
+.nav-back:hover { color:var(--green-dark); }
+
+/* LAYOUT */
+main { padding:64px 5% 80px; min-height:100vh; }
+.wizard-wrap { max-width:680px; margin:0 auto; }
+.wizard-head { text-align:center; padding:48px 0 32px; }
+.tag { font-size:13px; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:12px; }
+.wizard-title { font-size:clamp(28px,4vw,40px); font-weight:700; letter-spacing:-1px; line-height:1.15; margin-bottom:14px; }
+.wizard-sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.6; max-width:480px; margin:0 auto; }
+
+/* PROGRESS */
+.progress { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:40px; }
+.progress-dot {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.4);
+  transition:all .3s; flex-shrink:0;
+}
+.progress-line { width:20px; height:2px; background:rgba(255,255,255,0.12); transition:background .3s; }
+.progress-dot.done { background:var(--green); border-color:var(--green); color:var(--white); }
+.progress-dot.active { border-color:var(--green); color:var(--green); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
+.progress-line.done { background:var(--green); }
+
+/* CARD */
+.wizard-card {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:24px; padding:36px;
+}
+.step-panel { display:none; }
+.step-panel.active { display:block; animation:fadein .3s ease; }
+@keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.step-label { font-size:12px; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+.step-heading { font-size:22px; font-weight:700; margin-bottom:24px; letter-spacing:-0.3px; }
+
+/* SERVICE TILES */
+.tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.tile {
+  background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:16px; padding:18px 12px; text-align:center; cursor:pointer;
+  transition:all .2s; position:relative;
+}
+.tile:hover { border-color:rgba(34,197,94,0.4); }
+.tile.selected { background:rgba(34,197,94,0.12); border-color:var(--green); }
+.tile-icon { font-size:28px; margin-bottom:8px; transition:filter .2s; }
+.tile.selected .tile-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.8)); }
+.tile-name { font-size:13px; font-weight:600; margin-bottom:2px; }
+.tile-price { font-size:11px; color:rgba(255,255,255,0.4); }
+.tile-check {
+  position:absolute; top:8px; right:8px; width:18px; height:18px; border-radius:50%;
+  background:var(--green); color:var(--white); font-size:11px; font-weight:700;
+  display:none; align-items:center; justify-content:center;
+}
+.tile.selected .tile-check { display:flex; }
+
+/* FIELDS */
+.field { margin-bottom:18px; }
+.field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
+.field input, .field select, .field textarea {
+  width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  font-family:inherit; font-size:14px; color:var(--white); outline:none; transition:border .2s;
+}
+.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.25); }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green); }
+.field select option { background:var(--gray-900); }
+.field textarea { min-height:90px; resize:vertical; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field-error { display:none; color:#F87171; font-size:12px; margin-top:6px; }
+
+/* SUMMARY */
+.summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:24px; }
+.summary-row { display:flex; justify-content:space-between; gap:12px; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.summary-row:last-child { border-bottom:none; }
+.summary-row span:first-child { color:rgba(255,255,255,0.45); }
+.summary-row span:last-child { font-weight:600; text-align:right; }
+
+/* NAV BUTTONS */
+.wizard-nav {
+  display:flex; gap:12px; margin-top:32px;
+  position:sticky; bottom:0; left:0; right:0;
+  background:linear-gradient(to top, var(--black) 60%, transparent);
+  padding:16px 0 20px; z-index:50;
+}
+.field input.invalid, .field select.invalid, .field textarea.invalid {
+  border-color:#F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15);
+  animation:shakeInvalid .35s;
+}
+.cb-group.invalid, .code-input.invalid { border:1px solid #F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15); border-radius:12px; padding:8px; }
+@keyframes shakeInvalid { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+.scroll-top-btn {
+  position:fixed; bottom:24px; right:24px; z-index:100;
+  width:48px; height:48px; border-radius:50%;
+  background:var(--green); color:var(--white); border:none;
+  font-size:20px; cursor:pointer; box-shadow:0 6px 20px rgba(34,197,94,0.4);
+  display:none; align-items:center; justify-content:center;
+  transition:transform .15s;
+}
+.scroll-top-btn:hover { transform:scale(1.08); }
+.scroll-top-btn.visible { display:flex; }
+.paket-back-link { display:inline-block; margin-top:14px; font-size:13px; color:rgba(255,255,255,0.5); cursor:pointer; text-decoration:underline; }
+.paket-back-link:hover { color:var(--green); }
+.paket-unavailable { text-align:center; padding:80px 20px; }
+.paket-unavailable-icon { font-size:48px; margin-bottom:16px; }
+.btn { flex:1; padding:15px; border-radius:100px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; border:none; text-align:center; }
+.btn-back { background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); flex:0 0 auto; padding:15px 24px; }
+.btn-back:hover { background:rgba(255,255,255,0.06); }
+.btn-next { background:var(--green); color:var(--white); }
+.btn-next:hover { background:var(--green-dark); }
+.btn-next:disabled { opacity:.5; cursor:not-allowed; }
+
+/* SUCCESS */
+.success-icon { width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,0.15); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 20px; }
+.success-title { font-size:24px; font-weight:700; text-align:center; margin-bottom:10px; }
+.success-text { font-size:15px; color:rgba(255,255,255,0.6); text-align:center; line-height:1.6; margin-bottom:28px; }
+.success-link { display:block; text-align:center; color:var(--green); font-size:14px; font-weight:600; text-decoration:none; }
+.submit-error { display:none; color:#F87171; font-size:13px; text-align:center; margin-top:14px; }
+.code-input {
+  width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  font-family:inherit; color:var(--white); outline:none; transition:border .2s;
+}
+.code-input:focus { border-color:var(--green); }
+.code-hint { font-size:13px; color:rgba(255,255,255,0.5); text-align:center; margin-bottom:16px; }
+.code-resend { text-align:center; margin-top:16px; font-size:13px; }
+.code-resend button { background:transparent; border:none; color:var(--green); font-size:13px; cursor:pointer; font-family:inherit; font-weight:600; }
+.code-resend span { color:rgba(255,255,255,0.4); }
+
+/* DYNAMIC SERVICE FIELDS */
+.service-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px; margin-bottom:16px; }
+.service-block-title { font-size:14px; font-weight:700; color:var(--green); margin-bottom:14px; }
+.optional-toggle { font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); cursor:pointer; padding:8px 0; user-select:none; }
+.optional-toggle:hover { color:var(--white); }
+.optional-box { margin-top:10px; }
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:14px; color:var(--white); display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0; font-weight:500; }
+.field label.bool-label input { width:auto; }
+.cb-group { display:flex; flex-wrap:wrap; gap:8px; }
+.cb-chip { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; font-size:12px; cursor:pointer; text-transform:none; }
+.cb-chip input { width:auto; }
+.paket-banner {
+  margin-top:20px; display:inline-flex; align-items:center; gap:10px;
+  background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3);
+  border-radius:100px; padding:10px 20px; font-size:13px; font-weight:600; color:var(--green);
+}
+
+@media(max-width:600px) {
+  .tiles { grid-template-columns:repeat(2,1fr); }
+  .field-row { grid-template-columns:1fr; gap:0; }
+  .wizard-card { padding:20px; }
+  .progress-dot { width:26px; height:26px; font-size:11px; }
+  .progress-line { width:12px; }
+  .wizard-nav { flex-direction:column-reverse; }
+  .btn-back { width:100%; }
+  .service-block { padding:14px; }
+  .paket-banner { font-size:12px; padding:9px 14px; text-align:left; }
+  .wizard-head { padding:32px 0 24px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/logo.png?v=5" alt="Waschlurch" style="height:36px;width:auto">
+  </a>
+  <a href="/" class="nav-back">← Zur Startseite</a>
+</nav>
+
+<main>
+<button class="scroll-top-btn" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Nach oben">↑</button>
+<div class="wizard-wrap" id="wizard-content">
+
+  <div class="wizard-head">
+    <div class="tag">Kostenlose Anfrage</div>
+    <h1 class="wizard-title">In 4 Schritten zu Ihrem Angebot</h1>
+    <p class="wizard-sub">Wählen Sie Ihre Leistungen – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Kein Anruf nötig.</p>
+    <div id="paket-banner" style="display:none"></div>
+  </div>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="wizard-card">
+
+    <!-- STEP 1: LEISTUNGEN -->
+    <div class="step-panel active" data-step="1">
+      <div class="step-label">Schritt 1 von 4</div>
+      <div class="step-heading">Welche Leistung(en) benötigen Sie?</div>
+      <div class="tiles" id="tiles"></div>
+      <div class="field-error" id="err-1">Bitte wählen Sie mindestens eine Leistung aus.</div>
+    </div>
+
+    <!-- STEP 2: OBJEKT & UMFANG -->
+    <div class="step-panel" data-step="2">
+      <div class="step-label">Schritt 2 von 4</div>
+      <div class="step-heading">Objekt & Umfang</div>
+
+      <div class="field">
+        <label>Objektart *</label>
+        <select id="f-objektart">
+          <option value="">– Bitte wählen –</option>
+          <option>Einfamilienhaus</option>
+          <option>Mehrfamilienhaus</option>
+          <option>Büro</option>
+          <option>Praxis</option>
+          <option>Gewerbe</option>
+          <option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Anzahl Etagen *</label>
+          <input type="number" id="f-etagen" min="0" placeholder="z. B. 2">
+        </div>
+        <div class="field">
+          <label>Fläche in m² *</label>
+          <input type="number" id="f-flaeche" min="0" placeholder="z. B. 85">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Häufigkeit *</label>
+          <select id="f-haeufigkeit">
+            <option value="Einmalig">Einmalig</option>
+            <option value="Wöchentlich">Wöchentlich</option>
+            <option value="14-tägig">14-tägig</option>
+            <option value="Monatlich">Monatlich</option>
+            <option value="Quartalsweise">Quartalsweise</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Gewünschter Beginn *</label>
+          <select id="f-beginn">
+            <option value="Sofort">Sofort</option>
+            <option value="Innerhalb einer Woche">Innerhalb einer Woche</option>
+            <option value="Innerhalb eines Monats">Innerhalb eines Monats</option>
+            <option value="Flexibel">Flexibel</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="dyn-service-fields"></div>
+
+      <div class="field">
+        <label>Anmerkungen zum Objekt (optional)</label>
+        <textarea id="f-anmerkung" placeholder="z. B. Zugang, Besonderheiten ..."></textarea>
+      </div>
+      <div class="field-error" id="err-2">Bitte alle Pflichtfelder ausfüllen.</div>
+    </div>
+
+    <!-- STEP 3: ADRESSE -->
+    <div class="step-panel" data-step="3">
+      <div class="step-label">Schritt 3 von 4</div>
+      <div class="step-heading">Adresse & Wunschtermin</div>
+      <div class="field">
+        <label>Straße & Hausnummer *</label>
+        <input type="text" id="f-strasse" placeholder="Musterstraße 12">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>PLZ *</label>
+          <input type="text" id="f-plz" placeholder="53783" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Ort *</label>
+          <input type="text" id="f-ort" placeholder="Eitorf">
+        </div>
+      </div>
+      <div class="field">
+        <label>Wunschtermin (optional)</label>
+        <input type="date" id="f-termin" onchange="markField('f-termin', !isDateNotPast(this.value))">
+      </div>
+      <div class="field-error" id="err-3">Bitte Straße, PLZ und Ort ausfüllen.</div>
+
+      <div class="optional-toggle" onclick="toggleOptional('allg-optional-box')">+ Weitere Angaben (optional)</div>
+      <div class="optional-box" id="allg-optional-box" style="display:none">
+        <div class="field"><label class="bool-label"><input type="checkbox" id="f-park"> Parkmöglichkeiten vorhanden</label></div>
+        <div class="field"><label class="bool-label"><input type="checkbox" id="f-aufzug-allg"> Aufzug im Gebäude vorhanden</label></div>
+        <div class="field">
+          <label>Zugang zum Objekt</label>
+          <input type="text" id="f-zugang" placeholder="z. B. Schlüssel bei Nachbarn, Code fürs Tor ...">
+        </div>
+        <div class="field">
+          <label>Besondere Verschmutzungen</label>
+          <input type="text" id="f-verschmutzung-allg" placeholder="z. B. Baustaub, Fettflecken ...">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Budget (optional)</label>
+            <input type="text" id="f-budget" placeholder="z. B. bis 100 €">
+          </div>
+          <div class="field">
+            <label>Wie sind Sie auf uns aufmerksam geworden?</label>
+            <select id="f-quelle">
+              <option value="">– Bitte wählen –</option>
+              <option>Google</option>
+              <option>Empfehlung</option>
+              <option>Social Media</option>
+              <option>Sonstiges</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: KONTAKT -->
+    <div class="step-panel" data-step="4">
+      <div class="step-label">Schritt 4 von 4</div>
+      <div class="step-heading">Ihre Kontaktdaten</div>
+      <div class="summary" id="summary"></div>
+
+      <div id="contact-fields">
+        <div class="field-row">
+          <div class="field">
+            <label>Vorname *</label>
+            <input type="text" id="f-vorname" placeholder="Max">
+          </div>
+          <div class="field">
+            <label>Nachname *</label>
+            <input type="text" id="f-nachname" placeholder="Mustermann">
+          </div>
+        </div>
+        <div class="field">
+          <label>E-Mail *</label>
+          <input type="email" id="f-email" placeholder="max@beispiel.de">
+        </div>
+        <div class="field">
+          <label>Telefon * <span style="text-transform:none;font-weight:400">(muss mit 0 oder +49 beginnen)</span></label>
+          <input type="tel" id="f-tel" placeholder="0172 1234567">
+        </div>
+        <div class="field">
+          <label>Nachricht (optional)</label>
+          <textarea id="f-nachricht" placeholder="Weitere Wünsche oder Hinweise ..."></textarea>
+        </div>
+        <div class="field">
+          <label class="bool-label"><input type="checkbox" id="f-datenschutz"> Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zur Bearbeitung dieser Anfrage zu. *</label>
+        </div>
+        <div class="field-error" id="err-4">Bitte alle Pflichtfelder korrekt ausfüllen und der Datenschutzerklärung zustimmen.</div>
+      </div>
+
+      <div id="code-panel" style="display:none">
+        <div class="code-hint" id="code-hint">Wir haben einen 6-stelligen Code an Ihre E-Mail gesendet.</div>
+        <input type="text" class="code-input" id="f-code" placeholder="123456" maxlength="6" inputmode="numeric">
+        <div class="field-error" id="code-error">Der Code ist leider falsch. Bitte erneut versuchen.</div>
+        <div class="code-resend">
+          <span id="resend-timer">Erneut senden in <span id="countdown">60</span>s</span>
+          <button type="button" id="resend-btn" onclick="resendCode()" style="display:none">Code erneut senden</button>
+        </div>
+      </div>
+
+      <div class="submit-error" id="submit-error">Fehler beim Senden. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt an waschlurch@gmail.com.</div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="step-panel" data-step="success">
+      <div class="success-icon">✓</div>
+      <div class="success-title" id="success-title">Vielen Dank!</div>
+      <div class="success-text">Ihre Anfrage ist bei uns eingegangen. Wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot.</div>
+      <a href="/" class="success-link">← Zurück zur Startseite</a>
+    </div>
+
+  </div>
+
+  <div class="wizard-nav" id="wizard-nav">
+    <button type="button" class="btn btn-back" id="btn-back" onclick="prevStep()">← Zurück</button>
+    <button type="button" class="btn btn-next" id="btn-next" onclick="nextStep()">Weiter →</button>
+  </div>
+
+</div>
+</main>
+
+<script>
+const WEB3FORMS_KEY = '24205589-1aa2-44d0-a816-6bcba6b1e810';
+const TOTAL_STEPS = 4;
+
+const SERVICES = [
+  { id:'haushalt',   icon:'🏠', name:'Haushaltsreinigung',   price:'ab 54 €' },
+  { id:'buero',      icon:'🏢', name:'Büroreinigung',        price:'ab 68 €' },
+  { id:'fenster',    icon:'🪟', name:'Fensterreinigung',     price:'ab 52 €' },
+  { id:'grund',      icon:'🧹', name:'Grundreinigung',       price:'ab 190 €' },
+  { id:'hausmeister',icon:'🔧', name:'Hausmeisterservice',   price:'ab 76 € · 2 Std.' },
+  { id:'treppe',     icon:'↕️', name:'Treppenhausreinigung', price:'ab 29 €' },
+  { id:'winter',     icon:'❄️', name:'Winterdienst',         price:'ab 35 €' },
+  { id:'garten',     icon:'🌿', name:'Gartenpflege',         price:'ab 82 € · 2 Std.' },
+  { id:'muell',      icon:'🗑️', name:'Mülltonnenservice',    price:'ab 9 €/Mo.' },
+];
+
+// ── DYNAMISCHE FELDER JE LEISTUNG (Schritt 2) ─────────────────────
+const SERVICE_FIELDS = {
+  haushalt: {
+    required: [
+      { id:'badezimmer', label:'Anzahl Badezimmer', type:'number' },
+      { id:'bewohner', label:'Anzahl Bewohner', type:'number' },
+    ],
+    optional: [
+      { id:'zimmer', label:'Anzahl Zimmer', type:'number' },
+      { id:'haustiere', label:'Haustiere vorhanden', type:'bool' },
+      { id:'kinder', label:'Kinder im Haushalt', type:'bool' },
+      { id:'verschmutzung', label:'Verschmutzungsgrad', type:'select', options:['Leicht','Mittel','Stark'] },
+      { id:'leistungen', label:'Gewünschte Leistungen', type:'multi', options:['Staubsaugen','Wischen','Küche reinigen','Badezimmer reinigen','Betten beziehen','Bügeln','Fenster reinigen'] },
+      { id:'tag', label:'Bevorzugter Reinigungstag', type:'select', options:['Egal','Montag','Dienstag','Mittwoch','Donnerstag','Freitag'] },
+    ]
+  },
+  buero: {
+    required: [ { id:'arbeitsplaetze', label:'Anzahl Arbeitsplätze', type:'number' } ],
+    optional: [
+      { id:'wcs', label:'Anzahl WCs', type:'number' },
+      { id:'kueche', label:'Küche vorhanden', type:'bool' },
+      { id:'konferenz', label:'Konferenzräume vorhanden', type:'bool' },
+      { id:'empfang', label:'Empfangsbereich vorhanden', type:'bool' },
+      { id:'glas_innen', label:'Glasflächen innen', type:'bool' },
+      { id:'ausserhalb', label:'Reinigung außerhalb der Arbeitszeiten', type:'bool' },
+      { id:'schluessel', label:'Schlüssel vorhanden', type:'bool' },
+      { id:'hygiene', label:'Besondere Hygieneanforderungen', type:'text' },
+    ]
+  },
+  fenster: {
+    required: [ { id:'seiten', label:'Innen, Außen oder Beides', type:'select', options:['Innen','Außen','Beides'] } ],
+    optional: [
+      { id:'anzahl_fenster', label:'Anzahl Fenster (ca.)', type:'number' },
+      { id:'bodentief', label:'Bodentiefe Fenster', type:'bool' },
+      { id:'dachfenster', label:'Dachfenster vorhanden', type:'bool' },
+      { id:'wintergarten', label:'Wintergarten vorhanden', type:'bool' },
+      { id:'glasdach', label:'Glasdach vorhanden', type:'bool' },
+      { id:'schaufenster', label:'Schaufenster vorhanden', type:'bool' },
+      { id:'sprossen', label:'Sprossenfenster', type:'bool' },
+      { id:'leiter', label:'Leiter erforderlich', type:'bool' },
+      { id:'hebebuehne', label:'Hebebühne erforderlich', type:'bool' },
+      { id:'verschmutzung', label:'Verschmutzungsgrad', type:'select', options:['Leicht','Mittel','Stark'] },
+    ]
+  },
+  grund: {
+    required: [ { id:'gebaeudetyp', label:'Gebäudetyp', type:'select', options:['Wohnung','Haus','Büro','Gewerbe'] } ],
+    optional: [
+      { id:'letzte', label:'Letzte Grundreinigung', type:'select', options:['Weniger als 6 Monate','6–12 Monate','Über 1 Jahr','Noch nie'] },
+      { id:'boden', label:'Bodenbeläge', type:'multi', options:['Fliesen','Parkett','PVC','Teppich'] },
+      { id:'kueche', label:'Küche vorhanden', type:'bool' },
+      { id:'sanitaer', label:'Sanitärbereiche vorhanden', type:'bool' },
+      { id:'moebel', label:'Möbel vorhanden', type:'bool' },
+      { id:'bauend', label:'Bauendreinigung', type:'bool' },
+      { id:'stark', label:'Starke Verschmutzungen', type:'bool' },
+    ]
+  },
+  hausmeister: {
+    required: [ { id:'art_arbeiten', label:'Art der Arbeiten', type:'text' } ],
+    optional: [
+      { id:'aufgaben', label:'Aufgaben', type:'multi', options:['Kleinreparaturen','Lampenwechsel','Objektkontrolle','Gartenpflege','Winterdienst','Mülltonnenservice','Entrümpelung','Sonstiges'] },
+      { id:'regelmaessig', label:'Regelmäßig oder einmalig', type:'select', options:['Regelmäßig','Einmalig'] },
+      { id:'zeitaufwand', label:'Geschätzter Zeitaufwand', type:'text' },
+      { id:'material', label:'Material vorhanden', type:'bool' },
+    ]
+  },
+  treppe: {
+    required: [ { id:'wohnungen', label:'Anzahl Wohnungen', type:'number' } ],
+    optional: [
+      { id:'aufzug', label:'Aufzug vorhanden', type:'bool' },
+      { id:'handlaeufe', label:'Handläufe reinigen', type:'bool' },
+      { id:'fenster_th', label:'Fenster im Treppenhaus', type:'bool' },
+      { id:'kellerflur', label:'Kellerflur reinigen', type:'bool' },
+      { id:'eingang', label:'Eingangsbereich reinigen', type:'bool' },
+      { id:'aussen', label:'Außenbereich reinigen', type:'bool' },
+      { id:'briefkasten', label:'Briefkastenanlage reinigen', type:'bool' },
+      { id:'glas_th', label:'Glasflächen reinigen', type:'bool' },
+    ]
+  },
+  winter: {
+    required: [ { id:'flaechenart', label:'Art der Fläche', type:'multi', options:['Gehweg','Parkplatz','Hof','Einfahrt','Privatweg'] } ],
+    optional: [
+      { id:'stellplaetze', label:'Anzahl Stellplätze', type:'number' },
+      { id:'treppen', label:'Treppen vorhanden', type:'bool' },
+      { id:'streugut', label:'Streugut gewünscht', type:'bool' },
+      { id:'raeumung', label:'Schneeräumung gewünscht', type:'bool' },
+      { id:'nur_streuen', label:'Nur Streuen', type:'bool' },
+      { id:'zugaenglich', label:'Objekt jederzeit zugänglich', type:'bool' },
+    ]
+  },
+  garten: {
+    required: [],
+    optional: [
+      { id:'arbeiten', label:'Gewünschte Arbeiten', type:'multi', options:['Rasen mähen','Heckenschnitt','Unkraut entfernen','Beetpflege','Baumschnitt','Laub entfernen','Bewässerung','Entsorgung Grünschnitt'] },
+      { id:'heckenlaenge', label:'Heckenlänge (m)', type:'number' },
+      { id:'baeume', label:'Anzahl Bäume', type:'number' },
+      { id:'hanglage', label:'Hanglage vorhanden', type:'bool' },
+      { id:'maehroboter', label:'Mähroboter vorhanden', type:'bool' },
+    ]
+  },
+  muell: {
+    required: [ { id:'anzahl_tonnen', label:'Anzahl Tonnen', type:'number' } ],
+    optional: [
+      { id:'tonnenarten', label:'Tonnenarten', type:'multi', options:['Restmüll','Biomüll','Papier','Gelbe Tonne'] },
+      { id:'entfernung', label:'Entfernung zur Straße', type:'text' },
+      { id:'treppen_m', label:'Treppen vorhanden', type:'bool' },
+      { id:'verschlossen', label:'Müllplatz verschlossen', type:'bool' },
+      { id:'rueckstellung', label:'Rückstellung der Tonnen nach Leerung', type:'bool' },
+    ]
+  },
+};
+
+let currentStep = 1;
+let selectedServices = new Set();
+let _verifyCode = '';
+let _countdownInterval;
+let codeStageActive = false;
+
+// ── RENDER TILES ─────────────────────
+const tilesEl = document.getElementById('tiles');
+const _tileServices = (window._selectedPaket && Array.isArray(window._selectedPaket.services_ids) && window._selectedPaket.services_ids.length)
+  ? SERVICES.filter(s => window._selectedPaket.services_ids.includes(s.id))
+  : SERVICES;
+_tileServices.forEach(svc => {
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.dataset.id = svc.id;
+  el.innerHTML = `<div class="tile-check">✓</div><div class="tile-icon">${svc.icon}</div><div class="tile-name">${svc.name}</div><div class="tile-price" data-price-id="${svc.id}">${svc.price}</div>`;
+  el.onclick = () => {
+    if(selectedServices.has(svc.id)) { selectedServices.delete(svc.id); el.classList.remove('selected'); }
+    else { selectedServices.add(svc.id); el.classList.add('selected'); }
+  };
+  tilesEl.appendChild(el);
+});
+
+window._applyLivePreise = function(){
+  if(!window._livePreise) return;
+  document.querySelectorAll('.tile-price[data-price-id]').forEach(el => {
+    const id = el.getAttribute('data-price-id');
+    if(window._livePreise[id]) el.textContent = window._livePreise[id];
+  });
+};
+window._applyLivePreise();
+
+window._applySelectedPaket = function(){
+  const p = window._selectedPaket;
+  if(!p) return;
+
+  if(p.status === 'inaktiv'){
+    const contentEl = document.getElementById('wizard-content');
+    contentEl.innerHTML = `
+      <div class="paket-unavailable">
+        <div class="paket-unavailable-icon">😔</div>
+        <h1 class="wizard-title" style="font-size:24px">Dieses Paket ist aktuell nicht verfügbar</h1>
+        <p class="wizard-sub" style="margin-bottom:24px">Bitte wählen Sie ein anderes Paket oder stellen Sie eine allgemeine Anfrage.</p>
+        <a href="/#preise" class="btn-primary" style="display:inline-flex">← Zur Paketübersicht</a>
+      </div>
+    `;
+    return;
+  }
+
+  const ids = Array.isArray(p.services_ids) ? p.services_ids : [];
+  ids.forEach(id => {
+    const tile = tilesEl.querySelector(`.tile[data-id="${id}"]`);
+    if(tile && !selectedServices.has(id)){
+      selectedServices.add(id);
+      tile.classList.add('selected');
+    }
+  });
+  const banner = document.getElementById('paket-banner');
+  if(banner){
+    banner.innerHTML = `
+      <div class="paket-banner">✓ Paket "${p.name || ''}" vorausgewählt – Sie können die Leistungen unten noch anpassen</div>
+      <br><a href="/#preise" class="paket-back-link">← Zurück zur Paketübersicht (anderes Paket wählen)</a>
+    `;
+    banner.style.display = 'block';
+  }
+};
+window._applySelectedPaket();
+
+// ── SCROLL-NACH-OBEN BUTTON ─────────────────────
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scroll-top-btn');
+  if(!btn) return;
+  if(window.scrollY > 400) btn.classList.add('visible');
+  else btn.classList.remove('visible');
+});
+
+// ── DYNAMISCHE FELDER RENDERN ─────────────────────
+function fieldHTML(domId, field, required){
+  const reqMark = required ? ' *' : '';
+  if(field.type === 'number'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="number" id="${domId}" min="0"></div>`;
+  }
+  if(field.type === 'text'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="text" id="${domId}"></div>`;
+  }
+  if(field.type === 'date'){
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="date" id="${domId}" min="${new Date().toISOString().slice(0,10)}" onchange="markField('${domId}', !isDateNotPast(this.value))"></div>`;
+  }
+  if(field.type === 'select'){
+    const opts = field.options.map(o => `<option value="${o}">${o}</option>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><select id="${domId}"><option value="">– Bitte wählen –</option>${opts}</select></div>`;
+  }
+  if(field.type === 'radio'){
+    const opts = field.options.map((o,i) => `<label class="cb-chip"><input type="radio" name="${domId}" class="radio-option" value="${o}" ${i===0?'':''}> ${o}</label>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><div class="cb-group" id="${domId}">${opts}</div></div>`;
+  }
+  if(field.type === 'bool'){
+    return `<div class="field"><label class="bool-label"><input type="checkbox" id="${domId}"> ${field.label}</label></div>`;
+  }
+  if(field.type === 'multi'){
+    const opts = field.options.map(o => `<label class="cb-chip"><input type="checkbox" class="cb-option" data-value="${o}"> ${o}</label>`).join('');
+    return `<div class="field"><label>${field.label}${reqMark}</label><div class="cb-group" id="${domId}">${opts}</div></div>`;
+  }
+  if(field.type === 'file'){
+    return `<div class="field">
+      <label>${field.label}${reqMark}</label>
+      <input type="file" id="${domId}_input" accept="image/*" onchange="handleDynFileUpload('${domId}', this)">
+      <div id="${domId}_preview" style="margin-top:8px;display:none">
+        <img id="${domId}_preview_img" style="max-width:160px;border-radius:10px;display:block;margin-bottom:6px">
+        <button type="button" onclick="removeDynFile('${domId}')" style="padding:6px 12px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:11px;cursor:pointer;font-family:inherit">Entfernen</button>
+      </div>
+      <input type="hidden" id="${domId}" value="">
+    </div>`;
+  }
+  return '';
+}
+
+window.handleDynFileUpload = function(domId, input){
+  const file = input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ alert('Bitte eine Bilddatei auswählen.'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 640;
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      let quality = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while(dataUrl.length > 500000 && quality > 0.3){
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      document.getElementById(domId).value = dataUrl;
+      document.getElementById(domId+'_preview_img').src = dataUrl;
+      document.getElementById(domId+'_preview').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removeDynFile = function(domId){
+  document.getElementById(domId).value = '';
+  document.getElementById(domId+'_input').value = '';
+  document.getElementById(domId+'_preview').style.display = 'none';
+};
+
+let step2BuiltForServices = null;
+function buildDynServiceFields(){
+  const key = Array.from(selectedServices).sort().join(',') + '|' + (window._selectedPaket ? window._selectedPaket.name : '');
+  if(key === step2BuiltForServices) return;
+  step2BuiltForServices = key;
+
+  const container = document.getElementById('dyn-service-fields');
+  let html = '';
+
+  const paket = window._selectedPaket;
+  if(paket && Array.isArray(paket.custom_fields) && paket.custom_fields.length){
+    html += `<div class="service-block"><div class="service-block-title">${paket.icon||'📦'} Fragen zu Ihrem ${paket.name||'Paket'}</div>`;
+    paket.custom_fields.forEach((f, idx) => {
+      html += fieldHTML('dyn_paket_custom_'+idx, f, !!f.required);
+    });
+    html += `</div>`;
+  }
+
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    const svc = SERVICES.find(s => s.id === sid);
+    if(!cfg || !svc) return;
+    html += `<div class="service-block"><div class="service-block-title">${svc.icon} ${svc.name}</div>`;
+    cfg.required.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, true); });
+    if(cfg.optional.length){
+      const boxId = 'dyn_'+sid+'_optional';
+      html += `<div class="optional-toggle" onclick="toggleOptional('${boxId}')">+ Weitere Details zu ${svc.name} (optional)</div>`;
+      html += `<div class="optional-box" id="${boxId}" style="display:none">`;
+      cfg.optional.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, false); });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+window.toggleOptional = function(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+};
+
+function collectFieldValue(domId, field){
+  if(field.type === 'radio'){
+    const checked = document.querySelector(`input[name="${domId}"].radio-option:checked`);
+    return checked ? checked.value : '';
+  }
+  if(field.type === 'file'){
+    const el = document.getElementById(domId);
+    return el && el.value ? el.value : '';
+  }
+  const el = document.getElementById(domId);
+  if(!el) return '';
+  if(field.type === 'bool') return el.checked;
+  if(field.type === 'multi'){
+    const vals = [...el.querySelectorAll('.cb-option:checked')].map(cb => cb.dataset.value);
+    return vals.join(', ');
+  }
+  return el.value ? el.value.trim() : '';
+}
+
+function collectServiceDetails(){
+  const details = {};
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    if(!cfg) return;
+    const data = {};
+    [...cfg.required, ...cfg.optional].forEach(f => {
+      const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+      if(val !== '' && val !== false) data[f.id] = val;
+    });
+    details[sid] = data;
+  });
+  return details;
+}
+
+function collectPaketCustomAnswers(){
+  const paket = window._selectedPaket;
+  if(!paket || !Array.isArray(paket.custom_fields)) return {};
+  const answers = {};
+  paket.custom_fields.forEach((f, idx) => {
+    const val = collectFieldValue('dyn_paket_custom_'+idx, f);
+    if(val !== '' && val !== false) answers[f.label] = val;
+  });
+  return answers;
+}
+
+function paketAntwortenEmailText(paketAntworten){
+  const paket = window._selectedPaket;
+  const fileLabels = new Set((paket && Array.isArray(paket.custom_fields) ? paket.custom_fields : []).filter(f => f.type === 'file').map(f => f.label));
+  return Object.entries(paketAntworten)
+    .map(([k,v]) => `${k}: ${fileLabels.has(k) ? '[Foto beigefügt – siehe Dashboard]' : v}`)
+    .join(' · ');
+}
+
+function computeVollstaendigkeit(){
+  let total = 0, filled = 0;
+  selectedServices.forEach(sid => {
+    const cfg = SERVICE_FIELDS[sid];
+    if(!cfg) return;
+    cfg.optional.forEach(f => {
+      total++;
+      const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
+      if(val !== '' && val !== false) filled++;
+    });
+  });
+  const generalOptionalIds = ['f-park','f-aufzug-allg','f-zugang','f-verschmutzung-allg','f-budget','f-quelle'];
+  generalOptionalIds.forEach(id => {
+    total++;
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = el.type === 'checkbox' ? el.checked : el.value.trim();
+    if(val) filled++;
+  });
+  if(total === 0) return 100;
+  return Math.round((filled/total)*100);
+}
+
+function computeAuftragswert(){
+  let sum = 0;
+  selectedServices.forEach(sid => {
+    const svc = SERVICES.find(s => s.id === sid);
+    if(!svc) return;
+    const text = (window._livePreise && window._livePreise[sid]) || svc.price;
+    const match = text.match(/(\d+(?:[.,]\d+)?)/);
+    if(match) sum += parseFloat(match[1].replace(',','.'));
+  });
+  return Math.round(sum * 100) / 100;
+}
+
+function computePrioritaet(beginn){
+  if(beginn === 'Sofort') return 'Sofort';
+  if(beginn === 'Innerhalb einer Woche') return 'Diese Woche';
+  return 'Flexibel';
+}
+
+// ── PROGRESS BAR ─────────────────────
+const progressEl = document.getElementById('progress');
+function renderProgress() {
+  progressEl.innerHTML = '';
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i < currentStep ? ' done' : '') + (i === currentStep ? ' active' : '');
+    dot.textContent = i < currentStep ? '✓' : i;
+    progressEl.appendChild(dot);
+    if(i < TOTAL_STEPS){
+      const line = document.createElement('div');
+      line.className = 'progress-line' + (i < currentStep ? ' done' : '');
+      progressEl.appendChild(line);
+    }
+  }
+}
+
+// ── VALIDATION ─────────────────────
+function validateTel(tel) {
+  const cleaned = tel.replace(/\s/g,'');
+  return cleaned.startsWith('0') || cleaned.startsWith('+49') || cleaned.startsWith('0049');
+}
+
+function isValidName(text){
+  return text.length > 0 && !/\d/.test(text);
+}
+
+function isDateNotPast(dateStr){
+  if(!dateStr) return true; // leeres optionales Datum ist ok, Pflicht wird separat geprüft
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr + 'T00:00:00');
+  return d >= today;
+}
+
+function markField(id, invalid){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(invalid) el.classList.add('invalid'); else el.classList.remove('invalid');
+}
+
+function markDynField(domId, field, invalid){
+  const el = (field.type === 'multi' || field.type === 'radio') ? document.getElementById(domId) : document.getElementById(domId);
+  if(!el) return;
+  if(invalid) el.classList.add('invalid'); else el.classList.remove('invalid');
+}
+
+function validateStep(step) {
+  if(step === 1){
+    const ok = selectedServices.size > 0;
+    document.getElementById('err-1').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+  if(step === 2){
+    const objektart = document.getElementById('f-objektart').value;
+    const etagen = document.getElementById('f-etagen').value.trim();
+    const flaeche = document.getElementById('f-flaeche').value.trim();
+    let ok = true;
+    markField('f-objektart', !objektart); if(!objektart) ok = false;
+    markField('f-etagen', !etagen); if(!etagen) ok = false;
+    markField('f-flaeche', !flaeche); if(!flaeche) ok = false;
+    selectedServices.forEach(sid => {
+      const cfg = SERVICE_FIELDS[sid];
+      if(!cfg) return;
+      cfg.required.forEach(f => {
+        const domId = 'dyn_'+sid+'_'+f.id;
+        const val = collectFieldValue(domId, f);
+        const invalid = (val === '' || val === false);
+        markDynField(domId, f, invalid);
+        if(invalid) ok = false;
+      });
+    });
+    const paket = window._selectedPaket;
+    if(paket && Array.isArray(paket.custom_fields)){
+      paket.custom_fields.forEach((f, idx) => {
+        if(!f.required) return;
+        const domId = 'dyn_paket_custom_'+idx;
+        const val = collectFieldValue(domId, f);
+        const invalid = (val === '' || val === false);
+        markDynField(domId, f, invalid);
+        if(invalid) ok = false;
+      });
+    }
+    document.getElementById('err-2').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+  if(step === 3){
+    const strasse = document.getElementById('f-strasse').value.trim();
+    const plz = document.getElementById('f-plz').value.trim();
+    const ort = document.getElementById('f-ort').value.trim();
+    const termin = document.getElementById('f-termin').value;
+    let ok = true;
+    markField('f-strasse', !strasse); if(!strasse) ok = false;
+    markField('f-plz', !plz); if(!plz) ok = false;
+    markField('f-ort', !ort); if(!ort) ok = false;
+    const terminOk = isDateNotPast(termin);
+    markField('f-termin', !terminOk); if(!terminOk) ok = false;
+    document.getElementById('err-3').textContent = !terminOk ? 'Der Wunschtermin darf nicht in der Vergangenheit liegen.' : 'Bitte Straße, PLZ und Ort ausfüllen.';
+    document.getElementById('err-3').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+  if(step === 4){
+    const vorname = document.getElementById('f-vorname').value.trim();
+    const nachname = document.getElementById('f-nachname').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const tel = document.getElementById('f-tel').value.trim();
+    const datenschutz = document.getElementById('f-datenschutz').checked;
+    let ok = true;
+    const vornameOk = isValidName(vorname);
+    const nachnameOk = isValidName(nachname);
+    const emailOk = email.includes('@') && email.includes('.');
+    const telOk = validateTel(tel);
+    markField('f-vorname', !vornameOk); if(!vornameOk) ok = false;
+    markField('f-nachname', !nachnameOk); if(!nachnameOk) ok = false;
+    markField('f-email', !emailOk); if(!emailOk) ok = false;
+    markField('f-tel', !telOk); if(!telOk) ok = false;
+    if(!datenschutz) ok = false;
+    document.getElementById('err-4').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+  return true;
+}
+
+// ── SUMMARY (step 4) ─────────────────────
+function renderSummary(){
+  const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
+  const objektart = document.getElementById('f-objektart').value;
+  const etagen = document.getElementById('f-etagen').value.trim();
+  const flaeche = document.getElementById('f-flaeche').value.trim();
+  const haeufigkeit = document.getElementById('f-haeufigkeit').value;
+  const beginn = document.getElementById('f-beginn').value;
+  const strasse = document.getElementById('f-strasse').value.trim();
+  const plz = document.getElementById('f-plz').value.trim();
+  const ort = document.getElementById('f-ort').value.trim();
+  const termin = document.getElementById('f-termin').value;
+
+  const rows = [
+    ['Leistungen', names || '–'],
+    ['Objektart', objektart || '–'],
+    ['Etagen', etagen || '–'],
+    ['Fläche', flaeche ? flaeche + ' m²' : '–'],
+    ['Häufigkeit', haeufigkeit],
+    ['Gewünschter Beginn', beginn],
+    ['Adresse', (strasse || ort) ? (strasse + (strasse&&ort?', ':'') + plz + ' ' + ort) : '–'],
+    ['Wunschtermin', termin || '–'],
+  ];
+  document.getElementById('summary').innerHTML = rows.map(r =>
+    `<div class="summary-row"><span>${r[0]}</span><span>${r[1]}</span></div>`
+  ).join('');
+}
+
+// ── NAVIGATION ─────────────────────
+function showStep(step){
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.step-panel[data-step="${step}"]`).classList.add('active');
+  renderProgress();
+  document.getElementById('btn-back').style.display = step === 1 ? 'none' : 'block';
+  if(step === TOTAL_STEPS){
+    document.getElementById('btn-next').textContent = 'Code senden →';
+  } else {
+    document.getElementById('btn-next').textContent = 'Weiter →';
+  }
+  if(step === TOTAL_STEPS) renderSummary();
+  if(step === 2) buildDynServiceFields();
+}
+
+function nextStep(){
+  if(currentStep === TOTAL_STEPS){
+    if(!codeStageActive){
+      if(!validateStep(TOTAL_STEPS)) return;
+      sendVerificationCode();
+    } else {
+      verifyCodeAndSubmit();
+    }
+    return;
+  }
+  if(!validateStep(currentStep)) return;
+  currentStep++;
+  showStep(currentStep);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function prevStep(){
+  if(currentStep === TOTAL_STEPS && codeStageActive){
+    codeStageActive = false;
+    clearInterval(_countdownInterval);
+    document.getElementById('code-panel').style.display = 'none';
+    document.getElementById('contact-fields').style.display = 'block';
+    document.getElementById('btn-next').textContent = 'Code senden →';
+    return;
+  }
+  if(currentStep === 1) return;
+  currentStep--;
+  showStep(currentStep);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function sendVerificationCode(){
+  const email = document.getElementById('f-email').value.trim();
+  const vorname = document.getElementById('f-vorname').value.trim();
+  const btn = document.getElementById('btn-next');
+
+  _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+  btn.disabled = true;
+  btn.textContent = 'Code wird gesendet ...';
+
+  emailjs.send('service_vp2kavs', 'template_lc0ucul', {
+    email: email,
+    to_name: vorname,
+    passcode: _verifyCode,
+  }).then(function(){
+    codeStageActive = true;
+    document.getElementById('contact-fields').style.display = 'none';
+    document.getElementById('code-panel').style.display = 'block';
+    document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
+    document.getElementById('f-code').value = '';
+    document.getElementById('code-error').style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = 'Code bestätigen & Anfrage senden →';
+    startCountdown();
+  }).catch(function(error){
+    console.error('EmailJS error:', error);
+    document.getElementById('err-4').textContent = 'Fehler beim Senden des Codes. Bitte versuchen Sie es erneut.';
+    document.getElementById('err-4').style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Code senden →';
+  });
+}
+
+function resendCode(){
+  document.getElementById('resend-btn').style.display = 'none';
+  document.getElementById('resend-timer').style.display = '';
+  sendVerificationCode();
+}
+
+function startCountdown(){
+  let secs = 60;
+  document.getElementById('countdown').textContent = secs;
+  document.getElementById('resend-timer').style.display = '';
+  document.getElementById('resend-btn').style.display = 'none';
+  clearInterval(_countdownInterval);
+  _countdownInterval = setInterval(() => {
+    secs--;
+    document.getElementById('countdown').textContent = secs;
+    if(secs <= 0){
+      clearInterval(_countdownInterval);
+      document.getElementById('resend-timer').style.display = 'none';
+      document.getElementById('resend-btn').style.display = '';
+    }
+  }, 1000);
+}
+
+function verifyCodeAndSubmit(){
+  const entered = document.getElementById('f-code').value.trim();
+  const codeErr = document.getElementById('code-error');
+  if(entered !== _verifyCode){
+    codeErr.style.display = 'block';
+    document.getElementById('f-code').style.borderColor = '#F87171';
+    return;
+  }
+  codeErr.style.display = 'none';
+  clearInterval(_countdownInterval);
+  submitRequest();
+}
+
+function showSuccess(vorname){
+  document.getElementById('success-title').textContent = `Vielen Dank, ${vorname}!`;
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.step-panel[data-step="success"]').classList.add('active');
+  document.getElementById('wizard-nav').style.display = 'none';
+  document.getElementById('progress').style.display = 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── SUBMIT: Firestore ist die Quelle der Wahrheit, Web3Forms nur als E-Mail-Benachrichtigung ─────────────────────
+function submitRequest(){
+  const btn = document.getElementById('btn-next');
+  const errBox = document.getElementById('submit-error');
+  errBox.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Wird gesendet ...';
+
+  const vorname = document.getElementById('f-vorname').value.trim();
+  const nachname = document.getElementById('f-nachname').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  const nachricht = document.getElementById('f-nachricht').value.trim();
+  const names = SERVICES.filter(s => selectedServices.has(s.id)).map(s => s.name).join(', ');
+
+  const objektart = document.getElementById('f-objektart').value;
+  const etagen = document.getElementById('f-etagen').value.trim();
+  const flaeche = document.getElementById('f-flaeche').value.trim();
+  const haeufigkeit = document.getElementById('f-haeufigkeit').value;
+  const beginn = document.getElementById('f-beginn').value;
+  const anmerkung = document.getElementById('f-anmerkung').value.trim();
+  const strasse = document.getElementById('f-strasse').value.trim();
+  const plz = document.getElementById('f-plz').value.trim();
+  const ort = document.getElementById('f-ort').value.trim();
+  const termin = document.getElementById('f-termin').value;
+
+  const park = document.getElementById('f-park').checked;
+  const aufzugAllg = document.getElementById('f-aufzug-allg').checked;
+  const zugang = document.getElementById('f-zugang').value.trim();
+  const verschmutzungAllg = document.getElementById('f-verschmutzung-allg').value.trim();
+  const budget = document.getElementById('f-budget').value.trim();
+  const quelle = document.getElementById('f-quelle').value;
+
+  const serviceDetails = collectServiceDetails();
+  const paketAntworten = collectPaketCustomAnswers();
+  const vollstaendigkeit = computeVollstaendigkeit();
+  const auftragswert = computeAuftragswert();
+  const prioritaet = computePrioritaet(beginn);
+  const gewaehltesPaket = window._selectedPaket ? window._selectedPaket.name : '';
+
+  function trySubmit(retries){
+    if(!window._firebaseReady){
+      if(retries <= 0){
+        errBox.textContent = 'Verbindung zur Datenbank konnte nicht hergestellt werden. Bitte laden Sie die Seite neu und versuchen Sie es erneut.';
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Code bestätigen & Anfrage senden →';
+        return;
+      }
+      setTimeout(() => trySubmit(retries - 1), 300);
+      return;
+    }
+
+    const docData = {
+      createdAt: window._serverTimestamp(),
+      status: 'neu',
+      leistungen: names,
+      objektart: objektart,
+      etagen: etagen,
+      flaeche_m2: flaeche,
+      haeufigkeit: haeufigkeit,
+      gewuenschter_beginn: beginn,
+      anmerkung_objekt: anmerkung,
+      strasse: strasse,
+      plz: plz,
+      ort: ort,
+      wunschtermin: termin,
+      parkmoeglichkeiten: park,
+      aufzug_vorhanden: aufzugAllg,
+      zugang_objekt: zugang,
+      besondere_verschmutzung: verschmutzungAllg,
+      budget: budget,
+      quelle: quelle,
+      service_details: serviceDetails,
+      gewaehltes_paket: gewaehltesPaket,
+      paket_antworten: paketAntworten,
+      vorname: vorname,
+      nachname: nachname,
+      email: email,
+      telefon: tel,
+      nachricht: nachricht,
+      // Strukturierte Backend-Felder
+      geschaetzter_auftragswert: auftragswert,
+      prioritaet: prioritaet,
+      einsatzgebiet_plz: plz,
+      vollstaendigkeit_prozent: vollstaendigkeit,
+    };
+
+    window._addDoc(window._collection(window._db, 'anfragen'), docData)
+      .then(() => {
+        // E-Mail-Benachrichtigung an Daniel (best effort, blockiert den Erfolg nicht)
+        const detailsText = Object.keys(serviceDetails).map(sid => {
+          const svc = SERVICES.find(s => s.id === sid);
+          const entries = Object.entries(serviceDetails[sid]).map(([k,v]) => `${k}: ${v}`).join(', ');
+          return `${svc ? svc.name : sid} – ${entries || 'keine weiteren Angaben'}`;
+        }).join(' | ');
+
+        const fd = new FormData();
+        fd.append('access_key', WEB3FORMS_KEY);
+        fd.append('subject', `Anfrage: ${vorname} ${nachname} · ${names} · Priorität: ${prioritaet}`);
+        fd.append('from_name', 'Waschlurch Anfrage-Assistent');
+        fd.append('vorname', vorname);
+        fd.append('nachname', nachname);
+        fd.append('email', email);
+        fd.append('telefon', tel);
+        fd.append('leistungen', names);
+        fd.append('objektart', objektart);
+        fd.append('etagen', etagen);
+        fd.append('flaeche_m2', flaeche);
+        fd.append('haeufigkeit', haeufigkeit);
+        fd.append('gewuenschter_beginn', beginn);
+        fd.append('anmerkung_objekt', anmerkung);
+        fd.append('adresse', `${strasse}, ${plz} ${ort}`);
+        fd.append('wunschtermin', termin);
+        fd.append('nachricht', nachricht);
+        fd.append('details_je_leistung', detailsText);
+        fd.append('gewaehltes_paket', gewaehltesPaket);
+        fd.append('paket_antworten', paketAntwortenEmailText(paketAntworten));
+        fd.append('geschaetzter_auftragswert', auftragswert + ' € (geschätzt)');
+        fd.append('prioritaet', prioritaet);
+        fetch('https://api.web3forms.com/submit', { method:'POST', body:fd }).catch(() => {});
+
+        showSuccess(vorname);
+      })
+      .catch(err => {
+        console.error('Firestore error:', err);
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Code bestätigen & Anfrage senden →';
+      });
+  }
+
+  trySubmit(10);
+}
+
+// ── INITIALISIERUNG: Datum-Minimum, Namensfelder, Auto-Fehlerkorrektur, PLZ/Ort ─────────────────────
+document.getElementById('f-termin').min = new Date().toISOString().slice(0,10);
+
+// Zahlen aus Namensfeldern sofort entfernen, während der Nutzer tippt
+['f-vorname','f-nachname'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    const cleaned = el.value.replace(/[0-9]/g, '');
+    if(cleaned !== el.value) el.value = cleaned;
+    el.classList.remove('invalid');
+  });
+});
+
+// Rote Markierung automatisch entfernen, sobald der Nutzer ein Feld korrigiert
+document.addEventListener('input', (e) => {
+  if(e.target.classList && e.target.classList.contains('invalid')) e.target.classList.remove('invalid');
+});
+document.addEventListener('change', (e) => {
+  if(e.target.classList && e.target.classList.contains('invalid')) e.target.classList.remove('invalid');
+});
+
+// PLZ ↔ Ort automatisch ergänzen (kostenlose, öffentliche OpenPLZ-API, ohne Schlüssel)
+let plzLookupTimer, ortLookupTimer;
+document.getElementById('f-plz').addEventListener('input', function(){
+  clearTimeout(plzLookupTimer);
+  const plz = this.value.trim();
+  if(!/^\d{5}$/.test(plz)) return;
+  plzLookupTimer = setTimeout(() => {
+    fetch(`https://openplzapi.org/de/Localities?postalCode=${plz}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if(Array.isArray(data) && data.length > 0 && data[0].name){
+          const ortEl = document.getElementById('f-ort');
+          if(!ortEl.value.trim()) { ortEl.value = data[0].name; ortEl.classList.remove('invalid'); }
+        }
+      }).catch(() => {});
+  }, 500);
+});
+document.getElementById('f-ort').addEventListener('input', function(){
+  clearTimeout(ortLookupTimer);
+  const ort = this.value.trim();
+  const plzEl = document.getElementById('f-plz');
+  if(ort.length < 3 || plzEl.value.trim()) return;
+  ortLookupTimer = setTimeout(() => {
+    fetch(`https://openplzapi.org/de/Localities?name=${encodeURIComponent(ort)}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if(Array.isArray(data) && data.length > 0){
+          const uniquePlz = [...new Set(data.map(d => d.postalCode))];
+          if(uniquePlz.length === 1 && !plzEl.value.trim()){
+            plzEl.value = uniquePlz[0];
+            plzEl.classList.remove('invalid');
+          }
+          // Bei mehreren möglichen PLZ (z.B. Großstädte) bleibt das Feld bewusst leer –
+          // der Nutzer muss die passende PLZ selbst eintragen.
+        }
+      }).catch(() => {});
+  }, 600);
+});
+
+showStep(1);
+</script>
+
+</body>
+</html>
