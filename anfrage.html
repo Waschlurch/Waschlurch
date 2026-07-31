@@ -166,7 +166,32 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .summary-row span:last-child { font-weight:600; text-align:right; }
 
 /* NAV BUTTONS */
-.wizard-nav { display:flex; gap:12px; margin-top:32px; }
+.wizard-nav {
+  display:flex; gap:12px; margin-top:32px;
+  position:sticky; bottom:0; left:0; right:0;
+  background:linear-gradient(to top, var(--black) 60%, transparent);
+  padding:16px 0 20px; z-index:50;
+}
+.field input.invalid, .field select.invalid, .field textarea.invalid {
+  border-color:#F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15);
+  animation:shakeInvalid .35s;
+}
+.cb-group.invalid, .code-input.invalid { border:1px solid #F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15); border-radius:12px; padding:8px; }
+@keyframes shakeInvalid { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+.scroll-top-btn {
+  position:fixed; bottom:24px; right:24px; z-index:100;
+  width:48px; height:48px; border-radius:50%;
+  background:var(--green); color:var(--white); border:none;
+  font-size:20px; cursor:pointer; box-shadow:0 6px 20px rgba(34,197,94,0.4);
+  display:none; align-items:center; justify-content:center;
+  transition:transform .15s;
+}
+.scroll-top-btn:hover { transform:scale(1.08); }
+.scroll-top-btn.visible { display:flex; }
+.paket-back-link { display:inline-block; margin-top:14px; font-size:13px; color:rgba(255,255,255,0.5); cursor:pointer; text-decoration:underline; }
+.paket-back-link:hover { color:var(--green); }
+.paket-unavailable { text-align:center; padding:80px 20px; }
+.paket-unavailable-icon { font-size:48px; margin-bottom:16px; }
 .btn { flex:1; padding:15px; border-radius:100px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; border:none; text-align:center; }
 .btn-back { background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); flex:0 0 auto; padding:15px 24px; }
 .btn-back:hover { background:rgba(255,255,255,0.06); }
@@ -232,7 +257,8 @@ main { padding:64px 5% 80px; min-height:100vh; }
 </nav>
 
 <main>
-<div class="wizard-wrap">
+<button class="scroll-top-btn" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Nach oben">↑</button>
+<div class="wizard-wrap" id="wizard-content">
 
   <div class="wizard-head">
     <div class="tag">Kostenlose Anfrage</div>
@@ -331,7 +357,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
       </div>
       <div class="field">
         <label>Wunschtermin (optional)</label>
-        <input type="date" id="f-termin">
+        <input type="date" id="f-termin" onchange="markField('f-termin', !isDateNotPast(this.value))">
       </div>
       <div class="field-error" id="err-3">Bitte Straße, PLZ und Ort ausfüllen.</div>
 
@@ -395,7 +421,10 @@ main { padding:64px 5% 80px; min-height:100vh; }
           <label>Nachricht (optional)</label>
           <textarea id="f-nachricht" placeholder="Weitere Wünsche oder Hinweise ..."></textarea>
         </div>
-        <div class="field-error" id="err-4">Bitte alle Pflichtfelder korrekt ausfüllen.</div>
+        <div class="field">
+          <label class="bool-label"><input type="checkbox" id="f-datenschutz"> Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zur Bearbeitung dieser Anfrage zu. *</label>
+        </div>
+        <div class="field-error" id="err-4">Bitte alle Pflichtfelder korrekt ausfüllen und der Datenschutzerklärung zustimmen.</div>
       </div>
 
       <div id="code-panel" style="display:none">
@@ -564,7 +593,10 @@ let codeStageActive = false;
 
 // ── RENDER TILES ─────────────────────
 const tilesEl = document.getElementById('tiles');
-SERVICES.forEach(svc => {
+const _tileServices = (window._selectedPaket && Array.isArray(window._selectedPaket.services_ids) && window._selectedPaket.services_ids.length)
+  ? SERVICES.filter(s => window._selectedPaket.services_ids.includes(s.id))
+  : SERVICES;
+_tileServices.forEach(svc => {
   const el = document.createElement('div');
   el.className = 'tile';
   el.dataset.id = svc.id;
@@ -588,6 +620,20 @@ window._applyLivePreise();
 window._applySelectedPaket = function(){
   const p = window._selectedPaket;
   if(!p) return;
+
+  if(p.status === 'inaktiv'){
+    const contentEl = document.getElementById('wizard-content');
+    contentEl.innerHTML = `
+      <div class="paket-unavailable">
+        <div class="paket-unavailable-icon">😔</div>
+        <h1 class="wizard-title" style="font-size:24px">Dieses Paket ist aktuell nicht verfügbar</h1>
+        <p class="wizard-sub" style="margin-bottom:24px">Bitte wählen Sie ein anderes Paket oder stellen Sie eine allgemeine Anfrage.</p>
+        <a href="/#preise" class="btn-primary" style="display:inline-flex">← Zur Paketübersicht</a>
+      </div>
+    `;
+    return;
+  }
+
   const ids = Array.isArray(p.services_ids) ? p.services_ids : [];
   ids.forEach(id => {
     const tile = tilesEl.querySelector(`.tile[data-id="${id}"]`);
@@ -598,11 +644,22 @@ window._applySelectedPaket = function(){
   });
   const banner = document.getElementById('paket-banner');
   if(banner){
-    banner.innerHTML = `<div class="paket-banner">✓ Paket "${p.name || ''}" vorausgewählt – Sie können die Leistungen unten noch anpassen</div>`;
+    banner.innerHTML = `
+      <div class="paket-banner">✓ Paket "${p.name || ''}" vorausgewählt – Sie können die Leistungen unten noch anpassen</div>
+      <br><a href="/#preise" class="paket-back-link">← Zurück zur Paketübersicht (anderes Paket wählen)</a>
+    `;
     banner.style.display = 'block';
   }
 };
 window._applySelectedPaket();
+
+// ── SCROLL-NACH-OBEN BUTTON ─────────────────────
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scroll-top-btn');
+  if(!btn) return;
+  if(window.scrollY > 400) btn.classList.add('visible');
+  else btn.classList.remove('visible');
+});
 
 // ── DYNAMISCHE FELDER RENDERN ─────────────────────
 function fieldHTML(domId, field, required){
@@ -614,7 +671,7 @@ function fieldHTML(domId, field, required){
     return `<div class="field"><label>${field.label}${reqMark}</label><input type="text" id="${domId}"></div>`;
   }
   if(field.type === 'date'){
-    return `<div class="field"><label>${field.label}${reqMark}</label><input type="date" id="${domId}"></div>`;
+    return `<div class="field"><label>${field.label}${reqMark}</label><input type="date" id="${domId}" min="${new Date().toISOString().slice(0,10)}" onchange="markField('${domId}', !isDateNotPast(this.value))"></div>`;
   }
   if(field.type === 'select'){
     const opts = field.options.map(o => `<option value="${o}">${o}</option>`).join('');
@@ -841,6 +898,29 @@ function validateTel(tel) {
   return cleaned.startsWith('0') || cleaned.startsWith('+49') || cleaned.startsWith('0049');
 }
 
+function isValidName(text){
+  return text.length > 0 && !/\d/.test(text);
+}
+
+function isDateNotPast(dateStr){
+  if(!dateStr) return true; // leeres optionales Datum ist ok, Pflicht wird separat geprüft
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr + 'T00:00:00');
+  return d >= today;
+}
+
+function markField(id, invalid){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(invalid) el.classList.add('invalid'); else el.classList.remove('invalid');
+}
+
+function markDynField(domId, field, invalid){
+  const el = (field.type === 'multi' || field.type === 'radio') ? document.getElementById(domId) : document.getElementById(domId);
+  if(!el) return;
+  if(invalid) el.classList.add('invalid'); else el.classList.remove('invalid');
+}
+
 function validateStep(step) {
   if(step === 1){
     const ok = selectedServices.size > 0;
@@ -851,21 +931,30 @@ function validateStep(step) {
     const objektart = document.getElementById('f-objektart').value;
     const etagen = document.getElementById('f-etagen').value.trim();
     const flaeche = document.getElementById('f-flaeche').value.trim();
-    let ok = !!objektart && !!etagen && !!flaeche;
+    let ok = true;
+    markField('f-objektart', !objektart); if(!objektart) ok = false;
+    markField('f-etagen', !etagen); if(!etagen) ok = false;
+    markField('f-flaeche', !flaeche); if(!flaeche) ok = false;
     selectedServices.forEach(sid => {
       const cfg = SERVICE_FIELDS[sid];
       if(!cfg) return;
       cfg.required.forEach(f => {
-        const val = collectFieldValue('dyn_'+sid+'_'+f.id, f);
-        if(val === '' || val === false) ok = false;
+        const domId = 'dyn_'+sid+'_'+f.id;
+        const val = collectFieldValue(domId, f);
+        const invalid = (val === '' || val === false);
+        markDynField(domId, f, invalid);
+        if(invalid) ok = false;
       });
     });
     const paket = window._selectedPaket;
     if(paket && Array.isArray(paket.custom_fields)){
       paket.custom_fields.forEach((f, idx) => {
         if(!f.required) return;
-        const val = collectFieldValue('dyn_paket_custom_'+idx, f);
-        if(val === '' || val === false) ok = false;
+        const domId = 'dyn_paket_custom_'+idx;
+        const val = collectFieldValue(domId, f);
+        const invalid = (val === '' || val === false);
+        markDynField(domId, f, invalid);
+        if(invalid) ok = false;
       });
     }
     document.getElementById('err-2').style.display = ok ? 'none' : 'block';
@@ -875,7 +964,14 @@ function validateStep(step) {
     const strasse = document.getElementById('f-strasse').value.trim();
     const plz = document.getElementById('f-plz').value.trim();
     const ort = document.getElementById('f-ort').value.trim();
-    const ok = strasse && plz && ort;
+    const termin = document.getElementById('f-termin').value;
+    let ok = true;
+    markField('f-strasse', !strasse); if(!strasse) ok = false;
+    markField('f-plz', !plz); if(!plz) ok = false;
+    markField('f-ort', !ort); if(!ort) ok = false;
+    const terminOk = isDateNotPast(termin);
+    markField('f-termin', !terminOk); if(!terminOk) ok = false;
+    document.getElementById('err-3').textContent = !terminOk ? 'Der Wunschtermin darf nicht in der Vergangenheit liegen.' : 'Bitte Straße, PLZ und Ort ausfüllen.';
     document.getElementById('err-3').style.display = ok ? 'none' : 'block';
     return ok;
   }
@@ -884,7 +980,17 @@ function validateStep(step) {
     const nachname = document.getElementById('f-nachname').value.trim();
     const email = document.getElementById('f-email').value.trim();
     const tel = document.getElementById('f-tel').value.trim();
-    const ok = vorname && nachname && email.includes('@') && email.includes('.') && validateTel(tel);
+    const datenschutz = document.getElementById('f-datenschutz').checked;
+    let ok = true;
+    const vornameOk = isValidName(vorname);
+    const nachnameOk = isValidName(nachname);
+    const emailOk = email.includes('@') && email.includes('.');
+    const telOk = validateTel(tel);
+    markField('f-vorname', !vornameOk); if(!vornameOk) ok = false;
+    markField('f-nachname', !nachnameOk); if(!nachnameOk) ok = false;
+    markField('f-email', !emailOk); if(!emailOk) ok = false;
+    markField('f-tel', !telOk); if(!telOk) ok = false;
+    if(!datenschutz) ok = false;
     document.getElementById('err-4').style.display = ok ? 'none' : 'block';
     return ok;
   }
@@ -1176,6 +1282,66 @@ function submitRequest(){
 
   trySubmit(10);
 }
+
+// ── INITIALISIERUNG: Datum-Minimum, Namensfelder, Auto-Fehlerkorrektur, PLZ/Ort ─────────────────────
+document.getElementById('f-termin').min = new Date().toISOString().slice(0,10);
+
+// Zahlen aus Namensfeldern sofort entfernen, während der Nutzer tippt
+['f-vorname','f-nachname'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    const cleaned = el.value.replace(/[0-9]/g, '');
+    if(cleaned !== el.value) el.value = cleaned;
+    el.classList.remove('invalid');
+  });
+});
+
+// Rote Markierung automatisch entfernen, sobald der Nutzer ein Feld korrigiert
+document.addEventListener('input', (e) => {
+  if(e.target.classList && e.target.classList.contains('invalid')) e.target.classList.remove('invalid');
+});
+document.addEventListener('change', (e) => {
+  if(e.target.classList && e.target.classList.contains('invalid')) e.target.classList.remove('invalid');
+});
+
+// PLZ ↔ Ort automatisch ergänzen (kostenlose, öffentliche OpenPLZ-API, ohne Schlüssel)
+let plzLookupTimer, ortLookupTimer;
+document.getElementById('f-plz').addEventListener('input', function(){
+  clearTimeout(plzLookupTimer);
+  const plz = this.value.trim();
+  if(!/^\d{5}$/.test(plz)) return;
+  plzLookupTimer = setTimeout(() => {
+    fetch(`https://openplzapi.org/de/Localities?postalCode=${plz}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if(Array.isArray(data) && data.length > 0 && data[0].name){
+          const ortEl = document.getElementById('f-ort');
+          if(!ortEl.value.trim()) { ortEl.value = data[0].name; ortEl.classList.remove('invalid'); }
+        }
+      }).catch(() => {});
+  }, 500);
+});
+document.getElementById('f-ort').addEventListener('input', function(){
+  clearTimeout(ortLookupTimer);
+  const ort = this.value.trim();
+  const plzEl = document.getElementById('f-plz');
+  if(ort.length < 3 || plzEl.value.trim()) return;
+  ortLookupTimer = setTimeout(() => {
+    fetch(`https://openplzapi.org/de/Localities?name=${encodeURIComponent(ort)}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if(Array.isArray(data) && data.length > 0){
+          const uniquePlz = [...new Set(data.map(d => d.postalCode))];
+          if(uniquePlz.length === 1 && !plzEl.value.trim()){
+            plzEl.value = uniquePlz[0];
+            plzEl.classList.remove('invalid');
+          }
+          // Bei mehreren möglichen PLZ (z.B. Großstädte) bleibt das Feld bewusst leer –
+          // der Nutzer muss die passende PLZ selbst eintragen.
+        }
+      }).catch(() => {});
+  }, 600);
+});
 
 showStep(1);
 </script>
