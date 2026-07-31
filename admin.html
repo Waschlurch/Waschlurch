@@ -238,6 +238,24 @@ a { color:inherit; }
 .ma-name { font-size:15px; font-weight:700; }
 .ma-meta { font-size:12px; color:rgba(255,255,255,0.4); margin-top:2px; }
 
+/* REFERENZEN / FAQ ADMIN */
+.ref-admin-card, .faq-admin-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px 20px; margin-bottom:12px; display:flex; gap:14px; align-items:flex-start; }
+.ref-admin-card.inaktiv, .faq-admin-card.inaktiv { opacity:0.5; }
+.ref-admin-thumb { width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; background:var(--gray-800); }
+.ref-admin-body { flex:1; min-width:0; }
+.ref-admin-title, .faq-admin-q { font-size:14px; font-weight:700; }
+.ref-admin-sub, .faq-admin-a { font-size:12px; color:rgba(255,255,255,0.5); margin-top:2px; }
+.ref-admin-actions, .faq-admin-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.ref-admin-actions button, .faq-admin-actions button { font-size:11px; font-weight:600; padding:7px 12px; border-radius:100px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:var(--white); font-family:inherit; }
+
+/* BILDER (LEISTUNGEN) */
+.bild-leistung-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px 20px; margin-bottom:12px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+.bild-leistung-card.inaktiv { opacity:0.5; }
+.bild-leistung-thumb { width:64px; height:64px; object-fit:cover; border-radius:12px; flex-shrink:0; background:var(--gray-800); display:flex; align-items:center; justify-content:center; font-size:28px; }
+.bild-leistung-name { font-size:14px; font-weight:700; flex:1; min-width:140px; }
+.bild-leistung-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.bild-leistung-actions input[type="file"] { max-width:180px; font-size:11px; }
+
 /* KALKULATION */
 .kalk-row { display:flex; align-items:center; gap:14px; padding:14px 18px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; margin-bottom:10px; flex-wrap:wrap; }
 .kalk-row-icon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
@@ -439,6 +457,12 @@ a { color:inherit; }
     <div class="nav-item" data-view="preise" onclick="switchView('preise')"><span class="ni-icon">🏷️</span><span class="ni-label">Preise</span></div>
     <div class="nav-item" data-view="kalkulation" onclick="switchView('kalkulation')"><span class="ni-icon">📐</span><span class="ni-label">Kalkulation</span></div>
     <div class="nav-item" data-view="pakete" onclick="switchView('pakete')"><span class="ni-icon">📦</span><span class="ni-label">Pakete</span></div>
+    <div class="nav-item" data-view="referenzen" onclick="switchView('referenzen')"><span class="ni-icon">⭐</span><span class="ni-label">Referenzen</span></div>
+    <div class="nav-item" data-view="faqadmin" onclick="switchView('faqadmin')"><span class="ni-icon">❓</span><span class="ni-label">FAQ</span></div>
+    <div class="nav-item" data-view="bilder" onclick="switchView('bilder')"><span class="ni-icon">🖼️</span><span class="ni-label">Bilder</span></div>
+    <div class="nav-item" data-view="impressumadmin" onclick="switchView('impressumadmin')"><span class="ni-icon">📜</span><span class="ni-label">Impressum</span></div>
+    <div class="nav-item" data-view="bewerbungen" onclick="switchView('bewerbungen')"><span class="ni-icon">🙋</span><span class="ni-label">Bewerbungen</span></div>
+    <div class="nav-item" data-view="partneranfragen" onclick="switchView('partneranfragen')"><span class="ni-icon">🤝</span><span class="ni-label">Partneranfragen</span></div>
     <div class="nav-item" data-view="firma" onclick="switchView('firma')"><span class="ni-icon">🏢</span><span class="ni-label">Firma</span></div>
     <div class="sidebar-bottom">
       <button class="logout-btn" onclick="doLogout()">Abmelden</button>
@@ -1004,6 +1028,114 @@ a { color:inherit; }
       </div>
     </div>
 
+    <!-- REFERENZEN -->
+    <div class="view" id="view-referenzen">
+      <div class="view-head">
+        <div class="view-title">Referenzen</div>
+        <div class="view-sub">Erscheinen live im Referenzen-Bereich deiner Website</div>
+      </div>
+      <div class="paket-form">
+        <div class="paket-form-title" id="ref-form-title">Neue Referenz erstellen</div>
+        <input type="hidden" id="ref-edit-id" value="">
+        <div class="field">
+          <label>Bild (optional, wird automatisch komprimiert)</label>
+          <input type="file" id="ref-bild-input" accept="image/*" onchange="handleRefBildUpload(this)">
+          <div id="ref-bild-preview" style="margin-top:10px;display:none">
+            <img id="ref-bild-preview-img" style="max-width:200px;border-radius:12px;display:block;margin-bottom:8px">
+            <button type="button" onclick="removeRefBild()" style="padding:7px 14px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:12px;cursor:pointer;font-family:inherit">Bild entfernen</button>
+          </div>
+          <input type="hidden" id="ref-bild-data" value="">
+        </div>
+        <div class="field"><label>Titel</label><input type="text" id="ref-titel" placeholder="z. B. Haushaltsreinigung · Eitorf"></div>
+        <div class="field"><label>Beschreibung</label><input type="text" id="ref-beschreibung" placeholder="z. B. Privathaushalt · 85m²"></div>
+        <div class="field"><label>Reihenfolge (kleinere Zahl = weiter vorne)</label><input type="number" id="ref-reihenfolge" placeholder="1"></div>
+        <div class="wizard-nav-inline" style="display:flex;gap:12px;margin-top:10px">
+          <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="saveReferenz()" id="ref-save-btn">Referenz speichern</button>
+          <button class="btn" style="width:auto;padding:13px 24px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)" onclick="resetRefForm()">Abbrechen / Neu</button>
+        </div>
+      </div>
+      <div id="referenzen-list"><div class="empty-state">Lade Referenzen ...</div></div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="view" id="view-faqadmin">
+      <div class="view-head">
+        <div class="view-title">FAQ</div>
+        <div class="view-sub">Erscheinen live im FAQ-Bereich deiner Website</div>
+      </div>
+      <div class="paket-form">
+        <div class="paket-form-title" id="faq-form-title">Neue Frage erstellen</div>
+        <input type="hidden" id="faq-edit-id" value="">
+        <div class="field"><label>Frage</label><input type="text" id="faq-frage" placeholder="z. B. Wie läuft eine Anfrage ab?"></div>
+        <div class="field"><label>Antwort</label><textarea id="faq-antwort" placeholder="Ausführliche Antwort ..."></textarea></div>
+        <div class="field"><label>Reihenfolge (kleinere Zahl = weiter vorne)</label><input type="number" id="faq-reihenfolge" placeholder="1"></div>
+        <div class="wizard-nav-inline" style="display:flex;gap:12px;margin-top:10px">
+          <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="saveFaq()" id="faq-save-btn">Frage speichern</button>
+          <button class="btn" style="width:auto;padding:13px 24px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)" onclick="resetFaqForm()">Abbrechen / Neu</button>
+        </div>
+      </div>
+      <div id="faqadmin-list"><div class="empty-state">Lade FAQ ...</div></div>
+    </div>
+
+    <!-- BILDER (Leistungen) -->
+    <div class="view" id="view-bilder">
+      <div class="view-head">
+        <div class="view-title">Bilder</div>
+        <div class="view-sub">Bild je Leistung hochladen und Leistungen auf der Website ein-/ausblenden</div>
+      </div>
+      <div id="bilder-list"><div class="empty-state">Lade Leistungen ...</div></div>
+    </div>
+
+    <!-- IMPRESSUM -->
+    <div class="view" id="view-impressumadmin">
+      <div class="view-head">
+        <div class="view-title">Impressum</div>
+        <div class="view-sub">Diese Angaben erscheinen live auf waschlurch.com/impressum.html</div>
+      </div>
+      <div class="paket-form">
+        <div class="field-row">
+          <div class="field"><label>Firmenname</label><input type="text" id="imp-firmenname" placeholder="Waschlurch"></div>
+          <div class="field"><label>Inhaber</label><input type="text" id="imp-inhaber" placeholder="Daniel Lurch"></div>
+        </div>
+        <div class="field"><label>Straße & Hausnummer</label><input type="text" id="imp-strasse"></div>
+        <div class="field-row">
+          <div class="field"><label>PLZ</label><input type="text" id="imp-plz"></div>
+          <div class="field"><label>Ort</label><input type="text" id="imp-ort"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Telefon</label><input type="text" id="imp-telefon"></div>
+          <div class="field"><label>E-Mail</label><input type="email" id="imp-email"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Steuernummer (optional)</label><input type="text" id="imp-steuernummer"></div>
+          <div class="field"><label>USt-IdNr. (optional)</label><input type="text" id="imp-ustid"></div>
+        </div>
+        <div class="field"><label>Berufshaftpflichtversicherung (optional)</label><input type="text" id="imp-haftpflicht" placeholder="z. B. Name & Anschrift des Versicherers"></div>
+        <div class="field"><label>Zuständige Aufsichtsbehörde (optional)</label><input type="text" id="imp-aufsichtsbehoerde"></div>
+        <div class="field"><label>Weitere Angaben (optional, frei)</label><textarea id="imp-weitere" placeholder="z. B. Angaben zur Streitschlichtung, Bildnachweise etc."></textarea></div>
+        <button class="btn btn-primary" style="width:auto;padding:14px 28px" onclick="saveImpressum()" id="imp-save-btn">Impressum speichern</button>
+        <span class="preis-saved-msg" id="imp-saved-msg">✓ Gespeichert – live auf der Website</span>
+      </div>
+    </div>
+
+    <!-- BEWERBUNGEN -->
+    <div class="view" id="view-bewerbungen">
+      <div class="view-head">
+        <div class="view-title">Bewerbungen</div>
+        <div class="view-sub">Eingegangene Bewerbungen über waschlurch.com/bewerbung.html</div>
+      </div>
+      <div id="bewerbungen-list"><div class="empty-state">Lade Bewerbungen ...</div></div>
+    </div>
+
+    <!-- PARTNERANFRAGEN -->
+    <div class="view" id="view-partneranfragen">
+      <div class="view-head">
+        <div class="view-title">Partneranfragen</div>
+        <div class="view-sub">Eingegangene Kooperationsanfragen über waschlurch.com/partner.html</div>
+      </div>
+      <div id="partneranfragen-list"><div class="empty-state">Lade Partneranfragen ...</div></div>
+    </div>
+
     <!-- FIRMA -->
     <div class="view" id="view-firma">
       <div class="view-head">
@@ -1074,6 +1206,16 @@ let allPakete = [];
 let allMitarbeiter = [];
 let allKunden = [];
 let allAngebote = [];
+let allReferenzen = [];
+let allFaqs = [];
+let allLeistungenBilder = {};
+let unsubReferenzen = null;
+let unsubFaqs = null;
+let unsubLeistungenBilder = null;
+let allBewerbungen = [];
+let unsubBewerbungen = null;
+let allPartneranfragen = [];
+let unsubPartneranfragen = null;
 let unsubRequests = null;
 let unsubEinnahmen = null;
 let unsubAusgaben = null;
@@ -1304,6 +1446,11 @@ onAuthStateChanged(auth, (user) => {
     if(unsubMitarbeiter) unsubMitarbeiter();
     if(unsubKunden) unsubKunden();
     if(unsubAngebote) unsubAngebote();
+    if(unsubReferenzen) unsubReferenzen();
+    if(unsubFaqs) unsubFaqs();
+    if(unsubLeistungenBilder) unsubLeistungenBilder();
+    if(unsubBewerbungen) unsubBewerbungen();
+    if(unsubPartneranfragen) unsubPartneranfragen();
   }
 });
 
@@ -1371,10 +1518,41 @@ function startListeners(){
     renderAngeboteList();
   }, err => console.error(err));
 
+  const refQuery = query(collection(db, 'referenzen'), orderBy('reihenfolge', 'asc'));
+  unsubReferenzen = onSnapshot(refQuery, (snap) => {
+    allReferenzen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderReferenzenList();
+  }, err => console.error(err));
+
+  const faqQuery = query(collection(db, 'faqs'), orderBy('reihenfolge', 'asc'));
+  unsubFaqs = onSnapshot(faqQuery, (snap) => {
+    allFaqs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderFaqAdminList();
+  }, err => console.error(err));
+
+  unsubLeistungenBilder = onSnapshot(collection(db, 'leistungen_anzeige'), (snap) => {
+    allLeistungenBilder = {};
+    snap.docs.forEach(d => { allLeistungenBilder[d.id] = d.data(); });
+    renderBilderList();
+  }, err => console.error(err));
+
+  const bewQuery = query(collection(db, 'bewerbungen'), orderBy('createdAt', 'desc'));
+  unsubBewerbungen = onSnapshot(bewQuery, (snap) => {
+    allBewerbungen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderBewerbungenList();
+  }, err => console.error(err));
+
+  const partQuery = query(collection(db, 'partneranfragen'), orderBy('createdAt', 'desc'));
+  unsubPartneranfragen = onSnapshot(partQuery, (snap) => {
+    allPartneranfragen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderPartneranfragenList();
+  }, err => console.error(err));
+
   loadPreise();
   loadSteuersatz();
   loadFirma();
   loadKalkulation();
+  loadImpressum();
   renderPaketLeistungenCheckboxes();
 
   renderRangePicker('anfragen-range-picker', (range) => { anfragenRange = range; renderRequestCharts(); }, 14);
@@ -2113,6 +2291,40 @@ window.saveFirma = function(){
       console.error(err);
       btn.disabled = false;
       btn.textContent = 'Firmendaten speichern';
+      alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
+    });
+};
+
+// ── IMPRESSUM ─────────────────────
+const IMPRESSUM_FIELDS = ['firmenname','inhaber','strasse','plz','ort','telefon','email','steuernummer','ustid','haftpflicht','aufsichtsbehoerde','weitere'];
+
+function loadImpressum(){
+  getDoc(doc(db, 'einstellungen', 'impressum')).then(snap => {
+    const data = snap.exists() ? snap.data() : {};
+    IMPRESSUM_FIELDS.forEach(f => {
+      const el = document.getElementById('imp-'+f);
+      if(el && data[f] != null) el.value = data[f];
+    });
+  }).catch(err => console.error(err));
+}
+
+window.saveImpressum = function(){
+  const btn = document.getElementById('imp-save-btn');
+  const msg = document.getElementById('imp-saved-msg');
+  btn.disabled = true; btn.textContent = 'Speichere ...';
+
+  const data = {};
+  IMPRESSUM_FIELDS.forEach(f => { data[f] = document.getElementById('imp-'+f).value.trim(); });
+
+  setDoc(doc(db, 'einstellungen', 'impressum'), data, { merge:true })
+    .then(() => {
+      btn.disabled = false; btn.textContent = 'Impressum speichern';
+      msg.style.display = 'inline';
+      setTimeout(() => msg.style.display = 'none', 3000);
+    })
+    .catch(err => {
+      console.error(err);
+      btn.disabled = false; btn.textContent = 'Impressum speichern';
       alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
     });
 };
@@ -3715,6 +3927,361 @@ window.deleteAngebot = function(id){
   if(!confirm('Dieses Angebot wirklich löschen?')) return;
   deleteDoc(doc(db, 'angebote', id)).catch(err => console.error(err));
 };
+
+// ── REFERENZEN ─────────────────────
+window.handleRefBildUpload = function(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ alert('Bitte eine Bilddatei auswählen.'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 640;
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      let quality = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while(dataUrl.length > 700000 && quality > 0.3){ quality -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', quality); }
+      document.getElementById('ref-bild-data').value = dataUrl;
+      document.getElementById('ref-bild-preview-img').src = dataUrl;
+      document.getElementById('ref-bild-preview').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removeRefBild = function(){
+  document.getElementById('ref-bild-data').value = '';
+  document.getElementById('ref-bild-input').value = '';
+  document.getElementById('ref-bild-preview').style.display = 'none';
+};
+
+window.resetRefForm = function(){
+  document.getElementById('ref-edit-id').value = '';
+  document.getElementById('ref-titel').value = '';
+  document.getElementById('ref-beschreibung').value = '';
+  document.getElementById('ref-reihenfolge').value = (allReferenzen.length + 1);
+  window.removeRefBild();
+  document.getElementById('ref-form-title').textContent = 'Neue Referenz erstellen';
+  document.getElementById('ref-save-btn').textContent = 'Referenz speichern';
+};
+
+window.editReferenz = function(id){
+  const r = allReferenzen.find(x => x.id === id);
+  if(!r) return;
+  document.getElementById('ref-edit-id').value = id;
+  document.getElementById('ref-titel').value = r.titel || '';
+  document.getElementById('ref-beschreibung').value = r.beschreibung || '';
+  document.getElementById('ref-reihenfolge').value = r.reihenfolge != null ? r.reihenfolge : '';
+  document.getElementById('ref-bild-data').value = r.bild_base64 || '';
+  if(r.bild_base64){
+    document.getElementById('ref-bild-preview-img').src = r.bild_base64;
+    document.getElementById('ref-bild-preview').style.display = 'block';
+  } else {
+    document.getElementById('ref-bild-preview').style.display = 'none';
+  }
+  document.getElementById('ref-form-title').textContent = 'Referenz bearbeiten';
+  document.getElementById('ref-save-btn').textContent = 'Änderungen speichern';
+  window.switchView('referenzen');
+  window.scrollTo({top:0, behavior:'smooth'});
+};
+
+window.saveReferenz = function(){
+  const btn = document.getElementById('ref-save-btn');
+  const editId = document.getElementById('ref-edit-id').value;
+  const titel = document.getElementById('ref-titel').value.trim();
+  if(!titel){ alert('Bitte einen Titel eingeben.'); return; }
+
+  const data = {
+    titel,
+    beschreibung: document.getElementById('ref-beschreibung').value.trim(),
+    bild_base64: document.getElementById('ref-bild-data').value || null,
+    reihenfolge: parseInt(document.getElementById('ref-reihenfolge').value) || 99,
+  };
+
+  btn.disabled = true; btn.textContent = 'Speichere ...';
+  const promise = editId
+    ? updateDoc(doc(db, 'referenzen', editId), data)
+    : addDoc(collection(db, 'referenzen'), { ...data, status:'aktiv', createdAt: serverTimestamp() });
+
+  promise.then(() => { btn.disabled = false; window.resetRefForm(); })
+    .catch(err => { console.error(err); btn.disabled = false; alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.'); });
+};
+
+window.toggleReferenzStatus = function(id, current){
+  updateDoc(doc(db, 'referenzen', id), { status: current === 'aktiv' ? 'archiviert' : 'aktiv' }).catch(err => console.error(err));
+};
+
+window.deleteReferenz = function(id){
+  if(!confirm('Diese Referenz wirklich endgültig löschen?')) return;
+  deleteDoc(doc(db, 'referenzen', id)).catch(err => console.error(err));
+};
+
+function renderReferenzenList(){
+  const listEl = document.getElementById('referenzen-list');
+  if(!listEl) return;
+  if(allReferenzen.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Noch keine Referenzen angelegt.</div>';
+    return;
+  }
+  listEl.innerHTML = allReferenzen.map(r => `
+    <div class="ref-admin-card ${r.status !== 'aktiv' ? 'inaktiv' : ''}">
+      ${r.bild_base64 ? `<img src="${r.bild_base64}" class="ref-admin-thumb">` : `<div class="ref-admin-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px">🧹</div>`}
+      <div class="ref-admin-body">
+        <div class="ref-admin-title">${r.titel||''}</div>
+        <div class="ref-admin-sub">${r.beschreibung||''} · ${r.status==='aktiv' ? 'Aktiv – sichtbar' : 'Archiviert'}</div>
+        <div class="ref-admin-actions">
+          <button onclick="editReferenz('${r.id}')">✏️ Bearbeiten</button>
+          <button onclick="toggleReferenzStatus('${r.id}','${r.status}')">${r.status==='aktiv' ? '📥 Archivieren' : '▶ Aktivieren'}</button>
+          <button onclick="deleteReferenz('${r.id}')" style="border-color:rgba(248,113,113,0.3);color:#F87171">🗑 Löschen</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── FAQ ─────────────────────
+window.resetFaqForm = function(){
+  document.getElementById('faq-edit-id').value = '';
+  document.getElementById('faq-frage').value = '';
+  document.getElementById('faq-antwort').value = '';
+  document.getElementById('faq-reihenfolge').value = (allFaqs.length + 1);
+  document.getElementById('faq-form-title').textContent = 'Neue Frage erstellen';
+  document.getElementById('faq-save-btn').textContent = 'Frage speichern';
+};
+
+window.editFaq = function(id){
+  const f = allFaqs.find(x => x.id === id);
+  if(!f) return;
+  document.getElementById('faq-edit-id').value = id;
+  document.getElementById('faq-frage').value = f.frage || '';
+  document.getElementById('faq-antwort').value = f.antwort || '';
+  document.getElementById('faq-reihenfolge').value = f.reihenfolge != null ? f.reihenfolge : '';
+  document.getElementById('faq-form-title').textContent = 'Frage bearbeiten';
+  document.getElementById('faq-save-btn').textContent = 'Änderungen speichern';
+  window.switchView('faqadmin');
+  window.scrollTo({top:0, behavior:'smooth'});
+};
+
+window.saveFaq = function(){
+  const btn = document.getElementById('faq-save-btn');
+  const editId = document.getElementById('faq-edit-id').value;
+  const frage = document.getElementById('faq-frage').value.trim();
+  const antwort = document.getElementById('faq-antwort').value.trim();
+  if(!frage || !antwort){ alert('Bitte Frage und Antwort ausfüllen.'); return; }
+
+  const data = { frage, antwort, reihenfolge: parseInt(document.getElementById('faq-reihenfolge').value) || 99 };
+
+  btn.disabled = true; btn.textContent = 'Speichere ...';
+  const promise = editId
+    ? updateDoc(doc(db, 'faqs', editId), data)
+    : addDoc(collection(db, 'faqs'), { ...data, status:'aktiv', createdAt: serverTimestamp() });
+
+  promise.then(() => { btn.disabled = false; window.resetFaqForm(); })
+    .catch(err => { console.error(err); btn.disabled = false; alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.'); });
+};
+
+window.toggleFaqStatus = function(id, current){
+  updateDoc(doc(db, 'faqs', id), { status: current === 'aktiv' ? 'archiviert' : 'aktiv' }).catch(err => console.error(err));
+};
+
+window.deleteFaq = function(id){
+  if(!confirm('Diese Frage wirklich endgültig löschen?')) return;
+  deleteDoc(doc(db, 'faqs', id)).catch(err => console.error(err));
+};
+
+function renderFaqAdminList(){
+  const listEl = document.getElementById('faqadmin-list');
+  if(!listEl) return;
+  if(allFaqs.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Noch keine FAQ-Einträge angelegt.</div>';
+    return;
+  }
+  listEl.innerHTML = allFaqs.map(f => `
+    <div class="faq-admin-card ${f.status !== 'aktiv' ? 'inaktiv' : ''}">
+      <div class="ref-admin-body">
+        <div class="faq-admin-q">${f.frage||''}</div>
+        <div class="faq-admin-a">${f.antwort||''}</div>
+        <div class="ref-admin-sub">${f.status==='aktiv' ? 'Aktiv – sichtbar' : 'Archiviert'}</div>
+        <div class="faq-admin-actions">
+          <button onclick="editFaq('${f.id}')">✏️ Bearbeiten</button>
+          <button onclick="toggleFaqStatus('${f.id}','${f.status}')">${f.status==='aktiv' ? '📥 Archivieren' : '▶ Aktivieren'}</button>
+          <button onclick="deleteFaq('${f.id}')" style="border-color:rgba(248,113,113,0.3);color:#F87171">🗑 Löschen</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── BILDER (LEISTUNGEN) ─────────────────────
+window.handleLeistungBildUpload = function(sid, input){
+  const file = input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ alert('Bitte eine Bilddatei auswählen.'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 480;
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      let quality = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while(dataUrl.length > 500000 && quality > 0.3){ quality -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', quality); }
+      setDoc(doc(db, 'leistungen_anzeige', sid), { bild_base64: dataUrl }, { merge:true }).catch(err => console.error(err));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removeLeistungBild = function(sid){
+  setDoc(doc(db, 'leistungen_anzeige', sid), { bild_base64: null }, { merge:true }).catch(err => console.error(err));
+};
+
+window.toggleLeistungAktiv = function(sid, current){
+  setDoc(doc(db, 'leistungen_anzeige', sid), { aktiv: !current }, { merge:true }).catch(err => console.error(err));
+};
+
+function renderBilderList(){
+  const listEl = document.getElementById('bilder-list');
+  if(!listEl) return;
+  listEl.innerHTML = SERVICES.map(s => {
+    const info = allLeistungenBilder[s.id] || {};
+    const aktiv = info.aktiv !== false; // Standard: aktiv, außer explizit deaktiviert
+    return `
+    <div class="bild-leistung-card ${!aktiv ? 'inaktiv' : ''}">
+      ${info.bild_base64 ? `<img src="${info.bild_base64}" class="bild-leistung-thumb">` : `<div class="bild-leistung-thumb">${s.icon}</div>`}
+      <div class="bild-leistung-name">${s.icon} ${s.name} ${!aktiv ? '<span style="color:#F87171;font-size:11px">(ausgeblendet)</span>' : ''}</div>
+      <div class="bild-leistung-actions">
+        <input type="file" accept="image/*" onchange="handleLeistungBildUpload('${s.id}', this)">
+        ${info.bild_base64 ? `<button onclick="removeLeistungBild('${s.id}')" style="padding:7px 12px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:11px;cursor:pointer;font-family:inherit">Bild entfernen</button>` : ''}
+        <button onclick="toggleLeistungAktiv('${s.id}', ${aktiv})" style="padding:7px 12px;border-radius:100px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:var(--white);font-size:11px;cursor:pointer;font-family:inherit">${aktiv ? '🚫 Ausblenden' : '▶ Einblenden'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── BEWERBUNGEN ─────────────────────
+function viewBase64File(dataUrl){
+  if(!dataUrl) return;
+  const win = window.open('', '_blank');
+  if(dataUrl.startsWith('data:application/pdf')){
+    win.document.write(`<iframe src="${dataUrl}" style="width:100%;height:100vh;border:none"></iframe>`);
+  } else {
+    win.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${dataUrl}" style="max-width:100%;max-height:100vh"></body>`);
+  }
+}
+window.viewBewerbungFile = function(id, field){
+  const b = allBewerbungen.find(x => x.id === id);
+  if(b) viewBase64File(b[field]);
+};
+
+window.setBewerbungStatus = function(id, status){
+  updateDoc(doc(db, 'bewerbungen', id), { status }).catch(err => console.error(err));
+};
+
+window.deleteBewerbung = function(id){
+  if(!confirm('Diese Bewerbung wirklich löschen?')) return;
+  deleteDoc(doc(db, 'bewerbungen', id)).catch(err => console.error(err));
+};
+
+function renderBewerbungenList(){
+  const listEl = document.getElementById('bewerbungen-list');
+  if(!listEl) return;
+  if(allBewerbungen.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Noch keine Bewerbungen eingegangen.</div>';
+    return;
+  }
+  listEl.innerHTML = allBewerbungen.map(b => `
+    <div class="req-card">
+      <div class="req-top">
+        <div>
+          <div class="req-name">${b.vorname||''} ${b.nachname||''}</div>
+          <div class="req-meta">${formatDate(b.createdAt)} · ${b.quelle||''} ${b.position ? '· '+b.position : ''}</div>
+        </div>
+        <select class="req-status" onchange="setBewerbungStatus('${b.id}', this.value)">
+          <option value="eingegangen" ${b.status==='eingegangen'?'selected':''}>Eingegangen</option>
+          <option value="pruefung" ${b.status==='pruefung'?'selected':''}>In Prüfung</option>
+          <option value="gespraech" ${b.status==='gespraech'?'selected':''}>Vorstellungsgespräch</option>
+          <option value="eingestellt" ${b.status==='eingestellt'?'selected':''}>Eingestellt</option>
+          <option value="abgelehnt" ${b.status==='abgelehnt'?'selected':''}>Abgelehnt</option>
+        </select>
+      </div>
+      <div class="req-grid">
+        <div><span>Adresse:</span>${b.strasse||''}, ${b.plz||''} ${b.ort||''}</div>
+        <div><span>Telefon:</span>${b.telefon||'–'}</div>
+        <div><span>E-Mail:</span>${b.email||'–'}</div>
+        <div><span>Erreichbarkeit:</span>${b.erreichbarkeit||'–'}</div>
+      </div>
+      <div class="req-actions">
+        <a href="tel:${b.telefon||''}">📞 Anrufen</a>
+        <a href="mailto:${b.email||''}">✉️ E-Mail schreiben</a>
+        ${b.lebenslauf_base64 ? `<button onclick="viewBewerbungFile('${b.id}','lebenslauf_base64')">📄 Lebenslauf ansehen</button>` : ''}
+        ${b.anschreiben_base64 ? `<button onclick="viewBewerbungFile('${b.id}','anschreiben_base64')">📄 Anschreiben ansehen</button>` : ''}
+        ${b.foto_base64 ? `<button onclick="viewBewerbungFile('${b.id}','foto_base64')">🖼️ Foto ansehen</button>` : ''}
+        <button onclick="deleteBewerbung('${b.id}')" style="border-color:rgba(248,113,113,0.3);color:#F87171">🗑 Löschen</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── PARTNERANFRAGEN ─────────────────────
+window.setPartnerStatus = function(id, status){
+  updateDoc(doc(db, 'partneranfragen', id), { status }).catch(err => console.error(err));
+};
+
+window.deletePartneranfrage = function(id){
+  if(!confirm('Diese Partneranfrage wirklich löschen?')) return;
+  deleteDoc(doc(db, 'partneranfragen', id)).catch(err => console.error(err));
+};
+
+function renderPartneranfragenList(){
+  const listEl = document.getElementById('partneranfragen-list');
+  if(!listEl) return;
+  if(allPartneranfragen.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Noch keine Partneranfragen eingegangen.</div>';
+    return;
+  }
+  listEl.innerHTML = allPartneranfragen.map(p => `
+    <div class="req-card">
+      <div class="req-top">
+        <div>
+          <div class="req-name">${p.firma||''} · ${p.name||''}</div>
+          <div class="req-meta">${formatDate(p.createdAt)} · ${p.art||''}</div>
+        </div>
+        <select class="req-status" onchange="setPartnerStatus('${p.id}', this.value)">
+          <option value="eingegangen" ${p.status==='eingegangen'?'selected':''}>Eingegangen</option>
+          <option value="kontaktiert" ${p.status==='kontaktiert'?'selected':''}>Kontaktiert</option>
+          <option value="kooperation" ${p.status==='kooperation'?'selected':''}>Kooperation aktiv</option>
+          <option value="abgelehnt" ${p.status==='abgelehnt'?'selected':''}>Abgelehnt</option>
+        </select>
+      </div>
+      <div class="req-grid">
+        <div><span>Telefon:</span>${p.telefon||'–'}</div>
+        <div><span>E-Mail:</span>${p.email||'–'}</div>
+      </div>
+      <div class="req-msg">${p.anliegen||''}</div>
+      <div class="req-actions">
+        <a href="tel:${p.telefon||''}">📞 Anrufen</a>
+        <a href="mailto:${p.email||''}">✉️ E-Mail schreiben</a>
+        <button onclick="deletePartneranfrage('${p.id}')" style="border-color:rgba(248,113,113,0.3);color:#F87171">🗑 Löschen</button>
+      </div>
+    </div>
+  `).join('');
+}
 </script>
 
 </body>
