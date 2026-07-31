@@ -29,8 +29,15 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',
 a { color:inherit; }
 
 /* LOGIN */
-#login-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:5%; }
-.login-card { width:100%; max-width:380px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:40px; }
+#login-screen {
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:5%;
+  background-color:#FFFFFF;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(34,197,94,0.08) 0, transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(34,197,94,0.06) 0, transparent 45%),
+    repeating-linear-gradient(45deg, rgba(34,197,94,0.035) 0px, rgba(34,197,94,0.035) 2px, transparent 2px, transparent 26px);
+}
+.login-card { width:100%; max-width:380px; background:var(--black); border:1px solid rgba(0,0,0,0.08); border-radius:24px; padding:40px; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
 .login-logo { display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:8px; }
 .login-logo img { height:36px; }
 .login-title { text-align:center; font-size:22px; font-weight:700; margin-bottom:6px; }
@@ -85,7 +92,20 @@ a { color:inherit; }
 .stat-lbl { font-size:12px; color:rgba(255,255,255,0.45); margin-top:4px; }
 
 /* REQUEST CARDS */
-.req-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:14px; position:relative; }
+.req-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:14px; position:relative; border-left:4px solid var(--gray-500); }
+.req-card.status-neu { border-left-color:#F87171; }
+.req-card.status-kontaktiert { border-left-color:#FB923C; }
+.req-card.status-angebot { border-left-color:#FBBF24; }
+.req-card.status-gebucht { border-left-color:#22C55E; }
+.req-card.status-abgeschlossen { border-left-color:#15803D; }
+.req-card.status-abgelehnt { border-left-color:rgba(255,255,255,0.2); }
+.req-filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+.req-filter-bar select, .req-filter-bar input { padding:9px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:10px; color:var(--white); font-family:inherit; font-size:14px; }
+.req-filter-bar select option { background:var(--gray-900); }
+.req-tabs { display:flex; gap:8px; margin-bottom:16px; }
+.req-tab { padding:9px 16px; border-radius:100px; font-size:13px; font-weight:600; cursor:pointer; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.5); }
+.req-tab.active { background:rgba(34,197,94,0.15); border-color:var(--green); color:var(--green); }
+.wert-badge { display:inline-block; padding:4px 10px; border-radius:100px; font-weight:700; font-size:12px; }
 @keyframes flashGreen {
   0% { box-shadow:0 0 0 0 rgba(34,197,94,0); background:rgba(255,255,255,0.04); }
   35% { box-shadow:0 0 0 3px rgba(34,197,94,0.5); background:rgba(34,197,94,0.1); }
@@ -382,11 +402,11 @@ a { color:inherit; }
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">
+    <a href="/" class="login-logo" style="display:flex">
       <img src="/logo.png?v=5" alt="Waschlurch">
-    </div>
+    </a>
     <div class="login-title">Waschlurch Dashboard</div>
-    <div class="login-sub">Nur für dich – bitte anmelden</div>
+    <div class="login-sub">Login Admin</div>
     <div class="field">
       <label>E-Mail</label>
       <input type="email" id="login-email" placeholder="deine@email.de">
@@ -433,7 +453,30 @@ a { color:inherit; }
         <div class="view-title">Anfragen</div>
         <div class="view-sub">Alle eingehenden Kundenanfragen von der Website</div>
       </div>
+      <div class="req-tabs">
+        <div class="req-tab active" data-reqtab="aktiv" onclick="switchReqTab('aktiv')">📋 Aktiv</div>
+        <div class="req-tab" data-reqtab="archiviert" onclick="switchReqTab('archiviert')">📥 Archiviert</div>
+        <div class="req-tab" data-reqtab="papierkorb" onclick="switchReqTab('papierkorb')">🗑 Papierkorb</div>
+      </div>
       <div class="stat-row" id="anfragen-stats"></div>
+      <div class="req-filter-bar">
+        <select id="req-sort" onchange="renderRequests()">
+          <option value="datum-neu">Sortieren: Datum (neueste zuerst)</option>
+          <option value="datum-alt">Sortieren: Datum (älteste zuerst)</option>
+          <option value="status">Sortieren: Status</option>
+          <option value="wert-hoch">Sortieren: Wert (hoch → niedrig)</option>
+        </select>
+        <select id="req-filter-status" onchange="renderRequests()">
+          <option value="">Alle Status</option>
+          <option value="neu">Neu</option>
+          <option value="kontaktiert">Kontaktiert</option>
+          <option value="angebot gesendet">Angebot gesendet</option>
+          <option value="gebucht">Gebucht</option>
+          <option value="abgeschlossen">Abgeschlossen</option>
+          <option value="abgelehnt">Abgelehnt</option>
+        </select>
+        <input type="text" id="req-search" placeholder="🔍 Suche Name, E-Mail, Ort ..." oninput="renderRequests()" style="flex:1;min-width:180px">
+      </div>
       <div id="anfragen-range-picker"></div>
       <div class="chart-row">
         <div class="chart-card">
@@ -511,21 +554,21 @@ a { color:inherit; }
 
           <div class="field-row" style="margin-top:20px">
             <div class="field">
-              <label>Paket-Stufe</label>
-              <select id="ang-stufe" onchange="calcAngebot()">
-                <option value="basis">Basis</option>
-                <option value="komfort">Komfort</option>
-                <option value="premium">Premium</option>
-              </select>
-            </div>
-            <div class="field">
               <label>Häufigkeit</label>
-              <select id="ang-haeufigkeit">
+              <select id="ang-haeufigkeit" onchange="calcAngebot()">
                 <option>Einmalig</option>
                 <option>Wöchentlich</option>
                 <option>14-tägig</option>
                 <option>Monatlich</option>
                 <option>Quartalsweise</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Abrechnung als</label>
+              <select id="ang-abrechnung" onchange="calcAngebot()">
+                <option value="einzel">Einzelrechnung (pro Einsatz)</option>
+                <option value="monat">Monatsrechnung</option>
+                <option value="quartal">Quartalsrechnung</option>
               </select>
             </div>
           </div>
@@ -561,6 +604,23 @@ a { color:inherit; }
       </div>
 
       <div class="kalk-section-title">Bisherige Angebote</div>
+      <div class="req-filter-bar">
+        <select id="ang-list-sort" onchange="renderAngeboteList()">
+          <option value="datum-neu">Sortieren: Datum (neueste zuerst)</option>
+          <option value="datum-alt">Sortieren: Datum (älteste zuerst)</option>
+          <option value="summe-hoch">Sortieren: Summe (hoch → niedrig)</option>
+          <option value="summe-niedrig">Sortieren: Summe (niedrig → hoch)</option>
+        </select>
+        <select id="ang-list-status" onchange="renderAngeboteList()">
+          <option value="">Alle Status</option>
+          <option value="entwurf">Entwurf</option>
+          <option value="versendet">Versendet</option>
+          <option value="angenommen">Angenommen</option>
+          <option value="abgelehnt">Abgelehnt</option>
+          <option value="abgelaufen">Abgelaufen</option>
+        </select>
+        <input type="text" id="ang-list-search" placeholder="🔍 Suche Name, Leistung ..." oninput="renderAngeboteList()" style="flex:1;min-width:180px">
+      </div>
       <div id="angebote-list"><div class="empty-state">Lade Angebote ...</div></div>
     </div>
 
@@ -572,6 +632,7 @@ a { color:inherit; }
       </div>
       <div class="stat-row" id="kunden-stats"></div>
       <div id="kunden-list-view">
+        <input type="text" id="kunden-search" placeholder="🔍 Suche nach Name, Adresse, E-Mail ..." oninput="renderKunden()" style="width:100%;padding:12px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:var(--white);font-family:inherit;font-size:16px;margin-bottom:20px">
         <div id="kunden-list"><div class="empty-state">Lade Kunden ...</div></div>
       </div>
       <div id="kunden-detail-view" style="display:none"></div>
@@ -645,21 +706,92 @@ a { color:inherit; }
         <div class="field">
           <label>Kategorie</label>
           <select id="ausg-kategorie">
-            <option value="Reinigungsmittel">Reinigungsmittel</option>
-            <option value="Ausrüstung/Geräte">Ausrüstung/Geräte</option>
-            <option value="Fahrtkosten">Fahrtkosten</option>
-            <option value="Arbeitskleidung">Arbeitskleidung</option>
-            <option value="Versicherung">Versicherung</option>
-            <option value="Sonstiges">Sonstiges</option>
+            <optgroup label="Reinigungsmittel & Verbrauch">
+              <option>Allzweckreiniger</option>
+              <option>Glasreiniger</option>
+              <option>Sanitärreiniger</option>
+              <option>Desinfektionsmittel</option>
+              <option>Bodenpflegemittel</option>
+              <option>Entkalker</option>
+              <option>Mikrofasertücher</option>
+              <option>Putzlappen/Wischtücher</option>
+              <option>Müllsäcke/Beutel</option>
+              <option>Handschuhe</option>
+              <option>Toilettenpapier/Handtücher (Kunde)</option>
+            </optgroup>
+            <optgroup label="Ausrüstung & Geräte">
+              <option>Staubsauger</option>
+              <option>Wischmopp/Eimer-System</option>
+              <option>Hochdruckreiniger</option>
+              <option>Fensterreinigungs-Equipment</option>
+              <option>Kehrmaschine/Besen</option>
+              <option>Leiter</option>
+              <option>Gartengeräte</option>
+              <option>Winterdienst-Ausrüstung (Streugut, Schneeschieber)</option>
+              <option>Geräte-Reparatur</option>
+              <option>Geräte-Wartung</option>
+            </optgroup>
+            <optgroup label="Fahrzeug & Mobilität">
+              <option>Fahrtkosten/Benzin</option>
+              <option>Fahrzeug-Leasing</option>
+              <option>Fahrzeug-Reparatur</option>
+              <option>Fahrzeug-Versicherung</option>
+              <option>Parkgebühren</option>
+              <option>KFZ-Steuer</option>
+            </optgroup>
+            <optgroup label="Arbeitskleidung & Sicherheit">
+              <option>Arbeitskleidung</option>
+              <option>Sicherheitsschuhe</option>
+              <option>Arbeitsschutz (Masken, Schutzbrille)</option>
+            </optgroup>
+            <optgroup label="Versicherung & Recht">
+              <option>Betriebshaftpflicht</option>
+              <option>Rechtsschutzversicherung</option>
+              <option>Steuerberater</option>
+              <option>Rechtsberatung</option>
+            </optgroup>
+            <optgroup label="Büro & Verwaltung">
+              <option>Büromaterial</option>
+              <option>Software/Abos</option>
+              <option>Telefon/Internet</option>
+              <option>Domain/Hosting</option>
+              <option>Porto/Versand</option>
+            </optgroup>
+            <optgroup label="Marketing">
+              <option>Werbung/Anzeigen</option>
+              <option>Flyer/Drucksachen</option>
+              <option>Website</option>
+            </optgroup>
+            <optgroup label="Personal">
+              <option>Löhne/Gehälter</option>
+              <option>Subunternehmer</option>
+              <option>Schulungen/Weiterbildung</option>
+            </optgroup>
+            <optgroup label="Sonstiges">
+              <option>Miete/Lagerraum</option>
+              <option>Bankgebühren</option>
+              <option>Sonstiges</option>
+            </optgroup>
           </select>
         </div>
         <div class="field"><label>Beschreibung</label><input type="text" id="ausg-beschreibung" placeholder="z. B. Kassenbeleg Rossmann"></div>
         <div class="field"><label>Betrag (€)</label><input type="number" id="ausg-betrag" placeholder="24.90" step="0.01"></div>
         <button class="btn btn-primary" style="padding:13px 20px" onclick="addAusgabe()">+ Hinzufügen</button>
       </div>
+      <div class="field" style="max-width:400px;margin-bottom:20px">
+        <label>Beleg/Kassenbon hinzufügen (Foto oder PDF, optional)</label>
+        <input type="file" id="ausg-beleg-input" accept="image/*,application/pdf" capture="environment" onchange="handleAusgabeBelegUpload(this)">
+        <p style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px">Auf dem Handy öffnet sich automatisch die Kamera zum Abfotografieren.</p>
+        <div id="ausg-beleg-preview" style="margin-top:10px;display:none">
+          <img id="ausg-beleg-preview-img" style="max-width:160px;border-radius:10px;display:block;margin-bottom:6px">
+          <span id="ausg-beleg-pdf-label" style="display:none;color:rgba(255,255,255,0.6);font-size:13px">📄 PDF-Beleg angehängt</span>
+          <button type="button" onclick="removeAusgabeBeleg()" style="padding:6px 12px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:11px;cursor:pointer;font-family:inherit">Entfernen</button>
+        </div>
+        <input type="hidden" id="ausg-beleg-data" value="">
+      </div>
       <table class="fin-table">
         <thead>
-          <tr><th>Datum</th><th>Kategorie</th><th>Beschreibung</th><th>Betrag</th><th></th></tr>
+          <tr><th>Datum</th><th>Kategorie</th><th>Beschreibung</th><th>Betrag</th><th>Beleg</th><th></th></tr>
         </thead>
         <tbody id="ausgaben-table-body"></tbody>
       </table>
@@ -1194,6 +1326,7 @@ function startListeners(){
     renderKunden();
     renderAngAnfrageSelect();
     renderMitarbeiterList();
+    purgeOldTrash();
   }, err => {
     document.getElementById('anfragen-list').innerHTML = '<div class="empty-state">Fehler beim Laden. Bitte Firestore-Regeln prüfen.</div>';
     console.error(err);
@@ -1257,47 +1390,123 @@ function formatDate(ts){
   return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
+function getStatusClass(status){
+  const map = { 'neu':'status-neu', 'kontaktiert':'status-kontaktiert', 'angebot gesendet':'status-angebot', 'gebucht':'status-gebucht', 'abgeschlossen':'status-abgeschlossen', 'abgelehnt':'status-abgelehnt' };
+  return map[status] || '';
+}
+
+function wertColor(wert){
+  if(wert == null) return 'rgba(255,255,255,0.08)';
+  // Skala 0€ (grau/rot) bis 300€+ (grün) – je höher, desto lukrativer
+  const pct = Math.max(0, Math.min(1, wert / 300));
+  const r = Math.round(248 - pct*(248-34));
+  const g = Math.round(113 + pct*(197-113));
+  const b = Math.round(113 + pct*(94-113));
+  return `rgba(${r},${g},${b},0.25)`;
+}
+function wertTextColor(wert){
+  if(wert == null) return 'rgba(255,255,255,0.4)';
+  const pct = Math.max(0, Math.min(1, wert / 300));
+  const r = Math.round(248 - pct*(248-34));
+  const g = Math.round(113 + pct*(197-113));
+  const b = Math.round(113 + pct*(94-113));
+  return `rgb(${r},${g},${b})`;
+}
+
 function renderRequests(){
   const listEl = document.getElementById('anfragen-list');
   const statsEl = document.getElementById('anfragen-stats');
-  const visibleRequests = allRequests.filter(r => !r.archiviert);
 
+  let tabRequests;
+  if(currentReqTab === 'papierkorb') tabRequests = allRequests.filter(r => r.geloescht);
+  else if(currentReqTab === 'archiviert') tabRequests = allRequests.filter(r => r.archiviert && !r.geloescht);
+  else tabRequests = allRequests.filter(r => !r.archiviert && !r.geloescht);
+
+  const statusFilter = document.getElementById('req-filter-status') ? document.getElementById('req-filter-status').value : '';
+  const searchTerm = (document.getElementById('req-search') ? document.getElementById('req-search').value : '').toLowerCase().trim();
+  const sortMode = document.getElementById('req-sort') ? document.getElementById('req-sort').value : 'datum-neu';
+
+  let filtered = tabRequests;
+  if(statusFilter) filtered = filtered.filter(r => r.status === statusFilter);
+  if(searchTerm){
+    filtered = filtered.filter(r => {
+      const hay = `${r.vorname||''} ${r.nachname||''} ${r.email||''} ${r.ort||''} ${r.strasse||''} ${r.telefon||''}`.toLowerCase();
+      return hay.includes(searchTerm);
+    });
+  }
+
+  filtered = [...filtered].sort((a,b) => {
+    if(sortMode === 'datum-alt') return (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0);
+    if(sortMode === 'status') return (a.status||'').localeCompare(b.status||'');
+    if(sortMode === 'wert-hoch') return (b.geschaetzter_auftragswert||0) - (a.geschaetzter_auftragswert||0);
+    return (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0);
+  });
+
+  const activeAll = allRequests.filter(r => !r.archiviert && !r.geloescht);
   const counts = {};
   STATUS_OPTIONS.forEach(s => counts[s] = 0);
-  visibleRequests.forEach(r => { if(counts[r.status] !== undefined) counts[r.status]++; });
+  activeAll.forEach(r => { if(counts[r.status] !== undefined) counts[r.status]++; });
 
-  const archivedCount = allRequests.length - visibleRequests.length;
   statsEl.innerHTML = `
-    <div class="stat-card"><div class="stat-val">${visibleRequests.length}</div><div class="stat-lbl">Gesamt</div></div>
+    <div class="stat-card"><div class="stat-val">${activeAll.length}</div><div class="stat-lbl">Aktiv gesamt</div></div>
     <div class="stat-card"><div class="stat-val">${counts['neu']||0}</div><div class="stat-lbl">Neu</div></div>
     <div class="stat-card"><div class="stat-val">${counts['angebot gesendet']||0}</div><div class="stat-lbl">Angebot gesendet</div></div>
     <div class="stat-card"><div class="stat-val">${counts['gebucht']||0}</div><div class="stat-lbl">Gebucht</div></div>
   `;
 
-  if(visibleRequests.length === 0){
-    listEl.innerHTML = `<div class="empty-state">Noch keine Anfragen eingegangen.${archivedCount ? ' ('+archivedCount+' archiviert)' : ''}</div>`;
+  if(filtered.length === 0){
+    const emptyMsg = currentReqTab === 'papierkorb' ? 'Papierkorb ist leer.' : currentReqTab === 'archiviert' ? 'Keine archivierten Anfragen.' : 'Keine Anfragen gefunden.';
+    listEl.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
     renderRequestCharts();
     return;
   }
 
-  listEl.innerHTML = visibleRequests.map(r => {
+  const trashBar = currentReqTab === 'papierkorb' && filtered.length > 0
+    ? `<div style="margin-bottom:14px"><button onclick="emptyTrash()" style="padding:9px 16px;border-radius:100px;background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🗑 Papierkorb komplett leeren</button> <span style="font-size:12px;color:rgba(255,255,255,0.4);margin-left:10px">Wird automatisch nach 3 Monaten geleert</span></div>`
+    : '';
+
+  listEl.innerHTML = trashBar + filtered.map(r => {
     const daysSince = r.createdAt && r.createdAt.toDate ? Math.floor((Date.now() - r.createdAt.toDate().getTime()) / 86400000) : null;
     const isUnbearbeitet = ['neu','kontaktiert'].includes(r.status);
     let staleBadge = '';
-    if(isUnbearbeitet && daysSince != null){
+    if(isUnbearbeitet && daysSince != null && currentReqTab === 'aktiv'){
       if(daysSince >= 7) staleBadge = `<span class="req-stale-badge critical">⚠️ Seit ${daysSince} Tagen unbeantwortet!</span>`;
       else if(daysSince >= 3) staleBadge = `<span class="req-stale-badge warn">⏰ Seit ${daysSince} Tagen offen</span>`;
     }
+    const wert = r.geschaetzter_auftragswert;
+    const wertBadge = wert != null ? `<span class="wert-badge" style="background:${wertColor(wert)};color:${wertTextColor(wert)}">${wert.toFixed(2)} €</span>` : '–';
+
+    let tabActions = '';
+    if(currentReqTab === 'papierkorb'){
+      tabActions = `
+        <button onclick="restoreFromTrash('${r.id}')">♻️ Wiederherstellen</button>
+        <button onclick="permanentlyDeleteRequest('${r.id}')" style="border:1px solid rgba(248,113,113,0.3);color:#F87171;background:rgba(248,113,113,0.1)">🗑 Endgültig löschen</button>`;
+    } else if(currentReqTab === 'archiviert'){
+      tabActions = `
+        <button onclick="reactivateRequest('${r.id}')">♻️ Reaktivieren</button>
+        <button onclick="prepareReply('${r.id}')">✉️ Antwort vorbereiten</button>`;
+    } else {
+      tabActions = `
+        <button onclick="prepareReply('${r.id}')">✉️ Antwort vorbereiten</button>
+        <a href="tel:${r.telefon||''}">📞 Anrufen</a>
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((r.strasse||'')+', '+(r.plz||'')+' '+(r.ort||''))}" target="_blank" rel="noopener">📍 In Maps öffnen</a>
+        <button class="invoice-btn" onclick="generateInvoice('${r.id}', false)">📄 Rechnung</button>
+        <button class="invoice-btn" onclick="generateInvoice('${r.id}', true)">✉️ Rechnung senden</button>
+        <button onclick="addToGoogleCalendar('${r.id}')">📅 Google Kalender</button>
+        <button onclick="downloadICS('${r.id}')">📅 Kalender-Datei (.ics)</button>
+        <button onclick="showArchiveMenu('${r.id}')" style="flex:0 0 auto">⋯</button>`;
+    }
+
     return `
-    <div class="req-card" id="req-card-${r.id}">
+    <div class="req-card ${getStatusClass(r.status)}" id="req-card-${r.id}">
       <div class="req-top">
         <div>
           <div class="req-name">${r.vorname||''} ${r.nachname||''} ${r.prioritaet==='Sofort' ? '<span style="color:#F87171;font-size:11px;font-weight:700;margin-left:6px">● SOFORT</span>' : ''}${staleBadge}</div>
           <div class="req-meta">${formatDate(r.createdAt)} ${r.vollstaendigkeit_prozent!=null ? '· ' + r.vollstaendigkeit_prozent + '% ausgefüllt' : ''}</div>
         </div>
-        <select class="req-status" onchange="updateStatus('${r.id}', this.value)">
+        ${currentReqTab === 'aktiv' ? `<select class="req-status" onchange="updateStatus('${r.id}', this.value)">
           ${STATUS_OPTIONS.map(s => `<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
-        </select>
+        </select>` : `<span class="kunde-status-pill ${r.status==='abgelehnt'?'gesperrt':'neukunde'}">${r.status||''}</span>`}
       </div>
       <div class="req-grid">
         <div><span>Leistungen:</span>${r.leistungen||'–'}</div>
@@ -1311,7 +1520,7 @@ function renderRequests(){
         <div><span>Telefon:</span>${r.telefon||'–'}</div>
         <div><span>Beginn:</span>${r.gewuenschter_beginn||'–'}</div>
         <div><span>Wunschtermin:</span>${r.wunschtermin||'–'}</div>
-        <div><span>Geschätzter Wert:</span>${r.geschaetzter_auftragswert!=null ? r.geschaetzter_auftragswert.toFixed(2) + ' €' : '–'}</div>
+        <div><span>Geschätzter Wert:</span>${wertBadge}</div>
         <div><span>Priorität:</span>${r.prioritaet||'–'}</div>
         <div>
           <span>Mitarbeiter:</span>
@@ -1337,21 +1546,12 @@ function renderRequests(){
       </div>` : ''}
       ${r.nachricht ? `<div class="req-msg">"${r.nachricht}"</div>` : ''}
       ${r.anmerkung_objekt ? `<div class="req-msg">Anmerkung: ${r.anmerkung_objekt}</div>` : ''}
-      <div class="req-actions">
-        <button onclick="prepareReply('${r.id}')">✉️ Antwort vorbereiten</button>
-        <a href="tel:${r.telefon||''}">📞 Anrufen</a>
-        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((r.strasse||'')+', '+(r.plz||'')+' '+(r.ort||''))}" target="_blank" rel="noopener">📍 In Maps öffnen</a>
-        <button class="invoice-btn" onclick="generateInvoice('${r.id}', false)">📄 Rechnung</button>
-        <button class="invoice-btn" onclick="generateInvoice('${r.id}', true)">✉️ Rechnung senden</button>
-        <button onclick="addToGoogleCalendar('${r.id}')">📅 Google Kalender</button>
-        <button onclick="downloadICS('${r.id}')">📅 Kalender-Datei (.ics)</button>
-        <button onclick="showArchiveMenu('${r.id}')" style="flex:0 0 auto">⋯</button>
-      </div>
+      <div class="req-actions">${tabActions}</div>
     </div>
   `;
   }).join('');
 
-  visibleRequests.forEach(r => {
+  filtered.forEach(r => {
     const cardEl = document.getElementById('req-card-'+r.id);
     if(cardEl) attachLongPress(cardEl, r.id);
   });
@@ -1402,13 +1602,25 @@ window.showArchiveMenu = function(requestId){
   cardEl.classList.add('flash-green');
   setTimeout(() => cardEl.classList.remove('flash-green'), 600);
 
+  const r = allRequests.find(x => x.id === requestId) || {};
+  let buttons = '';
+  if(r.geloescht){
+    buttons = `
+      <button class="lp-archive" onclick="restoreFromTrash('${requestId}')">♻️ Wiederherstellen</button>
+      <button class="lp-delete" onclick="permanentlyDeleteRequest('${requestId}')">🗑 Endgültig löschen</button>`;
+  } else if(r.archiviert){
+    buttons = `
+      <button class="lp-archive" onclick="reactivateRequest('${requestId}')">♻️ Reaktivieren</button>
+      <button class="lp-delete" onclick="deleteRequestConfirm('${requestId}')">🗑 In Papierkorb verschieben</button>`;
+  } else {
+    buttons = `
+      <button class="lp-archive" onclick="archiveRequest('${requestId}')">📥 Anfrage archivieren</button>
+      <button class="lp-delete" onclick="deleteRequestConfirm('${requestId}')">🗑 In Papierkorb verschieben</button>`;
+  }
+
   const overlay = document.createElement('div');
   overlay.className = 'req-longpress-overlay';
-  overlay.innerHTML = `
-    <button class="lp-archive" onclick="archiveRequest('${requestId}')">📥 Anfrage archivieren</button>
-    <button class="lp-delete" onclick="deleteRequestConfirm('${requestId}')">🗑 Anfrage löschen</button>
-    <button class="lp-cancel" onclick="this.closest('.req-longpress-overlay').remove()">✕ Abbrechen</button>
-  `;
+  overlay.innerHTML = buttons + `<button class="lp-cancel" onclick="this.closest('.req-longpress-overlay').remove()">✕ Abbrechen</button>`;
   cardEl.appendChild(overlay);
 };
 
@@ -1416,9 +1628,45 @@ window.archiveRequest = function(id){
   updateDoc(doc(db, 'anfragen', id), { archiviert: true }).catch(err => console.error(err));
 };
 
+window.reactivateRequest = function(id){
+  updateDoc(doc(db, 'anfragen', id), { archiviert: false }).catch(err => console.error(err));
+};
+
 window.deleteRequestConfirm = function(id){
-  if(!confirm('Diese Anfrage wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  if(!confirm('Diese Anfrage in den Papierkorb verschieben? Du kannst sie dort noch 3 Monate lang wiederherstellen.')) return;
+  updateDoc(doc(db, 'anfragen', id), { geloescht: true, geloescht_am: serverTimestamp() }).catch(err => console.error(err));
+};
+
+window.restoreFromTrash = function(id){
+  updateDoc(doc(db, 'anfragen', id), { geloescht: false, geloescht_am: null }).catch(err => console.error(err));
+};
+
+window.permanentlyDeleteRequest = function(id){
+  if(!confirm('Diese Anfrage UNWIDERRUFLICH und endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
   deleteDoc(doc(db, 'anfragen', id)).catch(err => console.error(err));
+};
+
+window.emptyTrash = function(){
+  const trashed = allRequests.filter(r => r.geloescht);
+  if(trashed.length === 0){ alert('Papierkorb ist bereits leer.'); return; }
+  if(!confirm(`${trashed.length} Anfrage(n) im Papierkorb UNWIDERRUFLICH löschen?`)) return;
+  trashed.forEach(r => deleteDoc(doc(db, 'anfragen', r.id)).catch(err => console.error(err)));
+};
+
+function purgeOldTrash(){
+  const threeMonthsAgo = Date.now() - (90 * 86400000);
+  allRequests.forEach(r => {
+    if(r.geloescht && r.geloescht_am && r.geloescht_am.toMillis && r.geloescht_am.toMillis() < threeMonthsAgo){
+      deleteDoc(doc(db, 'anfragen', r.id)).catch(() => {});
+    }
+  });
+}
+
+let currentReqTab = 'aktiv';
+window.switchReqTab = function(tab){
+  currentReqTab = tab;
+  document.querySelectorAll('.req-tab').forEach(t => t.classList.toggle('active', t.dataset.reqtab === tab));
+  renderRequests();
 };
 
 document.addEventListener('click', (e) => {
@@ -1607,19 +1855,72 @@ window.deleteEinnahme = function(id){
 };
 
 // ── AUSGABEN ─────────────────────
+window.handleAusgabeBelegUpload = function(input){
+  const file = input.files[0];
+  if(!file) return;
+
+  if(file.type === 'application/pdf'){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('ausg-beleg-data').value = e.target.result;
+      document.getElementById('ausg-beleg-preview-img').style.display = 'none';
+      document.getElementById('ausg-beleg-pdf-label').style.display = 'block';
+      document.getElementById('ausg-beleg-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 800;
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      let quality = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while(dataUrl.length > 700000 && quality > 0.3){
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      document.getElementById('ausg-beleg-data').value = dataUrl;
+      document.getElementById('ausg-beleg-preview-img').src = dataUrl;
+      document.getElementById('ausg-beleg-preview-img').style.display = 'block';
+      document.getElementById('ausg-beleg-pdf-label').style.display = 'none';
+      document.getElementById('ausg-beleg-preview').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removeAusgabeBeleg = function(){
+  document.getElementById('ausg-beleg-data').value = '';
+  document.getElementById('ausg-beleg-input').value = '';
+  document.getElementById('ausg-beleg-preview').style.display = 'none';
+};
+
 window.addAusgabe = function(){
   const datum = document.getElementById('ausg-datum').value || new Date().toISOString().slice(0,10);
   const kategorie = document.getElementById('ausg-kategorie').value;
   const beschreibung = document.getElementById('ausg-beschreibung').value.trim();
   const betrag = parseFloat(document.getElementById('ausg-betrag').value) || 0;
+  const beleg = document.getElementById('ausg-beleg-data').value || null;
 
   if(!beschreibung || !betrag){ return; }
 
   addDoc(collection(db, 'ausgaben'), {
-    datum, kategorie, beschreibung, betrag, createdAt: serverTimestamp()
+    datum, kategorie, beschreibung, betrag, beleg_base64: beleg, createdAt: serverTimestamp()
   }).then(() => {
     document.getElementById('ausg-beschreibung').value = '';
     document.getElementById('ausg-betrag').value = '';
+    window.removeAusgabeBeleg();
   }).catch(err => console.error(err));
 };
 
@@ -1638,6 +1939,15 @@ function filterByRange(items, range, dateField){
   });
 }
 
+function ausgabeBetragColor(betrag){
+  // Je höher der Betrag, desto röter; kleine Beträge grau
+  const pct = Math.max(0, Math.min(1, betrag / 200));
+  const r = Math.round(107 + pct*(248-107));
+  const g = Math.round(114 - pct*(114-113));
+  const b = Math.round(128 - pct*(128-113));
+  return `rgb(${r},${g},${b})`;
+}
+
 function renderAusgaben(){
   const body = document.getElementById('ausgaben-table-body');
   const statsEl = document.getElementById('ausgaben-stats');
@@ -1653,7 +1963,7 @@ function renderAusgaben(){
 
   if(!body) return;
   if(filtered.length === 0){
-    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.4);padding:30px">Keine Ausgaben in diesem Zeitraum.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.4);padding:30px">Keine Ausgaben in diesem Zeitraum.</td></tr>';
     return;
   }
 
@@ -1662,11 +1972,23 @@ function renderAusgaben(){
       <td data-label="Datum">${a.datum||'–'}</td>
       <td data-label="Kategorie">${a.kategorie||'–'}</td>
       <td data-label="Beschreibung">${a.beschreibung||'–'}</td>
-      <td data-label="Betrag">${(a.betrag||0).toFixed(2)} €</td>
+      <td data-label="Betrag" style="font-weight:700;color:${ausgabeBetragColor(a.betrag||0)}">${(a.betrag||0).toFixed(2)} €</td>
+      <td>${a.beleg_base64 ? `<button onclick="viewAusgabeBeleg('${a.id}')" style="background:none;border:none;color:var(--green);cursor:pointer;font-size:16px">📎</button>` : ''}</td>
       <td><button class="fin-delete" onclick="deleteAusgabe('${a.id}')">✕</button></td>
     </tr>
   `).join('');
 }
+
+window.viewAusgabeBeleg = function(id){
+  const a = allAusgaben.find(x => x.id === id);
+  if(!a || !a.beleg_base64) return;
+  const win = window.open('', '_blank');
+  if(a.beleg_base64.startsWith('data:application/pdf')){
+    win.document.write(`<iframe src="${a.beleg_base64}" style="width:100%;height:100vh;border:none"></iframe>`);
+  } else {
+    win.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${a.beleg_base64}" style="max-width:100%;max-height:100vh"></body>`);
+  }
+};
 
 // ── PREISE ─────────────────────
 const EINHEIT_OPTIONS = [
@@ -2652,9 +2974,16 @@ function deriveKundenList(){
     if(r.createdAt && (!k.letzteAnfrage || r.createdAt.toMillis() > k.letzteAnfrage)){
       k.letzteAnfrage = r.createdAt.toMillis();
       k.vorname = r.vorname; k.nachname = r.nachname; k.telefon = r.telefon;
+      k.strasse = r.strasse; k.plz = r.plz; k.ort = r.ort;
+      k.objektart = r.objektart; k.zielgruppe = r.gewaehltes_paket ? (allPakete.find(p=>p.name===r.gewaehltes_paket)||{}).zielgruppe : null;
     }
     k.anfragen.push(r);
     if(r.geschaetzter_auftragswert != null) k.gesamtwert += r.geschaetzter_auftragswert;
+  });
+  const gewerblicheObjektarten = ['Büro','Praxis','Gewerbe','Sonstiges'];
+  Object.values(map).forEach(k => {
+    k.art = gewerblicheObjektarten.includes(k.objektart) ? 'Gewerblich' : 'Privat';
+    k.kundentyp = k.zielgruppe || k.objektart || '–';
   });
   return Object.values(map).sort((a,b) => (b.letzteAnfrage||0) - (a.letzteAnfrage||0));
 }
@@ -2675,7 +3004,7 @@ function renderKunden(){
   const statsEl = document.getElementById('kunden-stats');
   if(!listEl) return;
 
-  const kunden = deriveKundenList();
+  let kunden = deriveKundenList();
   statsEl.innerHTML = `
     <div class="stat-card"><div class="stat-val">${kunden.length}</div><div class="stat-lbl">Kunden gesamt</div></div>
     <div class="stat-card"><div class="stat-val">${kunden.filter(k => computeAutoStatus(k)==='stammkunde').length}</div><div class="stat-lbl">Stammkunden</div></div>
@@ -2683,8 +3012,17 @@ function renderKunden(){
     <div class="stat-card"><div class="stat-val">${kunden.reduce((s,k)=>s+k.gesamtwert,0).toFixed(0)} €</div><div class="stat-lbl">Gesch. Gesamtwert</div></div>
   `;
 
+  const searchEl = document.getElementById('kunden-search');
+  const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
+  if(searchTerm){
+    kunden = kunden.filter(k => {
+      const hay = `${k.vorname||''} ${k.nachname||''} ${k.email||''} ${k.strasse||''} ${k.ort||''} ${k.plz||''} ${k.telefon||''}`.toLowerCase();
+      return hay.includes(searchTerm);
+    });
+  }
+
   if(kunden.length === 0){
-    listEl.innerHTML = '<div class="empty-state">Noch keine Kunden – erscheinen automatisch, sobald Anfragen eingehen.</div>';
+    listEl.innerHTML = `<div class="empty-state">${searchTerm ? 'Keine Kunden gefunden.' : 'Noch keine Kunden – erscheinen automatisch, sobald Anfragen eingehen.'}</div>`;
     return;
   }
 
@@ -2695,8 +3033,8 @@ function renderKunden(){
     <div class="kunde-card" onclick="openKundeDetail('${k.key}')">
       <div class="kunde-top">
         <div>
-          <div class="kunde-name">${k.vorname||''} ${k.nachname||''}</div>
-          <div class="kunde-meta">${k.email} ${k.telefon ? '· '+k.telefon : ''}</div>
+          <div class="kunde-name">${k.vorname||''} ${k.nachname||''} <span style="font-size:11px;font-weight:600;color:${k.art==='Gewerblich'?'#3B82F6':'var(--green)'};margin-left:6px">${k.art}${k.kundentyp && k.kundentyp !== '–' ? ' · '+k.kundentyp : ''}</span></div>
+          <div class="kunde-meta">${k.email} ${k.telefon ? '· '+k.telefon : ''} ${k.ort ? '· '+k.ort : ''}</div>
         </div>
         <span class="kunde-status-pill ${status}">${status}</span>
       </div>
@@ -3008,15 +3346,12 @@ window.calcAngebot = function(){
   });
 
   const g = kalkulationData.general || {};
-  const stufe = document.getElementById('ang-stufe').value;
-  const stufePct = stufe === 'premium' ? (g.stufe_premium??32) : stufe === 'komfort' ? (g.stufe_komfort??15) : (g.stufe_basis??0);
-  const stufeBetrag = leistungenSumme * (stufePct/100);
 
   const km = parseFloat(document.getElementById('ang-km').value) || 0;
   const kmPreis = g.km_preis != null ? g.km_preis : 0.50;
   const fahrtkosten = km * 2 * kmPreis;
 
-  const zwischensumme = leistungenSumme + stufeBetrag + fahrtkosten;
+  const zwischensummeEinsatz = leistungenSumme + fahrtkosten;
 
   let zuschlagPct = 0;
   const zuschlaege = [];
@@ -3024,24 +3359,36 @@ window.calcAngebot = function(){
   if(document.getElementById('ang-zu-wochenende').checked){ const p = g.zu_wochenende??20; zuschlagPct += p; zuschlaege.push('Wochenende +'+p+'%'); }
   if(document.getElementById('ang-zu-express').checked){ const p = g.zu_express??25; zuschlagPct += p; zuschlaege.push('Express +'+p+'%'); }
   if(document.getElementById('ang-zu-erschwert').checked){ const p = g.zu_erschwert??10; zuschlagPct += p; zuschlaege.push('Erschwert +'+p+'%'); }
-  const zuschlagBetrag = zwischensumme * (zuschlagPct/100);
+  const zuschlagBetrag = zwischensummeEinsatz * (zuschlagPct/100);
 
   const zusatzkosten = parseFloat(document.getElementById('ang-zusatzkosten').value) || 0;
-  const nettoGesamt = zwischensumme + zuschlagBetrag + zusatzkosten;
+  const nettoProEinsatz = zwischensummeEinsatz + zuschlagBetrag + zusatzkosten;
+
+  // Häufigkeit × gewählte Abrechnungsart bestimmt den Multiplikator für die Gesamtrechnung
+  const haeufigkeit = document.getElementById('ang-haeufigkeit').value;
+  const abrechnung = document.getElementById('ang-abrechnung').value;
+  const EINSAETZE_PRO_MONAT = { 'Einmalig':1, 'Wöchentlich':4.33, '14-tägig':2.17, 'Monatlich':1, 'Quartalsweise':(1/3) };
+  const proMonat = EINSAETZE_PRO_MONAT[haeufigkeit] ?? 1;
+  let multiplikator = 1;
+  if(abrechnung === 'monat') multiplikator = haeufigkeit === 'Einmalig' ? 1 : proMonat;
+  else if(abrechnung === 'quartal') multiplikator = haeufigkeit === 'Einmalig' ? 1 : proMonat * 3;
+
+  const nettoGesamt = nettoProEinsatz * multiplikator;
   const mwstSatzEl = document.getElementById('steuer-mwst-satz');
   const mwstSatz = mwstSatzEl ? (parseFloat(mwstSatzEl.value) || 19) : 19;
   const mwstBetrag = nettoGesamt * (mwstSatz/100);
   const bruttoGesamt = nettoGesamt + mwstBetrag;
 
-  lastAngebotBreakdown = { zeilen, leistungenSumme, stufe, stufePct, stufeBetrag, km, kmPreis, fahrtkosten, zuschlaege, zuschlagPct, zuschlagBetrag, zusatzkosten, nettoGesamt, mwstSatz, mwstBetrag, bruttoGesamt };
+  lastAngebotBreakdown = { zeilen, leistungenSumme, km, kmPreis, fahrtkosten, zuschlaege, zuschlagPct, zuschlagBetrag, zusatzkosten, nettoProEinsatz, haeufigkeit, abrechnung, multiplikator, nettoGesamt, mwstSatz, mwstBetrag, bruttoGesamt };
 
+  const abrechnungLabel = abrechnung === 'monat' ? 'Monatsrechnung' : abrechnung === 'quartal' ? 'Quartalsrechnung' : 'Einzelrechnung';
   summaryEl.innerHTML = `
-    <div class="ang-summary-line"><span>Leistungen</span><span>${leistungenSumme.toFixed(2)} €</span></div>
-    <div class="ang-summary-line"><span>Paket-Stufe (${stufe}, +${stufePct}%)</span><span>${stufeBetrag.toFixed(2)} €</span></div>
+    <div class="ang-summary-line"><span>Leistungen (pro Einsatz)</span><span>${leistungenSumme.toFixed(2)} €</span></div>
     <div class="ang-summary-line"><span>Anfahrt (${(km*2).toFixed(1)} km gesamt)</span><span>${fahrtkosten.toFixed(2)} €</span></div>
     <div class="ang-summary-line"><span>Zuschläge (${zuschlagPct}%)</span><span>${zuschlagBetrag.toFixed(2)} €</span></div>
     <div class="ang-summary-line"><span>Zusatzkosten</span><span>${zusatzkosten.toFixed(2)} €</span></div>
-    <div class="ang-summary-line"><span>Netto gesamt</span><span>${nettoGesamt.toFixed(2)} €</span></div>
+    <div class="ang-summary-line"><span>Netto pro Einsatz</span><span>${nettoProEinsatz.toFixed(2)} €</span></div>
+    <div class="ang-summary-line"><span>${abrechnungLabel} (× ${multiplikator.toFixed(2)})</span><span>${nettoGesamt.toFixed(2)} €</span></div>
     <div class="ang-summary-line"><span>zzgl. ${mwstSatz}% USt.</span><span>${mwstBetrag.toFixed(2)} €</span></div>
     <div class="ang-summary-line total"><span>Angebotssumme</span><span>${bruttoGesamt.toFixed(2)} €</span></div>
   `;
@@ -3052,7 +3399,7 @@ function renderAngAnfrageSelect(){
   if(!sel) return;
   const current = sel.value;
   sel.innerHTML = '<option value="">– Manuell eingeben –</option>' +
-    allRequests.filter(r => !r.archiviert).map(r => `<option value="${r.id}">${r.vorname||''} ${r.nachname||''} · ${r.leistungen||''}</option>`).join('');
+    allRequests.filter(r => !r.archiviert && !r.geloescht).map(r => `<option value="${r.id}">${r.vorname||''} ${r.nachname||''} · ${r.leistungen||''}</option>`).join('');
   sel.value = current || '';
 }
 
@@ -3068,14 +3415,26 @@ window.loadAnfrageIntoAngebot = function(id){
   document.getElementById('ang-adresse').value = `${r.strasse||''}, ${r.plz||''} ${r.ort||''}`;
   if(r.haeufigkeit) document.getElementById('ang-haeufigkeit').value = r.haeufigkeit;
 
+  const sd = r.service_details || {};
+  const qtyMap = {
+    haushalt: () => r.flaeche_m2 || '',
+    buero: () => r.flaeche_m2 || '',
+    grund: () => r.flaeche_m2 || '',
+    fenster: () => sd.fenster && sd.fenster.anzahl_fenster ? sd.fenster.anzahl_fenster : '',
+    treppe: () => r.etagen || '',
+    muell: () => sd.muell && sd.muell.anzahl_tonnen ? sd.muell.anzahl_tonnen : '',
+    winter: () => 1,
+  };
+
   document.querySelectorAll('.ang-svc-cb').forEach(cb => {
     const sid = cb.dataset.id;
     const svc = KALK_SERVICES_BASE.find(s => s.id === sid);
     const isIncluded = svc && (r.leistungen||'').toLowerCase().includes(svc.name.toLowerCase());
     cb.checked = !!isIncluded;
     const qtyEl = document.querySelector(`.ang-svc-qty[data-id="${sid}"]`);
-    if(isIncluded && qtyEl && !qtyEl.value && r.flaeche_m2 && ['haushalt','buero','grund'].includes(sid)){
-      qtyEl.value = r.flaeche_m2;
+    if(isIncluded && qtyEl && !qtyEl.value && qtyMap[sid]){
+      const val = qtyMap[sid]();
+      if(val) qtyEl.value = val;
     }
   });
   calcAngebot();
@@ -3090,8 +3449,8 @@ window.resetAngebotForm = function(){
   document.getElementById('ang-email').value = '';
   document.getElementById('ang-telefon').value = '';
   document.getElementById('ang-adresse').value = '';
-  document.getElementById('ang-stufe').value = 'basis';
   document.getElementById('ang-haeufigkeit').value = 'Einmalig';
+  document.getElementById('ang-abrechnung').value = 'einzel';
   document.getElementById('ang-km').value = 0;
   document.getElementById('ang-zu-nacht').checked = false;
   document.getElementById('ang-zu-wochenende').checked = false;
@@ -3160,7 +3519,12 @@ function buildAngebotPDF(a, nummer){
     pdf.text(z.price.toFixed(2) + ' €', 163, y);
     y += 6;
   });
-  if(a.stufeBetrag > 0){ pdf.text(`Paket-Stufe: ${a.stufe} (+${a.stufePct}%)`, 22, y); pdf.text(a.stufeBetrag.toFixed(2)+' €', 163, y); y += 6; }
+  if(a.multiplikator && a.multiplikator !== 1){
+    const abrechnungLabel = a.abrechnung === 'monat' ? 'Monatsrechnung' : a.abrechnung === 'quartal' ? 'Quartalsrechnung' : 'Einzelrechnung';
+    pdf.text(`${abrechnungLabel} (${a.haeufigkeit||''}, × ${a.multiplikator.toFixed(2)})`, 22, y);
+    pdf.text((a.nettoProEinsatz||0).toFixed(2)+' € → '+a.nettoGesamt.toFixed(2)+' €', 163, y);
+    y += 6;
+  }
   if(a.fahrtkosten > 0){ pdf.text(`Anfahrt (${(a.km*2).toFixed(1)} km)`, 22, y); pdf.text(a.fahrtkosten.toFixed(2)+' €', 163, y); y += 6; }
   if(a.zuschlaege && a.zuschlaege.length){ pdf.text('Zuschläge: '+a.zuschlaege.join(', '), 22, y, {maxWidth:110}); pdf.text(a.zuschlagBetrag.toFixed(2)+' €', 163, y); y += 6; }
   if(a.zusatzkosten > 0){ pdf.text('Zusatzkosten', 22, y); pdf.text(a.zusatzkosten.toFixed(2)+' €', 163, y); y += 6; }
@@ -3269,7 +3633,29 @@ function renderAngeboteList(){
     listEl.innerHTML = '<div class="empty-state">Noch keine Angebote erstellt.</div>';
     return;
   }
-  listEl.innerHTML = allAngebote.map(a => {
+
+  const sortMode = document.getElementById('ang-list-sort') ? document.getElementById('ang-list-sort').value : 'datum-neu';
+  const statusFilter = document.getElementById('ang-list-status') ? document.getElementById('ang-list-status').value : '';
+  const searchTerm = (document.getElementById('ang-list-search') ? document.getElementById('ang-list-search').value : '').toLowerCase().trim();
+
+  let list = [...allAngebote];
+  if(statusFilter) list = list.filter(a => a.status === statusFilter);
+  if(searchTerm){
+    list = list.filter(a => `${a.vorname||''} ${a.nachname||''} ${a.leistungen_text||''} ${a.nummer||''}`.toLowerCase().includes(searchTerm));
+  }
+  list.sort((a,b) => {
+    if(sortMode === 'datum-alt') return (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0);
+    if(sortMode === 'summe-hoch') return (b.bruttoGesamt||0) - (a.bruttoGesamt||0);
+    if(sortMode === 'summe-niedrig') return (a.bruttoGesamt||0) - (b.bruttoGesamt||0);
+    return (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0);
+  });
+
+  if(list.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Keine Angebote gefunden.</div>';
+    return;
+  }
+
+  listEl.innerHTML = list.map(a => {
     const daysSince = a.createdAt && a.createdAt.toDate ? Math.floor((Date.now() - a.createdAt.toDate().getTime())/86400000) : null;
     let staleBadge = '';
     if(a.status === 'versendet' && daysSince != null){
