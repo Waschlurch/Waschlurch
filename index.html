@@ -57,25 +57,89 @@
         html += `
         <div class="preis-card ${p.beliebt && !isInactive ? 'featured' : ''} ${isInactive ? 'inaktiv' : ''}">
           ${p.beliebt && !isInactive ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
-          ${p.bild_base64 ? `<img src="${p.bild_base64}" class="preis-img" alt="${p.name||''}">` : `<div class="preis-icon">${p.icon || '🧹'}</div>`}
-          <div class="preis-name">${p.zielgruppe || ''}</div>
-          <div class="preis-title">${p.name || ''}</div>
-          ${p.beschreibung ? `<div class="preis-desc">${p.beschreibung}</div>` : ''}
-          <div class="preis-val">${p.preis_ab != null ? 'ab ' + p.preis_ab + ' €' : 'Auf Anfrage'}</div>
-          <div class="preis-unit">${p.preis_einheit_text || 'inkl. MwSt.'}</div>
-          <ul class="preis-features">
-            ${leistungen.map(l => `<li>${l}</li>`).join('')}
-            ${extras.map(e => `<li>${e}</li>`).join('')}
-          </ul>
-          ${isInactive
-            ? `<span class="preis-btn preis-btn-disabled">Aktuell nicht verfügbar</span>`
-            : `<a href="${link}" class="preis-btn">Bitte auswählen →</a>`}
+          <div class="preis-header" onclick="togglePaketCard(this)">
+            ${p.bild_base64 ? `<img src="${p.bild_base64}" class="preis-img" alt="${p.name||''}">` : `<div class="preis-icon">${p.icon || '🧹'}</div>`}
+            <div class="preis-name">${p.zielgruppe || ''} <span class="preis-toggle-icon">▾</span></div>
+            <div class="preis-title">${p.name || ''}</div>
+            <div class="preis-val">${p.preis_ab != null ? 'ab ' + p.preis_ab + ' €' : 'Auf Anfrage'}</div>
+            <div class="preis-unit">${p.preis_einheit_text || 'inkl. MwSt.'}</div>
+          </div>
+          <div class="preis-details">
+            ${p.beschreibung ? `<div class="preis-desc">${p.beschreibung}</div>` : ''}
+            <ul class="preis-features">
+              ${leistungen.map(l => `<li>${l}</li>`).join('')}
+              ${extras.map(e => `<li>${e}</li>`).join('')}
+            </ul>
+            ${isInactive
+              ? `<span class="preis-btn preis-btn-disabled">Aktuell nicht verfügbar</span>`
+              : `<a href="${link}" class="preis-btn">Bitte auswählen →</a>`}
+          </div>
         </div>`;
       });
       paketeGrid.innerHTML = html;
     }).catch(err => {
       console.error('Pakete konnten nicht geladen werden:', err);
       paketeGrid.innerHTML = '<p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Pakete konnten nicht geladen werden.</p>';
+    });
+  }
+
+  // ── Leistungen: Bilder & Sichtbarkeit aus dem Dashboard anwenden ─────────────────────
+  getDocs(collection(db, 'leistungen_anzeige')).then(snap => {
+    snap.forEach(docSnap => {
+      const sid = docSnap.id;
+      const info = docSnap.data();
+      const priceEl = document.querySelector(`[data-price-id="${sid}"]`);
+      if(!priceEl) return;
+      const card = priceEl.closest('.leistung-card');
+      if(!card) return;
+      if(info.aktiv === false){ card.style.display = 'none'; return; }
+      if(info.bild_base64){
+        const imgEl = card.querySelector('.leistung-img');
+        if(imgEl) imgEl.innerHTML = `<img src="${info.bild_base64}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+      }
+    });
+  }).catch(err => console.warn('Leistungs-Bilder konnten nicht geladen werden:', err));
+
+  // ── Referenzen dynamisch laden ─────────────────────
+  const refGrid = document.getElementById('ref-grid');
+  if(refGrid){
+    const rq = query(collection(db, 'referenzen'), where('status', '==', 'aktiv'), orderBy('reihenfolge', 'asc'));
+    getDocs(rq).then(snap => {
+      if(snap.empty){ refGrid.innerHTML = ''; refGrid.closest('section').style.display = 'none'; return; }
+      let html = '';
+      snap.forEach(docSnap => {
+        const r = docSnap.data();
+        html += `
+        <div class="ref-card">
+          <div class="ref-img">${r.bild_base64 ? `<img src="${r.bild_base64}" alt="${r.titel||''}">` : '🧹'}</div>
+          <div class="ref-body">
+            <div class="ref-title">${r.titel||''}</div>
+            <div class="ref-loc">${r.beschreibung||''}</div>
+          </div>
+        </div>`;
+      });
+      refGrid.innerHTML = html;
+    }).catch(err => {
+      console.error('Referenzen konnten nicht geladen werden:', err);
+      refGrid.closest('section').style.display = 'none';
+    });
+  }
+
+  // ── FAQ dynamisch laden ─────────────────────
+  const faqInner = document.getElementById('faq-inner');
+  if(faqInner){
+    const fq = query(collection(db, 'faqs'), where('status', '==', 'aktiv'), orderBy('reihenfolge', 'asc'));
+    getDocs(fq).then(snap => {
+      if(snap.empty){ faqInner.closest('section').style.display = 'none'; return; }
+      let html = '';
+      snap.forEach(docSnap => {
+        const f = docSnap.data();
+        html += `<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">${f.frage||''} <span class="faq-icon">+</span></div><div class="faq-a">${f.antwort||''}</div></div>`;
+      });
+      faqInner.innerHTML = html;
+    }).catch(err => {
+      console.error('FAQ konnte nicht geladen werden:', err);
+      faqInner.closest('section').style.display = 'none';
     });
   }
 </script>
@@ -404,6 +468,7 @@ section { padding:96px 5%; }
 .preis-card.inaktiv { filter:grayscale(1); opacity:0.55; cursor:not-allowed; }
 .preis-card.inaktiv:hover { transform:none; box-shadow:none; border-color:var(--gray-200); }
 .preis-btn-disabled { background:var(--gray-200); color:var(--gray-500); border-color:var(--gray-200); cursor:not-allowed; pointer-events:none; }
+.preis-toggle-icon { display:none; }
 
 /* SCROLL-ANIMATION */
 .reveal { opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
@@ -425,23 +490,18 @@ section { padding:96px 5%; }
 }
 .ref-card:hover { transform:translateY(-4px); box-shadow:0 16px 48px rgba(0,0,0,0.1); }
 .ref-img {
-  height:200px; 
+  height:200px; width:100%;
   display:flex; align-items:center; justify-content:center;
   font-size:48px;
   position:relative; overflow:hidden;
   transition:filter .25s;
+  background:linear-gradient(135deg,#DCFCE7,#BBF7D0);
 }
+.ref-img img { width:100%; height:100%; object-fit:cover; }
 .ref-card:hover .ref-img { filter:drop-shadow(0 0 14px rgba(34,197,94,0.6)); }
-.ref-img-1 { background:linear-gradient(135deg,#DCFCE7,#BBF7D0); }
-.ref-img-2 { background:linear-gradient(135deg,#D1FAE5,#A7F3D0); }
-.ref-img-3 { background:linear-gradient(135deg,#ECFDF5,#D1FAE5); }
-.ref-img-4 { background:linear-gradient(135deg,#F0FDF4,#DCFCE7); }
-.ref-img-5 { background:linear-gradient(135deg,#BBF7D0,#6EE7B7); }
-.ref-img-6 { background:linear-gradient(135deg,#6EE7B7,#34D399); }
 .ref-body { padding:20px; }
 .ref-title { font-size:15px; font-weight:700; color:var(--black); margin-bottom:4px; }
 .ref-loc { font-size:13px; color:var(--gray-500); }
-.ref-stars { color:var(--green); font-size:13px; margin-top:8px; }
 
 /* FAQ */
 #faq { background:var(--gray-100); }
@@ -561,26 +621,68 @@ footer {
 .footer-links a:hover { color:var(--white); }
 .footer-copy { font-size:13px; color:rgba(255,255,255,0.3); }
 
+/* COOKIE BANNER */
+.cookie-banner {
+  display:none; position:fixed; bottom:16px; left:16px; right:16px; z-index:2000;
+  max-width:640px; margin:0 auto;
+  background:var(--black); border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px; padding:20px 24px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  flex-direction:column; gap:16px;
+}
+.cookie-banner.visible { display:flex; }
+.cookie-banner-text { font-size:13px; line-height:1.6; color:rgba(255,255,255,0.7); }
+.cookie-banner-text strong { color:var(--white); }
+.cookie-banner-text a { color:var(--green); }
+.cookie-banner-actions { display:flex; gap:10px; }
+.cookie-btn-primary, .cookie-btn-secondary {
+  flex:1; padding:12px; border-radius:100px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family:inherit; border:none;
+}
+.cookie-btn-primary { background:var(--green); color:var(--white); }
+.cookie-btn-primary:hover { background:var(--green-dark); }
+.cookie-btn-secondary { background:rgba(255,255,255,0.08); color:var(--white); border:1px solid rgba(255,255,255,0.15); }
+.cookie-btn-secondary:hover { background:rgba(255,255,255,0.14); }
+
+/* MOBILE SCHNELLZUGRIFF-LEISTE */
+.mobile-quicknav {
+  display:none; position:fixed; bottom:0; left:0; right:0; z-index:900;
+  background:rgba(10,10,10,0.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border-top:1px solid rgba(255,255,255,0.1);
+  padding:8px 4px; padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  justify-content:space-around; align-items:center;
+}
+.quicknav-item {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  text-decoration:none; color:rgba(255,255,255,0.55); font-size:10px; font-weight:600;
+  flex:1; padding:4px 0;
+}
+.quicknav-item span:first-child { font-size:18px; }
+.quicknav-item.cta { color:var(--green); }
+
 /* MOBILE */
 @media(max-width:768px) {
+  body { padding-bottom:64px; }
+  .mobile-quicknav { display:flex; }
+  .cookie-banner { bottom:76px; }
   #karriere > div[style*="grid-template-columns"] { grid-template-columns:1fr!important; }
   nav { padding:0 5%; height:60px; }
   .nav-logo img { height:32px; }
   .nav-logo span, .nav-logo span span { font-size:22px!important; }
   .nav-links { display:none; }
   .hamburger { display:flex; }
-  section { padding:56px 5%; }
-  .section-head { margin-bottom:36px; }
-  .section-sub { font-size:15px; }
-  #hero { padding-top:60px; min-height:auto; }
-  .hero-inner { grid-template-columns:1fr; gap:32px; padding:32px 0; }
+  section { padding:40px 5% 48px; }
+  .section-head { margin-bottom:24px; }
+  .section-sub { font-size:14px; }
+  #hero { padding-top:56px; min-height:auto; }
+  .hero-inner { grid-template-columns:1fr; gap:24px; padding:24px 0 16px; }
   .hero-card { display:none; }
-  .hero-title { font-size:36px; }
-  .hero-sub { font-size:16px; margin-bottom:28px; }
+  .hero-title { font-size:32px; }
+  .hero-sub { font-size:15px; margin-bottom:20px; }
   .hero-btns { flex-direction:column; }
   .hero-btns a, .hero-btns button { width:100%; justify-content:center; }
-  .hero-stats { gap:16px; flex-wrap:wrap; margin-top:32px; padding-top:28px; }
-  .hero-stat-val { font-size:22px; }
+  .hero-stats { gap:14px; flex-wrap:wrap; margin-top:20px; padding-top:20px; }
+  .hero-stat-val { font-size:20px; }
   .trust-inner { gap:20px 28px; justify-content:flex-start; }
   .trust-item { font-size:13px; }
   .leistungen-scroll { padding:0 5% 16px; }
@@ -589,7 +691,17 @@ footer {
   .ueber-inner { grid-template-columns:1fr; gap:32px; }
   .ueber-img { display:none; }
   .preise-grid { grid-template-columns:1fr; gap:16px; }
-  .preis-card { padding:24px; }
+  .preis-card { padding:18px; }
+  .preis-header { cursor:pointer; }
+  .preis-toggle-icon { display:inline-block; float:right; font-size:16px; transition:transform .25s; color:var(--gray-500); }
+  .preis-card.expanded .preis-toggle-icon { transform:rotate(180deg); }
+  .preis-img, .preis-icon { margin-bottom:6px; }
+  .preis-val { font-size:22px; }
+  .preis-unit { margin-bottom:0; }
+  .preis-details { max-height:0; overflow:hidden; transition:max-height .35s ease; }
+  .preis-card.expanded .preis-details { max-height:900px; margin-top:16px; }
+  .preis-details .preis-desc { margin-bottom:12px; }
+  .preis-details .preis-features { margin-bottom:16px; }
   .preis-val { font-size:28px; }
   .preis-card.featured { transform:none; }
   .ref-grid { grid-template-columns:1fr 1fr; gap:14px; }
@@ -889,13 +1001,8 @@ footer {
       <div class="section-title">Unsere Arbeit spricht für sich</div>
       <p class="section-sub">Echte Ergebnisse aus dem Rhein-Sieg-Kreis – von Privathaushalten bis zu Gewerbeimmobilien.</p>
     </div>
-    <div class="ref-grid">
-      <div class="ref-card"><div class="ref-img ref-img-1">🏠</div><div class="ref-body"><div class="ref-title">Haushaltsreinigung · Eitorf</div><div class="ref-loc">Privathaushalt · 85m²</div><div class="ref-stars">★★★★★ "Immer zuverlässig und gründlich!"</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-2">🏢</div><div class="ref-body"><div class="ref-title">Büroreinigung · Siegburg</div><div class="ref-loc">Gewerbe · 120m²</div><div class="ref-stars">★★★★★ "Perfekte Arbeit, absolut empfehlenswert."</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-3">🪟</div><div class="ref-body"><div class="ref-title">Fensterreinigung · Hennef</div><div class="ref-loc">Einfamilienhaus · 14 Fenster</div><div class="ref-stars">★★★★★ "Kristallklar – super Ergebnis!"</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-4">🌿</div><div class="ref-body"><div class="ref-title">Gartenpflege · Bad Honnef</div><div class="ref-loc">Privatgarten · 400m²</div><div class="ref-stars">★★★★★ "Schnell, sauber, faire Preise."</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-5">❄️</div><div class="ref-body"><div class="ref-title">Winterdienst · Troisdorf</div><div class="ref-loc">Wohnanlage · Saison 2024/25</div><div class="ref-stars">★★★★★ "Immer pünktlich, nie Probleme!"</div></div></div>
-      <div class="ref-card"><div class="ref-img ref-img-6">🔧</div><div class="ref-body"><div class="ref-title">Hausmeisterservice · Lohmar</div><div class="ref-loc">Mehrfamilienhaus</div><div class="ref-stars">★★★★★ "Rundum-Service, sehr zufrieden."</div></div></div>
+    <div class="ref-grid" id="ref-grid">
+      <p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Referenzen werden geladen ...</p>
     </div>
   </div>
 </section>
@@ -907,13 +1014,8 @@ footer {
       <div class="section-tag">FAQ</div>
       <div class="section-title">Häufige Fragen</div>
     </div>
-    <div class="faq-inner">
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Wie läuft eine Anfrage ab? <span class="faq-icon">+</span></div><div class="faq-a">Sie füllen unser Kontaktformular aus oder rufen an. Wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Nach Ihrer Bestätigung vereinbaren wir einen Termin.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Wie bezahle ich? <span class="faq-icon">+</span></div><div class="faq-a">Die Bezahlung erfolgt bequem per Rechnung nach der erbrachten Leistung. Sie erhalten die Rechnung per E-Mail mit einer Zahlungsfrist von 14 Tagen.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">In welcher Region sind Sie tätig? <span class="faq-icon">+</span></div><div class="faq-a">Wir sind hauptsächlich im Rhein-Sieg-Kreis tätig – darunter Eitorf, Siegburg, Hennef, Troisdorf, Bad Honnef, Lohmar und Umgebung. Auf Anfrage auch in ganz NRW.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Sind die Kosten steuerlich absetzbar? <span class="faq-icon">+</span></div><div class="faq-a">Ja! Haushaltsnahe Dienstleistungen können nach §35a EStG bis zu 20% (max. 4.000 €/Jahr) von der Steuer abgesetzt werden. Wir stellen Ihnen eine entsprechende Rechnung aus.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Bringen Sie eigene Reinigungsmittel mit? <span class="faq-icon">+</span></div><div class="faq-a">Ja, wir bringen alle notwendigen Reinigungsmittel und Geräte mit. Auf Wunsch verwenden wir ausschließlich umweltfreundliche Öko-Reinigungsmittel.</div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Kann ich eine regelmäßige Reinigung buchen? <span class="faq-icon">+</span></div><div class="faq-a">Selbstverständlich! Wir bieten wöchentliche, 14-tägige und monatliche Reinigungsintervalle an. Stammkunden profitieren von festen Terminen und bevorzugter Behandlung.</div></div>
+    <div class="faq-inner" id="faq-inner">
+      <p style="text-align:center;color:var(--gray-500)">FAQ wird geladen ...</p>
     </div>
   </div>
 </section>
@@ -1026,13 +1128,13 @@ footer {
       <div style="font-size:32px;margin-bottom:12px">🙋</div>
       <div style="font-size:19px;font-weight:700;color:var(--white);margin-bottom:8px">Jetzt bewerben</div>
       <p style="font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.6">Du packst gerne mit an und suchst einen zuverlässigen Job in der Region? Wir suchen laufend motivierte Unterstützung.</p>
-      <a href="mailto:waschlurch@gmail.com?subject=Bewerbung%20bei%20Waschlurch&body=Hallo%20Daniel%2C%0D%0A%0D%0Aich%20interessiere%20mich%20für%20eine%20Mitarbeit%20bei%20Waschlurch.%0D%0A%0D%0AName%3A%0D%0ATelefon%3A%0D%0AVerfügbarkeit%3A%0D%0A%0D%0ABeste%20Grüße" class="btn-primary" style="display:inline-flex">Jetzt bewerben →</a>
+      <a href="/bewerbung.html" class="btn-primary" style="display:inline-flex">Jetzt bewerben →</a>
     </div>
     <div style="background:var(--white);border:2px solid var(--gray-200);border-radius:24px;padding:36px;text-align:center">
       <div style="font-size:32px;margin-bottom:12px">🤝</div>
       <div style="font-size:19px;font-weight:700;color:var(--black);margin-bottom:8px">Jetzt Partner werden</div>
       <p style="font-size:14px;color:var(--gray-500);margin-bottom:24px;line-height:1.6">Du hast einen Handwerks- oder Dienstleistungsbetrieb und möchtest kooperieren? Lass uns gemeinsam wachsen.</p>
-      <a href="mailto:waschlurch@gmail.com?subject=Partnerschaftsanfrage%20Waschlurch&body=Hallo%20Daniel%2C%0D%0A%0D%0Aich%20interessiere%20mich%20für%20eine%20Kooperation%20mit%20Waschlurch.%0D%0A%0D%0AFirma%3A%0D%0ATätigkeitsbereich%3A%0D%0AKontakt%3A%0D%0A%0D%0ABeste%20Grüße" class="preis-btn" style="display:inline-block">Jetzt Partner werden →</a>
+      <a href="/partner.html" class="preis-btn" style="display:inline-block">Jetzt Partner werden →</a>
     </div>
   </div>
 </section>
@@ -1048,15 +1150,55 @@ footer {
       <a href="#leistungen">Leistungen</a>
       <a href="#preise">Preise</a>
       <a href="#kontakt">Kontakt</a>
-      <a href="#">Impressum</a>
-      <a href="#">Datenschutz</a>
+      <a href="/impressum.html">Impressum</a>
+      <a href="/datenschutz.html">Datenschutz</a>
+      <a href="/agb.html">AGB</a>
       <a href="/admin.html" style="opacity:0.5;font-size:12px">Login</a>
     </div>
     <div class="footer-copy">© 2026 Waschlurch · Daniel Lurch · Eitorf</div>
   </div>
 </footer>
 
+<div class="mobile-quicknav">
+  <a href="#preise" class="quicknav-item"><span>📦</span><span>Pakete</span></a>
+  <a href="#leistungen" class="quicknav-item"><span>🧹</span><span>Leistungen</span></a>
+  <a href="#kontakt" class="quicknav-item"><span>📍</span><span>Kontakt</span></a>
+  <a href="/anfrage.html" class="quicknav-item cta"><span>✉️</span><span>Anfragen</span></a>
+</div>
+
+<div id="cookie-banner" class="cookie-banner">
+  <div class="cookie-banner-text">
+    🍪 <strong>Cookie-Hinweis:</strong> Wir verwenden nur technisch notwendige Speicherfunktionen für diese Website und unser Anfrageformular – keine Werbe- oder Analyse-Cookies. Mehr dazu in unserer <a href="/datenschutz.html">Datenschutzerklärung</a>.
+  </div>
+  <div class="cookie-banner-actions">
+    <button onclick="acceptNecessaryCookies()" class="cookie-btn-secondary">Nur notwendige</button>
+    <button onclick="acceptAllCookies()" class="cookie-btn-primary">Alle akzeptieren</button>
+  </div>
+</div>
+
 <script>
+// PAKETE AKKORDEON (nur mobil)
+window.togglePaketCard = function(headerEl){
+  if(window.innerWidth > 768) return;
+  const card = headerEl.closest('.preis-card');
+  if(card) card.classList.toggle('expanded');
+};
+
+// COOKIE BANNER
+function initCookieBanner(){
+  const consent = localStorage.getItem('waschlurch_cookie_consent');
+  if(!consent) document.getElementById('cookie-banner').classList.add('visible');
+}
+window.acceptAllCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:true, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+window.acceptNecessaryCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:false, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+document.addEventListener('DOMContentLoaded', initCookieBanner);
+
 // NAV
 function toggleMenu() {
   const menu = document.getElementById('mobile-menu');
