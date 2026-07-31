@@ -50,7 +50,7 @@
         const leistungen = Array.isArray(p.leistungen) ? p.leistungen : [];
         const extras = Array.isArray(p.extras) ? p.extras : [];
         const isInactive = p.status !== 'aktiv';
-        const link = p.slug ? '/pakete/'+p.slug : '/anfrage.html?paket='+id;
+        const link = p.slug ? '/pakete/'+p.slug+'.html' : '/anfrage.html?paket='+id;
         html += `
         <div class="preis-card ${p.beliebt && !isInactive ? 'featured' : ''} ${isInactive ? 'inaktiv' : ''}">
           ${p.beliebt && !isInactive ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
