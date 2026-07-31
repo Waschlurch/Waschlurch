@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGB – Waschlurch</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  getDoc(doc(db, 'einstellungen', 'impressum')).then(snap => {
+    const d = snap.exists() ? snap.data() : {};
+    const el = document.getElementById('anbieter-block');
+    el.innerHTML = `${d.firmenname||'Waschlurch'}, ${d.inhaber||''}, ${d.strasse||''}, ${d.plz||''} ${d.ort||''}`;
+    const zahlungsziel = document.getElementById('zahlungsziel-tage');
+    if(zahlungsziel) zahlungsziel.textContent = d.zahlungsziel || '14';
+  }).catch(() => {});
+
+  getDoc(doc(db, 'einstellungen', 'firma')).then(snap => {
+    const d = snap.exists() ? snap.data() : {};
+    if(d.zahlungsziel){
+      const el = document.getElementById('zahlungsziel-tage');
+      if(el) el.textContent = d.zahlungsziel;
+    }
+  }).catch(() => {});
+</script>
+<style>
+:root { --green:#22C55E; --green-dark:#15803D; --black:#0A0A0A; --gray-700:#374151; --white:#FFFFFF; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
+nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:#FFFFFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; }
+.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-logo img { height:36px; width:auto; }
+main { padding:110px 5% 80px; min-height:100vh; max-width:760px; margin:0 auto; }
+h1 { font-size:clamp(28px,4vw,36px); font-weight:700; letter-spacing:-1px; margin-bottom:12px; }
+.stand { font-size:13px; color:#9CA3AF; margin-bottom:36px; }
+h2 { font-size:17px; font-weight:700; color:var(--green-dark); margin:30px 0 8px; }
+p, li { font-size:15px; line-height:1.7; color:var(--gray-700); }
+ul { margin:8px 0 8px 22px; }
+.notice { background:#F9FAFB; border:1px solid #E5E7EB; border-radius:14px; padding:18px 20px; margin-top:40px; font-size:13px; color:#6B7280; }
+</style>
+</head>
+<body>
+
+<nav><a href="/" class="nav-logo"><img src="/logo.png?v=5" alt="Waschlurch"></a></nav>
+
+<main>
+  <h1>Allgemeine Geschäftsbedingungen</h1>
+  <p class="stand">Stand: Januar 2026</p>
+
+  <h2>§1 Geltungsbereich</h2>
+  <p>Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Reinigungs- und Hausmeisterdienstleistungen, die von <span id="anbieter-block">Waschlurch</span> (nachfolgend „Auftragnehmer") gegenüber Privat- und Gewerbekunden (nachfolgend „Auftraggeber") erbracht werden.</p>
+
+  <h2>§2 Vertragsschluss</h2>
+  <p>Der Vertrag kommt durch die Anfrage des Auftraggebers (z. B. über das Kontaktformular der Website, telefonisch oder per E-Mail) und die schriftliche oder mündliche Bestätigung des Auftragnehmers zustande. Angebote des Auftragnehmers sind freibleibend, sofern nicht ausdrücklich anders angegeben.</p>
+
+  <h2>§3 Leistungsumfang</h2>
+  <p>Der genaue Leistungsumfang ergibt sich aus der individuellen Vereinbarung zwischen Auftraggeber und Auftragnehmer (z. B. im Angebot oder in der Auftragsbestätigung). Zusatzleistungen, die nicht Bestandteil der ursprünglichen Vereinbarung sind, werden gesondert berechnet.</p>
+
+  <h2>§4 Preise und Zahlungsbedingungen</h2>
+  <p>Es gelten die im jeweiligen Angebot genannten Preise zzgl. der gesetzlichen Mehrwertsteuer. Die Zahlung erfolgt ausschließlich per Rechnung nach erbrachter Leistung. Die Zahlungsfrist beträgt, sofern nicht anders vereinbart, <span id="zahlungsziel-tage">14</span> Tage ab Rechnungsdatum. Bei Zahlungsverzug ist der Auftragnehmer berechtigt, Verzugszinsen gemäß § 288 BGB sowie Mahnkosten zu berechnen.</p>
+
+  <h2>§5 Termine und Zutritt</h2>
+  <p>Vereinbarte Termine sind von beiden Parteien einzuhalten. Der Auftraggeber stellt sicher, dass dem Auftragnehmer zum vereinbarten Zeitpunkt Zutritt zu den zu reinigenden Räumlichkeiten gewährt wird. Bei kurzfristiger Absage (weniger als 24 Stunden vorher) kann der Auftragnehmer einen angemessenen Ausfallanteil berechnen.</p>
+
+  <h2>§6 Wiederkehrende Leistungen und Kündigung</h2>
+  <p>Bei regelmäßig wiederkehrenden Reinigungsleistungen (z. B. wöchentlich, 14-tägig, monatlich) kann der Vertrag von beiden Seiten mit einer Frist von 4 Wochen zum Monatsende gekündigt werden, sofern nichts anderes vereinbart wurde. Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.</p>
+
+  <h2>§7 Haftung</h2>
+  <p>Der Auftragnehmer haftet für Schäden, die im Rahmen der Leistungserbringung schuldhaft verursacht werden, im Rahmen der gesetzlichen Bestimmungen. Für die Betriebstätigkeit besteht eine Betriebshaftpflichtversicherung. Für Schäden an Gegenständen, die der Auftraggeber vor Beginn der Arbeiten nicht auf ihre besondere Empfindlichkeit hingewiesen hat, wird keine Haftung übernommen. Die Haftung für leichte Fahrlässigkeit ist auf vertragstypische, vorhersehbare Schäden beschränkt.</p>
+
+  <h2>§8 Reklamationen</h2>
+  <p>Mängel in der Leistungserbringung sind unverzüglich, spätestens innerhalb von 5 Werktagen nach Leistungserbringung, schriftlich oder per E-Mail anzuzeigen. Der Auftragnehmer erhält Gelegenheit zur Nachbesserung.</p>
+
+  <h2>§9 Datenschutz</h2>
+  <p>Informationen zur Verarbeitung personenbezogener Daten finden Sie in unserer <a href="/datenschutz.html" style="color:var(--green-dark)">Datenschutzerklärung</a>.</p>
+
+  <h2>§10 Schlussbestimmungen</h2>
+  <p>Es gilt das Recht der Bundesrepublik Deutschland. Sollten einzelne Bestimmungen dieser AGB unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen hiervon unberührt.</p>
+
+  <div class="notice">
+    ℹ️ Diese AGB wurden als praxisnahe Vorlage für ein Einzelunternehmen im Reinigungsgewerbe erstellt. Sie ersetzen keine individuelle Rechtsberatung. Für eine rechtssichere, auf Ihr Unternehmen zugeschnittene Fassung empfehlen wir die Prüfung durch einen Rechtsanwalt.
+  </div>
+</main>
+
+</body>
+</html>
