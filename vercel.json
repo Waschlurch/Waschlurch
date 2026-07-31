@@ -1,5 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/pakete/:slug", "destination": "/anfrage.html" }
-  ]
+  "cleanUrls": true
 }
