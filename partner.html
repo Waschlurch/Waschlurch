@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jetzt Partner werden – Waschlurch</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window._db = db; window._collection = collection; window._addDoc = addDoc; window._serverTimestamp = serverTimestamp;
+</script>
+<style>
+:root { --green:#22C55E; --green-dark:#15803D; --black:#0A0A0A; --gray-500:#6B7280; --white:#FFFFFF; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
+nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:#FFFFFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; }
+.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-logo img { height:36px; width:auto; }
+main { padding:100px 5% 80px; min-height:100vh; }
+.wrap { max-width:640px; margin:0 auto; }
+.tag { display:inline-block; background:rgba(34,197,94,0.15); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:100px; margin-bottom:16px; }
+h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margin-bottom:12px; }
+.sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.6; margin-bottom:36px; }
+.card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:36px; }
+.field { margin-bottom:18px; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
+.field input, .field select, .field textarea {
+  width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  font-family:inherit; font-size:16px; color:var(--white); outline:none; transition:border .2s;
+}
+.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.25); }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green); }
+.field select option { background:#111827; }
+.field textarea { min-height:100px; resize:vertical; }
+.field input.invalid, .field select.invalid, .field textarea.invalid { border-color:#F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15); }
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:14px; color:var(--white); display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0; font-weight:500; }
+.field label.bool-label input { width:auto; }
+.field-error { display:none; color:#F87171; font-size:13px; margin-top:-8px; margin-bottom:16px; }
+.btn-primary {
+  width:100%; padding:16px; border-radius:100px; border:none; cursor:pointer;
+  background:var(--green); color:var(--white); font-size:15px; font-weight:700;
+  font-family:inherit; transition:background .2s; margin-top:8px;
+}
+.btn-primary:hover { background:var(--green-dark); }
+.btn-primary:disabled { opacity:.6; cursor:not-allowed; }
+.code-hint { font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:16px; text-align:center; }
+.code-input { width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; font-family:inherit; color:var(--white); outline:none; margin-bottom:14px; }
+.code-input:focus { border-color:var(--green); }
+.code-resend { text-align:center; font-size:13px; color:rgba(255,255,255,0.4); margin-top:14px; }
+.code-resend button { background:none; border:none; color:var(--green); font-weight:600; cursor:pointer; font-family:inherit; font-size:13px; }
+.success-panel { text-align:center; padding:40px 0; }
+.success-icon { width:64px; height:64px; border-radius:50%; background:rgba(34,197,94,0.15); color:var(--green); font-size:32px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
+@media(max-width:600px){ .field-row { grid-template-columns:1fr; gap:0; } main { padding:84px 5% 60px; } .card { padding:24px; } }
+
+/* COOKIE BANNER */
+.cookie-banner {
+  display:none; position:fixed; bottom:16px; left:16px; right:16px; z-index:2000;
+  max-width:640px; margin:0 auto;
+  background:var(--black); border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px; padding:20px 24px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  flex-direction:column; gap:16px;
+}
+.cookie-banner.visible { display:flex; }
+.cookie-banner-text { font-size:13px; line-height:1.6; color:rgba(255,255,255,0.7); }
+.cookie-banner-text strong { color:var(--white); }
+.cookie-banner-text a { color:var(--green); }
+.cookie-banner-actions { display:flex; gap:10px; }
+.cookie-btn-primary, .cookie-btn-secondary {
+  flex:1; padding:12px; border-radius:100px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family:inherit; border:none;
+}
+.cookie-btn-primary { background:var(--green); color:var(--white); }
+.cookie-btn-primary:hover { background:var(--green-dark); }
+.cookie-btn-secondary { background:rgba(255,255,255,0.08); color:var(--white); border:1px solid rgba(255,255,255,0.15); }
+.cookie-btn-secondary:hover { background:rgba(255,255,255,0.14); }
+</style>
+</head>
+<body>
+
+<nav><a href="/" class="nav-logo"><img src="/logo.png?v=5" alt="Waschlurch"></a></nav>
+
+<main>
+<div class="wrap">
+  <div class="tag">Kooperation</div>
+  <h1>Jetzt Partner werden</h1>
+  <p class="sub">Du hast einen Handwerks- oder Dienstleistungsbetrieb und möchtest kooperieren? Lass uns gemeinsam wachsen.</p>
+
+  <div class="card">
+    <div id="form-panel">
+      <div class="field"><label>Firmenname *</label><input type="text" id="p-firma"></div>
+      <div class="field-row">
+        <div class="field"><label>Ansprechpartner *</label><input type="text" id="p-name"></div>
+        <div class="field"><label>Telefon *</label><input type="tel" id="p-telefon"></div>
+      </div>
+      <div class="field"><label>E-Mail *</label><input type="email" id="p-email"></div>
+      <div class="field">
+        <label>Partnerart *</label>
+        <select id="p-art">
+          <option value="">– Bitte wählen –</option>
+          <option>Reinigungsmittelhersteller</option>
+          <option>Chemielieferant</option>
+          <option>Maschinenlieferant</option>
+          <option>Verbrauchsmateriallieferant</option>
+          <option>Schulungsanbieter</option>
+          <option>Personalvermittlung</option>
+          <option>Gebäudeverwaltung</option>
+          <option>Immobilienunternehmen</option>
+          <option>Marketingpartner</option>
+          <option>IT-Dienstleister</option>
+          <option>Kooperationspartner (Handwerk/Dienstleistung)</option>
+          <option>Sonstige</option>
+        </select>
+      </div>
+      <div class="field"><label>Ihr Anliegen *</label><textarea id="p-anliegen" placeholder="Beschreiben Sie kurz, worum es bei der Kooperation gehen soll ..."></textarea></div>
+
+      <div class="field" style="margin-top:24px">
+        <label class="bool-label"><input type="checkbox" id="p-datenschutz"> Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zur Bearbeitung dieser Anfrage zu. *</label>
+      </div>
+      <div class="field-error" id="p-err">Bitte alle Pflichtfelder korrekt ausfüllen und der Datenschutzerklärung zustimmen.</div>
+      <button class="btn-primary" id="p-next-btn" onclick="sendVerificationCode()">Code senden & Anfrage abschließen →</button>
+    </div>
+
+    <div id="code-panel" style="display:none">
+      <div class="code-hint" id="code-hint">Wir haben einen 6-stelligen Code gesendet.</div>
+      <input type="text" class="code-input" id="p-code" placeholder="123456" maxlength="6" inputmode="numeric">
+      <div class="field-error" id="code-error">Der Code ist leider falsch. Bitte erneut versuchen.</div>
+      <button class="btn-primary" onclick="verifyCodeAndSubmit()">Code bestätigen & Anfrage senden →</button>
+      <div class="code-resend">
+        <span id="resend-timer">Erneut senden in <span id="countdown">60</span>s</span>
+        <button type="button" id="resend-btn" onclick="resendCode()" style="display:none">Code erneut senden</button>
+      </div>
+    </div>
+
+    <div id="success-panel" class="success-panel" style="display:none">
+      <div class="success-icon">✓</div>
+      <h2 style="font-size:22px;margin-bottom:10px">Anfrage erfolgreich gesendet!</h2>
+      <p style="color:rgba(255,255,255,0.6)">Vielen Dank für Ihr Interesse – wir melden uns zeitnah bei Ihnen.</p>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+let _verifyCode = null;
+let _countdownInterval;
+
+function markInvalid(id, bad){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('invalid', bad);
+}
+
+function validateForm(){
+  let ok = true;
+  const req = ['p-firma','p-name','p-telefon','p-email','p-art','p-anliegen'];
+  req.forEach(id => {
+    const val = document.getElementById(id).value.trim();
+    const bad = !val;
+    markInvalid(id, bad);
+    if(bad) ok = false;
+  });
+  const email = document.getElementById('p-email').value.trim();
+  if(email && (!email.includes('@') || !email.includes('.'))){ markInvalid('p-email', true); ok = false; }
+  if(!document.getElementById('p-datenschutz').checked) ok = false;
+  document.getElementById('p-err').style.display = ok ? 'none' : 'block';
+  return ok;
+}
+
+window.sendVerificationCode = function(){
+  if(!validateForm()) return;
+  const email = document.getElementById('p-email').value.trim();
+  const name = document.getElementById('p-name').value.trim();
+  const btn = document.getElementById('p-next-btn');
+
+  _verifyCode = Math.floor(100000 + Math.random()*900000).toString();
+  btn.disabled = true; btn.textContent = 'Code wird gesendet ...';
+
+  emailjs.send('service_vp2kavs', 'template_lc0ucul', { email, to_name: name, passcode: _verifyCode })
+    .then(() => {
+      document.getElementById('form-panel').style.display = 'none';
+      document.getElementById('code-panel').style.display = 'block';
+      document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
+      startCountdown();
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('p-err').textContent = 'Fehler beim Senden des Codes. Bitte erneut versuchen.';
+      document.getElementById('p-err').style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Code senden & Anfrage abschließen →';
+    });
+};
+
+window.resendCode = function(){
+  document.getElementById('resend-btn').style.display = 'none';
+  document.getElementById('resend-timer').style.display = '';
+  window.sendVerificationCode();
+};
+
+function startCountdown(){
+  let secs = 60;
+  document.getElementById('countdown').textContent = secs;
+  document.getElementById('resend-timer').style.display = '';
+  document.getElementById('resend-btn').style.display = 'none';
+  clearInterval(_countdownInterval);
+  _countdownInterval = setInterval(() => {
+    secs--;
+    document.getElementById('countdown').textContent = secs;
+    if(secs <= 0){
+      clearInterval(_countdownInterval);
+      document.getElementById('resend-timer').style.display = 'none';
+      document.getElementById('resend-btn').style.display = '';
+    }
+  }, 1000);
+}
+
+window.verifyCodeAndSubmit = function(){
+  const entered = document.getElementById('p-code').value.trim();
+  if(entered !== _verifyCode){
+    document.getElementById('code-error').style.display = 'block';
+    return;
+  }
+  clearInterval(_countdownInterval);
+
+  const data = {
+    firma: document.getElementById('p-firma').value.trim(),
+    name: document.getElementById('p-name').value.trim(),
+    telefon: document.getElementById('p-telefon').value.trim(),
+    email: document.getElementById('p-email').value.trim(),
+    art: document.getElementById('p-art').value,
+    anliegen: document.getElementById('p-anliegen').value.trim(),
+    status: 'eingegangen',
+    verifiziert: true,
+    createdAt: window._serverTimestamp(),
+  };
+
+  window._addDoc(window._collection(window._db, 'partneranfragen'), data).then(() => {
+    document.getElementById('code-panel').style.display = 'none';
+    document.getElementById('success-panel').style.display = 'block';
+
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
+        subject: 'Neue Partneranfrage – ' + data.firma,
+        from_name: 'Waschlurch Partneranfragen',
+        firma: data.firma, name: data.name, email: data.email, telefon: data.telefon,
+        art: data.art, anliegen: data.anliegen,
+      })
+    }).catch(() => {});
+  }).catch(err => {
+    console.error(err);
+    document.getElementById('code-error').textContent = 'Fehler beim Absenden. Bitte erneut versuchen oder direkt an waschlurch@gmail.com schreiben.';
+    document.getElementById('code-error').style.display = 'block';
+  });
+};
+
+window.acceptAllCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:true, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+window.acceptNecessaryCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:false, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+document.addEventListener('DOMContentLoaded', function(){
+  if(!localStorage.getItem('waschlurch_cookie_consent')) document.getElementById('cookie-banner').classList.add('visible');
+});
+</script>
+
+<div id="cookie-banner" class="cookie-banner">
+  <div class="cookie-banner-text">
+    🍪 <strong>Cookie-Hinweis:</strong> Wir verwenden nur technisch notwendige Speicherfunktionen – keine Werbe- oder Analyse-Cookies. Mehr dazu in unserer <a href="/datenschutz.html">Datenschutzerklärung</a>.
+  </div>
+  <div class="cookie-banner-actions">
+    <button onclick="acceptNecessaryCookies()" class="cookie-btn-secondary">Nur notwendige</button>
+    <button onclick="acceptAllCookies()" class="cookie-btn-primary">Alle akzeptieren</button>
+  </div>
+</div>
+</body>
+</html>
