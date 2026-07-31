@@ -94,7 +94,9 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); animation:pageLoadFade .6s ease; }
+@keyframes pageLoadFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion: reduce) { body { animation:none; } }
 
 /* NAV */
 nav {
@@ -220,24 +222,35 @@ section { padding:96px 5%; }
 .hero-svc:hover .hero-svc-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.9)); transform:scale(1.15); }
 .hero-svc-check { margin-left:auto; color:var(--green); font-size:16px; }
 
-/* TRUST BAR */
+/* TRUST BAR — LAUFBAND/TICKER */
 #trust {
-  padding:28px 5%;
+  padding:16px 0;
   background:var(--green-light);
   border-top:1px solid rgba(34,197,94,0.2);
   border-bottom:1px solid rgba(34,197,94,0.2);
+  overflow:hidden;
+  white-space:nowrap;
 }
 .trust-inner {
-  max-width:1200px; margin:0 auto;
-  display:flex; align-items:center; justify-content:center;
-  gap:48px; flex-wrap:wrap;
+  display:inline-flex; align-items:center;
+  animation:trustTicker 28s linear infinite;
 }
+#trust:hover .trust-inner { animation-play-state:paused; }
 .trust-item {
-  display:flex; align-items:center; gap:10px;
+  display:inline-flex; align-items:center; gap:10px;
   font-size:14px; font-weight:600; color:var(--green-dark);
+  white-space:nowrap; flex-shrink:0;
+  padding:0 32px;
 }
 .trust-item span:first-child { font-size:20px; transition:filter .25s,transform .25s; }
 .trust-item:hover span:first-child { filter:drop-shadow(0 0 10px rgba(34,197,94,0.9)); transform:scale(1.15); }
+@keyframes trustTicker {
+  from { transform:translateX(0); }
+  to { transform:translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trust-inner { animation:none; }
+}
 
 /* LEISTUNGEN */
 #leistungen { background:var(--white); }
@@ -290,7 +303,7 @@ section { padding:96px 5%; }
 .leistung-tag { font-size:11px; font-weight:700; color:var(--green-dark); text-transform:uppercase; letter-spacing:.8px; margin-bottom:5px; }
 .leistung-title { font-size:18px; font-weight:700; color:var(--black); margin-bottom:5px; letter-spacing:-0.3px; }
 .leistung-desc { font-size:13px; color:var(--gray-500); line-height:1.5; margin-bottom:10px; }
-.leistung-ab { font-size:13px; font-weight:600; color:var(--gray-700); }
+.leistung-ab { font-size:13px; font-weight:600; color:var(--gray-700); display:none; }
 
 /* ABOUT */
 #ueber { background:var(--black); }
@@ -645,7 +658,7 @@ footer {
         <a href="tel:+490000000000" class="btn-secondary">📞 Jetzt anrufen</a>
       </div>
       <div class="hero-stats">
-        <div><div class="hero-stat-val">100+</div><div class="hero-stat-lbl">Zufriedene Kunden</div></div>
+        <div><div class="hero-stat-val">63+</div><div class="hero-stat-lbl">Zufriedene Kunden</div></div>
         <div><div class="hero-stat-val">4,9★</div><div class="hero-stat-lbl">Bewertung</div></div>
         <div><div class="hero-stat-val">24h</div><div class="hero-stat-lbl">Antwortzeit</div></div>
       </div>
@@ -656,7 +669,7 @@ footer {
         <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);border-radius:24px;padding:28px 32px;display:flex;align-items:center;gap:24px">
           <img src="/logo.png?v=5" alt="Waschlurch" style="height:120px;width:auto;flex-shrink:0">
           <div>
-            <div style="font-size:32px;font-weight:900;color:var(--green);letter-spacing:-1px;line-height:1">100+</div>
+            <div style="font-size:32px;font-weight:900;color:var(--green);letter-spacing:-1px;line-height:1">63+</div>
             <div style="font-size:15px;font-weight:700;color:var(--white);margin-top:4px">Zufriedene Kunden</div>
             <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:3px">im Rhein-Sieg-Kreis</div>
           </div>
@@ -709,6 +722,11 @@ footer {
     <div class="trust-item"><span>📍</span><span>Rhein-Sieg-Kreis</span></div>
     <div class="trust-item"><span>🌿</span><span>Öko-Reinigungsmittel</span></div>
     <div class="trust-item"><span>§</span><span>§35a EStG absetzbar</span></div>
+    <div class="trust-item" aria-hidden="true"><span>✓</span><span>Geprüfte Qualität</span></div>
+    <div class="trust-item" aria-hidden="true"><span>🛡️</span><span>Haftpflichtversichert</span></div>
+    <div class="trust-item" aria-hidden="true"><span>📍</span><span>Rhein-Sieg-Kreis</span></div>
+    <div class="trust-item" aria-hidden="true"><span>🌿</span><span>Öko-Reinigungsmittel</span></div>
+    <div class="trust-item" aria-hidden="true"><span>§</span><span>§35a EStG absetzbar</span></div>
   </div>
 </div>
 
@@ -841,24 +859,7 @@ footer {
     <div class="ueber-img">
       <div class="ueber-img-bg"></div>
       <div style="display:flex;flex-direction:column;gap:16px;width:100%">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">100+</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Kunden</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">4,9★</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Bewertung</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">9</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Leistungen</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center">
-            <div style="font-size:36px;font-weight:900;color:var(--green)">24h</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">Antwortzeit</div>
-          </div>
-        </div>
+        <img src="/daniel-foto.jpg" alt="Daniel Lurch – Waschlurch" style="width:100%;border-radius:20px;object-fit:cover;max-height:420px;display:block">
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;text-align:center">
           <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:6px">Einsatzgebiet</div>
           <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.8)">Eitorf · Siegburg · Hennef · Troisdorf · Bad Honnef · Lohmar</div>
