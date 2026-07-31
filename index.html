@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Waschlurch – Reinigung & Hausmeisterservice</title>
-<link rel="icon" type="image/png" href="/apple-touch-icon.png?v=5">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=5">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <script type="module">
@@ -50,7 +53,7 @@
         const leistungen = Array.isArray(p.leistungen) ? p.leistungen : [];
         const extras = Array.isArray(p.extras) ? p.extras : [];
         const isInactive = p.status !== 'aktiv';
-        const link = p.slug ? '/pakete/'+p.slug+'.html' : '/anfrage.html?paket='+id;
+        const link = '/anfrage.html?paket='+id;
         html += `
         <div class="preis-card ${p.beliebt && !isInactive ? 'featured' : ''} ${isInactive ? 'inaktiv' : ''}">
           ${p.beliebt && !isInactive ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
