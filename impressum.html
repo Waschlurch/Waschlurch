@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impressum – Waschlurch</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  getDoc(doc(db, 'einstellungen', 'impressum')).then(snap => {
+    const el = document.getElementById('impressum-content');
+    if(!snap.exists()){
+      el.innerHTML = '<p>Impressum wird gerade eingerichtet. Bitte kontaktieren Sie uns direkt unter waschlurch@gmail.com.</p>';
+      return;
+    }
+    const d = snap.data();
+    el.innerHTML = `
+      <h2>Angaben gemäß § 5 TMG</h2>
+      <p>${d.firmenname||''}<br>${d.inhaber||''}<br>${d.strasse||''}<br>${d.plz||''} ${d.ort||''}</p>
+
+      <h2>Kontakt</h2>
+      <p>Telefon: ${d.telefon||'–'}<br>E-Mail: ${d.email||'–'}</p>
+
+      ${d.steuernummer || d.ustid ? `<h2>Steuerliche Angaben</h2><p>${d.steuernummer ? 'Steuernummer: '+d.steuernummer+'<br>' : ''}${d.ustid ? 'USt-IdNr.: '+d.ustid : ''}</p>` : ''}
+
+      ${d.aufsichtsbehoerde ? `<h2>Aufsichtsbehörde</h2><p>${d.aufsichtsbehoerde}</p>` : ''}
+
+      ${d.haftpflicht ? `<h2>Berufshaftpflichtversicherung</h2><p>${d.haftpflicht}</p>` : ''}
+
+      <h2>EU-Streitschlichtung</h2>
+      <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr/</a>. Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+
+      ${d.weitere ? `<h2>Weitere Angaben</h2><p>${d.weitere.replace(/\n/g,'<br>')}</p>` : ''}
+    `;
+  }).catch(err => {
+    console.error(err);
+    document.getElementById('impressum-content').innerHTML = '<p>Impressum konnte nicht geladen werden. Bitte kontaktieren Sie uns direkt unter waschlurch@gmail.com.</p>';
+  });
+</script>
+<style>
+:root { --green:#22C55E; --green-dark:#15803D; --black:#0A0A0A; --gray-700:#374151; --white:#FFFFFF; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
+nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:#FFFFFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; }
+.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-logo img { height:36px; width:auto; }
+main { padding:110px 5% 80px; min-height:100vh; max-width:720px; margin:0 auto; }
+h1 { font-size:clamp(28px,4vw,36px); font-weight:700; letter-spacing:-1px; margin-bottom:36px; }
+#impressum-content h2 { font-size:16px; font-weight:700; color:var(--green-dark); margin:28px 0 8px; }
+#impressum-content h2:first-child { margin-top:0; }
+#impressum-content p { font-size:15px; line-height:1.7; color:var(--gray-700); }
+#impressum-content a { color:var(--green-dark); }
+</style>
+</head>
+<body>
+
+<nav><a href="/" class="nav-logo"><img src="/logo.png?v=5" alt="Waschlurch"></a></nav>
+
+<main>
+  <h1>Impressum</h1>
+  <div id="impressum-content"><p>Wird geladen ...</p></div>
+</main>
+
+</body>
+</html>
