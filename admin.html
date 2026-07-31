@@ -2193,9 +2193,10 @@ function renderPaketeList(){
         ${p.bild_base64 ? `<img src="${p.bild_base64}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0">` : ''}
         <div>
           <div class="paket-card-name">${p.icon||'📦'} ${p.name||''} ${p.beliebt ? '<span style="color:var(--green);font-size:11px">★ Beliebt</span>' : ''}</div>
-          <div class="paket-card-meta">${p.zielgruppe||''} · ${p.status === 'aktiv' ? 'Aktiv – sichtbar auf Website' : 'Außer Betrieb'} · ab ${p.preis_ab!=null?p.preis_ab+' €':'–'}</div>
+          <div class="paket-card-meta">${p.zielgruppe||''} · ${p.status === 'aktiv' ? 'Aktiv – sichtbar auf Website' : 'Außer Betrieb'} · ab ${p.preis_ab!=null?p.preis_ab+' €':'–'} · Slug: <strong>${p.slug || '– keiner –'}</strong></div>
         </div>
         <div class="paket-card-actions">
+          <button onclick="editPaketSlug('${p.id}','${p.slug||''}')">🔗 Slug bearbeiten</button>
           <button class="pk-active-btn" onclick="togglePaketStatus('${p.id}','${p.status}')">${p.status==='aktiv' ? '⏸ Deaktivieren (auf Website ausgrauen)' : '▶ Aktivieren'}</button>
           <button class="pk-delete-btn" onclick="deletePaket('${p.id}')">🗑 Löschen</button>
         </div>
@@ -2204,6 +2205,16 @@ function renderPaketeList(){
     </div>
   `).join('');
 }
+
+window.editPaketSlug = function(id, currentSlug){
+  const neu = prompt('Slug für dieses Paket (muss exakt zum Dateinamen in /pakete/ passen, z. B. "buero" für buero.html):', currentSlug || '');
+  if(neu === null) return;
+  const cleaned = neu.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+  updateDoc(doc(db, 'pakete', id), { slug: cleaned || null }).catch(err => {
+    console.error(err);
+    alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
+  });
+};
 
 window.suggestPaketSlug = function(){
   const slugEl = document.getElementById('pk-slug');
