@@ -662,67 +662,118 @@ footer {
 
 /* MOBILE */
 @media(max-width:768px) {
+  /* ── GLOBAL ── */
   body { padding-bottom:64px; }
   .mobile-quicknav { display:flex; }
-  .cookie-banner { bottom:76px; }
+  .cookie-banner { bottom:76px; left:16px; right:16px; }
   #karriere > div[style*="grid-template-columns"] { grid-template-columns:1fr!important; }
-  nav { padding:0 5%; height:60px; }
-  .nav-logo img { height:32px; }
-  .nav-logo span, .nav-logo span span { font-size:22px!important; }
+
+  /* ── NAV: kleineres Logo, dezenteres Menü ── */
+  nav { padding:0 24px; height:64px; }
+  .nav-logo img { height:28px; }
+  .nav-logo span, .nav-logo span span { font-size:19px!important; letter-spacing:-0.3px!important; }
   .nav-links { display:none; }
   .hamburger { display:flex; }
-  section { padding:40px 5% 48px; }
-  .section-head { margin-bottom:24px; }
-  .section-sub { font-size:14px; }
-  #hero { padding-top:56px; min-height:auto; }
-  .hero-inner { grid-template-columns:1fr; gap:24px; padding:24px 0 16px; }
+  .hamburger span { background:var(--gray-700); }
+
+  /* Menü öffnet weich statt abrupt */
+  .mobile-menu {
+    display:flex; opacity:0; visibility:hidden; pointer-events:none;
+    transform:translateY(-8px);
+    transition:opacity .3s cubic-bezier(.4,0,.2,1), transform .3s cubic-bezier(.4,0,.2,1), visibility .3s;
+    padding:32px 24px;
+  }
+  .mobile-menu.open { opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0); }
+  .mobile-menu a { font-size:20px; padding-bottom:16px; }
+
+  /* ── RUHIGERER RHYTHMUS (8px-Raster) ── */
+  section { padding:64px 24px; }
+  .section-head { margin-bottom:32px; }
+  .section-tag { font-size:12px; margin-bottom:8px; }
+  .section-title { line-height:1.15; }
+  .section-sub { font-size:15px; line-height:1.6; }
+
+  /* ── HERO: nur Logo, Badge, Headline, Text, 2 Buttons ── */
+  #hero { padding-top:64px; min-height:auto; }
+  .hero-inner { grid-template-columns:1fr; gap:0; padding:32px 0 24px; }
   .hero-card { display:none; }
-  .hero-title { font-size:32px; }
-  .hero-sub { font-size:15px; margin-bottom:20px; }
-  .hero-btns { flex-direction:column; }
-  .hero-btns a, .hero-btns button { width:100%; justify-content:center; }
-  .hero-stats { gap:14px; flex-wrap:wrap; margin-top:20px; padding-top:20px; }
-  .hero-stat-val { font-size:20px; }
-  .trust-inner { gap:20px 28px; justify-content:flex-start; }
-  .trust-item { font-size:13px; }
-  .leistungen-scroll { padding:0 5% 16px; }
-  .leistung-card { width:78vw; max-width:300px; }
+  .tag { font-size:12px; padding:6px 16px; margin-bottom:16px; }
+  .hero-title { font-size:36px; line-height:1.2; letter-spacing:-0.5px; }
+  .hero-sub { font-size:16px; line-height:1.6; margin-top:16px; margin-bottom:32px; max-width:100%; }
+  .hero-btns { flex-direction:column; gap:16px; }
+  .hero-btns a, .hero-btns button { width:100%; }
+  .hero-stats { display:none; } /* Kennzahlen erscheinen weiter unten (Trust-Leiste & Referenzen) */
+
+  /* ── EINHEITLICHE BUTTONS: gleiche Höhe, Radius, Schrift, Tipp-Feedback ── */
+  .btn-primary, .btn-secondary, .form-submit, .preis-btn {
+    height:48px; padding:0 32px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; border-radius:100px;
+    transition:transform .15s cubic-bezier(.4,0,.2,1), background .2s ease, border-color .2s ease;
+  }
+  .btn-primary:hover, .form-submit:hover { transform:none; }
+  .btn-primary:active, .btn-secondary:active, .form-submit:active, .preis-btn:active { transform:scale(0.96); }
+
+  /* ── TRUST-LEISTE ── */
+  .trust-item { font-size:13px; padding:0 24px; }
+
+  /* ── LEISTUNGEN ── */
+  .leistungen-scroll { padding:0 24px 16px; }
+  .leistung-card { width:80vw; max-width:300px; border-radius:24px; }
   .leistung-img { height:180px; font-size:56px; }
+  .leistung-body { padding:24px; }
+
+  /* ── ÜBER UNS ── */
   .ueber-inner { grid-template-columns:1fr; gap:32px; }
   .ueber-img { display:none; }
+
+  /* ── PAKETE: gleiche Kartenrundung überall ── */
   .preise-grid { grid-template-columns:1fr; gap:16px; }
-  .preis-card { padding:18px; }
+  .preis-card { padding:24px; border-radius:24px; }
   .preis-header { cursor:pointer; }
-  .preis-toggle-icon { display:inline-block; float:right; font-size:16px; transition:transform .25s; color:var(--gray-500); }
+  .preis-toggle-icon { display:inline-block; float:right; font-size:16px; transition:transform .3s cubic-bezier(.4,0,.2,1); color:var(--gray-500); }
   .preis-card.expanded .preis-toggle-icon { transform:rotate(180deg); }
-  .preis-img, .preis-icon { margin-bottom:6px; }
-  .preis-val { font-size:22px; }
+  .preis-img, .preis-icon { margin-bottom:8px; }
+  .preis-val { font-size:24px; }
   .preis-unit { margin-bottom:0; }
-  .preis-details { max-height:0; overflow:hidden; transition:max-height .35s ease; }
+  .preis-details { max-height:0; overflow:hidden; transition:max-height .4s cubic-bezier(.4,0,.2,1); }
   .preis-card.expanded .preis-details { max-height:900px; margin-top:16px; }
-  .preis-details .preis-desc { margin-bottom:12px; }
-  .preis-details .preis-features { margin-bottom:16px; }
-  .preis-val { font-size:28px; }
+  .preis-details .preis-desc { margin-bottom:16px; }
+  .preis-details .preis-features { margin-bottom:24px; }
   .preis-card.featured { transform:none; }
-  .ref-grid { grid-template-columns:1fr 1fr; gap:14px; }
+
+  /* ── REFERENZEN ── */
+  .ref-grid { grid-template-columns:1fr 1fr; gap:16px; }
+  .ref-card { border-radius:24px; }
   .ref-img { height:140px; font-size:36px; }
+  .ref-body { padding:16px; }
+
+  /* ── KONTAKT ── */
   .kontakt-inner { grid-template-columns:1fr; gap:40px; }
-  .kontakt-form { padding:24px; }
+  .kontakt-form { padding:24px; border-radius:24px; }
   .form-row { grid-template-columns:1fr; gap:0; }
-  .footer-inner { flex-direction:column; text-align:center; }
-  .footer-links { flex-wrap:wrap; justify-content:center; gap:16px 20px; }
+  .kontakt-item { border-radius:24px; }
+
+  /* ── FOOTER ── */
+  .footer-inner { flex-direction:column; text-align:center; gap:24px; }
+  .footer-links { flex-wrap:wrap; justify-content:center; gap:16px 24px; }
+
+  /* ── SICHTBARER FOKUS (Erreichbarkeit) ── */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline:2px solid var(--green); outline-offset:2px;
+  }
 }
 @media(max-width:480px) {
-  section { padding:44px 5%; }
-  .hero-title { font-size:30px; }
+  section { padding:48px 24px; }
+  .hero-title { font-size:32px; }
   .ref-grid { grid-template-columns:1fr; }
   .ref-img { height:170px; }
   .trust-item { font-size:12px; }
-  .kontakt-item { padding:14px 16px; }
-  .kontakt-form { padding:20px; }
+  .kontakt-item { padding:16px; }
+  .kontakt-form { padding:24px; }
   .form-title { font-size:18px; }
   .leistung-card { width:82vw; }
-  .faq-q { padding:16px 18px; font-size:14px; }
+  .faq-q { padding:16px; font-size:14px; }
 }
 </style>
 </head>
