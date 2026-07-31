@@ -750,55 +750,8 @@ a { color:inherit; }
       </div>
 
       <div class="paket-form">
-        <div class="paket-form-title" id="paket-form-title">Neues Paket erstellen</div>
-        <input type="hidden" id="pk-edit-id" value="">
-        <div class="field-row">
-          <div class="field"><label>Icon (Emoji)</label><input type="text" id="pk-icon" placeholder="🏠" maxlength="4"></div>
-          <div class="field"><label>Zielgruppe</label><input type="text" id="pk-zielgruppe" placeholder="z. B. Privat, Gewerbe, Handwerk"></div>
-        </div>
-        <div class="field">
-          <label>Paket-Bild (optional, wird automatisch komprimiert)</label>
-          <input type="file" id="pk-bild-input" accept="image/*" onchange="handlePaketBildUpload(this)">
-          <div id="pk-bild-preview" style="margin-top:10px;display:none">
-            <img id="pk-bild-preview-img" style="max-width:200px;border-radius:12px;display:block;margin-bottom:8px">
-            <button type="button" onclick="removePaketBild()" style="padding:7px 14px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:12px;cursor:pointer;font-family:inherit">Bild entfernen</button>
-          </div>
-          <input type="hidden" id="pk-bild-data" value="">
-        </div>
-        <div class="field"><label>Paketname</label><input type="text" id="pk-name" placeholder="z. B. Einfamilienhaus-Paket" oninput="suggestPaketSlug()"></div>
-        <div class="field">
-          <label>URL-Kürzel (für saubere Adresse, z. B. waschlurch.com/pakete/buero)</label>
-          <input type="text" id="pk-slug" placeholder="buero" oninput="this.dataset.manuallyEdited='1'">
-        </div>
-        <div class="field"><label>Kurzbeschreibung</label><input type="text" id="pk-beschreibung" placeholder="z. B. Rundum-Sauberkeit für Ihr Zuhause"></div>
-        <div class="field">
-          <label>Enthaltene Leistungen</label>
-          <div class="paket-cb-grid" id="pk-leistungen-cb"></div>
-        </div>
-        <div class="field">
-          <label>Extras (eine Zeile pro Extra, optional)</label>
-          <textarea id="pk-extras" placeholder="z. B. Kühlschrank reinigen&#10;Betten frisch beziehen"></textarea>
-        </div>
-        <div class="field">
-          <label>Eigene Analysefragen für dieses Paket (optional)</label>
-          <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px">Erscheinen nur bei diesem Paket in der Anfrage-Seite – z. B. "Anzahl Büroarbeitsplätze" fürs Büro-Paket oder "Anzahl Sitzplätze" fürs Gastronomie-Paket.</p>
-          <div id="pk-custom-fields-list"></div>
-          <button type="button" onclick="addCustomFieldRow()" style="margin-top:8px;padding:9px 18px;border-radius:100px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:var(--white);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Frage hinzufügen</button>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>Preis ab (€)</label><input type="number" id="pk-preis" placeholder="79" step="0.5"></div>
-          <div class="field"><label>Preis-Zusatztext</label><input type="text" id="pk-preis-text" placeholder="je Einsatz · inkl. MwSt."></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>Reihenfolge (kleinere Zahl = weiter vorne)</label><input type="number" id="pk-reihenfolge" placeholder="1"></div>
-          <div class="field">
-            <label class="bool-label" style="margin-top:32px"><input type="checkbox" id="pk-beliebt"> Als "Beliebteste Wahl" hervorheben</label>
-          </div>
-        </div>
-        <div class="wizard-nav-inline" style="display:flex;gap:12px;margin-top:10px">
-          <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="savePaket()" id="pk-save-btn">Paket speichern</button>
-          <button class="btn" style="width:auto;padding:13px 24px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)" onclick="resetPaketForm()">Abbrechen / Neues Paket</button>
-        </div>
+        <div class="paket-form-title">Neues Paket anlegen</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.5)">Neue Pakete werden von Claude als eigene, fest zugeschnittene Seite (inkl. eigener Fragen) angelegt – das kannst du nicht mehr selbst im Dashboard erstellen. Sag einfach Bescheid, wenn du ein neues Paket brauchst oder eines geändert werden soll. Hier im Dashboard kannst du bestehende Pakete <strong>ein-/ausblenden</strong> und <strong>löschen</strong>.</p>
       </div>
 
       <div id="pakete-list"><div class="empty-state">Lade Pakete ...</div></div>
@@ -2243,8 +2196,7 @@ function renderPaketeList(){
           <div class="paket-card-meta">${p.zielgruppe||''} · ${p.status === 'aktiv' ? 'Aktiv – sichtbar auf Website' : 'Außer Betrieb'} · ab ${p.preis_ab!=null?p.preis_ab+' €':'–'}</div>
         </div>
         <div class="paket-card-actions">
-          <button onclick="editPaket('${p.id}')">✏️ Bearbeiten</button>
-          <button class="pk-active-btn" onclick="togglePaketStatus('${p.id}','${p.status}')">${p.status==='aktiv' ? '⏸ Außer Betrieb nehmen' : '▶ Aktivieren'}</button>
+          <button class="pk-active-btn" onclick="togglePaketStatus('${p.id}','${p.status}')">${p.status==='aktiv' ? '⏸ Deaktivieren (auf Website ausgrauen)' : '▶ Aktivieren'}</button>
           <button class="pk-delete-btn" onclick="deletePaket('${p.id}')">🗑 Löschen</button>
         </div>
       </div>
