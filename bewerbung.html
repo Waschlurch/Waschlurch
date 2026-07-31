@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jetzt bewerben – Waschlurch</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window._db = db; window._collection = collection; window._addDoc = addDoc; window._serverTimestamp = serverTimestamp;
+</script>
+<style>
+:root { --green:#22C55E; --green-dark:#15803D; --black:#0A0A0A; --gray-500:#6B7280; --white:#FFFFFF; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
+nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:#FFFFFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; }
+.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-logo img { height:36px; width:auto; }
+main { padding:100px 5% 80px; min-height:100vh; }
+.wrap { max-width:640px; margin:0 auto; }
+.tag { display:inline-block; background:rgba(34,197,94,0.15); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:100px; margin-bottom:16px; }
+h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margin-bottom:12px; }
+.sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.6; margin-bottom:36px; }
+.card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:36px; }
+.field { margin-bottom:18px; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
+.field input, .field select, .field textarea {
+  width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  font-family:inherit; font-size:16px; color:var(--white); outline:none; transition:border .2s;
+}
+.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.25); }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green); }
+.field select option { background:#111827; }
+.field textarea { min-height:80px; resize:vertical; }
+.field input.invalid, .field select.invalid { border-color:#F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15); }
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:14px; color:var(--white); display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0; font-weight:500; }
+.field label.bool-label input { width:auto; }
+.section-label { font-size:14px; font-weight:700; color:var(--green); margin:28px 0 14px; }
+.field-error { display:none; color:#F87171; font-size:13px; margin-top:-8px; margin-bottom:16px; }
+.btn-primary {
+  width:100%; padding:16px; border-radius:100px; border:none; cursor:pointer;
+  background:var(--green); color:var(--white); font-size:15px; font-weight:700;
+  font-family:inherit; transition:background .2s; margin-top:8px;
+}
+.btn-primary:hover { background:var(--green-dark); }
+.btn-primary:disabled { opacity:.6; cursor:not-allowed; }
+.code-hint { font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:16px; text-align:center; }
+.code-input { width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; font-family:inherit; color:var(--white); outline:none; margin-bottom:14px; }
+.code-input:focus { border-color:var(--green); }
+.code-resend { text-align:center; font-size:13px; color:rgba(255,255,255,0.4); margin-top:14px; }
+.code-resend button { background:none; border:none; color:var(--green); font-weight:600; cursor:pointer; font-family:inherit; font-size:13px; }
+.success-panel { text-align:center; padding:40px 0; }
+.success-icon { width:64px; height:64px; border-radius:50%; background:rgba(34,197,94,0.15); color:var(--green); font-size:32px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
+input[type="file"] { color:rgba(255,255,255,0.6); font-size:13px; }
+@media(max-width:600px){ .field-row { grid-template-columns:1fr; gap:0; } main { padding:84px 5% 60px; } .card { padding:24px; } }
+
+/* COOKIE BANNER */
+.cookie-banner {
+  display:none; position:fixed; bottom:16px; left:16px; right:16px; z-index:2000;
+  max-width:640px; margin:0 auto;
+  background:var(--black); border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px; padding:20px 24px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  flex-direction:column; gap:16px;
+}
+.cookie-banner.visible { display:flex; }
+.cookie-banner-text { font-size:13px; line-height:1.6; color:rgba(255,255,255,0.7); }
+.cookie-banner-text strong { color:var(--white); }
+.cookie-banner-text a { color:var(--green); }
+.cookie-banner-actions { display:flex; gap:10px; }
+.cookie-btn-primary, .cookie-btn-secondary {
+  flex:1; padding:12px; border-radius:100px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family:inherit; border:none;
+}
+.cookie-btn-primary { background:var(--green); color:var(--white); }
+.cookie-btn-primary:hover { background:var(--green-dark); }
+.cookie-btn-secondary { background:rgba(255,255,255,0.08); color:var(--white); border:1px solid rgba(255,255,255,0.15); }
+.cookie-btn-secondary:hover { background:rgba(255,255,255,0.14); }
+</style>
+</head>
+<body>
+
+<nav><a href="/" class="nav-logo"><img src="/logo.png?v=5" alt="Waschlurch"></a></nav>
+
+<main>
+<div class="wrap">
+  <div class="tag">Karriere bei Waschlurch</div>
+  <h1>Jetzt bewerben</h1>
+  <p class="sub">Du packst gerne mit an und suchst einen zuverlässigen Job in der Region? Füll das Formular aus – wir melden uns bei dir.</p>
+
+  <div class="card">
+    <div id="form-panel">
+      <div class="field-row">
+        <div class="field"><label>Vorname *</label><input type="text" id="b-vorname"></div>
+        <div class="field"><label>Nachname *</label><input type="text" id="b-nachname"></div>
+      </div>
+      <div class="field"><label>Straße & Hausnummer *</label><input type="text" id="b-strasse"></div>
+      <div class="field-row">
+        <div class="field"><label>PLZ *</label><input type="text" id="b-plz" maxlength="5" inputmode="numeric"></div>
+        <div class="field"><label>Ort *</label><input type="text" id="b-ort"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Telefon *</label><input type="tel" id="b-telefon"></div>
+        <div class="field"><label>E-Mail *</label><input type="email" id="b-email"></div>
+      </div>
+
+      <div class="section-label">Zur Bewerbung</div>
+      <div class="field">
+        <label>Wie bist du auf uns aufmerksam geworden? *</label>
+        <select id="b-quelle">
+          <option value="">– Bitte wählen –</option>
+          <option>Google-Suche</option>
+          <option>Social Media</option>
+          <option>Empfehlung</option>
+          <option>Aushang/Flyer</option>
+          <option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="field"><label>Gewünschte Position (optional)</label><input type="text" id="b-position" placeholder="z. B. Reinigungskraft, Teamleitung"></div>
+      <div class="field"><label>Ab wann verfügbar? / Erreichbarkeit *</label><textarea id="b-erreichbarkeit" placeholder="z. B. ab sofort, Vollzeit, tagsüber erreichbar unter ..."></textarea></div>
+
+      <div class="section-label">Unterlagen</div>
+      <div class="field"><label>Lebenslauf * (PDF oder Bild, max. 800 KB)</label><input type="file" id="b-lebenslauf" accept="application/pdf,image/*" onchange="handleBewerbungFile(this,'lebenslauf')"></div>
+      <div class="field"><label>Anschreiben (optional, PDF oder Bild)</label><input type="file" id="b-anschreiben" accept="application/pdf,image/*" onchange="handleBewerbungFile(this,'anschreiben')"></div>
+      <div class="field"><label>Foto (optional)</label><input type="file" id="b-foto" accept="image/*" onchange="handleBewerbungFile(this,'foto')"></div>
+
+      <div class="field" style="margin-top:24px">
+        <label class="bool-label"><input type="checkbox" id="b-datenschutz"> Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zur Bearbeitung dieser Bewerbung zu. *</label>
+      </div>
+      <div class="field-error" id="b-err">Bitte alle Pflichtfelder korrekt ausfüllen und der Datenschutzerklärung zustimmen.</div>
+      <button class="btn-primary" id="b-next-btn" onclick="sendVerificationCode()">Code senden & Bewerbung abschließen →</button>
+    </div>
+
+    <div id="code-panel" style="display:none">
+      <div class="code-hint" id="code-hint">Wir haben einen 6-stelligen Code gesendet.</div>
+      <input type="text" class="code-input" id="b-code" placeholder="123456" maxlength="6" inputmode="numeric">
+      <div class="field-error" id="code-error">Der Code ist leider falsch. Bitte erneut versuchen.</div>
+      <button class="btn-primary" onclick="verifyCodeAndSubmit()">Code bestätigen & Bewerbung senden →</button>
+      <div class="code-resend">
+        <span id="resend-timer">Erneut senden in <span id="countdown">60</span>s</span>
+        <button type="button" id="resend-btn" onclick="resendCode()" style="display:none">Code erneut senden</button>
+      </div>
+    </div>
+
+    <div id="success-panel" class="success-panel" style="display:none">
+      <div class="success-icon">✓</div>
+      <h2 style="font-size:22px;margin-bottom:10px">Bewerbung erfolgreich gesendet!</h2>
+      <p style="color:rgba(255,255,255,0.6)">Vielen Dank für dein Interesse – wir melden uns zeitnah bei dir.</p>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+let _verifyCode = null;
+let _countdownInterval;
+let _files = {};
+
+window.handleBewerbungFile = function(input, key){
+  const file = input.files[0];
+  if(!file) return;
+  const isPdf = file.type === 'application/pdf';
+
+  if(isPdf){
+    if(file.size > 900000){ alert('Diese PDF ist zu groß (max. 800 KB). Bitte eine kleinere Datei wählen oder ein Foto der Unterlagen hochladen.'); input.value=''; return; }
+    const reader = new FileReader();
+    reader.onload = (e) => { _files[key] = e.target.result; };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxWidth = 900;
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width*scale), h = Math.round(img.height*scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      let quality = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while(dataUrl.length > 800000 && quality > 0.3){ quality -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', quality); }
+      _files[key] = dataUrl;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+function markInvalid(id, bad){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('invalid', bad);
+}
+
+function validateForm(){
+  let ok = true;
+  const req = ['b-vorname','b-nachname','b-strasse','b-plz','b-ort','b-telefon','b-email','b-quelle','b-erreichbarkeit'];
+  req.forEach(id => {
+    const val = document.getElementById(id).value.trim();
+    const bad = !val;
+    markInvalid(id, bad);
+    if(bad) ok = false;
+  });
+  const email = document.getElementById('b-email').value.trim();
+  if(email && (!email.includes('@') || !email.includes('.'))){ markInvalid('b-email', true); ok = false; }
+  if(!_files.lebenslauf){ ok = false; document.getElementById('b-lebenslauf').style.outline = '2px solid #F87171'; } else { document.getElementById('b-lebenslauf').style.outline = 'none'; }
+  if(!document.getElementById('b-datenschutz').checked) ok = false;
+  document.getElementById('b-err').style.display = ok ? 'none' : 'block';
+  return ok;
+}
+
+window.sendVerificationCode = function(){
+  if(!validateForm()) return;
+  const email = document.getElementById('b-email').value.trim();
+  const vorname = document.getElementById('b-vorname').value.trim();
+  const btn = document.getElementById('b-next-btn');
+
+  _verifyCode = Math.floor(100000 + Math.random()*900000).toString();
+  btn.disabled = true; btn.textContent = 'Code wird gesendet ...';
+
+  emailjs.send('service_vp2kavs', 'template_lc0ucul', { email, to_name: vorname, passcode: _verifyCode })
+    .then(() => {
+      document.getElementById('form-panel').style.display = 'none';
+      document.getElementById('code-panel').style.display = 'block';
+      document.getElementById('code-hint').textContent = 'Wir haben einen 6-stelligen Code an ' + email + ' gesendet.';
+      startCountdown();
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('b-err').textContent = 'Fehler beim Senden des Codes. Bitte erneut versuchen.';
+      document.getElementById('b-err').style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Code senden & Bewerbung abschließen →';
+    });
+};
+
+window.resendCode = function(){
+  document.getElementById('resend-btn').style.display = 'none';
+  document.getElementById('resend-timer').style.display = '';
+  window.sendVerificationCode();
+};
+
+function startCountdown(){
+  let secs = 60;
+  document.getElementById('countdown').textContent = secs;
+  document.getElementById('resend-timer').style.display = '';
+  document.getElementById('resend-btn').style.display = 'none';
+  clearInterval(_countdownInterval);
+  _countdownInterval = setInterval(() => {
+    secs--;
+    document.getElementById('countdown').textContent = secs;
+    if(secs <= 0){
+      clearInterval(_countdownInterval);
+      document.getElementById('resend-timer').style.display = 'none';
+      document.getElementById('resend-btn').style.display = '';
+    }
+  }, 1000);
+}
+
+window.verifyCodeAndSubmit = function(){
+  const entered = document.getElementById('b-code').value.trim();
+  if(entered !== _verifyCode){
+    document.getElementById('code-error').style.display = 'block';
+    return;
+  }
+  clearInterval(_countdownInterval);
+
+  const data = {
+    vorname: document.getElementById('b-vorname').value.trim(),
+    nachname: document.getElementById('b-nachname').value.trim(),
+    strasse: document.getElementById('b-strasse').value.trim(),
+    plz: document.getElementById('b-plz').value.trim(),
+    ort: document.getElementById('b-ort').value.trim(),
+    telefon: document.getElementById('b-telefon').value.trim(),
+    email: document.getElementById('b-email').value.trim(),
+    quelle: document.getElementById('b-quelle').value,
+    position: document.getElementById('b-position').value.trim(),
+    erreichbarkeit: document.getElementById('b-erreichbarkeit').value.trim(),
+    lebenslauf_base64: _files.lebenslauf || null,
+    anschreiben_base64: _files.anschreiben || null,
+    foto_base64: _files.foto || null,
+    status: 'eingegangen',
+    verifiziert: true,
+    createdAt: window._serverTimestamp(),
+  };
+
+  window._addDoc(window._collection(window._db, 'bewerbungen'), data).then(() => {
+    document.getElementById('code-panel').style.display = 'none';
+    document.getElementById('success-panel').style.display = 'block';
+
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        access_key: '24205589-1aa2-44d0-a816-6bcba6b1e810',
+        subject: 'Neue Bewerbung – ' + data.vorname + ' ' + data.nachname,
+        from_name: 'Waschlurch Bewerbungen',
+        vorname: data.vorname, nachname: data.nachname, email: data.email, telefon: data.telefon,
+        position: data.position, erreichbarkeit: data.erreichbarkeit, quelle: data.quelle,
+      })
+    }).catch(() => {});
+  }).catch(err => {
+    console.error(err);
+    document.getElementById('code-error').textContent = 'Fehler beim Absenden. Bitte erneut versuchen oder direkt an waschlurch@gmail.com schreiben.';
+    document.getElementById('code-error').style.display = 'block';
+  });
+};
+
+window.acceptAllCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:true, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+window.acceptNecessaryCookies = function(){
+  localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:false, date:Date.now()}));
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+document.addEventListener('DOMContentLoaded', function(){
+  if(!localStorage.getItem('waschlurch_cookie_consent')) document.getElementById('cookie-banner').classList.add('visible');
+});
+</script>
+
+<div id="cookie-banner" class="cookie-banner">
+  <div class="cookie-banner-text">
+    🍪 <strong>Cookie-Hinweis:</strong> Wir verwenden nur technisch notwendige Speicherfunktionen – keine Werbe- oder Analyse-Cookies. Mehr dazu in unserer <a href="/datenschutz.html">Datenschutzerklärung</a>.
+  </div>
+  <div class="cookie-banner-actions">
+    <button onclick="acceptNecessaryCookies()" class="cookie-btn-secondary">Nur notwendige</button>
+    <button onclick="acceptAllCookies()" class="cookie-btn-primary">Alle akzeptieren</button>
+  </div>
+</div>
+</body>
+</html>
