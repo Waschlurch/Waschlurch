@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Datenschutzerklärung – Waschlurch</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
+    authDomain: "waschlurch-469d4.firebaseapp.com",
+    projectId: "waschlurch-469d4",
+    storageBucket: "waschlurch-469d4.firebasestorage.app",
+    messagingSenderId: "664644631002",
+    appId: "1:664644631002:web:f9ec65dfd318a861b6a8e3",
+    measurementId: "G-B7VJ5LE2D2"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  getDoc(doc(db, 'einstellungen', 'impressum')).then(snap => {
+    const d = snap.exists() ? snap.data() : {};
+    const el = document.getElementById('verantwortlich-block');
+    el.innerHTML = `${d.firmenname||'Waschlurch'}<br>${d.inhaber||''}<br>${d.strasse||''}<br>${d.plz||''} ${d.ort||''}<br>E-Mail: ${d.email||'–'}${d.telefon ? '<br>Telefon: '+d.telefon : ''}`;
+  }).catch(() => {
+    document.getElementById('verantwortlich-block').innerHTML = 'Siehe <a href="/impressum.html">Impressum</a>.';
+  });
+</script>
+<style>
+:root { --green:#22C55E; --green-dark:#15803D; --black:#0A0A0A; --gray-700:#374151; --white:#FFFFFF; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
+nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:#FFFFFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; }
+.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-logo img { height:36px; width:auto; }
+main { padding:110px 5% 80px; min-height:100vh; max-width:760px; margin:0 auto; }
+h1 { font-size:clamp(28px,4vw,36px); font-weight:700; letter-spacing:-1px; margin-bottom:12px; }
+.stand { font-size:13px; color:#9CA3AF; margin-bottom:36px; }
+h2 { font-size:17px; font-weight:700; color:var(--green-dark); margin:30px 0 8px; }
+h3 { font-size:15px; font-weight:700; margin:18px 0 6px; }
+p, li { font-size:15px; line-height:1.7; color:var(--gray-700); }
+ul { margin:8px 0 8px 22px; }
+a { color:var(--green-dark); }
+.notice { background:#F9FAFB; border:1px solid #E5E7EB; border-radius:14px; padding:18px 20px; margin-top:40px; font-size:13px; color:#6B7280; }
+</style>
+</head>
+<body>
+
+<nav><a href="/" class="nav-logo"><img src="/logo.png?v=5" alt="Waschlurch"></a></nav>
+
+<main>
+  <h1>Datenschutzerklärung</h1>
+  <p class="stand">Stand: Januar 2026</p>
+
+  <h2>1. Verantwortliche Stelle</h2>
+  <p id="verantwortlich-block">Wird geladen ...</p>
+
+  <h2>2. Übersicht der Verarbeitungen</h2>
+  <p>Wenn Sie unser Kontakt- oder Anfrageformular nutzen, verarbeiten wir die von Ihnen freiwillig angegebenen Daten (z. B. Name, Adresse, Telefonnummer, E-Mail-Adresse, Angaben zur gewünschten Leistung), um Ihre Anfrage zu bearbeiten und Ihnen ein Angebot zu erstellen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Erfüllung vorvertraglicher Maßnahmen bzw. eines Vertrags).</p>
+
+  <h2>3. Hosting</h2>
+  <p>Diese Website wird bei <strong>Vercel Inc.</strong> gehostet. Beim Aufruf der Website werden automatisch technische Verbindungsdaten (u. a. IP-Adresse, Datum/Uhrzeit des Zugriffs, aufgerufene Seite, verwendeter Browser) durch den Hosting-Anbieter verarbeitet, um die Website technisch bereitzustellen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer funktionierenden und sicheren Website).</p>
+
+  <h2>4. Formular-Datenverarbeitung & eingesetzte Dienste</h2>
+  <p>Zur Bearbeitung Ihrer Anfrage nutzen wir folgende Dienste als Auftragsverarbeiter bzw. Empfänger Ihrer Daten:</p>
+
+  <h3>Google Firebase / Firestore (Google Ireland Limited)</h3>
+  <p>Ihre Formulardaten werden in der Datenbank "Firebase Firestore" von Google gespeichert, um Ihre Anfrage zu verwalten und zu bearbeiten. Es handelt sich hierbei um eine technisch notwendige Datenverarbeitung zur Vertragsanbahnung, keine Werbe- oder Trackingcookies werden dabei gesetzt.</p>
+
+  <h3>EmailJS</h3>
+  <p>Zur Verifizierung Ihrer E-Mail-Adresse (Versand eines Bestätigungscodes) nutzen wir den Dienst EmailJS. Dabei wird Ihre E-Mail-Adresse zum Zweck des Versands des Bestätigungscodes verarbeitet.</p>
+
+  <h3>Web3Forms</h3>
+  <p>Zur Benachrichtigung des Betreibers über eingegangene Anfragen nutzen wir den Formular-Versanddienst Web3Forms.</p>
+
+  <p>Mit den genannten Anbietern bestehen, soweit erforderlich, Verträge zur Auftragsverarbeitung gemäß Art. 28 DSGVO bzw. Standardvertragsklauseln der EU-Kommission für Datenübermittlungen in Drittländer (z. B. USA).</p>
+
+  <h2>5. Cookies & lokale Speicherung</h2>
+  <p>Diese Website verwendet ausschließlich <strong>technisch notwendige</strong> Speicherfunktionen (z. B. um Ihre Cookie-Einstellung zu speichern oder Sie im geschützten Admin-Bereich eingeloggt zu halten). Diese benötigen keine Einwilligung nach § 25 Abs. 2 TTDSG, da sie zur Bereitstellung des von Ihnen ausdrücklich gewünschten Dienstes erforderlich sind.</p>
+  <p>Aktuell werden auf dieser Website <strong>keine</strong> Analyse-, Marketing- oder Tracking-Cookies eingesetzt, für die eine Einwilligung erforderlich wäre. Sollte sich dies ändern, wird der Cookie-Banner entsprechend erweitert und Ihre Einwilligung eingeholt.</p>
+
+  <h2>6. Ihre Rechte</h2>
+  <p>Sie haben nach der DSGVO folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
+  <ul>
+    <li>Auskunft (Art. 15 DSGVO)</li>
+    <li>Berichtigung (Art. 16 DSGVO)</li>
+    <li>Löschung (Art. 17 DSGVO)</li>
+    <li>Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
+    <li>Datenübertragbarkeit (Art. 20 DSGVO)</li>
+    <li>Widerspruch gegen die Verarbeitung (Art. 21 DSGVO)</li>
+  </ul>
+  <p>Wenden Sie sich hierzu gerne an die oben genannte Kontaktadresse.</p>
+
+  <h2>7. Beschwerderecht</h2>
+  <p>Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde über die Verarbeitung Ihrer personenbezogenen Daten durch uns zu beschweren.</p>
+
+  <h2>8. Speicherdauer</h2>
+  <p>Wir speichern personenbezogene Daten nur so lange, wie dies zur Erfüllung der genannten Zwecke erforderlich ist oder gesetzliche Aufbewahrungsfristen (z. B. handels- und steuerrechtliche Vorgaben) dies vorschreiben.</p>
+
+  <div class="notice">
+    ℹ️ Diese Datenschutzerklärung wurde nach bestem Wissen auf Basis der tatsächlich eingesetzten technischen Dienste erstellt. Sie ersetzt keine individuelle Rechtsberatung. Für eine rechtssichere, auf Ihr Unternehmen zugeschnittene Fassung empfehlen wir die Prüfung durch einen Rechtsanwalt oder Datenschutzbeauftragten.
+  </div>
+</main>
+
+</body>
+</html>
