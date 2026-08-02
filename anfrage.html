@@ -1231,6 +1231,9 @@ function submitRequest(){
       createdAt: window._serverTimestamp(),
       status: 'neu',
       leistungen: names,
+      // IDs zusätzlich zum Klartext: Der Angebotsrechner erkennt die
+      // Leistungen damit exakt statt über Namensabgleich.
+      leistungen_ids: Array.from(selectedServices),
       objektart: objektart,
       etagen: etagen,
       flaeche_m2: flaeche,

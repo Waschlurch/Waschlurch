@@ -344,6 +344,26 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
   font-size:12px; font-weight:600; color:#F87171; line-height:1.5;
 }
 .ang-gewinn-fuss { margin-top:10px; font-size:11px; color:rgba(255,255,255,0.38); line-height:1.5; }
+
+/* ── Übernahme aus Anfrage ── */
+.ang-uebernahme-box {
+  background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.28);
+  border-radius:14px; padding:16px 18px; margin-bottom:22px;
+}
+.ang-uebernahme-titel { font-size:14px; font-weight:700; color:var(--white); margin-bottom:3px; }
+.ang-uebernahme-sub { font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:12px; line-height:1.5; }
+.ang-uebernahme-box select { width:100%; }
+.ang-uebernahme-info {
+  margin-top:12px; padding:11px 13px; border-radius:10px;
+  background:rgba(34,197,94,0.10); border:1px solid rgba(34,197,94,0.25);
+  font-size:12px; line-height:1.65; color:rgba(255,255,255,0.75);
+}
+.ang-uebernahme-info strong { color:var(--green); }
+.ang-uebernahme-info.warnung { background:rgba(251,191,36,0.10); border-color:rgba(251,191,36,0.3); }
+.ang-uebernahme-info.warnung strong { color:#FBBF24; }
+.ang-uebernahme-info.fehler { background:rgba(248,113,113,0.10); border-color:rgba(248,113,113,0.3); }
+.ang-uebernahme-info.fehler strong { color:#F87171; }
+.ang-uebernahme-offen { margin-top:6px; color:rgba(251,191,36,0.85); }
 .kalk-titel-zusatz { font-weight:500; color:rgba(255,255,255,0.4); text-transform:none; letter-spacing:0; }
 .kalk-zeit-feld { border-color:rgba(251,191,36,0.28)!important; }
 .kosten-hinweis {
@@ -665,11 +685,13 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
           <input type="hidden" id="ang-edit-id" value="">
           <input type="hidden" id="ang-anfrage-id" value="">
 
-          <div class="field">
-            <label>Von bestehender Anfrage übernehmen (optional)</label>
+          <div class="ang-uebernahme-box">
+            <div class="ang-uebernahme-titel">⚡ Aus einer Anfrage übernehmen</div>
+            <div class="ang-uebernahme-sub">Kundendaten, Leistungen und Mengen werden automatisch eingetragen</div>
             <select id="ang-anfrage-select" onchange="loadAnfrageIntoAngebot(this.value)">
               <option value="">– Manuell eingeben –</option>
             </select>
+            <div class="ang-uebernahme-info" id="ang-uebernahme-info" style="display:none"></div>
           </div>
           <div class="field-row">
             <div class="field"><label>Vorname</label><input type="text" id="ang-vorname" placeholder="Max"></div>
@@ -4021,39 +4043,108 @@ function renderAngAnfrageSelect(){
 
 window.loadAnfrageIntoAngebot = function(id){
   document.getElementById('ang-anfrage-id').value = id;
-  if(!id) return;
-  const r = allRequests.find(x => x.id === id);
-  if(!r) return;
-  document.getElementById('ang-vorname').value = r.vorname || '';
-  document.getElementById('ang-nachname').value = r.nachname || '';
-  document.getElementById('ang-email').value = r.email || '';
-  document.getElementById('ang-telefon').value = r.telefon || '';
-  document.getElementById('ang-adresse').value = `${r.strasse||''}, ${r.plz||''} ${r.ort||''}`;
-  if(r.haeufigkeit) document.getElementById('ang-haeufigkeit').value = r.haeufigkeit;
+  const rueck = document.getElementById('ang-uebernahme-info');
 
-  const sd = r.service_details || {};
-  const qtyMap = {
-    haushalt: () => r.flaeche_m2 || '',
-    buero: () => r.flaeche_m2 || '',
-    grund: () => r.flaeche_m2 || '',
-    fenster: () => sd.fenster && sd.fenster.anzahl_fenster ? sd.fenster.anzahl_fenster : '',
-    treppe: () => r.etagen || '',
-    muell: () => sd.muell && sd.muell.anzahl_tonnen ? sd.muell.anzahl_tonnen : '',
-    winter: () => 1,
+  if(!id){
+    if(rueck){ rueck.style.display = 'none'; rueck.innerHTML = ''; }
+    return;
+  }
+  const r = allRequests.find(x => x.id === id);
+  if(!r){
+    if(rueck){
+      rueck.style.display = '';
+      rueck.className = 'ang-uebernahme-info fehler';
+      rueck.innerHTML = 'Diese Anfrage konnte nicht geladen werden. Bitte die Seite neu laden.';
+    }
+    return;
+  }
+
+  const uebernommen = [];
+  const setzen = (feldId, wert, bezeichnung) => {
+    const el = document.getElementById(feldId);
+    if(el && wert){ el.value = wert; if(bezeichnung) uebernommen.push(bezeichnung); }
   };
 
+  setzen('ang-vorname',  r.vorname || '', null);
+  setzen('ang-nachname', r.nachname || '', null);
+  if(r.vorname || r.nachname) uebernommen.push('Name');
+  setzen('ang-email',   r.email   || '', 'E-Mail');
+  setzen('ang-telefon', r.telefon || '', 'Telefon');
+
+  const adresse = [r.strasse, [r.plz, r.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  setzen('ang-adresse', adresse, adresse ? 'Adresse' : null);
+  if(r.haeufigkeit) setzen('ang-haeufigkeit', r.haeufigkeit, 'Häufigkeit: ' + r.haeufigkeit);
+
+  /* Leistungen erkennen: bevorzugt über die gespeicherten IDs
+     (seit anfrage.html sie mitschreibt), sonst über Namensabgleich –
+     Letzteres ist für Altbestände nötig, die keine IDs haben. */
+  const idsAusAnfrage = Array.isArray(r.leistungen_ids) ? r.leistungen_ids : null;
+  const leistungenText = (r.leistungen || '').toLowerCase();
+
+  const sd = r.service_details || {};
+  const zahl = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? '' : n; };
+  const mengeFuer = {
+    haushalt: () => zahl(r.flaeche_m2),
+    buero:    () => zahl(r.flaeche_m2),
+    grund:    () => zahl(r.flaeche_m2),
+    fenster:  () => zahl(sd.fenster && sd.fenster.anzahl_fenster),
+    treppe:   () => zahl(r.etagen),
+    muell:    () => zahl(sd.muell && sd.muell.anzahl_tonnen),
+    winter:   () => 1,
+  };
+
+  const erkannt = [];
+  const ohneMenge = [];
   document.querySelectorAll('.ang-svc-cb').forEach(cb => {
     const sid = cb.dataset.id;
     const svc = KALK_SERVICES_BASE.find(s => s.id === sid);
-    const isIncluded = svc && (r.leistungen||'').toLowerCase().includes(svc.name.toLowerCase());
-    cb.checked = !!isIncluded;
+    if(!svc) return;
+
+    const dabei = idsAusAnfrage
+      ? idsAusAnfrage.includes(sid)
+      : leistungenText.includes(svc.name.toLowerCase());
+    cb.checked = dabei;
+    if(!dabei) return;
+
     const qtyEl = document.querySelector(`.ang-svc-qty[data-id="${sid}"]`);
-    if(isIncluded && qtyEl && !qtyEl.value && qtyMap[sid]){
-      const val = qtyMap[sid]();
-      if(val) qtyEl.value = val;
+    const menge = mengeFuer[sid] ? mengeFuer[sid]() : '';
+    if(qtyEl && menge){
+      qtyEl.value = menge;                       // bewusst überschreiben
+      erkannt.push(svc.name + ' (' + menge + ' ' + svc.unit + ')');
+    } else {
+      erkannt.push(svc.name);
+      if(qtyEl && !qtyEl.value) ohneMenge.push(svc.name + ' – ' + svc.unit);
     }
   });
+
+  // Anmerkungsfeld mit dem Kundenwunsch vorbelegen, ohne Vorhandenes zu verwerfen
+  const anmerkEl = document.getElementById('ang-anmerkung');
+  if(anmerkEl && !anmerkEl.value.trim()){
+    const teile = [];
+    if(r.gewaehltes_paket)   teile.push('Gewünschtes Paket: ' + r.gewaehltes_paket);
+    if(r.objektart)          teile.push('Objektart: ' + r.objektart);
+    if(r.gewuenschter_beginn)teile.push('Gewünschter Beginn: ' + r.gewuenschter_beginn);
+    if(r.zugang_objekt)      teile.push('Zugang: ' + r.zugang_objekt);
+    if(r.parkmoeglichkeiten) teile.push('Parken: ' + r.parkmoeglichkeiten);
+    if(r.besondere_verschmutzung) teile.push('Besonderheiten: ' + r.besondere_verschmutzung);
+    if(r.anmerkung_objekt)   teile.push(r.anmerkung_objekt);
+    if(r.nachricht)          teile.push('Nachricht des Kunden: ' + r.nachricht);
+    if(teile.length){ anmerkEl.value = teile.join('\n'); uebernommen.push('Anmerkungen'); }
+  }
+
   calcAngebot();
+
+  // Sichtbare Rückmeldung – sonst merkt man nicht, dass etwas passiert ist
+  if(rueck){
+    rueck.style.display = '';
+    rueck.className = 'ang-uebernahme-info' + (erkannt.length ? '' : ' warnung');
+    rueck.innerHTML = erkannt.length
+      ? `<strong>Übernommen:</strong> ${uebernommen.join(' · ')}<br>
+         <strong>Leistungen:</strong> ${erkannt.join(', ')}
+         ${ohneMenge.length ? `<div class="ang-uebernahme-offen">Menge fehlt noch bei: ${ohneMenge.join(', ')} – bitte selbst eintragen.</div>` : ''}`
+      : `<strong>Kundendaten übernommen</strong>, aber keine Leistung erkannt.<br>
+         In der Anfrage steht: „${r.leistungen || '(nichts)'}". Bitte die Leistungen unten von Hand anhaken.`;
+  }
 };
 
 window.resetAngebotForm = function(){

@@ -13,7 +13,7 @@
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDQH4RzoYWhIpcA-6gB6LsFrxV_-pKM-n4",
@@ -27,6 +27,30 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
+  /* ── Anfrage vom Startseiten-Formular in die Datenbank schreiben ──
+     Bisher ging dieses Formular NUR per E-Mail über Web3Forms raus.
+     Solche Anfragen tauchten deshalb nie im Dashboard auf und konnten
+     im Angebotsrechner nicht ausgewählt werden. Die E-Mail bleibt der
+     verlässliche Kanal – dieser Eintrag kommt zusätzlich dazu. */
+  const LEISTUNG_ZU_ID = {
+    'Haushaltsreinigung':'haushalt', 'Büroreinigung':'buero', 'Fensterreinigung':'fenster',
+    'Treppenhausreinigung':'treppe', 'Grundreinigung':'grund', 'Hausmeisterservice':'hausmeister',
+    'Mülltonnenservice':'muell', 'Winterdienst':'winter', 'Gartenpflege':'garten'
+  };
+  window._speichereAnfrage = function(d){
+    const id = LEISTUNG_ZU_ID[d.leistung];
+    return addDoc(collection(db, 'anfragen'), {
+      createdAt: serverTimestamp(),
+      status: 'neu',
+      quelle: 'Startseite (Kontaktformular)',
+      vorname: d.vorname, nachname: d.nachname,
+      email: d.email, telefon: d.telefon,
+      leistungen: d.leistung,
+      leistungen_ids: id ? [id] : [],
+      nachricht: d.nachricht
+    });
+  };
 
   getDoc(doc(db, 'preise', 'aktuell')).then(snap => {
     if(!snap.exists()) return;
@@ -1471,6 +1495,15 @@ function verifyCode() {
       clearInterval(_countdownInterval);
       document.getElementById('step-2').style.display = 'none';
       document.getElementById('form-success').style.display = 'block';
+
+      // Zusätzlich ins Dashboard schreiben, damit die Anfrage dort
+      // auftaucht und im Angebotsrechner auswählbar ist. Schlägt das
+      // fehl, ist die E-Mail trotzdem raus – der Kunde darf davon
+      // nichts merken, deshalb nur still protokollieren.
+      if(window._speichereAnfrage){
+        window._speichereAnfrage({ vorname, nachname, email, telefon: tel, leistung, nachricht })
+          .catch(err => console.warn('Anfrage konnte nicht im Dashboard gespeichert werden:', err));
+      }
     }
   });
 }
