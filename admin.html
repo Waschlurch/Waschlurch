@@ -321,6 +321,37 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
 .ang-summary-line { display:flex; justify-content:space-between; font-size:13px; padding:6px 0; color:rgba(255,255,255,0.6); }
 .ang-summary-line.total { font-size:18px; font-weight:700; color:var(--white); border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; padding-top:12px; }
 .ang-summary-line.gewinn { color:var(--green); font-weight:600; }
+.ang-summary-line.verlust { color:#F87171; font-weight:600; }
+
+/* ── Gewinnblock im Angebotsrechner ── */
+.ang-gewinn-block {
+  margin-top:18px; padding-top:16px;
+  border-top:1px dashed rgba(255,255,255,0.16);
+}
+.ang-gewinn-kopf {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  font-size:13px; font-weight:700; color:rgba(255,255,255,0.75);
+  text-transform:uppercase; letter-spacing:.7px; margin-bottom:10px;
+}
+.ang-schaetzung {
+  background:rgba(251,191,36,0.16); border:1px solid rgba(251,191,36,0.35);
+  color:#FBBF24; font-size:10px; font-weight:700; letter-spacing:.5px;
+  padding:2px 8px; border-radius:100px; cursor:help;
+}
+.ang-warnung {
+  margin-top:10px; padding:10px 12px; border-radius:10px;
+  background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.3);
+  font-size:12px; font-weight:600; color:#F87171; line-height:1.5;
+}
+.ang-gewinn-fuss { margin-top:10px; font-size:11px; color:rgba(255,255,255,0.38); line-height:1.5; }
+.kalk-titel-zusatz { font-weight:500; color:rgba(255,255,255,0.4); text-transform:none; letter-spacing:0; }
+.kalk-zeit-feld { border-color:rgba(251,191,36,0.28)!important; }
+.kosten-hinweis {
+  background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.25);
+  border-radius:14px; padding:14px 16px; margin-bottom:16px;
+  font-size:12.5px; line-height:1.6; color:rgba(255,255,255,0.6);
+}
+.kosten-hinweis strong { color:#FBBF24; display:block; margin-bottom:4px; }
 .angebot-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:12px; }
 .angebot-status-pill { padding:5px 12px; border-radius:100px; font-size:11px; font-weight:700; }
 .angebot-status-pill.entwurf { background:rgba(107,114,128,0.2); color:#9CA3AF; }
@@ -1053,6 +1084,34 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
         <span class="kalk-row-label">€/km (Hin- und Rückfahrt wird automatisch verdoppelt)</span>
       </div>
 
+      <div class="kalk-section-title">Deine Kosten <span class="kalk-titel-zusatz">– Grundlage der Gewinnrechnung</span></div>
+      <div class="kosten-hinweis" id="kosten-hinweis">
+        <strong>Diese Werte sind Branchenschätzungen, nicht deine gemessenen Zahlen.</strong>
+        Solange du sie nicht bestätigt hast, ist jeder ausgewiesene Gewinn nur ein Anhaltspunkt.
+        Trag deine tatsächlichen Werte ein — die Minutenangaben je Leistung stehen oben in der Liste —
+        und setz danach den Haken.
+      </div>
+      <div class="kalk-row">
+        <div class="kalk-row-icon">⏱️</div>
+        <div class="kalk-row-name">Kosten je Arbeitsstunde</div>
+        <input type="number" id="kalk-stundenkosten" step="0.5" value="22">
+        <span class="kalk-row-label">€/Std. (Lohn inkl. Arbeitgeberanteil, oder dein eigener Ziel-Stundensatz)</span>
+      </div>
+      <div class="kalk-row">
+        <div class="kalk-row-icon">⛽</div>
+        <div class="kalk-row-name">Fahrzeugkosten je Kilometer</div>
+        <input type="number" id="kalk-km-kosten" step="0.05" value="0.35">
+        <span class="kalk-row-label">€/km (Sprit, Verschleiß, Versicherung — was dich die Fahrt wirklich kostet)</span>
+      </div>
+      <div class="kalk-row">
+        <div class="kalk-row-icon">✅</div>
+        <div class="kalk-row-name">Werte geprüft</div>
+        <label class="bool-label" style="flex:1">
+          <input type="checkbox" id="kalk-kosten-bestaetigt">
+          Ja, das sind meine echten Kosten — Gewinn nicht mehr als Schätzung kennzeichnen
+        </label>
+      </div>
+
       <div class="kalk-section-title">Zuschläge</div>
       <div class="kalk-row">
         <div class="kalk-row-icon">🌙</div>
@@ -1332,17 +1391,24 @@ const SERVICES = [
 ];
 
 // ── ANGEBOTSRECHNER: Kalkulationssätze ─────────────────────
+/* zeit / zeit2 = geschätzte Arbeitsminuten je Einheit; Grundlage der
+   Gewinnrechnung. Es sind ÜBLICHE BRANCHENWERTE der Gebäudereinigung,
+   NICHT Daniels gemessene Zeiten – im Bereich „Kalkulation" überschreibbar.
+   Solange sie nicht angepasst sind, ist der ausgewiesene Gewinn eine
+   Schätzung und wird im Dashboard auch so gekennzeichnet. */
 const KALK_SERVICES_BASE = [
-  { id:'haushalt',   icon:'🏠', name:'Haushaltsreinigung',   unit:'m²',      rate:0.42, min_price:38 },
-  { id:'buero',      icon:'🏢', name:'Büroreinigung',        unit:'m²',      rate:0.52, min_price:48 },
-  { id:'fenster',    icon:'🪟', name:'Fensterreinigung',     unit:'Fenster', rate:5.50, unit2:'Türen', rate2:4.00, min_price:35 },
-  { id:'grund',      icon:'🧹', name:'Grundreinigung',       unit:'m²',      rate:0.85, min_price:145 },
-  { id:'hausmeister',icon:'🔧', name:'Hausmeisterservice',   unit:'Std.',    rate:27,   min_qty:2 },
-  { id:'treppe',     icon:'↕️', name:'Treppenhausreinigung', unit:'Etagen',  rate:13,   min_price:25 },
-  { id:'winter',     icon:'❄️', name:'Winterdienst',         unit:'Einsatz',rate:35,   min_qty:1 },
-  { id:'garten',     icon:'🌿', name:'Gartenpflege',         unit:'Std.',    rate:32,   min_qty:2 },
-  { id:'muell',      icon:'🗑️', name:'Mülltonnenservice',    unit:'Tonnen', rate:9,    min_price:18 },
+  { id:'haushalt',   icon:'🏠', name:'Haushaltsreinigung',   unit:'m²',      rate:0.42, min_price:38, zeit:2.0 },
+  { id:'buero',      icon:'🏢', name:'Büroreinigung',        unit:'m²',      rate:0.52, min_price:48, zeit:0.6 },
+  { id:'fenster',    icon:'🪟', name:'Fensterreinigung',     unit:'Fenster', rate:5.50, unit2:'Türen', rate2:4.00, min_price:35, zeit:5, zeit2:4 },
+  { id:'grund',      icon:'🧹', name:'Grundreinigung',       unit:'m²',      rate:0.85, min_price:145, zeit:2.0 },
+  { id:'hausmeister',icon:'🔧', name:'Hausmeisterservice',   unit:'Std.',    rate:27,   min_qty:2, zeit:60 },
+  { id:'treppe',     icon:'↕️', name:'Treppenhausreinigung', unit:'Etagen',  rate:13,   min_price:25, zeit:20 },
+  { id:'winter',     icon:'❄️', name:'Winterdienst',         unit:'Einsatz',rate:35,   min_qty:1, zeit:45 },
+  { id:'garten',     icon:'🌿', name:'Gartenpflege',         unit:'Std.',    rate:32,   min_qty:2, zeit:60 },
+  { id:'muell',      icon:'🗑️', name:'Mülltonnenservice',    unit:'Tonnen', rate:9,    min_price:18, zeit:5 },
 ];
+// Vorgabewerte der Kostenseite – ebenfalls Schätzungen, überschreibbar
+const KOSTEN_VORGABE = { stundenkosten: 22, km_kosten: 0.35 };
 let kalkulationData = {};
 
 
@@ -3698,6 +3764,20 @@ function getKalkServiceRate(sid){
     rate2: override.rate2 != null ? override.rate2 : base.rate2,
     min_price: override.min_price != null ? override.min_price : base.min_price,
     min_qty: override.min_qty != null ? override.min_qty : base.min_qty,
+    zeit: override.zeit != null ? override.zeit : base.zeit,
+    zeit2: override.zeit2 != null ? override.zeit2 : base.zeit2,
+  };
+}
+
+// Kostenseite: gespeicherte Werte, sonst Vorgabe
+function getKostenSaetze(){
+  const g = kalkulationData.general || {};
+  return {
+    stundenkosten: g.stundenkosten != null ? g.stundenkosten : KOSTEN_VORGABE.stundenkosten,
+    km_kosten:     g.km_kosten     != null ? g.km_kosten     : KOSTEN_VORGABE.km_kosten,
+    // Sobald Daniel die Werte einmal selbst gespeichert hat, ist der
+    // Gewinn keine reine Schätzung mehr und wird anders beschriftet.
+    bestaetigt: g.kosten_bestaetigt === true
   };
 }
 
@@ -3715,12 +3795,22 @@ function renderKalkulationForm(){
       ${s.unit2 ? `<input type="number" step="0.01" id="kalk-rate2-${s.id}" value="${cfg.rate2}"><span class="kalk-row-label">€ / ${s.unit2}</span>` : ''}
       ${s.min_price != null ? `<input type="number" step="1" id="kalk-minprice-${s.id}" value="${cfg.min_price}"><span class="kalk-row-label">Mindestpreis €</span>` : ''}
       ${s.min_qty != null ? `<input type="number" step="1" id="kalk-minqty-${s.id}" value="${cfg.min_qty}"><span class="kalk-row-label">Mindestmenge</span>` : ''}
+      <input type="number" step="0.1" id="kalk-zeit-${s.id}" value="${cfg.zeit}" class="kalk-zeit-feld">
+      <span class="kalk-row-label">Min. / ${s.unit}</span>
+      ${s.unit2 ? `<input type="number" step="0.1" id="kalk-zeit2-${s.id}" value="${cfg.zeit2}" class="kalk-zeit-feld"><span class="kalk-row-label">Min. / ${s.unit2}</span>` : ''}
     </div>`;
   }).join('');
 
   const g = kalkulationData.general || {};
   const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
   setVal('kalk-km-preis', g.km_preis != null ? g.km_preis : 0.50);
+  const k = getKostenSaetze();
+  setVal('kalk-stundenkosten', k.stundenkosten);
+  setVal('kalk-km-kosten', k.km_kosten);
+  const bestEl = document.getElementById('kalk-kosten-bestaetigt');
+  if(bestEl) bestEl.checked = k.bestaetigt;
+  const hinweisEl = document.getElementById('kosten-hinweis');
+  if(hinweisEl) hinweisEl.style.display = k.bestaetigt ? 'none' : '';
   setVal('kalk-zu-nacht', g.zu_nacht != null ? g.zu_nacht : 15);
   setVal('kalk-zu-wochenende', g.zu_wochenende != null ? g.zu_wochenende : 20);
   setVal('kalk-zu-express', g.zu_express != null ? g.zu_express : 25);
@@ -3742,10 +3832,15 @@ window.saveKalkulation = function(){
       rate2: s.unit2 ? (parseFloat(document.getElementById('kalk-rate2-'+s.id).value) || 0) : null,
       min_price: s.min_price != null ? (parseFloat(document.getElementById('kalk-minprice-'+s.id).value) || 0) : null,
       min_qty: s.min_qty != null ? (parseFloat(document.getElementById('kalk-minqty-'+s.id).value) || 0) : null,
+      zeit: parseFloat(document.getElementById('kalk-zeit-'+s.id).value) || 0,
+      zeit2: s.unit2 ? (parseFloat(document.getElementById('kalk-zeit2-'+s.id).value) || 0) : null,
     };
   });
   data.general = {
     km_preis: parseFloat(document.getElementById('kalk-km-preis').value) || 0,
+    stundenkosten: parseFloat(document.getElementById('kalk-stundenkosten').value) || 0,
+    km_kosten: parseFloat(document.getElementById('kalk-km-kosten').value) || 0,
+    kosten_bestaetigt: document.getElementById('kalk-kosten-bestaetigt').checked,
     zu_nacht: parseFloat(document.getElementById('kalk-zu-nacht').value) || 0,
     zu_wochenende: parseFloat(document.getElementById('kalk-zu-wochenende').value) || 0,
     zu_express: parseFloat(document.getElementById('kalk-zu-express').value) || 0,
@@ -3811,6 +3906,7 @@ window.calcAngebot = function(){
   if(!summaryEl) return;
 
   let leistungenSumme = 0;
+  let arbeitsminuten = 0;
   const zeilen = [];
   document.querySelectorAll('.ang-svc-cb').forEach(cb => {
     const sid = cb.dataset.id;
@@ -3823,6 +3919,8 @@ window.calcAngebot = function(){
     const price = computeServicePrice(sid, qty, qty2);
     if(priceEl) priceEl.textContent = price.toFixed(2) + ' €';
     leistungenSumme += price;
+    const cfg = getKalkServiceRate(sid);
+    arbeitsminuten += qty * (cfg.zeit || 0) + qty2 * (cfg.zeit2 || 0);
     const svc = KALK_SERVICES_BASE.find(s => s.id === sid);
     zeilen.push({ id: sid, name: svc.name, qty, qty2, unit: svc.unit, unit2: svc.unit2||null, price });
   });
@@ -3861,9 +3959,29 @@ window.calcAngebot = function(){
   const mwstBetrag = nettoGesamt * (mwstSatz/100);
   const bruttoGesamt = nettoGesamt + mwstBetrag;
 
-  lastAngebotBreakdown = { zeilen, leistungenSumme, km, kmPreis, fahrtkosten, zuschlaege, zuschlagPct, zuschlagBetrag, zusatzkosten, nettoProEinsatz, haeufigkeit, abrechnung, multiplikator, nettoGesamt, mwstSatz, mwstBetrag, bruttoGesamt };
+  /* ── Kostenseite und Gewinn ──────────────────────────────────
+     Bewusst auf Netto gerechnet: Die Umsatzsteuer ist durchlaufender
+     Posten und gehört nicht in den Gewinn. Material (Zusatzkosten)
+     wird dem Kunden 1:1 weiterberechnet und hebt sich deshalb auf. */
+  const kosten = getKostenSaetze();
+  const arbeitsstunden   = arbeitsminuten / 60;
+  const arbeitskosten    = arbeitsstunden * kosten.stundenkosten;
+  const echteFahrtkosten = km * 2 * kosten.km_kosten;
+  const kostenProEinsatz = arbeitskosten + echteFahrtkosten;
+  const gewinnProEinsatz = (nettoProEinsatz - zusatzkosten) - kostenProEinsatz;
+  const gewinnGesamt     = gewinnProEinsatz * multiplikator;
+  const marge            = nettoGesamt > 0 ? (gewinnGesamt / nettoGesamt) * 100 : 0;
+  const stundenlohn      = arbeitsstunden > 0 ? gewinnProEinsatz / arbeitsstunden : 0;
+
+  lastAngebotBreakdown = { zeilen, leistungenSumme, km, kmPreis, fahrtkosten, zuschlaege, zuschlagPct, zuschlagBetrag, zusatzkosten, nettoProEinsatz, haeufigkeit, abrechnung, multiplikator, nettoGesamt, mwstSatz, mwstBetrag, bruttoGesamt,
+    arbeitsminuten, arbeitsstunden, arbeitskosten, echteFahrtkosten, kostenProEinsatz, gewinnProEinsatz, gewinnGesamt, marge, stundenlohn, kosten_bestaetigt: kosten.bestaetigt };
 
   const abrechnungLabel = abrechnung === 'monat' ? 'Monatsrechnung' : abrechnung === 'quartal' ? 'Quartalsrechnung' : 'Einzelrechnung';
+  const zeitText = arbeitsstunden >= 1
+    ? arbeitsstunden.toFixed(1).replace('.', ',') + ' Std.'
+    : Math.round(arbeitsminuten) + ' Min.';
+  const gewinnFarbe = gewinnGesamt < 0 ? 'verlust' : 'gewinn';
+
   summaryEl.innerHTML = `
     <div class="ang-summary-line"><span>Leistungen (pro Einsatz)</span><span>${leistungenSumme.toFixed(2)} €</span></div>
     <div class="ang-summary-line"><span>Anfahrt (${(km*2).toFixed(1)} km gesamt)</span><span>${fahrtkosten.toFixed(2)} €</span></div>
@@ -3873,6 +3991,22 @@ window.calcAngebot = function(){
     <div class="ang-summary-line"><span>${abrechnungLabel} (× ${multiplikator.toFixed(2)})</span><span>${nettoGesamt.toFixed(2)} €</span></div>
     <div class="ang-summary-line"><span>zzgl. ${mwstSatz}% USt.</span><span>${mwstBetrag.toFixed(2)} €</span></div>
     <div class="ang-summary-line total"><span>Angebotssumme</span><span>${bruttoGesamt.toFixed(2)} €</span></div>
+
+    <div class="ang-gewinn-block">
+      <div class="ang-gewinn-kopf">
+        Was bleibt übrig?
+        ${kosten.bestaetigt ? '' : '<span class="ang-schaetzung" title="Die Kostenwerte im Bereich Kalkulation sind noch Branchenvorgaben und nicht bestätigt">Schätzung</span>'}
+      </div>
+      <div class="ang-summary-line"><span>Arbeitszeit (geschätzt)</span><span>${zeitText}</span></div>
+      <div class="ang-summary-line"><span>Arbeitskosten (${kosten.stundenkosten} €/Std.)</span><span>− ${arbeitskosten.toFixed(2)} €</span></div>
+      <div class="ang-summary-line"><span>Fahrtkosten (${kosten.km_kosten} €/km)</span><span>− ${echteFahrtkosten.toFixed(2)} €</span></div>
+      <div class="ang-summary-line ${gewinnFarbe}"><span>Gewinn pro Einsatz</span><span>${gewinnProEinsatz.toFixed(2)} €</span></div>
+      <div class="ang-summary-line ${gewinnFarbe}"><span>Gewinn ${abrechnungLabel.toLowerCase()}</span><span>${gewinnGesamt.toFixed(2)} €</span></div>
+      <div class="ang-summary-line"><span>Marge</span><span>${marge.toFixed(1).replace('.', ',')} %</span></div>
+      <div class="ang-summary-line"><span>Verdienst je Arbeitsstunde</span><span>${stundenlohn.toFixed(2)} €</span></div>
+      ${gewinnGesamt < 0 ? '<div class="ang-warnung">⚠️ Dieses Angebot wäre ein Verlustgeschäft.</div>' : ''}
+      ${!kosten.bestaetigt ? '<div class="ang-gewinn-fuss">Beruht auf Branchenvorgaben. <span class="stammdaten-link" onclick="switchView(\'kalkulation\')">Eigene Kosten eintragen →</span></div>' : ''}
+    </div>
   `;
 };
 
