@@ -364,6 +364,8 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
 .ang-uebernahme-info.fehler { background:rgba(248,113,113,0.10); border-color:rgba(248,113,113,0.3); }
 .ang-uebernahme-info.fehler strong { color:#F87171; }
 .ang-uebernahme-offen { margin-top:6px; color:rgba(251,191,36,0.85); }
+.ang-anfrage-status { margin-top:8px; font-size:11.5px; line-height:1.5; color:rgba(255,255,255,0.42); }
+.ang-anfrage-status.warnung { color:#FBBF24; }
 .kalk-titel-zusatz { font-weight:500; color:rgba(255,255,255,0.4); text-transform:none; letter-spacing:0; }
 .kalk-zeit-feld { border-color:rgba(251,191,36,0.28)!important; }
 .kosten-hinweis {
@@ -691,6 +693,7 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
             <select id="ang-anfrage-select" onchange="loadAnfrageIntoAngebot(this.value)">
               <option value="">– Manuell eingeben –</option>
             </select>
+            <div class="ang-anfrage-status" id="ang-anfrage-status">Anfragen werden geladen ...</div>
             <div class="ang-uebernahme-info" id="ang-uebernahme-info" style="display:none"></div>
           </div>
           <div class="field-row">
@@ -1744,11 +1747,24 @@ function renderUebersichtIntern(){
       </div>`).join('');
 }
 
+/* ── Sortierung ohne Firestore-orderBy ────────────────────────
+   Wichtig: Eine Abfrage mit orderBy('createdAt') liefert AUSSCHLIESSLICH
+   Dokumente, die dieses Feld besitzen. Fehlt es – etwa bei Einträgen aus
+   einem anderen Weg oder bei einem fehlgeschlagenen serverTimestamp –
+   verschwindet der Datensatz kommentarlos aus der Liste und war damit
+   im Angebotsrechner nicht auswählbar. Deshalb ungefiltert laden und
+   hier sortieren; bei diesen Datenmengen kostenlos. */
+function nachDatumAbsteigend(a, b){
+  const za = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+  const zb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+  return zb - za;
+}
+
 // ── ANFRAGEN ─────────────────────
 function startListeners(){
-  const reqQuery = query(collection(db, 'anfragen'), orderBy('createdAt', 'desc'));
+  const reqQuery = collection(db, 'anfragen');
   unsubRequests = onSnapshot(reqQuery, (snap) => {
-    allRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allRequests = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
     renderRequests();
     renderRequestSelect();
     renderBericht();
@@ -1759,6 +1775,13 @@ function startListeners(){
     renderUebersicht();
   }, err => {
     document.getElementById('anfragen-list').innerHTML = '<div class="empty-state">Fehler beim Laden. Bitte Firestore-Regeln prüfen.</div>';
+    // Auch im Angebotsrechner anzeigen – dort fiel ein Ladefehler bisher
+    // nicht auf, das Auswahlfeld blieb einfach kommentarlos leer.
+    const st = document.getElementById('ang-anfrage-status');
+    if(st){
+      st.className = 'ang-anfrage-status warnung';
+      st.textContent = 'Anfragen konnten nicht geladen werden (' + (err.code || 'unbekannter Fehler') + '). Bitte abmelden und neu anmelden.';
+    }
     console.error(err);
   });
 
@@ -1797,9 +1820,9 @@ function startListeners(){
     renderKunden();
   }, err => console.error(err));
 
-  const angeboteQuery = query(collection(db, 'angebote'), orderBy('createdAt', 'desc'));
+  const angeboteQuery = collection(db, 'angebote');
   unsubAngebote = onSnapshot(angeboteQuery, (snap) => {
-    allAngebote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allAngebote = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
     renderAngeboteList();
     renderUebersicht();
   }, err => console.error(err));
@@ -1822,16 +1845,16 @@ function startListeners(){
     renderBilderList();
   }, err => console.error(err));
 
-  const bewQuery = query(collection(db, 'bewerbungen'), orderBy('createdAt', 'desc'));
+  const bewQuery = collection(db, 'bewerbungen');
   unsubBewerbungen = onSnapshot(bewQuery, (snap) => {
-    allBewerbungen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allBewerbungen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
     renderBewerbungenList();
     renderUebersicht();
   }, err => console.error(err));
 
-  const partQuery = query(collection(db, 'partneranfragen'), orderBy('createdAt', 'desc'));
+  const partQuery = collection(db, 'partneranfragen');
   unsubPartneranfragen = onSnapshot(partQuery, (snap) => {
-    allPartneranfragen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allPartneranfragen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
     renderPartneranfragenList();
     renderUebersicht();
   }, err => console.error(err));
@@ -4036,9 +4059,37 @@ function renderAngAnfrageSelect(){
   const sel = document.getElementById('ang-anfrage-select');
   if(!sel) return;
   const current = sel.value;
+  const status = document.getElementById('ang-anfrage-status');
+
+  const auswaehlbar = allRequests.filter(r => !r.archiviert && !r.geloescht);
+
   sel.innerHTML = '<option value="">– Manuell eingeben –</option>' +
-    allRequests.filter(r => !r.archiviert && !r.geloescht).map(r => `<option value="${r.id}">${r.vorname||''} ${r.nachname||''} · ${r.leistungen||''}</option>`).join('');
+    auswaehlbar.map(r => {
+      const name = ((r.vorname||'') + ' ' + (r.nachname||'')).trim() || 'Ohne Namen';
+      const was  = r.leistungen || r.gewaehltes_paket || 'keine Leistung angegeben';
+      const wann = r.createdAt && r.createdAt.toMillis
+        ? new Date(r.createdAt.toMillis()).toLocaleDateString('de-DE')
+        : 'ohne Datum';
+      return `<option value="${r.id}">${name} · ${was} · ${wann}</option>`;
+    }).join('');
   sel.value = current || '';
+
+  /* Sichtbar machen, woran es liegt, wenn nichts zur Auswahl steht –
+     vorher sah eine leere Liste genauso aus wie ein kaputtes Feature. */
+  if(!status) return;
+  const archiviert = allRequests.filter(r => r.archiviert && !r.geloescht).length;
+  if(auswaehlbar.length){
+    status.className = 'ang-anfrage-status';
+    status.textContent = auswaehlbar.length === 1
+      ? '1 Anfrage steht zur Auswahl.'
+      : auswaehlbar.length + ' Anfragen stehen zur Auswahl.';
+  } else if(archiviert){
+    status.className = 'ang-anfrage-status warnung';
+    status.textContent = 'Keine aktiven Anfragen – alle ' + archiviert + ' sind archiviert. Im Bereich „Anfragen" unter „Archiviert" zurückholen.';
+  } else {
+    status.className = 'ang-anfrage-status warnung';
+    status.textContent = 'Es sind noch keine Anfragen in der Datenbank. Anfragen erscheinen hier, sobald jemand ein Formular auf der Website absendet.';
+  }
 }
 
 window.loadAnfrageIntoAngebot = function(id){

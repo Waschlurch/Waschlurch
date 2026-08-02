@@ -70,15 +70,15 @@
         paketeGrid.innerHTML = '<p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Aktuell sind keine Pakete verfügbar. Schreiben Sie uns gerne direkt für ein individuelles Angebot.</p>';
         return;
       }
-      let html = '';
-      snap.forEach(docSnap => {
-        const p = docSnap.data();
-        const id = docSnap.id;
+      /* Pakete nach Zielgruppe bündeln. Zwölf Karten untereinander
+         machten auf dem Handy 53% der gesamten Seitenlänge aus –
+         gruppiert und zugeklappt sind es ein paar Zeilen. */
+      const karte = (p, id) => {
         const leistungen = Array.isArray(p.leistungen) ? p.leistungen : [];
         const extras = Array.isArray(p.extras) ? p.extras : [];
         const isInactive = p.status !== 'aktiv';
         const link = '/anfrage.html?paket='+id;
-        html += `
+        return `
         <div class="preis-card ${p.beliebt && !isInactive ? 'featured' : ''} ${isInactive ? 'inaktiv' : ''}">
           ${p.beliebt && !isInactive ? '<div class="preis-badge">⭐ Beliebteste Wahl</div>' : ''}
           <div class="preis-header" onclick="togglePaketCard(this)">
@@ -99,6 +99,67 @@
               : `<a href="${link}" class="preis-btn">Bitte auswählen →</a>`}
           </div>
         </div>`;
+      };
+
+      /* Die Zielgruppen aus der Datenbank sind sehr fein aufgeteilt –
+         zehn Gruppen mit meist nur einem Paket wären keine Ordnung.
+         Deshalb zu Oberkategorien bündeln. Zielgruppen, die hier nicht
+         stehen, bilden weiterhin ihre eigene Gruppe; neu angelegte
+         Pakete verschwinden dadurch nie. */
+      const OBERGRUPPE = {
+        'Privat':                  'Für Ihr Zuhause',
+        'Hausverwaltung':          'Für Hausverwaltungen',
+        'Außenanlagen':            'Für Hausverwaltungen',
+        'Gewerbe':                 'Für Büro & Gewerbe',
+        'Kanzlei / Ingenieurbüro': 'Für Büro & Gewerbe',
+        'Gastronomie':             'Für Gastronomie & Handel',
+        'Einzelhandel':            'Für Gastronomie & Handel',
+        'Autohaus / Werkstatt':    'Für Werkstatt & Handwerk',
+        'Handwerk':                'Für Werkstatt & Handwerk',
+        'Neubau / Renovierung':    'Nach Bau & Umzug'
+      };
+      const REIHENFOLGE = ['Für Ihr Zuhause','Für Hausverwaltungen','Für Büro & Gewerbe',
+                           'Für Gastronomie & Handel','Für Werkstatt & Handwerk','Nach Bau & Umzug'];
+
+      const gruppen = new Map();
+      snap.forEach(docSnap => {
+        const p = docSnap.data();
+        const ziel = (p.zielgruppe || '').trim();
+        const name = OBERGRUPPE[ziel] || ziel || 'Weitere Pakete';
+        if(!gruppen.has(name)) gruppen.set(name, []);
+        gruppen.get(name).push({ p, id: docSnap.id });
+      });
+
+      // Bekannte Oberkategorien zuerst, unbekannte hinten anhängen
+      const sortiert = new Map();
+      REIHENFOLGE.forEach(n => { if(gruppen.has(n)) sortiert.set(n, gruppen.get(n)); });
+      gruppen.forEach((v, k) => { if(!sortiert.has(k)) sortiert.set(k, v); });
+
+      let html = '';
+      let nr = 0;
+      sortiert.forEach((eintraege, name) => {
+        const offen = nr === 0;   // erste Gruppe aufgeklappt, Rest zu
+        const anzahl = eintraege.length;
+        const abPreis = eintraege
+          .map(e => e.p.preis_ab)
+          .filter(v => typeof v === 'number')
+          .sort((a,b) => a-b)[0];
+        html += `
+        <div class="paket-gruppe${offen ? ' offen' : ''}">
+          <button type="button" class="paket-gruppe-kopf" onclick="togglePaketGruppe(this)" aria-expanded="${offen}">
+            <span class="paket-gruppe-text">
+              <span class="paket-gruppe-name">${name}</span>
+              <span class="paket-gruppe-meta">${anzahl} ${anzahl === 1 ? 'Paket' : 'Pakete'}${abPreis != null ? ' · ab ' + abPreis + ' €' : ''}</span>
+            </span>
+            <span class="paket-gruppe-pfeil" aria-hidden="true">▾</span>
+          </button>
+          <div class="paket-gruppe-inhalt">
+            <div class="paket-gruppe-karten">
+              ${eintraege.map(e => karte(e.p, e.id)).join('')}
+            </div>
+          </div>
+        </div>`;
+        nr++;
       });
       paketeGrid.innerHTML = html;
       if(window.staffelNachtragen) window.staffelNachtragen();
@@ -567,6 +628,44 @@ section { padding:96px 5%; }
 .preis-btn-disabled { background:var(--gray-200); color:var(--gray-500); border-color:var(--gray-200); cursor:not-allowed; pointer-events:none; }
 .preis-toggle-icon { display:none; }
 
+/* ── PAKET-GRUPPEN ────────────────────────────────────────── */
+.preise-grid { display:block; }          /* Gruppen statt einem Raster */
+.paket-gruppe { margin-bottom:14px; }
+.paket-gruppe-kopf {
+  width:100%; display:flex; align-items:center; gap:14px;
+  background:var(--white); border:2px solid var(--gray-200);
+  border-radius:20px; padding:18px 22px; cursor:pointer;
+  font-family:inherit; text-align:left;
+  transition:border-color .25s ease, background .25s ease, box-shadow .25s ease;
+}
+.paket-gruppe-kopf:hover { border-color:var(--green); }
+.paket-gruppe.offen .paket-gruppe-kopf {
+  border-color:var(--green); background:var(--green-light);
+}
+.paket-gruppe-text { flex:1; min-width:0; }
+.paket-gruppe-name { display:block; font-size:17px; font-weight:700; color:var(--black); letter-spacing:-0.3px; }
+.paket-gruppe-meta { display:block; font-size:13px; color:var(--gray-500); margin-top:3px; }
+.paket-gruppe.offen .paket-gruppe-meta { color:var(--green-dark); }
+.paket-gruppe-pfeil {
+  font-size:18px; color:var(--gray-500); flex-shrink:0;
+  transition:transform .35s var(--weich), color .25s ease;
+}
+.paket-gruppe.offen .paket-gruppe-pfeil { transform:rotate(180deg); color:var(--green-dark); }
+.paket-gruppe-inhalt {
+  display:grid; grid-template-rows:0fr;
+  transition:grid-template-rows .45s var(--weich);
+}
+.paket-gruppe.offen .paket-gruppe-inhalt { grid-template-rows:1fr; }
+.paket-gruppe-karten { overflow:hidden; }
+.paket-gruppe.offen .paket-gruppe-karten { padding-top:14px; }
+.paket-gruppe-karten {
+  display:grid; gap:20px;
+  /* auto-FILL statt auto-FIT: auto-fit lässt ungenutzte Spalten
+     zusammenfallen und würde die Karten einer kleinen Gruppe auf die
+     volle Breite strecken (559px statt ~300px). */
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+}
+
 /* SCROLL-ANIMATION */
 .reveal { opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
 .reveal.visible { opacity:1; transform:translateY(0); }
@@ -798,9 +897,11 @@ footer {
 /* MOBILE */
 @media(max-width:768px) {
   /* ── GLOBAL ── */
-  body { padding-bottom:64px; }
-  .mobile-quicknav { display:flex; }
-  .cookie-banner { bottom:76px; left:16px; right:16px; }
+  /* Untere Schnellnavigation entfernt: Sie verdeckte dauerhaft 64px
+     Bildschirm und doppelte das Hamburger-Menü. */
+  body { padding-bottom:0; }
+  .mobile-quicknav { display:none; }
+  .cookie-banner { bottom:16px; left:16px; right:16px; }
   #karriere > div[style*="grid-template-columns"] { grid-template-columns:1fr!important; }
   .scroll-fortschritt { display:block; }
   .leistungen-punkte { display:flex; }
@@ -838,8 +939,8 @@ footer {
   .mobile-menu a { font-size:20px; padding-bottom:16px; }
 
   /* ── RHYTHMUS & ABSCHNITTSKÖPFE ── */
-  section { padding:72px 24px; position:relative; }
-  .section-head { margin-bottom:36px; }
+  section { padding:56px 24px; position:relative; }
+  .section-head { margin-bottom:28px; }
   .section-tag {
     font-size:11px; margin-bottom:10px; display:inline-flex; align-items:center; gap:8px;
   }
@@ -940,8 +1041,16 @@ footer {
   .ueber-inner { grid-template-columns:1fr; gap:32px; }
   .ueber-img { display:none; }
 
+  /* ── PAKET-GRUPPEN kompakt ── */
+  .paket-gruppe { margin-bottom:10px; }
+  .paket-gruppe-kopf { padding:16px 18px; border-radius:18px; gap:12px; }
+  .paket-gruppe-name { font-size:16px; }
+  .paket-gruppe-meta { font-size:12px; }
+  .paket-gruppe-karten { grid-template-columns:1fr; gap:12px; }
+  .paket-gruppe.offen .paket-gruppe-karten { padding-top:12px; }
+
   /* ── PAKETE: gleiche Kartenrundung überall ── */
-  .preise-grid { grid-template-columns:1fr; gap:14px; }
+  .preise-grid { gap:14px; }
   .preis-card {
     padding:22px; border-radius:26px;
     box-shadow:0 6px 22px rgba(0,0,0,0.05);
@@ -1475,6 +1584,14 @@ footer {
 </div>
 
 <script>
+// PAKET-GRUPPEN AUF- UND ZUKLAPPEN
+window.togglePaketGruppe = function(btn){
+  const gruppe = btn.closest('.paket-gruppe');
+  if(!gruppe) return;
+  const offen = gruppe.classList.toggle('offen');
+  btn.setAttribute('aria-expanded', offen ? 'true' : 'false');
+};
+
 // PAKETE AKKORDEON (nur mobil)
 window.togglePaketCard = function(headerEl){
   if(window.innerWidth > 768) return;
