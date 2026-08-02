@@ -64,7 +64,14 @@ a { color:inherit; }
 .sidebar {
   width:220px; flex-shrink:0; background:rgba(255,255,255,0.03); border-right:1px solid rgba(255,255,255,0.08);
   padding:24px 16px; display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0;
+  overflow-y:auto; scrollbar-width:thin;
 }
+/* Gruppenüberschriften in der Seitenleiste */
+.nav-group {
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.1px;
+  color:rgba(255,255,255,0.28); padding:18px 12px 6px; user-select:none;
+}
+.nav-group:first-of-type { padding-top:2px; }
 .sidebar-logo { display:flex; align-items:center; gap:10px; padding:0 8px 24px; }
 .sidebar-logo img { height:30px; }
 .sidebar-logo span { font-size:16px; font-weight:700; }
@@ -90,6 +97,41 @@ a { color:inherit; }
 .stat-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px 20px; }
 .stat-val { font-size:24px; font-weight:700; }
 .stat-lbl { font-size:12px; color:rgba(255,255,255,0.45); margin-top:4px; }
+
+/* ── ÜBERSICHT (Startbildschirm) ── */
+.stat-card.klickbar { cursor:pointer; transition:border-color .15s, background .15s; }
+.stat-card.klickbar:hover { border-color:rgba(34,197,94,0.45); background:rgba(34,197,94,0.06); }
+.stat-card.betont .stat-val { color:var(--green); }
+.ueb-cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ueb-panel { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; }
+.ueb-panel-title { font-size:13px; font-weight:700; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:14px; }
+.ueb-zeile {
+  display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:11px;
+  cursor:pointer; transition:background .15s; text-decoration:none;
+}
+.ueb-zeile:hover { background:rgba(255,255,255,0.06); }
+.ueb-zeile + .ueb-zeile { margin-top:2px; }
+.ueb-punkt { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--green); }
+.ueb-zeile-text { flex:1; min-width:0; }
+.ueb-zeile-name { font-size:14px; font-weight:600; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ueb-zeile-sub { font-size:12px; color:rgba(255,255,255,0.42); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ueb-zeile-zeit { font-size:11px; color:rgba(255,255,255,0.32); flex-shrink:0; }
+.ueb-leer { font-size:13px; color:rgba(255,255,255,0.35); padding:10px 2px; }
+
+/* ── Stammdaten-Hinweis im Firma-Bereich ── */
+.stammdaten-hinweis {
+  background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.22);
+  border-radius:14px; padding:16px 18px; margin-bottom:24px;
+  font-size:13px; line-height:1.6; color:rgba(255,255,255,0.66);
+}
+.stammdaten-hinweis strong { color:var(--white); display:block; margin-bottom:4px; }
+.stammdaten-link { color:var(--green); font-weight:700; cursor:pointer; white-space:nowrap; }
+.stammdaten-link:hover { text-decoration:underline; }
+.feld-quelle {
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.6px;
+  color:rgba(255,255,255,0.3); margin-left:6px;
+}
+input[readonly] { opacity:.62; cursor:not-allowed; }
 
 /* REQUEST CARDS */
 .req-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:14px; position:relative; border-left:4px solid var(--gray-500); }
@@ -321,6 +363,13 @@ a { color:inherit; }
     backdrop-filter:blur(20px); z-index:500; justify-content:space-between;
   }
   .sidebar-logo { display:none; }
+  /* Gruppenüberschriften werden auf dem Handy zu dezenten Trennstrichen,
+     damit die Leiste optisch gegliedert ist, ohne Platz zu kosten */
+  .nav-group {
+    padding:0; margin:10px 5px; width:1px; min-width:1px; flex-shrink:0;
+    background:rgba(255,255,255,0.14); font-size:0; overflow:hidden; align-self:stretch;
+  }
+  .nav-group:first-of-type { display:none; }
   .sidebar-bottom { margin-top:0; margin-left:0; }
   .logout-btn { width:auto; padding:8px 10px; white-space:nowrap; font-size:10px; }
   .nav-item { flex-direction:column; gap:2px; font-size:10px; padding:8px 8px; min-width:56px; text-align:center; margin-bottom:0; }
@@ -329,6 +378,7 @@ a { color:inherit; }
   .main { margin-left:0; padding:20px 5% 100px; }
   .stat-row { grid-template-columns:1fr 1fr; }
   .tpl-layout { grid-template-columns:1fr; }
+  .ueb-cols { grid-template-columns:1fr; }
   .req-grid { grid-template-columns:1fr; }
   .fin-form { grid-template-columns:1fr 1fr; }
   .chart-row { grid-template-columns:1fr; }
@@ -445,24 +495,32 @@ a { color:inherit; }
       <img src="/logo.png?v=5" alt="">
       <span>Waschlurch</span>
     </div>
-    <div class="nav-item active" data-view="anfragen" onclick="switchView('anfragen')"><span class="ni-icon">📋</span><span class="ni-label">Anfragen</span></div>
+    <div class="nav-group">Tagesgeschäft</div>
+    <div class="nav-item active" data-view="uebersicht" onclick="switchView('uebersicht')"><span class="ni-icon">🏠</span><span class="ni-label">Übersicht</span></div>
+    <div class="nav-item" data-view="anfragen" onclick="switchView('anfragen')"><span class="ni-icon">📋</span><span class="ni-label">Anfragen</span></div>
     <div class="nav-item" data-view="kunden" onclick="switchView('kunden')"><span class="ni-icon">👥</span><span class="ni-label">Kunden</span></div>
-    <div class="nav-item" data-view="mitarbeiter" onclick="switchView('mitarbeiter')"><span class="ni-icon">🧑‍🔧</span><span class="ni-label">Mitarbeiter</span></div>
-    <div class="nav-item" data-view="textbausteine" onclick="switchView('textbausteine')"><span class="ni-icon">✉️</span><span class="ni-label">Antworten</span></div>
     <div class="nav-item" data-view="angebote" onclick="switchView('angebote')"><span class="ni-icon">📝</span><span class="ni-label">Angebote</span></div>
-    <div class="nav-item" data-view="finanzen" onclick="switchView('finanzen')"><span class="ni-icon">💰</span><span class="ni-label">Finanzen</span></div>
+    <div class="nav-item" data-view="bewerbungen" onclick="switchView('bewerbungen')"><span class="ni-icon">🙋</span><span class="ni-label">Bewerbungen</span></div>
+    <div class="nav-item" data-view="partneranfragen" onclick="switchView('partneranfragen')"><span class="ni-icon">🤝</span><span class="ni-label">Partneranfragen</span></div>
+
+    <div class="nav-group">Finanzen</div>
+    <div class="nav-item" data-view="finanzen" onclick="switchView('finanzen')"><span class="ni-icon">💰</span><span class="ni-label">Einnahmen</span></div>
     <div class="nav-item" data-view="ausgaben" onclick="switchView('ausgaben')"><span class="ni-icon">🧾</span><span class="ni-label">Ausgaben</span></div>
     <div class="nav-item" data-view="steuern" onclick="switchView('steuern')"><span class="ni-icon">🧮</span><span class="ni-label">Steuern</span></div>
     <div class="nav-item" data-view="bericht" onclick="switchView('bericht')"><span class="ni-icon">🖨️</span><span class="ni-label">Bericht</span></div>
-    <div class="nav-item" data-view="preise" onclick="switchView('preise')"><span class="ni-icon">🏷️</span><span class="ni-label">Preise</span></div>
-    <div class="nav-item" data-view="kalkulation" onclick="switchView('kalkulation')"><span class="ni-icon">📐</span><span class="ni-label">Kalkulation</span></div>
+
+    <div class="nav-group">Website-Inhalte</div>
     <div class="nav-item" data-view="pakete" onclick="switchView('pakete')"><span class="ni-icon">📦</span><span class="ni-label">Pakete</span></div>
+    <div class="nav-item" data-view="preise" onclick="switchView('preise')"><span class="ni-icon">🏷️</span><span class="ni-label">Preise</span></div>
+    <div class="nav-item" data-view="bilder" onclick="switchView('bilder')"><span class="ni-icon">🖼️</span><span class="ni-label">Bilder</span></div>
     <div class="nav-item" data-view="referenzen" onclick="switchView('referenzen')"><span class="ni-icon">⭐</span><span class="ni-label">Referenzen</span></div>
     <div class="nav-item" data-view="faqadmin" onclick="switchView('faqadmin')"><span class="ni-icon">❓</span><span class="ni-label">FAQ</span></div>
-    <div class="nav-item" data-view="bilder" onclick="switchView('bilder')"><span class="ni-icon">🖼️</span><span class="ni-label">Bilder</span></div>
     <div class="nav-item" data-view="impressumadmin" onclick="switchView('impressumadmin')"><span class="ni-icon">📜</span><span class="ni-label">Impressum</span></div>
-    <div class="nav-item" data-view="bewerbungen" onclick="switchView('bewerbungen')"><span class="ni-icon">🙋</span><span class="ni-label">Bewerbungen</span></div>
-    <div class="nav-item" data-view="partneranfragen" onclick="switchView('partneranfragen')"><span class="ni-icon">🤝</span><span class="ni-label">Partneranfragen</span></div>
+
+    <div class="nav-group">Einstellungen</div>
+    <div class="nav-item" data-view="kalkulation" onclick="switchView('kalkulation')"><span class="ni-icon">📐</span><span class="ni-label">Kalkulation</span></div>
+    <div class="nav-item" data-view="mitarbeiter" onclick="switchView('mitarbeiter')"><span class="ni-icon">🧑‍🔧</span><span class="ni-label">Mitarbeiter</span></div>
+    <div class="nav-item" data-view="textbausteine" onclick="switchView('textbausteine')"><span class="ni-icon">✉️</span><span class="ni-label">Antworten</span></div>
     <div class="nav-item" data-view="firma" onclick="switchView('firma')"><span class="ni-icon">🏢</span><span class="ni-label">Firma</span></div>
     <div class="sidebar-bottom">
       <button class="logout-btn" onclick="doLogout()">Abmelden</button>
@@ -471,8 +529,27 @@ a { color:inherit; }
 
   <div class="main">
 
+    <!-- ÜBERSICHT (Startbildschirm nach dem Anmelden) -->
+    <div class="view active" id="view-uebersicht">
+      <div class="view-head">
+        <div class="view-title" id="ueb-gruss">Übersicht</div>
+        <div class="view-sub" id="ueb-datum"></div>
+      </div>
+      <div class="stat-row" id="ueb-stats"></div>
+      <div class="ueb-cols">
+        <div class="ueb-panel">
+          <div class="ueb-panel-title">Zuletzt eingegangen</div>
+          <div id="ueb-neueste"></div>
+        </div>
+        <div class="ueb-panel">
+          <div class="ueb-panel-title">Braucht Aufmerksamkeit</div>
+          <div id="ueb-todo"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ANFRAGEN -->
-    <div class="view active" id="view-anfragen">
+    <div class="view" id="view-anfragen">
       <div class="view-head">
         <div class="view-title">Anfragen</div>
         <div class="view-sub">Alle eingehenden Kundenanfragen von der Website</div>
@@ -1142,22 +1219,31 @@ a { color:inherit; }
         <div class="view-title">Firma</div>
         <div class="view-sub">Diese Angaben werden für rechtssichere Rechnungen verwendet</div>
       </div>
-      <div class="field-row">
-        <div class="field"><label>Firmenname</label><input type="text" id="firma-name" placeholder="Waschlurch"></div>
-        <div class="field"><label>Inhaber</label><input type="text" id="firma-inhaber" placeholder="Daniel Lurch"></div>
+
+      <div class="stammdaten-hinweis">
+        <strong>Anschrift, Kontakt und Steuernummern werden im Impressum gepflegt.</strong>
+        Sie standen früher doppelt hier und dort – und liefen dadurch leicht auseinander.
+        Jetzt gibt es nur noch eine Stelle: Änderst du sie im Impressum, werden sie hier
+        automatisch übernommen.
+        <span class="stammdaten-link" onclick="switchView('impressumadmin')">Zum Impressum →</span>
       </div>
-      <div class="field"><label>Straße & Hausnummer</label><input type="text" id="firma-strasse" placeholder="Musterstraße 1"></div>
+
       <div class="field-row">
-        <div class="field"><label>PLZ</label><input type="text" id="firma-plz" placeholder="53783"></div>
-        <div class="field"><label>Ort</label><input type="text" id="firma-ort" placeholder="Eitorf"></div>
+        <div class="field"><label>Firmenname <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-name" placeholder="Waschlurch" readonly></div>
+        <div class="field"><label>Inhaber <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-inhaber" placeholder="Daniel Lurch" readonly></div>
+      </div>
+      <div class="field"><label>Straße & Hausnummer <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-strasse" placeholder="Musterstraße 1" readonly></div>
+      <div class="field-row">
+        <div class="field"><label>PLZ <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-plz" placeholder="53783" readonly></div>
+        <div class="field"><label>Ort <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-ort" placeholder="Eitorf" readonly></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Steuernummer</label><input type="text" id="firma-steuernummer" placeholder="z. B. 123/456/78901"></div>
-        <div class="field"><label>USt-IdNr. (falls vorhanden)</label><input type="text" id="firma-ustid" placeholder="z. B. DE123456789"></div>
+        <div class="field"><label>Steuernummer <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-steuernummer" placeholder="z. B. 123/456/78901" readonly></div>
+        <div class="field"><label>USt-IdNr. <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-ustid" placeholder="z. B. DE123456789" readonly></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Telefon</label><input type="text" id="firma-telefon" placeholder="+49 ..."></div>
-        <div class="field"><label>E-Mail</label><input type="email" id="firma-email" placeholder="waschlurch@gmail.com"></div>
+        <div class="field"><label>Telefon <span class="feld-quelle">aus Impressum</span></label><input type="text" id="firma-telefon" placeholder="+49 ..." readonly></div>
+        <div class="field"><label>E-Mail <span class="feld-quelle">aus Impressum</span></label><input type="email" id="firma-email" placeholder="waschlurch@gmail.com" readonly></div>
       </div>
       <div class="field-row">
         <div class="field"><label>IBAN</label><input type="text" id="firma-iban" placeholder="DE00 0000 0000 0000 0000 00"></div>
@@ -1462,6 +1548,114 @@ window.switchView = function(name){
   document.querySelector(`.nav-item[data-view="${name}"]`).classList.add('active');
 };
 
+// ── ÜBERSICHT (Startbildschirm) ─────────────────────
+function zeitDifferenz(ts){
+  if(!ts || !ts.toMillis) return '';
+  const min = Math.floor((Date.now() - ts.toMillis()) / 60000);
+  if(min < 1)    return 'gerade eben';
+  if(min < 60)   return 'vor ' + min + ' Min.';
+  const std = Math.floor(min / 60);
+  if(std < 24)   return 'vor ' + std + ' Std.';
+  const tage = Math.floor(std / 24);
+  if(tage === 1) return 'gestern';
+  if(tage < 31)  return 'vor ' + tage + ' Tagen';
+  return new Date(ts.toMillis()).toLocaleDateString('de-DE');
+}
+
+function renderUebersicht(){
+  // Abgesichert, weil diese Funktion in mehreren Datenlauschern vor
+  // anderen Renderfunktionen steht: Ein Fehler hier darf niemals
+  // Steuern-, Berichts- oder Finanzansicht mit lahmlegen.
+  try {
+    renderUebersichtIntern();
+  } catch(err){
+    console.error('Übersicht konnte nicht berechnet werden:', err);
+  }
+}
+
+function renderUebersichtIntern(){
+  const statsEl = document.getElementById('ueb-stats');
+  if(!statsEl) return;
+
+  // Begrüßung nach Tageszeit
+  const std = new Date().getHours();
+  const gruss = std < 11 ? 'Guten Morgen' : std < 18 ? 'Guten Tag' : 'Guten Abend';
+  document.getElementById('ueb-gruss').textContent = gruss + ', Daniel';
+  document.getElementById('ueb-datum').textContent =
+    new Date().toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Nur lebende Anfragen (nicht archiviert, nicht im Papierkorb)
+  const lebend = allRequests.filter(r => !r.archiviert && !r.geloescht);
+  const offen  = lebend.filter(r => !r.status || r.status === 'neu' || r.status === 'kontaktiert');
+
+  // Umsatz im laufenden Monat
+  const jetzt = new Date();
+  const imMonat = e => {
+    if(!e.datum) return false;
+    const d = new Date(e.datum);
+    return d.getMonth() === jetzt.getMonth() && d.getFullYear() === jetzt.getFullYear();
+  };
+  const umsatz  = allEinnahmen.filter(imMonat).reduce((s,e) => s + (e.betrag||0), 0);
+  const ausgabe = allAusgaben.filter(imMonat).reduce((s,a) => s + (a.betrag||0), 0);
+
+  const wartendeAngebote = allAngebote.filter(a => a.status === 'versendet');
+  const neueBewerbungen  = allBewerbungen.filter(b => !b.status || b.status === 'eingegangen');
+  const neuePartner      = allPartneranfragen.filter(p => !p.status || p.status === 'neu');
+
+  const euro = n => n.toLocaleString('de-DE', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €';
+
+  statsEl.innerHTML = `
+    <div class="stat-card klickbar ${offen.length ? 'betont' : ''}" onclick="switchView('anfragen')">
+      <div class="stat-val">${offen.length}</div>
+      <div class="stat-lbl">Offene Anfragen</div>
+    </div>
+    <div class="stat-card klickbar" onclick="switchView('finanzen')">
+      <div class="stat-val">${euro(umsatz)}</div>
+      <div class="stat-lbl">Einnahmen diesen Monat</div>
+    </div>
+    <div class="stat-card klickbar" onclick="switchView('ausgaben')">
+      <div class="stat-val">${euro(ausgabe)}</div>
+      <div class="stat-lbl">Ausgaben diesen Monat</div>
+    </div>
+    <div class="stat-card klickbar ${wartendeAngebote.length ? 'betont' : ''}" onclick="switchView('angebote')">
+      <div class="stat-val">${wartendeAngebote.length}</div>
+      <div class="stat-lbl">Angebote ohne Antwort</div>
+    </div>`;
+
+  // Zuletzt eingegangene Anfragen
+  const neueste = lebend.slice(0, 6);
+  document.getElementById('ueb-neueste').innerHTML = neueste.length === 0
+    ? '<div class="ueb-leer">Noch keine Anfragen.</div>'
+    : neueste.map(r => `
+      <div class="ueb-zeile" onclick="switchView('anfragen')">
+        <div class="ueb-punkt" style="background:${(!r.status||r.status==='neu') ? 'var(--green)' : 'rgba(255,255,255,0.2)'}"></div>
+        <div class="ueb-zeile-text">
+          <div class="ueb-zeile-name">${(r.vorname||'') + ' ' + (r.nachname||'')}</div>
+          <div class="ueb-zeile-sub">${r.leistungen || 'Keine Leistung angegeben'}</div>
+        </div>
+        <div class="ueb-zeile-zeit">${zeitDifferenz(r.createdAt)}</div>
+      </div>`).join('');
+
+  // Offene Punkte
+  const todo = [];
+  if(offen.length)             todo.push(['anfragen',        offen.length + ' Anfrage(n) unbeantwortet', 'Seit der letzten Bearbeitung offen']);
+  if(wartendeAngebote.length)  todo.push(['angebote',        wartendeAngebote.length + ' Angebot(e) ohne Rückmeldung', 'Nachfassen lohnt sich meist']);
+  if(neueBewerbungen.length)   todo.push(['bewerbungen',     neueBewerbungen.length + ' neue Bewerbung(en)', 'Noch nicht gesichtet']);
+  if(neuePartner.length)       todo.push(['partneranfragen', neuePartner.length + ' neue Partneranfrage(n)', 'Noch nicht gesichtet']);
+
+  document.getElementById('ueb-todo').innerHTML = todo.length === 0
+    ? '<div class="ueb-leer">Alles erledigt – nichts liegt an.</div>'
+    : todo.map(([ziel, titel, sub]) => `
+      <div class="ueb-zeile" onclick="switchView('${ziel}')">
+        <div class="ueb-punkt"></div>
+        <div class="ueb-zeile-text">
+          <div class="ueb-zeile-name">${titel}</div>
+          <div class="ueb-zeile-sub">${sub}</div>
+        </div>
+        <div class="ueb-zeile-zeit">→</div>
+      </div>`).join('');
+}
+
 // ── ANFRAGEN ─────────────────────
 function startListeners(){
   const reqQuery = query(collection(db, 'anfragen'), orderBy('createdAt', 'desc'));
@@ -1474,6 +1668,7 @@ function startListeners(){
     renderAngAnfrageSelect();
     renderMitarbeiterList();
     purgeOldTrash();
+    renderUebersicht();
   }, err => {
     document.getElementById('anfragen-list').innerHTML = '<div class="empty-state">Fehler beim Laden. Bitte Firestore-Regeln prüfen.</div>';
     console.error(err);
@@ -1483,6 +1678,7 @@ function startListeners(){
   unsubEinnahmen = onSnapshot(finQuery, (snap) => {
     allEinnahmen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderEinnahmen();
+    renderUebersicht();
     renderSteuern();
     renderBericht();
   }, err => console.error(err));
@@ -1491,6 +1687,7 @@ function startListeners(){
   unsubAusgaben = onSnapshot(ausgQuery, (snap) => {
     allAusgaben = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderAusgaben();
+    renderUebersicht();
     renderSteuern();
     renderBericht();
   }, err => console.error(err));
@@ -1516,6 +1713,7 @@ function startListeners(){
   unsubAngebote = onSnapshot(angeboteQuery, (snap) => {
     allAngebote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderAngeboteList();
+    renderUebersicht();
   }, err => console.error(err));
 
   const refQuery = query(collection(db, 'referenzen'), orderBy('reihenfolge', 'asc'));
@@ -1540,12 +1738,14 @@ function startListeners(){
   unsubBewerbungen = onSnapshot(bewQuery, (snap) => {
     allBewerbungen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderBewerbungenList();
+    renderUebersicht();
   }, err => console.error(err));
 
   const partQuery = query(collection(db, 'partneranfragen'), orderBy('createdAt', 'desc'));
   unsubPartneranfragen = onSnapshot(partQuery, (snap) => {
     allPartneranfragen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderPartneranfragenList();
+    renderUebersicht();
   }, err => console.error(err));
 
   loadPreise();
@@ -1748,7 +1948,7 @@ window.updateStatus = function(id, newStatus){
 };
 
 window.assignMitarbeiter = function(id, mitarbeiterId){
-  updateDoc(doc(db, 'anfragen', id), { zugewiesener_mitarbeiter: mitarbeiterId || null }).catch(err => console.error(err));
+  updateDoc(doc(db, 'anfragen', id), { zugewiesener_mitarbeiter: mitarbeiterId || null }).catch(err => meldeSchreibfehler(err, 'Das Zuweisen des Mitarbeiters'));
 };
 
 window.prepareReply = function(id){
@@ -1803,32 +2003,44 @@ window.showArchiveMenu = function(requestId){
 };
 
 window.archiveRequest = function(id){
-  updateDoc(doc(db, 'anfragen', id), { archiviert: true }).catch(err => console.error(err));
+  updateDoc(doc(db, 'anfragen', id), { archiviert: true }).catch(err => meldeSchreibfehler(err, 'Das Archivieren der Anfrage'));
 };
 
 window.reactivateRequest = function(id){
-  updateDoc(doc(db, 'anfragen', id), { archiviert: false }).catch(err => console.error(err));
+  updateDoc(doc(db, 'anfragen', id), { archiviert: false }).catch(err => meldeSchreibfehler(err, 'Das Zurückholen aus dem Archiv'));
 };
+
+// ── Fehler bei Schreibvorgängen sichtbar machen ─────────────────────
+// Vorher endeten Löschen und Verschieben auf .catch(console.error):
+// Schlug etwas fehl, blieb der Eintrag stehen und der Nutzer bekam
+// keinerlei Rückmeldung – er klickte ins Leere.
+function meldeSchreibfehler(err, was){
+  console.error(was, err);
+  const grund = (err && err.code === 'permission-denied')
+    ? 'Deine Anmeldung ist vermutlich abgelaufen.\n\nBitte melde dich ab und wieder neu an.'
+    : 'Vermutlich besteht gerade keine Verbindung.\n\nBitte prüfe dein Internet und versuche es erneut.';
+  alert(was + ' hat nicht geklappt.\n\n' + grund);
+}
 
 window.deleteRequestConfirm = function(id){
   if(!confirm('Diese Anfrage in den Papierkorb verschieben? Du kannst sie dort noch 3 Monate lang wiederherstellen.')) return;
-  updateDoc(doc(db, 'anfragen', id), { geloescht: true, geloescht_am: serverTimestamp() }).catch(err => console.error(err));
+  updateDoc(doc(db, 'anfragen', id), { geloescht: true, geloescht_am: serverTimestamp() }).catch(err => meldeSchreibfehler(err, 'Das Verschieben in den Papierkorb'));
 };
 
 window.restoreFromTrash = function(id){
-  updateDoc(doc(db, 'anfragen', id), { geloescht: false, geloescht_am: null }).catch(err => console.error(err));
+  updateDoc(doc(db, 'anfragen', id), { geloescht: false, geloescht_am: null }).catch(err => meldeSchreibfehler(err, 'Das Wiederherstellen der Anfrage'));
 };
 
 window.permanentlyDeleteRequest = function(id){
   if(!confirm('Diese Anfrage UNWIDERRUFLICH und endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
-  deleteDoc(doc(db, 'anfragen', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'anfragen', id)).catch(err => meldeSchreibfehler(err, 'Das endgültige Löschen der Anfrage'));
 };
 
 window.emptyTrash = function(){
   const trashed = allRequests.filter(r => r.geloescht);
   if(trashed.length === 0){ alert('Papierkorb ist bereits leer.'); return; }
   if(!confirm(`${trashed.length} Anfrage(n) im Papierkorb UNWIDERRUFLICH löschen?`)) return;
-  trashed.forEach(r => deleteDoc(doc(db, 'anfragen', r.id)).catch(err => console.error(err)));
+  trashed.forEach(r => deleteDoc(doc(db, 'anfragen', r.id)).catch(err => meldeSchreibfehler(err, 'Das Leeren des Papierkorbs')));
 };
 
 function purgeOldTrash(){
@@ -2029,7 +2241,7 @@ window.toggleEinnahmeStatus = function(id, current){
 
 window.deleteEinnahme = function(id){
   if(!confirm('Diesen Eintrag wirklich löschen?')) return;
-  deleteDoc(doc(db, 'einnahmen', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'einnahmen', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen der Einnahme'));
 };
 
 // ── AUSGABEN ─────────────────────
@@ -2104,7 +2316,7 @@ window.addAusgabe = function(){
 
 window.deleteAusgabe = function(id){
   if(!confirm('Diesen Eintrag wirklich löschen?')) return;
-  deleteDoc(doc(db, 'ausgaben', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'ausgaben', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen der Ausgabe'));
 };
 
 function filterByRange(items, range, dateField){
@@ -2276,9 +2488,16 @@ window.saveFirma = function(){
   btn.disabled = true;
   btn.textContent = 'Speichere ...';
 
+  // Nur die Felder speichern, die dieser Bereich selbst besitzt.
+  // Anschrift, Kontakt und Steuernummern kommen aus dem Impressum und
+  // werden dort gepflegt – hier zurückzuschreiben würde sie bei leerem
+  // Impressum überschreiben.
+  const gespiegelt = Object.values(STAMMDATEN_ZUORDNUNG);
   const data = {};
-  FIRMA_FIELDS.forEach(f => { data[f] = document.getElementById('firma-'+f).value.trim(); });
-  firmaData = data;
+  FIRMA_FIELDS.filter(f => !gespiegelt.includes(f)).forEach(f => {
+    data[f] = document.getElementById('firma-'+f).value.trim();
+  });
+  firmaData = Object.assign({}, firmaData, data);
 
   setDoc(doc(db, 'einstellungen', 'firma'), data, { merge:true })
     .then(() => {
@@ -2299,11 +2518,21 @@ window.saveFirma = function(){
 const IMPRESSUM_FIELDS = ['firmenname','inhaber','strasse','plz','ort','telefon','email','steuernummer','ustid','haftpflicht','aufsichtsbehoerde','weitere'];
 
 function loadImpressum(){
-  getDoc(doc(db, 'einstellungen', 'impressum')).then(snap => {
-    const data = snap.exists() ? snap.data() : {};
+  Promise.all([
+    getDoc(doc(db, 'einstellungen', 'impressum')),
+    getDoc(doc(db, 'einstellungen', 'firma'))
+  ]).then(([impSnap, firmaSnap]) => {
+    const data  = impSnap.exists()   ? impSnap.data()   : {};
+    const firma = firmaSnap.exists() ? firmaSnap.data() : {};
     IMPRESSUM_FIELDS.forEach(f => {
       const el = document.getElementById('imp-'+f);
-      if(el && data[f] != null) el.value = data[f];
+      if(!el) return;
+      if(data[f]) { el.value = data[f]; return; }
+      // Erstbefüllung: Steht die Angabe nur in den Rechnungsdaten,
+      // wird sie hier übernommen, damit beim Zusammenlegen der
+      // Stammdaten nichts verloren geht.
+      const ausFirma = firma[STAMMDATEN_ZUORDNUNG[f]];
+      if(ausFirma) el.value = ausFirma;
     });
   }).catch(err => console.error(err));
 }
@@ -2317,6 +2546,7 @@ window.saveImpressum = function(){
   IMPRESSUM_FIELDS.forEach(f => { data[f] = document.getElementById('imp-'+f).value.trim(); });
 
   setDoc(doc(db, 'einstellungen', 'impressum'), data, { merge:true })
+    .then(() => spiegeleStammdatenNachFirma(data))
     .then(() => {
       btn.disabled = false; btn.textContent = 'Impressum speichern';
       msg.style.display = 'inline';
@@ -2328,6 +2558,46 @@ window.saveImpressum = function(){
       alert('Fehler beim Speichern. Bitte Firestore-Regeln prüfen.');
     });
 };
+
+/* ── Stammdaten synchron halten ──────────────────────────────────
+   Firmenname, Anschrift, Kontakt und Steuernummern standen bisher
+   doppelt in 'einstellungen/impressum' und 'einstellungen/firma' –
+   und konnten unbemerkt auseinanderlaufen. Gepflegt wird jetzt nur
+   noch im Impressum; die Kopie in 'firma' wird beim Speichern
+   automatisch nachgezogen.
+
+   Bewusst kein Umbau der Lesestellen: 'firma' speist die Rechnungs-
+   und Angebots-PDFs. Bleibt die Struktur dort unangetastet, kann
+   diese Änderung keine fehlerhaften Rechnungen erzeugen. */
+const STAMMDATEN_ZUORDNUNG = {
+  firmenname:  'name',      // im Impressum anders benannt als in 'firma'
+  inhaber:     'inhaber',
+  strasse:     'strasse',
+  plz:         'plz',
+  ort:         'ort',
+  telefon:     'telefon',
+  email:       'email',
+  steuernummer:'steuernummer',
+  ustid:       'ustid'
+};
+
+function spiegeleStammdatenNachFirma(impressumDaten){
+  const kopie = {};
+  Object.entries(STAMMDATEN_ZUORDNUNG).forEach(([imp, firma]) => {
+    const wert = (impressumDaten[imp] || '').trim();
+    // Nur ausgefüllte Werte übernehmen: Ein leeres Impressumsfeld darf
+    // niemals eine gepflegte Angabe in den Rechnungsdaten überschreiben.
+    if(wert) kopie[firma] = wert;
+  });
+  if(Object.keys(kopie).length === 0) return Promise.resolve();
+  // Bankdaten und Zahlungsziel bleiben unberührt – merge überschreibt nur die Kopie
+  return setDoc(doc(db, 'einstellungen', 'firma'), kopie, { merge:true })
+    .then(() => { firmaData = Object.assign({}, firmaData, kopie); })
+    .catch(err => {
+      console.error('Stammdaten konnten nicht nach firma gespiegelt werden:', err);
+      alert('Das Impressum wurde gespeichert, aber die Übernahme in die Rechnungsdaten hat nicht geklappt.\n\nBitte im Bereich „Firma" prüfen, ob Anschrift und Kontakt stimmen.');
+    });
+}
 
 // ── ZEITRAUM-AUSWAHL ─────────────────────
 function computeRangeFromPreset(days){
@@ -2898,7 +3168,7 @@ window.togglePaketStatus = function(id, currentStatus){
 
 window.deletePaket = function(id){
   if(!confirm('Dieses Paket wirklich endgültig löschen? (Alternativ: "Außer Betrieb nehmen", um es nur auszublenden)')) return;
-  deleteDoc(doc(db, 'pakete', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'pakete', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen des Pakets'));
 };
 
 function slugify(text){
@@ -3406,7 +3676,7 @@ window.toggleMitarbeiterStatus = function(id, current){
 
 window.deleteMitarbeiter = function(id){
   if(!confirm('Diesen Mitarbeiter wirklich löschen?')) return;
-  deleteDoc(doc(db, 'mitarbeiter', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'mitarbeiter', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen des Mitarbeiters'));
 };
 
 // ── KALKULATION (Sätze für den Angebotsrechner) ─────────────────────
@@ -3909,7 +4179,7 @@ window.setAngebotStatus = function(id, status){
   updateDoc(doc(db, 'angebote', id), { status })
     .then(() => {
       if(status === 'angenommen' && angebot && angebot.anfrage_id){
-        updateDoc(doc(db, 'anfragen', angebot.anfrage_id), { status: 'gebucht' }).catch(err => console.error(err));
+        updateDoc(doc(db, 'anfragen', angebot.anfrage_id), { status: 'gebucht' }).catch(err => meldeSchreibfehler(err, 'Das Markieren der Anfrage als gebucht'));
       }
     })
     .catch(err => console.error(err));
@@ -3925,7 +4195,7 @@ window.redownloadAngebot = function(id){
 
 window.deleteAngebot = function(id){
   if(!confirm('Dieses Angebot wirklich löschen?')) return;
-  deleteDoc(doc(db, 'angebote', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'angebote', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen des Angebots'));
 };
 
 // ── REFERENZEN ─────────────────────
@@ -4021,7 +4291,7 @@ window.toggleReferenzStatus = function(id, current){
 
 window.deleteReferenz = function(id){
   if(!confirm('Diese Referenz wirklich endgültig löschen?')) return;
-  deleteDoc(doc(db, 'referenzen', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'referenzen', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen der Referenz'));
 };
 
 function renderReferenzenList(){
@@ -4094,7 +4364,7 @@ window.toggleFaqStatus = function(id, current){
 
 window.deleteFaq = function(id){
   if(!confirm('Diese Frage wirklich endgültig löschen?')) return;
-  deleteDoc(doc(db, 'faqs', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'faqs', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen des FAQ-Eintrags'));
 };
 
 function renderFaqAdminList(){
@@ -4195,7 +4465,7 @@ window.setBewerbungStatus = function(id, status){
 
 window.deleteBewerbung = function(id){
   if(!confirm('Diese Bewerbung wirklich löschen?')) return;
-  deleteDoc(doc(db, 'bewerbungen', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'bewerbungen', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen der Bewerbung'));
 };
 
 function renderBewerbungenList(){
@@ -4245,7 +4515,7 @@ window.setPartnerStatus = function(id, status){
 
 window.deletePartneranfrage = function(id){
   if(!confirm('Diese Partneranfrage wirklich löschen?')) return;
-  deleteDoc(doc(db, 'partneranfragen', id)).catch(err => console.error(err));
+  deleteDoc(doc(db, 'partneranfragen', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen der Partneranfrage'));
 };
 
 function renderPartneranfragenList(){
