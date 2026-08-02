@@ -537,17 +537,96 @@ const PAKET_LOGIK = {
   // ── nach slug: Pakete mit eigenem Bedarf ──
   slug: {
     'lagerhalle':      { leistungen:['grund','hausmeister','fenster','winter','muell'],
-                         objektarten:['Lagerhalle','Logistikhalle','Produktionshalle','Kühl-/Trockenlager','Sonstige Halle'] },
+                         objektarten:['Lagerhalle','Logistikhalle','Produktionshalle','Kühl-/Trockenlager','Sonstige Halle'],
+                         felder_aus:['grund_kueche','grund_moebel','grund_bauend','grund_letzte'],
+                         gebaeudetypen:['Lagerhalle','Logistikhalle','Produktionshalle','Kühlhaus'],
+                         extrafragen:[
+                           {label:'Regalgassen mitreinigen',type:'bool'},
+                           {label:'Sozial- und Sanitärräume mitreinigen',type:'bool'},
+                           {label:'Bodenreinigung mit Kehrmaschine gewünscht',type:'bool'},
+                           {label:'Rampen und Tore mitreinigen',type:'bool'}
+                         ] },
     'schreinerei':     { leistungen:['grund','hausmeister','fenster','muell'],
-                         objektarten:['Schreinerei','Tischlerei','Atelier','Kleine Produktionswerkstatt','Sonstige Werkstatt'] },
+                         objektarten:['Schreinerei','Tischlerei','Atelier','Kleine Produktionswerkstatt','Sonstige Werkstatt'],
+                         felder_aus:['grund_kueche','grund_moebel','grund_bauend'],
+                         gebaeudetypen:['Werkstatt','Produktionsraum','Atelier','Lagerbereich'],
+                         extrafragen:[
+                           {label:'Maschinen von Feinstaub befreien',type:'bool'},
+                           {label:'Absauganlage und Filter mitreinigen',type:'bool'},
+                           {label:'Lackier- oder Ölbereich mitreinigen',type:'bool'},
+                           {label:'Späne entsorgen',type:'bool'}
+                         ] },
     'arztpraxis':      { leistungen:['buero','fenster','grund','muell'],
-                         objektarten:['Allgemeinarztpraxis','Facharztpraxis','Zahnarztpraxis','Physio-/Ergotherapie','Heilpraktiker','Sonstige Praxis'] },
+                         objektarten:['Allgemeinarztpraxis','Facharztpraxis','Zahnarztpraxis','Physio-/Ergotherapie','Heilpraktiker','Sonstige Praxis'],
+                         felder_aus:['grund_moebel','grund_bauend','grund_kueche'],
+                         gebaeudetypen:['Praxis','Praxis mit Laborbereich','Therapieräume'],
+                         extrafragen:[
+                           {label:'Flächendesinfektion nach Hygieneplan',type:'bool'},
+                           {label:'Behandlungsliegen mitreinigen',type:'bool'},
+                           {label:'Wartebereich und Empfang mitreinigen',type:'bool'},
+                           {label:'Getrennte Reinigungsutensilien je Bereich erforderlich',type:'bool'}
+                         ] },
     'ingenieurbuero':  { leistungen:['buero','fenster','grund','muell'],
                          objektarten:['Ingenieurbüro','Architekturbüro','Planungsbüro','Vermessungsbüro','Sonstiges Planungsbüro'] },
     'cafe-baeckerei':  { leistungen:['buero','fenster','grund','muell'],
                          objektarten:['Café','Bäckerei mit Verkauf','Konditorei','Eisdiele','Bistro'] },
     'friseur-kosmetik':{ leistungen:['buero','fenster','grund','muell'],
                          objektarten:['Friseursalon','Kosmetikstudio','Nagelstudio','Barbershop','Massage-/Wellnessstudio'] },
+    'autowerkstatt':   { leistungen:['grund','fenster','hausmeister','winter','muell'],
+                         objektarten:['KFZ-Werkstatt','Autohaus mit Showroom','Reifenlager','Waschhalle','Lackiererei'],
+                         felder_aus:['grund_kueche','grund_moebel','grund_bauend','grund_letzte'],
+                         gebaeudetypen:['Werkstatthalle','Showroom','Reifenlager','Waschhalle'],
+                         extrafragen:[
+                           {label:'Hebebühnen reinigen',type:'bool'},
+                           {label:'Ölflecken und Ölabscheider behandeln',type:'bool'},
+                           {label:'Showroom-Glasflächen streifenfrei',type:'bool'},
+                           {label:'Ausstellungsfahrzeuge umsetzen erforderlich',type:'bool'},
+                           {label:'Werkzeugwagen und Ablagen abwischen',type:'bool'},
+                           {label:'Anzahl Hebebühnen',type:'number'}
+                         ] },
+    'gastronomie':     { leistungen:['buero','fenster','grund','muell','winter'],
+                         objektarten:['Restaurant','Café','Imbiss','Bar','Kantine','Hotel-Gastronomie'],
+                         felder_aus:['grund_moebel','grund_bauend'],
+                         gebaeudetypen:['Gastraum','Küche','Gastraum mit Küche'],
+                         extrafragen:[
+                           {label:'Küche und Zubereitungsflächen mitreinigen',type:'bool'},
+                           {label:'Dunstabzugshaube und Fettfilter',type:'bool'},
+                           {label:'Gästetoiletten mitreinigen',type:'bool'},
+                           {label:'Reinigung nach HACCP-Vorgaben erforderlich',type:'bool'},
+                           {label:'Außenbereich / Terrasse',type:'bool'}
+                         ] },
+    'buero':           { leistungen:['buero','fenster','grund','muell','winter','hausmeister'],
+                         objektarten:['Einzelbüro','Großraumbüro','Büroetage','Coworking-Fläche'],
+                         felder_aus:['grund_kueche','grund_moebel','grund_bauend'],
+                         gebaeudetypen:['Büro','Büroetage','Bürogebäude'],
+                         extrafragen:[
+                           {label:'Teeküche mitreinigen',type:'bool'},
+                           {label:'Besprechungsräume mitreinigen',type:'bool'},
+                           {label:'Bildschirme und Technik abstauben',type:'bool'},
+                           {label:'Schlüssel oder Zugangscode wird gestellt',type:'bool'}
+                         ] },
+    'treppenhaus':     { leistungen:['treppe','fenster','hausmeister','winter','muell','garten'],
+                         objektarten:['Mehrfamilienhaus','Wohnanlage','Gemischt genutztes Objekt'],
+                         felder_aus:['grund_kueche','grund_moebel','grund_bauend','grund_letzte'],
+                         extrafragen:[
+                           {label:'Briefkastenanlage mitreinigen',type:'bool'},
+                           {label:'Kellerflur mitreinigen',type:'bool'},
+                           {label:'Aufzugkabine mitreinigen',type:'bool'},
+                           {label:'Fenster im Treppenhaus mitreinigen',type:'bool'}
+                         ] },
+    'einfamilienhaus': { leistungen:['haushalt','fenster','grund','garten','muell','winter'],
+                         objektarten:['Einfamilienhaus','Doppelhaushälfte','Reihenhaus'],
+                         extrafragen:[
+                           {label:'Betten frisch beziehen',type:'bool'},
+                           {label:'Innenfenster mitreinigen',type:'bool'},
+                           {label:'Keller oder Dachboden mitreinigen',type:'bool'}
+                         ] },
+    'wohnung':         { leistungen:['haushalt','fenster','grund','muell'],
+                         objektarten:['Wohnung','Maisonette','Apartment'],
+                         extrafragen:[
+                           {label:'Balkon mitreinigen',type:'bool'},
+                           {label:'Innenfenster mitreinigen',type:'bool'}
+                         ] },
     'winterdienst':    { leistungen:['winter','hausmeister'],
                          objektarten:['Wohnanlage','Bürogebäude','Parkplatz','Gehweg / Zufahrt','Gewerbegrundstück'] },
     'senioren':        { leistungen:['haushalt','fenster','muell'],
@@ -961,17 +1040,46 @@ function buildDynServiceFields(){
     html += `</div>`;
   }
 
+  /* Paketbezogene Zusatzfragen – etwa „Hebebühnen reinigen" beim
+     KFZ-Paket. Stehen bewusst direkt hinter den Paketfragen. */
+  const logik = logikFuerPaket(paket);
+  if(logik && Array.isArray(logik.extrafragen) && logik.extrafragen.length){
+    html += `<div class="service-block"><div class="service-block-title">🔎 Details zu Ihrem Auftrag</div>`;
+    logik.extrafragen.forEach((f, idx) => {
+      html += fieldHTML('dyn_paket_extra_'+idx, f, !!f.required);
+    });
+    html += `</div>`;
+  }
+
+  const ausgeblendet = new Set((logik && logik.felder_aus) || []);
+
   selectedServices.forEach(sid => {
     const cfg = SERVICE_FIELDS[sid];
     const svc = SERVICES.find(s => s.id === sid);
     if(!cfg || !svc) return;
+
+    /* Unpassende Fragen entfernen. Beim Werkstattpaket erschien sonst
+       „Bauendreinigung" und ein Gebäudetyp mit „Wohnung/Haus", weil die
+       Grundreinigung ihre Fragen pauschal für alle Pakete mitbringt. */
+    const passt = f => !ausgeblendet.has(sid + '_' + f.id);
+    const anpassen = f => {
+      if(sid === 'grund' && f.id === 'gebaeudetyp' && Array.isArray(logik && logik.gebaeudetypen)){
+        return Object.assign({}, f, { options: logik.gebaeudetypen });
+      }
+      return f;
+    };
+
+    const pflicht  = cfg.required.filter(passt).map(anpassen);
+    const optional = cfg.optional.filter(passt).map(anpassen);
+    if(!pflicht.length && !optional.length) return;
+
     html += `<div class="service-block"><div class="service-block-title">${svc.icon} ${svc.name}</div>`;
-    cfg.required.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, true); });
-    if(cfg.optional.length){
+    pflicht.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, true); });
+    if(optional.length){
       const boxId = 'dyn_'+sid+'_optional';
       html += `<div class="optional-toggle" onclick="toggleOptional('${boxId}')">+ Weitere Details zu ${svc.name} (optional)</div>`;
       html += `<div class="optional-box" id="${boxId}" style="display:none">`;
-      cfg.optional.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, false); });
+      optional.forEach(f => { html += fieldHTML('dyn_'+sid+'_'+f.id, f, false); });
       html += `</div>`;
     }
     html += `</div>`;
@@ -1021,12 +1129,21 @@ function collectServiceDetails(){
 
 function collectPaketCustomAnswers(){
   const paket = window._selectedPaket;
-  if(!paket || !Array.isArray(paket.custom_fields)) return {};
   const answers = {};
-  paket.custom_fields.forEach((f, idx) => {
-    const val = collectFieldValue('dyn_paket_custom_'+idx, f);
-    if(val !== '' && val !== false) answers[f.label] = val;
-  });
+  if(paket && Array.isArray(paket.custom_fields)){
+    paket.custom_fields.forEach((f, idx) => {
+      const val = collectFieldValue('dyn_paket_custom_'+idx, f);
+      if(val !== '' && val !== false) answers[f.label] = val;
+    });
+  }
+  // Zusatzfragen aus der Paket-Logik (z. B. „Hebebühnen reinigen")
+  const logik = logikFuerPaket(paket);
+  if(logik && Array.isArray(logik.extrafragen)){
+    logik.extrafragen.forEach((f, idx) => {
+      const val = collectFieldValue('dyn_paket_extra_'+idx, f);
+      if(val !== '' && val !== false) answers[f.label] = val;
+    });
+  }
   return answers;
 }
 
