@@ -524,6 +524,75 @@ const SERVICES = [
   { id:'muell',      icon:'🗑️', name:'Mülltonnenservice',    price:'ab 9 €/Mo.' },
 ];
 
+/* ── PAKET-LOGIK ───────────────────────────────────────────────
+   Ohne diese Zuordnung konnte man beim Lagerhallen-Paket eine
+   Haushaltsreinigung dazuwählen und als Objektart „Einfamilienhaus"
+   angeben. Beides ergibt keinen Sinn und führt zu unbrauchbaren
+   Anfragen.
+
+   Gesucht wird zuerst nach slug (paketgenau), dann nach zielgruppe
+   (Oberkategorie). Findet sich nichts, bleibt alles wählbar – neu
+   angelegte Pakete funktionieren dadurch weiterhin, nur ungefiltert. */
+const PAKET_LOGIK = {
+  // ── nach slug: Pakete mit eigenem Bedarf ──
+  slug: {
+    'lagerhalle':      { leistungen:['grund','hausmeister','fenster','winter','muell'],
+                         objektarten:['Lagerhalle','Logistikhalle','Produktionshalle','Kühl-/Trockenlager','Sonstige Halle'] },
+    'schreinerei':     { leistungen:['grund','hausmeister','fenster','muell'],
+                         objektarten:['Schreinerei','Tischlerei','Atelier','Kleine Produktionswerkstatt','Sonstige Werkstatt'] },
+    'arztpraxis':      { leistungen:['buero','fenster','grund','muell'],
+                         objektarten:['Allgemeinarztpraxis','Facharztpraxis','Zahnarztpraxis','Physio-/Ergotherapie','Heilpraktiker','Sonstige Praxis'] },
+    'ingenieurbuero':  { leistungen:['buero','fenster','grund','muell'],
+                         objektarten:['Ingenieurbüro','Architekturbüro','Planungsbüro','Vermessungsbüro','Sonstiges Planungsbüro'] },
+    'cafe-baeckerei':  { leistungen:['buero','fenster','grund','muell'],
+                         objektarten:['Café','Bäckerei mit Verkauf','Konditorei','Eisdiele','Bistro'] },
+    'friseur-kosmetik':{ leistungen:['buero','fenster','grund','muell'],
+                         objektarten:['Friseursalon','Kosmetikstudio','Nagelstudio','Barbershop','Massage-/Wellnessstudio'] },
+    'winterdienst':    { leistungen:['winter','hausmeister'],
+                         objektarten:['Wohnanlage','Bürogebäude','Parkplatz','Gehweg / Zufahrt','Gewerbegrundstück'] },
+    'senioren':        { leistungen:['haushalt','fenster','muell'],
+                         objektarten:['Wohnung','Einfamilienhaus','Seniorenwohnung','Betreutes Wohnen'] },
+    'umzug-privat':    { leistungen:['grund','fenster','haushalt'],
+                         objektarten:['Wohnung','Einfamilienhaus','Reihenhaus','Doppelhaushälfte','Gewerbeeinheit'] },
+    'renovierung':     { leistungen:['grund','fenster','hausmeister'],
+                         objektarten:['Wohnung','Einfamilienhaus','Bürofläche','Ladenlokal','Sonstige Fläche'] },
+    'erstbezug':       { leistungen:['grund','fenster'],
+                         objektarten:['Neubauwohnung','Neubau Einfamilienhaus','Neubau Bürofläche','Neubau Ladenlokal'] },
+    'besenrein':       { leistungen:['grund','hausmeister'],
+                         objektarten:['Wohnung','Einfamilienhaus','Keller / Dachboden','Garage','Gewerbeeinheit'] }
+  },
+  // ── nach zielgruppe: gilt für alle übrigen Pakete der Kategorie ──
+  zielgruppe: {
+    'Privat':                  { leistungen:['haushalt','fenster','grund','garten','muell','winter'],
+                                 objektarten:['Einfamilienhaus','Doppelhaushälfte','Reihenhaus','Wohnung','Mehrfamilienhaus'] },
+    'Hausverwaltung':          { leistungen:['treppe','hausmeister','winter','garten','muell','fenster','grund'],
+                                 objektarten:['Mehrfamilienhaus','Wohnanlage','Bürogebäude','Gemischt genutztes Objekt'] },
+    'Außenanlagen':            { leistungen:['winter','grund','garten','hausmeister','muell'],
+                                 objektarten:['Parkplatz','Tiefgarage','Hoffläche','Gehweg / Zufahrt','Grünanlage'] },
+    'Gewerbe':                 { leistungen:['buero','fenster','grund','muell','winter','hausmeister'],
+                                 objektarten:['Büro','Praxis','Kanzlei','Coworking-Fläche','Sonstige Gewerbefläche'] },
+    'Kanzlei / Ingenieurbüro': { leistungen:['buero','fenster','grund','muell'],
+                                 objektarten:['Rechtsanwaltskanzlei','Steuerberatung','Ingenieurbüro','Architekturbüro','Notariat'] },
+    'Gastronomie':             { leistungen:['buero','fenster','grund','muell','winter'],
+                                 objektarten:['Restaurant','Café','Imbiss','Bar','Kantine','Hotel-Gastronomie'] },
+    'Einzelhandel':            { leistungen:['buero','fenster','grund','muell','winter'],
+                                 objektarten:['Ladengeschäft','Boutique','Buchhandlung','Supermarkt','Kiosk'] },
+    'Autohaus / Werkstatt':    { leistungen:['grund','fenster','hausmeister','winter','muell'],
+                                 objektarten:['KFZ-Werkstatt','Autohaus','Showroom','Reifenlager','Waschhalle'] },
+    'Handwerk':                { leistungen:['grund','hausmeister','fenster','muell'],
+                                 objektarten:['Werkstatt','Lagerhalle','Produktionsraum','Atelier','Betriebshof'] },
+    'Neubau / Renovierung':    { leistungen:['grund','fenster','hausmeister'],
+                                 objektarten:['Neubau Wohnung','Neubau Einfamilienhaus','Renovierte Wohnung','Gewerbeeinheit','Ladenlokal'] }
+  }
+};
+
+function logikFuerPaket(p){
+  if(!p) return null;
+  return (p.slug && PAKET_LOGIK.slug[p.slug])
+      || (p.zielgruppe && PAKET_LOGIK.zielgruppe[p.zielgruppe])
+      || null;
+}
+
 // ── DYNAMISCHE FELDER JE LEISTUNG (Schritt 2) ─────────────────────
 const SERVICE_FIELDS = {
   haushalt: {
@@ -698,6 +767,44 @@ window._applySelectedPaket = function(){
       tile.classList.add('selected');
     }
   });
+
+  /* Unpassende Leistungen ausblenden. Beim Lagerhallen-Paket war sonst
+     „Haushaltsreinigung" wählbar. Die Leistungen des Pakets selbst
+     bleiben immer sichtbar, auch wenn die Liste sie nicht führt. */
+  const logik = logikFuerPaket(p);
+  if(logik && Array.isArray(logik.leistungen)){
+    const erlaubt = new Set(logik.leistungen.concat(ids));
+    tilesEl.querySelectorAll('.tile').forEach(tile => {
+      const id = tile.dataset.id;
+      if(erlaubt.has(id)) return;
+      tile.style.display = 'none';
+      // Falls vorher angehakt: wieder abwählen, sonst käme eine
+      // unsichtbare Leistung mit in die Anfrage.
+      if(selectedServices.has(id)){
+        selectedServices.delete(id);
+        tile.classList.remove('selected');
+      }
+    });
+  }
+
+  // Objektarten passend zum Paket – „Einfamilienhaus" bei einer
+  // Lagerhalle war schlicht falsch.
+  const sel = document.getElementById('f-objektart');
+  if(sel){
+    // Ausgangsliste einmalig sichern, damit ein Paket ohne eigene
+    // Zuordnung nicht die Objektarten des zuvor geladenen erbt.
+    if(!sel.dataset.standard) sel.dataset.standard = sel.innerHTML;
+    const bisher = sel.value;
+    if(logik && Array.isArray(logik.objektarten) && logik.objektarten.length){
+      sel.innerHTML = '<option value="">– Bitte wählen –</option>'
+        + logik.objektarten.map(o => `<option>${o}</option>`).join('')
+        + '<option>Sonstiges</option>';
+    } else {
+      sel.innerHTML = sel.dataset.standard;
+    }
+    // Auswahl nur behalten, wenn es sie in der neuen Liste noch gibt
+    if(bisher && Array.from(sel.options).some(o => o.value === bisher || o.text === bisher)) sel.value = bisher;
+  }
   const banner = document.getElementById('paket-banner');
   if(banner){
     banner.innerHTML = `
