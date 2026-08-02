@@ -231,10 +231,30 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .cb-chip { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; font-size:12px; cursor:pointer; text-transform:none; }
 .cb-chip input { width:auto; }
 .paket-banner {
-  margin-top:20px; display:inline-flex; align-items:center; gap:10px;
-  background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3);
-  border-radius:100px; padding:10px 20px; font-size:13px; font-weight:600; color:var(--green);
+  margin-top:20px; display:flex; align-items:center; gap:14px; text-align:left;
+  background:rgba(34,197,94,0.10); border:1px solid rgba(34,197,94,0.3);
+  border-radius:18px; padding:16px 20px; max-width:520px; margin-left:auto; margin-right:auto;
 }
+.paket-banner-icon { font-size:28px; flex-shrink:0; }
+.paket-banner-text { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.paket-banner-text strong { font-size:16px; font-weight:700; color:var(--green); }
+.paket-banner-sub { font-size:13px; color:rgba(255,255,255,0.55); line-height:1.45; }
+
+/* Hinweis in Schritt 2: was das Paket abdeckt, plus Weg zurück */
+.leistungen-anpassen {
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);
+  border-radius:14px; padding:12px 16px; margin-bottom:22px;
+  font-size:13px; color:rgba(255,255,255,0.6); line-height:1.5;
+}
+.leistungen-anpassen strong { color:rgba(255,255,255,0.88); font-weight:600; }
+.leistungen-anpassen button {
+  margin-left:auto; background:transparent; border:1px solid rgba(34,197,94,0.45);
+  color:var(--green); border-radius:100px; padding:7px 16px;
+  font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap;
+  transition:background .2s ease;
+}
+.leistungen-anpassen button:hover { background:rgba(34,197,94,0.14); }
 
 @media(max-width:600px) {
   .tiles { grid-template-columns:repeat(2,1fr); }
@@ -288,7 +308,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
 
   <div class="wizard-head">
     <div class="tag">Kostenlose Anfrage</div>
-    <h1 class="wizard-title">In 4 Schritten zu Ihrem Angebot</h1>
+    <h1 class="wizard-title" id="wizard-haupttitel">In 4 Schritten zu Ihrem Angebot</h1>
     <p class="wizard-sub">Wählen Sie Ihre Leistungen – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Kein Anruf nötig.</p>
     <div id="paket-banner" style="display:none"></div>
   </div>
@@ -309,6 +329,10 @@ main { padding:64px 5% 80px; min-height:100vh; }
     <div class="step-panel" data-step="2">
       <div class="step-label">Schritt 2 von 4</div>
       <div class="step-heading">Objekt & Umfang</div>
+      <div class="leistungen-anpassen" id="leistungen-anpassen" style="display:none">
+        <span id="leistungen-anpassen-text"></span>
+        <button type="button" onclick="zurueckZurLeistungsauswahl()">Leistungen anpassen</button>
+      </div>
 
       <div class="field">
         <label>Objektart *</label>
@@ -612,6 +636,12 @@ const SERVICE_FIELDS = {
 };
 
 let currentStep = 1;
+/* Ist ein Paket über die URL gewählt, entfällt die allgemeine
+   Leistungsauswahl: Die Leistungen stehen durch das Paket bereits fest.
+   Der Assistent startet dann direkt bei den paketspezifischen Fragen.
+   Wird erst gesetzt, wenn das Paket geladen ist – das passiert
+   asynchron aus Firestore. */
+let START_STEP = 1;
 let selectedServices = new Set();
 let _verifyCode = '';
 let _countdownInterval;
@@ -671,11 +701,52 @@ window._applySelectedPaket = function(){
   const banner = document.getElementById('paket-banner');
   if(banner){
     banner.innerHTML = `
-      <div class="paket-banner">✓ Paket "${p.name || ''}" vorausgewählt – Sie können die Leistungen unten noch anpassen</div>
-      <br><a href="/#preise" class="paket-back-link">← Zurück zur Paketübersicht (anderes Paket wählen)</a>
+      <div class="paket-banner">
+        <span class="paket-banner-icon">${p.icon || '📦'}</span>
+        <span class="paket-banner-text">
+          <strong>${p.name || 'Paket'}</strong>
+          ${p.beschreibung ? `<span class="paket-banner-sub">${p.beschreibung}</span>` : ''}
+        </span>
+      </div>
+      <a href="/#preise" class="paket-back-link">← Anderes Paket wählen</a>
     `;
     banner.style.display = 'block';
   }
+
+  /* Schritt 1 überspringen: Die Leistungen ergeben sich aus dem Paket.
+     Wer sie doch anpassen will, kommt über „Leistungen anpassen" hin. */
+  START_STEP = 2;
+
+  // Zeigen, welche Leistungen das Paket mitbringt – sonst wüsste
+  // niemand, was durch die übersprungene Auswahl festgelegt wurde.
+  const hinweis = document.getElementById('leistungen-anpassen');
+  const hinweisText = document.getElementById('leistungen-anpassen-text');
+  if(hinweis && hinweisText){
+    const namen = Array.from(selectedServices)
+      .map(id => (SERVICES.find(s => s.id === id) || {}).name)
+      .filter(Boolean);
+    hinweisText.innerHTML = namen.length
+      ? 'Enthalten: <strong>' + namen.join(', ') + '</strong>'
+      : 'Für dieses Paket sind noch keine Leistungen hinterlegt.';
+    hinweis.style.display = '';
+  }
+
+  if(currentStep === 1) currentStep = 2;
+  // Immer über showStep: nur dort werden Fortschritt, Zurück-Button
+  // und die Schrittbeschriftung neu berechnet.
+  showStep(currentStep);
+
+  const titel = document.getElementById('wizard-haupttitel');
+  if(titel) titel.textContent = 'In 3 Schritten zu Ihrem Angebot';
+};
+
+/* Wer doch Leistungen ergänzen möchte, kommt zurück zu Schritt 1.
+   Danach ist er wieder Teil des Ablaufs. */
+window.zurueckZurLeistungsauswahl = function(){
+  START_STEP = 1;
+  currentStep = 1;
+  showStep(1);
+  window.scrollTo({ top:0, behavior:'smooth' });
 };
 window._applySelectedPaket();
 
@@ -905,10 +976,14 @@ function computePrioritaet(beginn){
 const progressEl = document.getElementById('progress');
 function renderProgress() {
   progressEl.innerHTML = '';
-  for(let i=1;i<=TOTAL_STEPS;i++){
+  // Übersprungene Schritte gar nicht erst anzeigen und die sichtbaren
+  // neu durchnummerieren – sonst begänne der Assistent bei "2 von 4".
+  let nummer = 0;
+  for(let i = START_STEP; i <= TOTAL_STEPS; i++){
+    nummer++;
     const dot = document.createElement('div');
     dot.className = 'progress-dot' + (i < currentStep ? ' done' : '') + (i === currentStep ? ' active' : '');
-    dot.textContent = i < currentStep ? '✓' : i;
+    dot.textContent = i < currentStep ? '✓' : nummer;
     progressEl.appendChild(dot);
     if(i < TOTAL_STEPS){
       const line = document.createElement('div');
@@ -1056,7 +1131,10 @@ function showStep(step){
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
   document.querySelector(`.step-panel[data-step="${step}"]`).classList.add('active');
   renderProgress();
-  document.getElementById('btn-back').style.display = step === 1 ? 'none' : 'block';
+  document.getElementById('btn-back').style.display = step <= START_STEP ? 'none' : 'block';
+  // Schritt 1 heißt „von 4", wenn er übersprungen wird aber „von 3"
+  const zaehler = document.querySelector(`.step-panel[data-step="${step}"] .step-label`);
+  if(zaehler) zaehler.textContent = 'Schritt ' + (step - START_STEP + 1) + ' von ' + (TOTAL_STEPS - START_STEP + 1);
   if(step === TOTAL_STEPS){
     document.getElementById('btn-next').textContent = 'Code senden →';
   } else {
@@ -1091,7 +1169,7 @@ function prevStep(){
     document.getElementById('btn-next').textContent = 'Code senden →';
     return;
   }
-  if(currentStep === 1) return;
+  if(currentStep <= START_STEP) return;
   currentStep--;
   showStep(currentStep);
   window.scrollTo({top:0, behavior:'smooth'});
