@@ -1038,6 +1038,7 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
         <div class="paket-form-title">Schnellstart</div>
         <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:14px">Noch unsicher, wie man Pakete sinnvoll aufbaut? Mit einem Klick werden 12 fertige Pakete angelegt (Privathaushalte, Büros, Kanzleien, Gastronomie, Einzelhandel, Autohaus/Werkstatt, Handwerksbetriebe, Parkplätze, Hausverwaltung u.v.m.) – Preise, Texte und Fragen kannst du danach jederzeit anpassen.</p>
         <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="seedDefaultPakete()" id="pk-seed-btn">✨ 12 Standard-Pakete jetzt anlegen</button>
+        <button class="btn btn-primary" style="width:auto;padding:13px 24px;margin-left:10px" onclick="ergaenzePakete()" id="pk-ergaenzen-btn">➕ Kategorien auf je 4 Pakete auffüllen</button>
       </div>
 
       <div class="paket-form">
@@ -3321,6 +3322,174 @@ window.fixMissingSlugs = async function(){
   }
 };
 
+/* ── Kategorien auf je vier Pakete auffüllen ───────────────────
+   Ergänzt nur, was per slug noch fehlt – die Funktion darf deshalb
+   mehrfach geklickt werden, ohne Dubletten zu erzeugen. Bewusst ohne
+   preis_ab: Auf der Website werden keine Preise mehr ausgewiesen. */
+const ZUSATZ_PAKETE = [
+  // ── Für Ihr Zuhause ──
+  { icon:'📦', zielgruppe:'Privat', name:'Umzugs- & Übergabereinigung', slug:'umzug-privat',
+    beschreibung:'Besenreine Übergabe an Vermieter oder Käufer', services_ids:['grund','fenster'],
+    extras:['Fenster inkl. Rahmen','Schränke innen','Übergabefertig'],
+    custom_fields:[
+      {label:'Wohnfläche in m²',type:'number',required:true},
+      {label:'Übergabetermin',type:'date',required:true},
+      {label:'Wohnung ist bereits leer geräumt',type:'bool',required:true},
+      {label:'Teppichboden vorhanden',type:'bool',required:false},
+      {label:'Fotos der Räume',type:'file',required:false}
+    ], reihenfolge:13 },
+  { icon:'🤝', zielgruppe:'Privat', name:'Senioren- & Alltagshilfe', slug:'senioren',
+    beschreibung:'Regelmäßige Unterstützung im Haushalt, ruhig und verlässlich', services_ids:['haushalt'],
+    extras:['Immer dieselbe Reinigungskraft','Feste Wochentage'],
+    custom_fields:[
+      {label:'Wohnfläche in m²',type:'number',required:true},
+      {label:'Gewünschter Wochentag',type:'select',options:['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'],required:true},
+      {label:'Ist jemand während der Reinigung zu Hause',type:'bool',required:true},
+      {label:'Besonderheiten (Allergien, Haustiere, Zugang)',type:'text',required:false}
+    ], reihenfolge:14 },
+
+  // ── Für Hausverwaltungen ──
+  { icon:'❄️', zielgruppe:'Hausverwaltung', name:'Winterdienst-Paket', slug:'winterdienst',
+    beschreibung:'Räum- und Streupflicht zuverlässig erfüllt', services_ids:['winter'],
+    extras:['Einsatz vor 7 Uhr','Dokumentation der Einsätze','Streugut inklusive'],
+    custom_fields:[
+      {label:'Zu räumende Fläche in m²',type:'number',required:true},
+      {label:'Gehweglänge in Metern',type:'number',required:true},
+      {label:'Streugut',type:'select',options:['Splitt','Salz','Nach Vorgabe der Gemeinde'],required:true},
+      {label:'Einsatz auch am Wochenende',type:'bool',required:true},
+      {label:'Lagermöglichkeit für Streugut vor Ort',type:'bool',required:false}
+    ], reihenfolge:15 },
+
+  // ── Für Büro & Gewerbe ──
+  { icon:'📐', zielgruppe:'Kanzlei / Ingenieurbüro', name:'Ingenieur- & Architekturbüro', slug:'ingenieurbuero',
+    beschreibung:'Für Planungsbüros mit Plänen, Modellen und empfindlicher Technik', services_ids:['buero','fenster'],
+    extras:['Vorsicht bei Plänen und Modellen','Bildschirme und Technik nach Absprache'],
+    custom_fields:[
+      {label:'Anzahl Arbeitsplätze',type:'number',required:true},
+      {label:'Bürofläche in m²',type:'number',required:true},
+      {label:'Plotter- oder Modellbauraum vorhanden',type:'bool',required:true},
+      {label:'Bereiche, die nicht betreten werden dürfen',type:'text',required:false},
+      {label:'Reinigung außerhalb der Bürozeiten',type:'bool',required:false}
+    ], reihenfolge:16 },
+  { icon:'🩺', zielgruppe:'Gewerbe', name:'Arzt- & Therapiepraxis', slug:'arztpraxis',
+    beschreibung:'Hygienegerechte Reinigung für Praxen und Therapieräume', services_ids:['buero','fenster'],
+    extras:['Getrennte Reinigungsutensilien je Bereich','Flächendesinfektion nach Vorgabe'],
+    custom_fields:[
+      {label:'Praxisfläche in m²',type:'number',required:true},
+      {label:'Anzahl Behandlungsräume',type:'number',required:true},
+      {label:'Anzahl Sanitärräume',type:'number',required:true},
+      {label:'Hygieneplan vorhanden',type:'bool',required:true},
+      {label:'Desinfektionsmittel wird gestellt von',type:'select',options:['Praxis','Waschlurch'],required:true},
+      {label:'Reinigung nur nach Sprechstundenende',type:'bool',required:false}
+    ], reihenfolge:17 },
+
+  // ── Für Gastronomie & Handel ──
+  { icon:'☕', zielgruppe:'Gastronomie', name:'Café & Bäckerei', slug:'cafe-baeckerei',
+    beschreibung:'Frühe Einsätze vor Ladenöffnung', services_ids:['buero','fenster','muell'],
+    extras:['Einsatz vor Öffnung möglich','Theken- und Vitrinenbereich'],
+    custom_fields:[
+      {label:'Gastraumfläche in m²',type:'number',required:true},
+      {label:'Anzahl Sitzplätze innen',type:'number',required:true},
+      {label:'Außenbereich vorhanden',type:'bool',required:true},
+      {label:'Früheste mögliche Uhrzeit',type:'text',required:true},
+      {label:'Backstube gehört dazu',type:'bool',required:false}
+    ], reihenfolge:18 },
+  { icon:'💇', zielgruppe:'Einzelhandel', name:'Friseur & Kosmetikstudio', slug:'friseur-kosmetik',
+    beschreibung:'Haarreste, Spiegel und Sanitär – gründlich und schnell', services_ids:['buero','fenster'],
+    extras:['Spiegelflächen streifenfrei','Haarreste gründlich entfernt'],
+    custom_fields:[
+      {label:'Salonfläche in m²',type:'number',required:true},
+      {label:'Anzahl Bedienplätze',type:'number',required:true},
+      {label:'Anzahl Waschbecken',type:'number',required:true},
+      {label:'Reinigung nach Ladenschluss',type:'bool',required:true},
+      {label:'Kabinen oder Behandlungsräume vorhanden',type:'bool',required:false}
+    ], reihenfolge:19 },
+
+  // ── Für Werkstatt & Handwerk ──
+  { icon:'🪵', zielgruppe:'Handwerk', name:'Schreinerei & Tischlerei', slug:'schreinerei',
+    beschreibung:'Holzstaub und Späne, auch in Maschinennähe', services_ids:['grund','hausmeister'],
+    extras:['Feinstaub auf Maschinen und Ablagen','Absauganlage nach Absprache'],
+    custom_fields:[
+      {label:'Werkstattfläche in m²',type:'number',required:true},
+      {label:'Anzahl Maschinen, die freigeräumt werden',type:'number',required:false},
+      {label:'Absauganlage vorhanden',type:'bool',required:true},
+      {label:'Lackier- oder Ölbereich vorhanden',type:'bool',required:true},
+      {label:'Reinigung während des Betriebs möglich',type:'bool',required:false}
+    ], reihenfolge:20 },
+  { icon:'📦', zielgruppe:'Handwerk', name:'Lagerhalle & Logistik', slug:'lagerhalle',
+    beschreibung:'Große Flächen, Regalgassen und Sozialräume', services_ids:['grund','hausmeister'],
+    extras:['Kehrmaschine für große Flächen','Sozial- und Sanitärräume'],
+    custom_fields:[
+      {label:'Hallenfläche in m²',type:'number',required:true},
+      {label:'Anzahl Regalgassen',type:'number',required:false},
+      {label:'Bodenbelag',type:'select',options:['Beton','Estrich','Beschichtet','Sonstiges'],required:true},
+      {label:'Staplerverkehr während der Reinigung',type:'bool',required:true},
+      {label:'Sozialräume gehören dazu',type:'bool',required:false}
+    ], reihenfolge:21 },
+
+  // ── Nach Bau & Umzug ──
+  { icon:'🎨', zielgruppe:'Neubau / Renovierung', name:'Renovierungsreinigung', slug:'renovierung',
+    beschreibung:'Nach Malern, Bodenlegen oder Sanierung', services_ids:['grund','fenster'],
+    extras:['Farb- und Kleberreste','Feinstaub in allen Ecken'],
+    custom_fields:[
+      {label:'Fläche in m²',type:'number',required:true},
+      {label:'Art der Arbeiten',type:'multi',options:['Malerarbeiten','Bodenverlegung','Trockenbau','Elektro','Sanitär'],required:true},
+      {label:'Farb- oder Kleberreste vorhanden',type:'bool',required:true},
+      {label:'Bauschutt bereits entfernt',type:'bool',required:true},
+      {label:'Fotos der Räume',type:'file',required:false}
+    ], reihenfolge:22 },
+  { icon:'🔑', zielgruppe:'Neubau / Renovierung', name:'Erstbezugsreinigung Neubau', slug:'erstbezug',
+    beschreibung:'Bezugsfertig ab dem ersten Tag', services_ids:['grund','fenster'],
+    extras:['Aufkleber und Schutzfolien entfernt','Fenster inkl. Rahmen und Falze'],
+    custom_fields:[
+      {label:'Wohnfläche in m²',type:'number',required:true},
+      {label:'Anzahl Fenster',type:'number',required:true},
+      {label:'Schutzfolien noch angebracht',type:'bool',required:true},
+      {label:'Gewünschter Termin',type:'date',required:true},
+      {label:'Baustrom und Wasser verfügbar',type:'bool',required:true}
+    ], reihenfolge:23 },
+  { icon:'🧹', zielgruppe:'Neubau / Renovierung', name:'Entrümpelung & Besenrein', slug:'besenrein',
+    beschreibung:'Räumen und übergabefertig hinterlassen', services_ids:['grund','hausmeister'],
+    extras:['Abtransport nach Absprache','Besenreine Übergabe'],
+    custom_fields:[
+      {label:'Fläche in m²',type:'number',required:true},
+      {label:'Geschätzte Menge',type:'select',options:['Wenige Einzelstücke','Ein Raum','Ganze Wohnung','Haus mit Keller/Dachboden'],required:true},
+      {label:'Sperrmüll enthalten',type:'bool',required:true},
+      {label:'Aufzug oder ebenerdiger Zugang vorhanden',type:'bool',required:true},
+      {label:'Fotos der zu räumenden Bereiche',type:'file',required:false}
+    ], reihenfolge:24 }
+];
+
+window.ergaenzePakete = async function(){
+  const btn = document.getElementById('pk-ergaenzen-btn');
+  const vorhandeneSlugs = new Set(allPakete.map(p => p.slug).filter(Boolean));
+  const fehlende = ZUSATZ_PAKETE.filter(p => !vorhandeneSlugs.has(p.slug));
+
+  if(fehlende.length === 0){
+    alert('Alle Zusatzpakete sind bereits angelegt – es gibt nichts zu ergänzen.');
+    return;
+  }
+  if(!confirm(fehlende.length + ' Paket(e) werden ergänzt, damit jede Kategorie vier Pakete hat:\n\n'
+      + fehlende.map(p => '· ' + p.name).join('\n')
+      + '\n\nBereits vorhandene Pakete bleiben unverändert.')) return;
+
+  btn.disabled = true; btn.textContent = 'Lege Pakete an ...';
+  try {
+    for(const p of fehlende){
+      await addDoc(collection(db, 'pakete'), {
+        ...p, preis_ab: null, preis_einheit_text: 'Preis auf Anfrage',
+        beliebt: false, status: 'aktiv', bild_base64: '', createdAt: serverTimestamp()
+      });
+    }
+    alert(fehlende.length + ' Paket(e) angelegt. Jede Kategorie hat jetzt vier Pakete.\n\nDie Fragen je Paket kannst du hier jederzeit anpassen.');
+  } catch(err){
+    console.error(err);
+    alert('Fehler beim Anlegen. Bitte Firestore-Regeln prüfen und erneut versuchen.');
+  }
+  btn.disabled = false;
+  btn.textContent = '➕ Kategorien auf je 4 Pakete auffüllen';
+};
+
 window.seedDefaultPakete = async function(){
   if(allPakete.length > 0){
     if(!confirm('Es gibt bereits Pakete. Sollen die 12 Standard-Pakete zusätzlich angelegt werden?')) return;
@@ -3514,7 +3683,7 @@ window.generateInvoice = async function(requestId, alsoEmail){
   const brutto = parseFloat(eingabe.replace(',','.'));
   if(!brutto || brutto <= 0){ alert('Bitte einen gültigen Betrag eingeben.'); return; }
 
-  const mwstSatz = parseFloat(document.getElementById('steuer-mwst-satz') ? document.getElementById('steuer-mwst-satz').value : 19) || 19;
+  const mwstSatz = zahlAusFeld(document.getElementById('steuer-mwst-satz'), 19);
   const netto = brutto / (1 + mwstSatz/100);
   const mwst = brutto - netto;
 
@@ -3921,8 +4090,8 @@ function renderAngLeistungenList(){
       <input type="checkbox" class="ang-svc-cb" data-id="${s.id}" onchange="calcAngebot()">
       <div class="ang-leistung-name">${s.icon} ${s.name}</div>
       <div class="ang-leistung-qty">
-        <input type="number" class="ang-svc-qty" data-id="${s.id}" placeholder="${s.unit}" oninput="calcAngebot()">
-        ${s.unit2 ? `<input type="number" class="ang-svc-qty2" data-id="${s.id}" placeholder="${s.unit2}" oninput="calcAngebot()">` : ''}
+        <input type="number" min="0" step="any" class="ang-svc-qty" data-id="${s.id}" placeholder="${s.unit}" oninput="calcAngebot()">
+        ${s.unit2 ? `<input type="number" min="0" step="any" class="ang-svc-qty2" data-id="${s.id}" placeholder="${s.unit2}" oninput="calcAngebot()">` : ''}
       </div>
       <div class="ang-leistung-price" id="ang-price-${s.id}">0,00 €</div>
     </div>
@@ -3930,10 +4099,25 @@ function renderAngLeistungenList(){
   calcAngebot();
 }
 
+/* Zahl aus einem Eingabefeld lesen, OHNE die Null zu verlieren.
+   `parseFloat(x) || vorgabe` ersetzt eine eingegebene 0 durch die
+   Vorgabe – bei einem Steuersatz von 0% (Kleinunternehmerregelung
+   nach §19 UStG) hätte das stillschweigend 19% aufgeschlagen. */
+function zahlAusFeld(el, vorgabe){
+  if(!el) return vorgabe;
+  const roh = String(el.value).trim();
+  if(roh === '') return vorgabe;
+  const n = parseFloat(roh.replace(',', '.'));
+  return isNaN(n) ? vorgabe : n;
+}
+
 function computeServicePrice(sid, qty, qty2){
   const cfg = getKalkServiceRate(sid);
   if(!cfg) return 0;
-  qty = qty || 0; qty2 = qty2 || 0;
+  // Negative Mengen abfangen: Ein Tippfehler wie "-5" ergab sonst
+  // einen negativen Posten, der die Angebotssumme heimlich senkte.
+  qty  = Math.max(0, qty  || 0);
+  qty2 = Math.max(0, qty2 || 0);
   let raw;
   if(cfg.unit2){
     raw = qty * cfg.rate + qty2 * (cfg.rate2||0);
@@ -4000,7 +4184,7 @@ window.calcAngebot = function(){
 
   const nettoGesamt = nettoProEinsatz * multiplikator;
   const mwstSatzEl = document.getElementById('steuer-mwst-satz');
-  const mwstSatz = mwstSatzEl ? (parseFloat(mwstSatzEl.value) || 19) : 19;
+  const mwstSatz = zahlAusFeld(mwstSatzEl, 19);
   const mwstBetrag = nettoGesamt * (mwstSatz/100);
   const bruttoGesamt = nettoGesamt + mwstBetrag;
 

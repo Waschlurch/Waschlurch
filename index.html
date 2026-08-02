@@ -85,8 +85,7 @@
             ${p.bild_base64 ? `<img src="${p.bild_base64}" class="preis-img" alt="${p.name||''}">` : `<div class="preis-icon">${p.icon || '🧹'}</div>`}
             <div class="preis-name">${p.zielgruppe || ''} <span class="preis-toggle-icon">▾</span></div>
             <div class="preis-title">${p.name || ''}</div>
-            <div class="preis-val">${p.preis_ab != null ? 'ab ' + p.preis_ab + ' €' : 'Auf Anfrage'}</div>
-            <div class="preis-unit">${p.preis_einheit_text || 'inkl. MwSt.'}</div>
+            <div class="preis-unit">Preis auf Anfrage</div>
           </div>
           <div class="preis-details">
             ${p.beschreibung ? `<div class="preis-desc">${p.beschreibung}</div>` : ''}
@@ -140,16 +139,12 @@
       sortiert.forEach((eintraege, name) => {
         const offen = nr === 0;   // erste Gruppe aufgeklappt, Rest zu
         const anzahl = eintraege.length;
-        const abPreis = eintraege
-          .map(e => e.p.preis_ab)
-          .filter(v => typeof v === 'number')
-          .sort((a,b) => a-b)[0];
         html += `
         <div class="paket-gruppe${offen ? ' offen' : ''}">
           <button type="button" class="paket-gruppe-kopf" onclick="togglePaketGruppe(this)" aria-expanded="${offen}">
             <span class="paket-gruppe-text">
               <span class="paket-gruppe-name">${name}</span>
-              <span class="paket-gruppe-meta">${anzahl} ${anzahl === 1 ? 'Paket' : 'Pakete'}${abPreis != null ? ' · ab ' + abPreis + ' €' : ''}</span>
+              <span class="paket-gruppe-meta">${anzahl} ${anzahl === 1 ? 'Paket' : 'Pakete'}</span>
             </span>
             <span class="paket-gruppe-pfeil" aria-hidden="true">▾</span>
           </button>
@@ -1035,7 +1030,7 @@ footer {
   }
   .leistung-body { padding:22px 22px 24px; }
   .leistung-title { font-size:19px; }
-  .leistung-ab { display:block; margin-top:10px; font-size:14px; color:var(--green-dark); font-weight:700; }
+  .leistung-ab { display:none; }   /* Preise werden auf der Website nicht mehr ausgewiesen */
 
   /* ── ÜBER UNS ── */
   .ueber-inner { grid-template-columns:1fr; gap:32px; }
@@ -1253,8 +1248,8 @@ footer {
   <div>
     <div class="section-head center" style="max-width:1200px;margin:0 auto 56px">
       <div class="section-tag">Preise</div>
-      <div class="section-title">Transparente Pakete</div>
-      <p class="section-sub">Alle Preise inkl. 19% MwSt. Bezahlung per Rechnung nach der Leistungserbringung. Keine versteckten Kosten.</p>
+      <div class="section-title">Unsere Pakete</div>
+      <p class="section-sub">Wählen Sie den passenden Bereich und stellen Sie unverbindlich eine Anfrage. Sie erhalten ein individuelles Angebot innerhalb von 24 Stunden.</p>
     </div>
     <div class="preise-grid" id="pakete-grid">
       <p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Pakete werden geladen ...</p>
