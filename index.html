@@ -101,6 +101,7 @@
         </div>`;
       });
       paketeGrid.innerHTML = html;
+      if(window.staffelNachtragen) window.staffelNachtragen();
     }).catch(err => {
       console.error('Pakete konnten nicht geladen werden:', err);
       paketeGrid.innerHTML = '<p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Pakete konnten nicht geladen werden.</p>';
@@ -756,6 +757,44 @@ footer {
 .quicknav-item span:first-child { font-size:18px; }
 .quicknav-item.cta { color:var(--green); }
 
+/* ═══ MODERNE BAUSTEINE (überwiegend mobil) ══════════════════ */
+:root {
+  --weich:  cubic-bezier(.22,1,.36,1);      /* sanftes Ausrollen  */
+  --federn: cubic-bezier(.34,1.4,.64,1);    /* leichtes Nachwippen */
+}
+
+/* Lesefortschritt am oberen Rand */
+.scroll-fortschritt {
+  display:none; position:fixed; top:0; left:0; right:0; height:2px;
+  z-index:1001; background:rgba(255,255,255,0.06); pointer-events:none;
+}
+.scroll-fortschritt span {
+  display:block; height:100%; width:0%;
+  background:linear-gradient(90deg, var(--green), #4ADE80);
+  box-shadow:0 0 10px rgba(34,197,94,0.7);
+  transition:width .1s linear;
+}
+
+/* Punkte unter dem Leistungs-Karussell */
+.leistungen-punkte { display:none; justify-content:center; gap:7px; margin-top:20px; }
+.leistungen-punkt {
+  width:6px; height:6px; border-radius:100px; background:var(--gray-200);
+  transition:width .4s var(--federn), background .3s ease;
+}
+.leistungen-punkt.aktiv { width:22px; background:var(--green); }
+
+/* Gestaffelter Auftritt von Karten innerhalb eines Abschnitts */
+.reveal-kind { opacity:0; transform:translateY(22px); }
+.reveal-kind.sichtbar {
+  opacity:1; transform:translateY(0);
+  transition:opacity .65s var(--weich), transform .65s var(--weich);
+}
+
+@media(prefers-reduced-motion: reduce){
+  .reveal-kind, .reveal-kind.sichtbar { opacity:1; transform:none; transition:none; }
+  .scroll-fortschritt span { transition:none; }
+}
+
 /* MOBILE */
 @media(max-width:768px) {
   /* ── GLOBAL ── */
@@ -763,14 +802,30 @@ footer {
   .mobile-quicknav { display:flex; }
   .cookie-banner { bottom:76px; left:16px; right:16px; }
   #karriere > div[style*="grid-template-columns"] { grid-template-columns:1fr!important; }
+  .scroll-fortschritt { display:block; }
+  .leistungen-punkte { display:flex; }
 
-  /* ── NAV: kleineres Logo, dezenteres Menü ── */
-  nav { padding:0 24px; height:64px; }
-  .nav-logo img { height:28px; }
-  .nav-logo span, .nav-logo span span { font-size:19px!important; letter-spacing:-0.3px!important; }
+  /* ── NAV: Milchglas, schrumpft beim Scrollen ── */
+  nav {
+    padding:0 20px; height:66px;
+    background:rgba(255,255,255,0.82);
+    backdrop-filter:blur(22px) saturate(180%);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    border-bottom:1px solid rgba(0,0,0,0.05);
+    transition:height .35s var(--weich), background .35s ease, border-color .35s ease;
+  }
+  nav.nav-klein { height:54px; background:rgba(255,255,255,0.94); border-bottom-color:rgba(0,0,0,0.09); }
+  .nav-logo img { height:30px; transition:height .35s var(--weich); }
+  nav.nav-klein .nav-logo img { height:24px; }
+  .nav-logo span, .nav-logo span span { font-size:19px!important; letter-spacing:-0.3px!important; transition:font-size .35s var(--weich); }
+  nav.nav-klein .nav-logo span, nav.nav-klein .nav-logo span span { font-size:17px!important; }
   .nav-links { display:none; }
   .hamburger { display:flex; }
-  .hamburger span { background:var(--gray-700); }
+  .hamburger span { background:var(--gray-700); transition:transform .35s var(--weich), opacity .25s ease, background .3s; }
+  /* Hamburger wird beim Öffnen zum Kreuz */
+  .hamburger.offen span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+  .hamburger.offen span:nth-child(2) { opacity:0; transform:scaleX(0); }
+  .hamburger.offen span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
 
   /* Menü öffnet weich statt abrupt */
   .mobile-menu {
@@ -782,12 +837,28 @@ footer {
   .mobile-menu.open { opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0); }
   .mobile-menu a { font-size:20px; padding-bottom:16px; }
 
-  /* ── RUHIGERER RHYTHMUS (8px-Raster) ── */
-  section { padding:64px 24px; }
-  .section-head { margin-bottom:32px; }
-  .section-tag { font-size:12px; margin-bottom:8px; }
-  .section-title { line-height:1.15; }
-  .section-sub { font-size:15px; line-height:1.6; }
+  /* ── RHYTHMUS & ABSCHNITTSKÖPFE ── */
+  section { padding:72px 24px; position:relative; }
+  .section-head { margin-bottom:36px; }
+  .section-tag {
+    font-size:11px; margin-bottom:10px; display:inline-flex; align-items:center; gap:8px;
+  }
+  /* Kleine Linie, die neben der Bereichsbezeichnung aufzieht */
+  .section-tag::before {
+    content:''; width:0; height:2px; border-radius:2px; background:var(--green);
+    transition:width .7s var(--weich) .15s;
+  }
+  .reveal.visible .section-tag::before,
+  .section-head.visible .section-tag::before { width:22px; }
+  .section-title { line-height:1.12; font-size:clamp(30px,8.5vw,40px); letter-spacing:-1.2px; }
+  .section-sub { font-size:15.5px; line-height:1.65; }
+
+  /* Sanfter Farbverlauf gibt den hellen Abschnitten Tiefe */
+  #preise { background:linear-gradient(180deg,#FFFFFF 0%,var(--gray-100) 22%,var(--gray-100) 100%); }
+  #leistungen::after {
+    content:''; position:absolute; left:0; right:0; bottom:0; height:1px;
+    background:linear-gradient(90deg,transparent,var(--gray-200),transparent);
+  }
 
   /* ── HERO: Badge, Headline, Text, 2 Buttons, kompakte Kennzahlen ──
      Die rechte Spalte (.hero-img-wrap) wird ausgeblendet – sie war
@@ -829,19 +900,55 @@ footer {
   /* ── TRUST-LEISTE ── */
   .trust-item { font-size:13px; padding:0 24px; }
 
-  /* ── LEISTUNGEN ── */
-  .leistungen-scroll { padding:0 24px 16px; }
-  .leistung-card { width:80vw; max-width:300px; border-radius:24px; }
-  .leistung-img { height:180px; font-size:56px; }
-  .leistung-body { padding:24px; }
+  /* ── LEISTUNGEN: Karussell mit Vorschau auf die nächste Karte ── */
+  .leistungen-scroll {
+    /* Über die volle Bildschirmbreite ziehen. Das Polster des
+       Abschnitts wird per negativem Rand aufgehoben; ohne
+       max-width:none bliebe der Container schmal und würde die
+       nächste Karte abschneiden statt sie hervorlugen zu lassen. */
+    max-width:none;
+    width:100vw;
+    margin:0 -24px;
+    padding:4px 24px 8px;
+    scroll-snap-type:x mandatory;
+    scroll-padding-left:24px;
+  }
+  .leistungen-grid { gap:14px; }
+  /* Schmaler als der Bildschirm: Die nächste Karte lugt hervor und
+     signalisiert dadurch, dass man wischen kann. */
+  .leistung-card {
+    width:75vw; max-width:300px; border-radius:26px;
+    scroll-snap-align:start;
+    box-shadow:0 10px 30px rgba(0,0,0,0.07);
+    transition:transform .35s var(--weich), box-shadow .35s var(--weich);
+  }
+  .leistung-card:active { transform:scale(0.97); box-shadow:0 4px 14px rgba(0,0,0,0.10); }
+  .leistung-img {
+    height:190px; font-size:60px;
+    position:relative; overflow:hidden;
+  }
+  /* Weicher Verlauf über dem Bild sorgt für Tiefe */
+  .leistung-img::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,0.35) 100%);
+  }
+  .leistung-body { padding:22px 22px 24px; }
+  .leistung-title { font-size:19px; }
+  .leistung-ab { display:block; margin-top:10px; font-size:14px; color:var(--green-dark); font-weight:700; }
 
   /* ── ÜBER UNS ── */
   .ueber-inner { grid-template-columns:1fr; gap:32px; }
   .ueber-img { display:none; }
 
   /* ── PAKETE: gleiche Kartenrundung überall ── */
-  .preise-grid { grid-template-columns:1fr; gap:16px; }
-  .preis-card { padding:24px; border-radius:24px; }
+  .preise-grid { grid-template-columns:1fr; gap:14px; }
+  .preis-card {
+    padding:22px; border-radius:26px;
+    box-shadow:0 6px 22px rgba(0,0,0,0.05);
+    transition:transform .3s var(--weich), box-shadow .3s var(--weich), border-color .3s ease;
+  }
+  .preis-card:active { transform:scale(0.985); }
+  .preis-card.expanded { box-shadow:0 14px 40px rgba(34,197,94,0.16); border-color:var(--green); }
   .preis-header { cursor:pointer; }
   .preis-toggle-icon { display:inline-block; float:right; font-size:16px; transition:transform .3s cubic-bezier(.4,0,.2,1); color:var(--gray-500); }
   .preis-card.expanded .preis-toggle-icon { transform:rotate(180deg); }
@@ -870,6 +977,27 @@ footer {
   .footer-inner { flex-direction:column; text-align:center; gap:24px; }
   .footer-links { flex-wrap:wrap; justify-content:center; gap:16px 24px; }
 
+  /* ── UNTERE SCHNELLNAVIGATION ── */
+  .mobile-quicknav {
+    background:rgba(255,255,255,0.86);
+    backdrop-filter:blur(22px) saturate(180%);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    border-top:1px solid rgba(0,0,0,0.06);
+  }
+  .quicknav-item { transition:transform .25s var(--federn), color .2s ease; }
+  .quicknav-item:active { transform:scale(0.88); }
+  .quicknav-item span:first-child { transition:transform .25s var(--federn); }
+  .quicknav-item:active span:first-child { transform:translateY(-2px) scale(1.12); }
+
+  /* ── KONTAKTFORMULAR ── */
+  .kontakt-form input, .kontakt-form select, .kontakt-form textarea {
+    font-size:16px;                    /* verhindert das Hineinzoomen auf iOS */
+    transition:border-color .25s ease, background .25s ease, transform .2s var(--weich);
+  }
+  .kontakt-form input:focus, .kontakt-form select:focus, .kontakt-form textarea:focus {
+    border-color:var(--green);
+  }
+
   /* ── SICHTBARER FOKUS (Erreichbarkeit) ── */
   a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline:2px solid var(--green); outline-offset:2px;
@@ -890,6 +1018,9 @@ footer {
 </style>
 </head>
 <body>
+
+<!-- Lesefortschritt (nur mobil sichtbar) -->
+<div class="scroll-fortschritt" aria-hidden="true"><span id="scroll-balken"></span></div>
 
 <!-- NAV -->
 <nav>
@@ -1128,6 +1259,7 @@ footer {
 
       </div>
     </div>
+    <div class="leistungen-punkte" id="leistungen-punkte" aria-hidden="true"></div>
   </div>
 </section>
 
@@ -1369,14 +1501,70 @@ document.addEventListener('DOMContentLoaded', initCookieBanner);
 function toggleMenu() {
   const menu = document.getElementById('mobile-menu');
   const ham = document.getElementById('hamburger');
-  menu.classList.toggle('open');
+  const offen = menu.classList.toggle('open');
+  if(ham) ham.classList.toggle('offen', offen);
+  // Hintergrund nicht mitscrollen lassen, solange das Menü offen ist
+  document.body.style.overflow = offen ? 'hidden' : '';
 }
 
-// NAV scroll effect
-window.addEventListener('scroll', () => {
+/* ── Scroll-Effekte gebündelt ──────────────────────────────────
+   Alles in EINEM Handler mit requestAnimationFrame: mehrere
+   Scroll-Listener nebeneinander lassen die Seite auf schwächeren
+   Handys spürbar ruckeln. */
+(function(){
   const nav = document.querySelector('nav');
-  nav.style.boxShadow = window.scrollY > 20 ? '0 2px 20px rgba(0,0,0,0.08)' : 'none';
-});
+  const balken = document.getElementById('scroll-balken');
+  let laeuft = false;
+
+  function aktualisiere(){
+    const y = window.scrollY;
+
+    if(nav){
+      nav.style.boxShadow = y > 20 ? '0 2px 20px rgba(0,0,0,0.08)' : 'none';
+      nav.classList.toggle('nav-klein', y > 80);
+    }
+    if(balken){
+      const hoehe = document.documentElement.scrollHeight - window.innerHeight;
+      balken.style.width = (hoehe > 0 ? Math.min(100, (y / hoehe) * 100) : 0) + '%';
+    }
+    laeuft = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if(!laeuft){ laeuft = true; requestAnimationFrame(aktualisiere); }
+  }, { passive:true });
+  aktualisiere();
+})();
+
+/* ── Punkte unter dem Leistungs-Karussell ────────────────────── */
+(function(){
+  document.addEventListener('DOMContentLoaded', () => {
+    const spur = document.querySelector('.leistungen-scroll');
+    const punkteBox = document.getElementById('leistungen-punkte');
+    if(!spur || !punkteBox) return;
+    const karten = spur.querySelectorAll('.leistung-card');
+    if(karten.length < 2) return;
+
+    karten.forEach((_, i) => {
+      const p = document.createElement('span');
+      p.className = 'leistungen-punkt' + (i === 0 ? ' aktiv' : '');
+      punkteBox.appendChild(p);
+    });
+    const punkte = punkteBox.querySelectorAll('.leistungen-punkt');
+
+    let laeuft = false;
+    spur.addEventListener('scroll', () => {
+      if(laeuft) return;
+      laeuft = true;
+      requestAnimationFrame(() => {
+        const breite = karten[0].offsetWidth + 14;   // Karte + Abstand
+        const aktiv = Math.round(spur.scrollLeft / breite);
+        punkte.forEach((p, i) => p.classList.toggle('aktiv', i === aktiv));
+        laeuft = false;
+      });
+    }, { passive:true });
+  });
+})();
 
 // FAQ
 function toggleFaq(el) {
@@ -1615,7 +1803,56 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     targets.forEach(el => el.classList.add('visible'));
   }
+
+  /* Karten eines Abschnitts nacheinander einblenden statt alle
+     gleichzeitig – das ergibt spürbar mehr Rhythmus beim Scrollen. */
+  const gruppen = [
+    document.querySelectorAll('#preise .preis-card'),
+    document.querySelectorAll('#leistungen .leistung-card'),
+    document.querySelectorAll('#referenzen .ref-card'),
+    document.querySelectorAll('#ueber .ueber-punkt'),
+    document.querySelectorAll('#kontakt .kontakt-item')
+  ];
+
+  if(!('IntersectionObserver' in window)) return;
+
+  const staffel = new IntersectionObserver((entries, beobachter) => {
+    entries.forEach(entry => {
+      if(!entry.isIntersecting) return;
+      const verzoegerung = parseInt(entry.target.dataset.staffel || 0, 10);
+      setTimeout(() => entry.target.classList.add('sichtbar'), verzoegerung);
+      beobachter.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+
+  gruppen.forEach(gruppe => {
+    gruppe.forEach((el, i) => {
+      el.classList.add('reveal-kind');
+      el.dataset.staffel = Math.min(i, 6) * 70;   // gedeckelt, damit späte Karten nicht hängen
+      staffel.observe(el);
+    });
+  });
 });
+
+/* Pakete kommen erst nach dem Laden aus der Datenbank – deshalb
+   erneut anstoßen, sobald sie im DOM sind. */
+window.staffelNachtragen = function(){
+  if(!('IntersectionObserver' in window)) return;
+  const neue = document.querySelectorAll('#preise .preis-card:not(.reveal-kind)');
+  if(!neue.length) return;
+  const beob = new IntersectionObserver((entries, b) => {
+    entries.forEach(e => {
+      if(!e.isIntersecting) return;
+      setTimeout(() => e.target.classList.add('sichtbar'), parseInt(e.target.dataset.staffel||0,10));
+      b.unobserve(e.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+  neue.forEach((el, i) => {
+    el.classList.add('reveal-kind');
+    el.dataset.staffel = Math.min(i, 6) * 70;
+    beob.observe(el);
+  });
+};
 </script>
 
 </body>
