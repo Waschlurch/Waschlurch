@@ -364,6 +364,15 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
 .ang-uebernahme-info.fehler { background:rgba(248,113,113,0.10); border-color:rgba(248,113,113,0.3); }
 .ang-uebernahme-info.fehler strong { color:#F87171; }
 .ang-uebernahme-offen { margin-top:6px; color:rgba(251,191,36,0.85); }
+/* ── Startkasten im FAQ-Bereich ── */
+.faq-start-box {
+  background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.28);
+  border-radius:16px; padding:20px 22px; margin-bottom:24px;
+}
+.faq-start-titel { font-size:15px; font-weight:700; color:var(--white); margin-bottom:6px; }
+.faq-start-text { font-size:13px; line-height:1.65; color:rgba(255,255,255,0.6); margin-bottom:14px; max-width:640px; }
+.faq-start-hinweis { font-size:11.5px; color:rgba(255,255,255,0.38); margin-top:10px; }
+
 .ang-anfrage-status { margin-top:8px; font-size:11.5px; line-height:1.5; color:rgba(255,255,255,0.42); }
 .ang-anfrage-status.warnung { color:#FBBF24; }
 .kalk-titel-zusatz { font-weight:500; color:rgba(255,255,255,0.4); text-transform:none; letter-spacing:0; }
@@ -1225,6 +1234,18 @@ input[readonly] { opacity:.62; cursor:not-allowed; }
         <div class="view-title">FAQ</div>
         <div class="view-sub">Erscheinen live im FAQ-Bereich deiner Website</div>
       </div>
+
+      <div class="faq-start-box" id="faq-start-box" style="display:none">
+        <div class="faq-start-titel">Noch keine Fragen angelegt</div>
+        <div class="faq-start-text">
+          Solange hier nichts steht, blendet die Website den gesamten FAQ-Bereich aus – Besuchern fehlt damit ein wichtiger Vertrauensbeweis.
+          Mit einem Klick legst du zwölf sachliche Standardfragen zu Ablauf, Bezahlung, Versicherung und Steuerabzug an.
+          Alle sind danach frei bearbeit- und löschbar.
+        </div>
+        <button class="btn btn-primary" style="width:auto;padding:12px 22px" onclick="ergaenzeFaqs()" id="faq-seed-btn">Standard-Fragen anlegen</button>
+        <div class="faq-start-hinweis">Bereits vorhandene Fragen werden nicht doppelt angelegt.</div>
+      </div>
+
       <div class="paket-form">
         <div class="paket-form-title" id="faq-form-title">Neue Frage erstellen</div>
         <input type="hidden" id="faq-edit-id" value="">
@@ -4800,6 +4821,72 @@ window.editFaq = function(id){
   window.scrollTo({top:0, behavior:'smooth'});
 };
 
+/* ── Standard-FAQ anlegen ──────────────────────────────────────
+   Ein leerer FAQ-Bereich blendet sich auf der Website komplett aus.
+   Besuchern fehlt damit ein Vertrauensbeweis genau an der Stelle,
+   an der sie kurz vor der Anfrage noch zögern.
+
+   Die Fragen sind bewusst sachlich und decken sich mit dem, was
+   auf der Website ohnehin zugesichert wird (Rechnung mit 14 Tagen
+   Zahlungsziel, Haftpflichtversicherung, Öko-Mittel, §35a EStG).
+   Nichts davon ist erfunden – alles bearbeitbar.
+
+   Abgleich über die Frage selbst, damit mehrfaches Klicken keine
+   Dubletten erzeugt – dasselbe Muster wie bei ergaenzePakete(). */
+const STANDARD_FAQS = [
+  { frage:'Wie läuft eine Anfrage ab?',
+    antwort:'Sie schicken uns über das Formular Ihre Angaben. Wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot. Passt es, vereinbaren wir einen Termin – ein Anruf ist nicht nötig.', reihenfolge:1 },
+  { frage:'Was kostet die Reinigung?',
+    antwort:'Das hängt von Fläche, Aufwand und Häufigkeit ab. Deshalb erstellen wir für jede Anfrage ein individuelles Angebot, statt Pauschalpreise zu nennen, die am Ende doch nicht passen. Das Angebot ist kostenlos und unverbindlich.', reihenfolge:2 },
+  { frage:'Wie wird bezahlt?',
+    antwort:'Ausschließlich per Rechnung, zahlbar innerhalb von 14 Tagen nach der Leistung. Keine Vorkasse, kein Abo-Zwang, keine versteckten Kosten.', reihenfolge:3 },
+  { frage:'Sind Sie versichert?',
+    antwort:'Ja. Wir sind haftpflichtversichert. Sollte bei der Arbeit etwas beschädigt werden, ist das abgedeckt.', reihenfolge:4 },
+  { frage:'In welchem Gebiet sind Sie tätig?',
+    antwort:'Im gesamten Rhein-Sieg-Kreis – unter anderem Eitorf, Siegburg, Hennef, Troisdorf, Bad Honnef und Lohmar. Fragen Sie bei anderen Orten gerne nach.', reihenfolge:5 },
+  { frage:'Kann ich Reinigungskosten von der Steuer absetzen?',
+    antwort:'Privathaushalte können haushaltsnahe Dienstleistungen nach §35a EStG mit 20 Prozent der Arbeitskosten von der Steuerschuld abziehen, bis zu 4.000 Euro im Jahr. Voraussetzung ist eine Rechnung und die Zahlung per Überweisung – beides ist bei uns Standard.', reihenfolge:6 },
+  { frage:'Welche Reinigungsmittel verwenden Sie?',
+    antwort:'Wir arbeiten mit umweltschonenden Öko-Reinigungsmitteln. Wenn Sie eigene Mittel bevorzugen oder auf bestimmte Stoffe empfindlich reagieren, verwenden wir gerne Ihre.', reihenfolge:7 },
+  { frage:'Muss ich während der Reinigung zu Hause sein?',
+    antwort:'Nein. Viele Kunden hinterlegen einen Schlüssel oder nennen uns einen Zugangscode. Wie das bei Ihnen laufen soll, klären wir beim ersten Termin.', reihenfolge:8 },
+  { frage:'Kommt immer dieselbe Person?',
+    antwort:'Bei regelmäßigen Aufträgen bemühen wir uns um eine feste Zuordnung. Sie wissen dann, wer bei Ihnen arbeitet – das ist uns genauso wichtig wie Ihnen.', reihenfolge:9 },
+  { frage:'Wie kurzfristig kann ich einen Termin bekommen?',
+    antwort:'Das hängt von der Auslastung ab. Melden Sie sich gerne auch bei kurzfristigem Bedarf – wenn es eilt, sagen Sie es in der Anfrage dazu.', reihenfolge:10 },
+  { frage:'Kann ich einen Termin absagen oder verschieben?',
+    antwort:'Ja. Sagen Sie möglichst rechtzeitig Bescheid, dann finden wir einen neuen Termin.', reihenfolge:11 },
+  { frage:'Reinigen Sie auch Gewerbeobjekte?',
+    antwort:'Ja – Büros, Praxen, Kanzleien, Ladenlokale, Gastronomie, Werkstätten und Hallen. Auf Wunsch außerhalb Ihrer Geschäftszeiten, damit der Betrieb nicht gestört wird.', reihenfolge:12 }
+];
+
+window.ergaenzeFaqs = function(){
+  const btn = document.getElementById('faq-seed-btn');
+  const vorhanden = new Set(allFaqs.map(f => (f.frage || '').trim().toLowerCase()));
+  const fehlend = STANDARD_FAQS.filter(f => !vorhanden.has(f.frage.trim().toLowerCase()));
+
+  if(fehlend.length === 0){
+    alert('Alle Standardfragen sind bereits angelegt.');
+    return;
+  }
+  if(!confirm(fehlend.length + ' Standardfrage(n) anlegen? Du kannst sie danach beliebig bearbeiten oder löschen.')) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Lege an ...';
+
+  Promise.all(fehlend.map(f =>
+    addDoc(collection(db, 'faqs'), { ...f, status:'aktiv', createdAt: serverTimestamp() })
+  )).then(() => {
+    btn.disabled = false;
+    btn.textContent = 'Standard-Fragen anlegen';
+    alert(fehlend.length + ' Frage(n) angelegt. Sie erscheinen jetzt auf der Website.');
+  }).catch(err => {
+    btn.disabled = false;
+    btn.textContent = 'Standard-Fragen anlegen';
+    meldeSchreibfehler(err, 'Das Anlegen der Standardfragen');
+  });
+};
+
 window.saveFaq = function(){
   const btn = document.getElementById('faq-save-btn');
   const editId = document.getElementById('faq-edit-id').value;
@@ -4830,6 +4917,15 @@ window.deleteFaq = function(id){
 function renderFaqAdminList(){
   const listEl = document.getElementById('faqadmin-list');
   if(!listEl) return;
+
+  // Startkasten nur zeigen, solange noch Standardfragen fehlen
+  const startBox = document.getElementById('faq-start-box');
+  if(startBox){
+    const vorhanden = new Set(allFaqs.map(f => (f.frage || '').trim().toLowerCase()));
+    const fehlend = STANDARD_FAQS.filter(f => !vorhanden.has(f.frage.trim().toLowerCase())).length;
+    startBox.style.display = fehlend > 0 ? '' : 'none';
+  }
+
   if(allFaqs.length === 0){
     listEl.innerHTML = '<div class="empty-state">Noch keine FAQ-Einträge angelegt.</div>';
     return;

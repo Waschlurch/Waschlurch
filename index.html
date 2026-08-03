@@ -28,6 +28,18 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  /* Blendet einen Abschnitt aus UND die Menüeinträge, die darauf zeigen.
+     Vorher blieb im Handy-Menü z. B. „FAQ" stehen, obwohl der Abschnitt
+     bei leerer Datenbank entfernt wurde – ein Klick tat dann nichts. */
+  window._verbergeAbschnitt = function(el, anker){
+    const sek = el && el.closest('section');
+    if(sek) sek.style.display = 'none';
+    document.querySelectorAll(`a[href="#${anker}"]`).forEach(a => {
+      const li = a.closest('li');
+      (li || a).style.display = 'none';
+    });
+  };
+
   /* ── Anfrage vom Startseiten-Formular in die Datenbank schreiben ──
      Bisher ging dieses Formular NUR per E-Mail über Web3Forms raus.
      Solche Anfragen tauchten deshalb nie im Dashboard auf und konnten
@@ -186,7 +198,7 @@
   if(refGrid){
     const rq = query(collection(db, 'referenzen'), where('status', '==', 'aktiv'), orderBy('reihenfolge', 'asc'));
     getDocs(rq).then(snap => {
-      if(snap.empty){ refGrid.innerHTML = ''; refGrid.closest('section').style.display = 'none'; return; }
+      if(snap.empty){ refGrid.innerHTML = ''; window._verbergeAbschnitt(refGrid, 'referenzen'); return; }
       let html = '';
       snap.forEach(docSnap => {
         const r = docSnap.data();
@@ -202,7 +214,7 @@
       refGrid.innerHTML = html;
     }).catch(err => {
       console.error('Referenzen konnten nicht geladen werden:', err);
-      refGrid.closest('section').style.display = 'none';
+      window._verbergeAbschnitt(refGrid, 'referenzen');
     });
   }
 
@@ -211,7 +223,7 @@
   if(faqInner){
     const fq = query(collection(db, 'faqs'), where('status', '==', 'aktiv'), orderBy('reihenfolge', 'asc'));
     getDocs(fq).then(snap => {
-      if(snap.empty){ faqInner.closest('section').style.display = 'none'; return; }
+      if(snap.empty){ window._verbergeAbschnitt(faqInner, 'faq'); return; }
       let html = '';
       snap.forEach(docSnap => {
         const f = docSnap.data();
@@ -220,7 +232,7 @@
       faqInner.innerHTML = html;
     }).catch(err => {
       console.error('FAQ konnte nicht geladen werden:', err);
-      faqInner.closest('section').style.display = 'none';
+      window._verbergeAbschnitt(faqInner, 'faq');
     });
   }
 </script>
@@ -262,6 +274,19 @@ nav {
 .nav-links a:hover { color:var(--green-dark); }
 .nav-cta { background:var(--black); color:var(--white)!important; padding:9px 20px; border-radius:100px; font-size:14px; font-weight:600!important; transition:background .2s!important; }
 .nav-cta:hover { background:var(--green-dark)!important; }
+.lang-switch {
+  display:flex; align-items:center; gap:6px; padding:5px; margin-left:12px;
+  background:rgba(17,24,39,0.04); border:1px solid rgba(17,24,39,0.08);
+  border-radius:999px;
+}
+.lang-switch button {
+  border:none; background:transparent; color:var(--gray-700);
+  font-size:12px; font-weight:700; letter-spacing:0.04em; padding:6px 10px;
+  border-radius:999px; cursor:pointer; transition:all .2s ease;
+}
+.lang-switch button.active {
+  background:var(--black); color:var(--white);
+}
 .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:4px; }
 .hamburger span { width:24px; height:2px; background:var(--black); border-radius:2px; transition:.3s; }
 
@@ -622,6 +647,47 @@ section { padding:96px 5%; }
 .preis-card.inaktiv:hover { transform:none; box-shadow:none; border-color:var(--gray-200); }
 .preis-btn-disabled { background:var(--gray-200); color:var(--gray-500); border-color:var(--gray-200); cursor:not-allowed; pointer-events:none; }
 .preis-toggle-icon { display:none; }
+
+/* ── LEISTUNGS-DETAILANSICHT ──────────────────────────────── */
+.leistungen-hinweis { text-align:center; font-size:13px; color:var(--gray-500); margin-top:14px; }
+.leistung-card { cursor:pointer; }
+.leistung-card:focus-visible { outline:3px solid var(--green); outline-offset:3px; }
+
+.leistung-overlay {
+  position:fixed; inset:0; z-index:2000;
+  background:rgba(0,0,0,0.72); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center; padding:24px;
+  opacity:0; transition:opacity .28s var(--weich);
+}
+.leistung-overlay[hidden] { display:none; }
+.leistung-overlay.offen { opacity:1; }
+.leistung-dialog {
+  background:var(--white); border-radius:26px; padding:32px;
+  max-width:520px; width:100%; max-height:88vh; overflow-y:auto;
+  position:relative; text-align:left;
+  transform:translateY(18px) scale(.97);
+  transition:transform .32s var(--federn);
+}
+.leistung-overlay.offen .leistung-dialog { transform:translateY(0) scale(1); }
+.leistung-schliessen {
+  position:absolute; top:16px; right:16px; width:36px; height:36px;
+  border:none; border-radius:50%; background:var(--gray-100);
+  font-size:22px; line-height:1; color:var(--gray-700); cursor:pointer;
+  transition:background .2s;
+}
+.leistung-schliessen:hover { background:var(--gray-200); }
+.leistung-dialog-icon { font-size:52px; margin-bottom:10px; }
+.leistung-dialog-tag { font-size:11px; font-weight:700; color:var(--green-dark); text-transform:uppercase; letter-spacing:.9px; margin-bottom:6px; }
+.leistung-dialog-titel { font-size:26px; font-weight:700; letter-spacing:-0.6px; margin-bottom:10px; color:var(--black); }
+.leistung-dialog-text { font-size:15px; line-height:1.65; color:var(--gray-700); margin-bottom:18px; }
+.leistung-dialog-liste { list-style:none; display:flex; flex-direction:column; gap:9px; margin-bottom:26px; }
+.leistung-dialog-liste li { display:flex; gap:10px; font-size:14.5px; color:var(--gray-700); line-height:1.5; }
+.leistung-dialog-liste li::before { content:'✓'; color:var(--green); font-weight:700; flex-shrink:0; }
+.leistung-dialog-cta { width:100%; justify-content:center; }
+@media(max-width:768px){
+  .leistung-overlay { padding:16px; align-items:flex-end; }
+  .leistung-dialog { padding:26px 22px; border-radius:26px 26px 0 0; max-height:90vh; }
+}
 
 /* ── PAKET-GRUPPEN ────────────────────────────────────────── */
 .preise-grid { display:block; }          /* Gruppen statt einem Raster */
@@ -1151,22 +1217,9 @@ footer {
     <li><a href="#faq">FAQ</a></li>
     <li><a href="/anfrage.html" class="nav-cta">Jetzt anfragen</a></li>
   </ul>
-  <div class="hamburger" onclick="toggleMenu()" id="hamburger">
-    <span></span><span></span><span></span>
-  </div>
-</nav>
-
-<!-- MOBILE MENU -->
-<div class="mobile-menu" id="mobile-menu">
-  <a href="#preise" onclick="toggleMenu()">Pakete</a>
-  <a href="#leistungen" onclick="toggleMenu()">Leistungen</a>
-  <a href="#ueber" onclick="toggleMenu()">Über uns</a>
-  <a href="#referenzen" onclick="toggleMenu()">Referenzen</a>
-  <a href="#faq" onclick="toggleMenu()">FAQ</a>
-  <a href="/anfrage.html" style="color:var(--green)">Jetzt anfragen →</a>
-</div>
-
-<!-- HERO -->
+  <div class="lang-switch">
+    <button class="active" onclick="setLanguage('de')">DE</button>
+    <
 <section id="hero">
   <div class="hero-bg"></div>
   <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
@@ -1282,7 +1335,7 @@ footer {
     <div class="leistungen-scroll">
       <div class="leistungen-grid">
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="haushalt" onclick="oeffneLeistung('haushalt')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('haushalt')}">
           <div class="leistung-img">🏠</div>
           <div class="leistung-body">
             <div class="leistung-tag">Privat & Gewerbe</div>
@@ -1292,7 +1345,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="buero" onclick="oeffneLeistung('buero')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('buero')}">
           <div class="leistung-img">🏢</div>
           <div class="leistung-body">
             <div class="leistung-tag">Gewerbe</div>
@@ -1302,7 +1355,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="fenster" onclick="oeffneLeistung('fenster')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('fenster')}">
           <div class="leistung-img">🪟</div>
           <div class="leistung-body">
             <div class="leistung-tag">Innen & Außen</div>
@@ -1312,7 +1365,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="grund" onclick="oeffneLeistung('grund')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('grund')}">
           <div class="leistung-img">🧹</div>
           <div class="leistung-body">
             <div class="leistung-tag">Intensiv</div>
@@ -1322,7 +1375,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="hausmeister" onclick="oeffneLeistung('hausmeister')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('hausmeister')}">
           <div class="leistung-img">🔧</div>
           <div class="leistung-body">
             <div class="leistung-tag">Rundum-Service</div>
@@ -1332,7 +1385,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="treppe" onclick="oeffneLeistung('treppe')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('treppe')}">
           <div class="leistung-img">↕️</div>
           <div class="leistung-body">
             <div class="leistung-tag">Wohnanlagen</div>
@@ -1342,7 +1395,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="winter" onclick="oeffneLeistung('winter')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('winter')}">
           <div class="leistung-img">❄️</div>
           <div class="leistung-body">
             <div class="leistung-tag">Saison</div>
@@ -1352,7 +1405,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="garten" onclick="oeffneLeistung('garten')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('garten')}">
           <div class="leistung-img">🌿</div>
           <div class="leistung-body">
             <div class="leistung-tag">Ganzjährig</div>
@@ -1362,7 +1415,7 @@ footer {
           </div>
         </div>
 
-        <div class="leistung-card">
+        <div class="leistung-card" role="button" tabindex="0" data-leistung="muell" onclick="oeffneLeistung('muell')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();oeffneLeistung('muell')}">
           <div class="leistung-img">🗑️</div>
           <div class="leistung-body">
             <div class="leistung-tag">Monatlich</div>
@@ -1375,8 +1428,22 @@ footer {
       </div>
     </div>
     <div class="leistungen-punkte" id="leistungen-punkte" aria-hidden="true"></div>
+    <p class="leistungen-hinweis">Tippen Sie auf eine Leistung für alle Details</p>
   </div>
 </section>
+
+<!-- DETAILANSICHT EINER LEISTUNG -->
+<div class="leistung-overlay" id="leistung-overlay" role="dialog" aria-modal="true" aria-labelledby="lo-titel" hidden>
+  <div class="leistung-dialog">
+    <button type="button" class="leistung-schliessen" onclick="schliesseLeistung()" aria-label="Schließen">×</button>
+    <div class="leistung-dialog-icon" id="lo-icon" aria-hidden="true"></div>
+    <div class="leistung-dialog-tag" id="lo-tag"></div>
+    <h3 class="leistung-dialog-titel" id="lo-titel"></h3>
+    <p class="leistung-dialog-text" id="lo-text"></p>
+    <ul class="leistung-dialog-liste" id="lo-liste"></ul>
+    <a class="btn-primary leistung-dialog-cta" id="lo-cta" href="/anfrage.html">Leistung in Anspruch nehmen →</a>
+  </div>
+</div>
 
 <!-- ÜBER UNS -->
 <section id="ueber">
@@ -1569,7 +1636,7 @@ footer {
       <a href="/admin.html" style="opacity:0.5;font-size:12px">Login</a>
     </div>
     <div class="footer-social">
-      <a href="https://www.instagram.com/waschlurch/" target="_blank" rel="noopener noreferrer" aria-label="Waschlurch bei Instagram">
+      <a href="https://www.instagram.com/wasch.lurch/" target="_blank" rel="noopener noreferrer" aria-label="Waschlurch bei Instagram">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.13 1.38C1.35 2.68.93 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.13.67.66 1.34 1.08 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.3 1.46-.72 2.13-1.38.66-.67 1.08-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.3-.79-.72-1.46-1.38-2.13C21.32 1.35 20.65.93 19.86.63 19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0z"/><path d="M12 5.84a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zM12 16a4 4 0 110-8 4 4 0 010 8z"/><circle cx="18.41" cy="5.59" r="1.44"/></svg>
         <span>Instagram</span>
       </a>
@@ -1600,6 +1667,100 @@ footer {
 </div>
 
 <script>
+/* ── LEISTUNGEN: Laufband, Detailansicht, Weiterleitung ────────── */
+const LEISTUNG_INFO = {
+  haushalt:{icon:'🏠',tag:'Privat & Gewerbe',titel:'Haushaltsreinigung',
+    text:'Regelmäßig oder einmalig – wir bringen Ihr Zuhause auf Vordermann. Immer dieselbe Reinigungskraft, damit Sie wissen, wer bei Ihnen arbeitet.',
+    punkte:['Küche, Bad und Wohnräume gründlich','Staubwischen, Saugen, Wischen','Betten beziehen auf Wunsch','Eigene Reinigungsmittel möglich','Umweltschonende Öko-Mittel']},
+  buero:{icon:'🏢',tag:'Gewerbe',titel:'Büroreinigung',
+    text:'Für Büros, Praxen und Gewerberäume jeder Größe. Auf Wunsch außerhalb Ihrer Arbeitszeiten, damit niemand gestört wird.',
+    punkte:['Arbeitsplätze, Flure und Sanitärbereiche','Teeküche und Besprechungsräume','Papierkörbe leeren','Reinigung nach Feierabend möglich','Diskretion und Verschwiegenheit']},
+  fenster:{icon:'🪟',tag:'Innen & Außen',titel:'Fensterreinigung',
+    text:'Kristallklar von beiden Seiten – Rahmen und Falze inklusive. Auch schwer erreichbare Flächen.',
+    punkte:['Innen und außen streifenfrei','Rahmen und Falze inklusive','Schaufenster und Glastüren','Wintergärten und Dachfenster','Bei Bedarf mit Hebebühne']},
+  grund:{icon:'🧹',tag:'Intensiv',titel:'Grundreinigung',
+    text:'Die gründliche Tiefenreinigung – nach Umzug, Renovierung oder wenn es einfach mal wieder Zeit ist.',
+    punkte:['Alle Flächen, auch schwer zugängliche','Kalk- und Fettlöser wo nötig','Schränke innen auf Wunsch','Böden intensiv behandelt','Übergabefertiges Ergebnis']},
+  hausmeister:{icon:'🔧',tag:'Rundum-Service',titel:'Hausmeisterservice',
+    text:'Ein fester Ansprechpartner für alles rund um Ihre Immobilie – von der Kontrolle bis zur kleinen Reparatur.',
+    punkte:['Regelmäßige Objektkontrolle','Kleinreparaturen','Leuchtmittel und Filter wechseln','Ansprechpartner für Mieter','Koordination von Handwerkern']},
+  treppe:{icon:'↕️',tag:'Wohnanlagen',titel:'Treppenhausreinigung',
+    text:'Zuverlässig nach festem Plan – damit die Hausordnung eingehalten wird, ohne dass Sie sich kümmern müssen.',
+    punkte:['Treppen und Podeste','Handläufe und Geländer','Briefkastenanlage','Kellerflur und Aufzugkabine','Fenster im Treppenhaus']},
+  winter:{icon:'❄️',tag:'Saison',titel:'Winterdienst',
+    text:'Räum- und Streupflicht erfüllt – pünktlich, auch bei Schneefall früh am Morgen. Mit Dokumentation für Ihre Absicherung.',
+    punkte:['Einsatz vor 7 Uhr','Räumen und Streuen','Streugut inklusive','Dokumentation jedes Einsatzes','Auch am Wochenende']},
+  garten:{icon:'🌿',tag:'Ganzjährig',titel:'Gartenpflege',
+    text:'Rasen, Hecken, Beete – Ihre Außenanlage bleibt das ganze Jahr über gepflegt.',
+    punkte:['Rasen mähen und vertikutieren','Hecken und Sträucher schneiden','Beete pflegen und jäten','Laub beseitigen','Grünschnitt entsorgen']},
+  muell:{icon:'🗑️',tag:'Monatlich',titel:'Mülltonnenservice',
+    text:'Tonnen raus und wieder rein – pünktlich zum Abfuhrtag, ohne dass Sie daran denken müssen.',
+    punkte:['Rausstellen zum Abfuhrtermin','Zurückstellen nach Leerung','Alle Tonnenarten','Tonnenreinigung auf Wunsch','Auch bei Abwesenheit']}
+};
+
+let _zuletztFokussiert = null;
+window.oeffneLeistung = function(id){
+  const d = LEISTUNG_INFO[id];
+  if(!d) return;
+  _zuletztFokussiert = document.activeElement;
+  document.getElementById('lo-icon').textContent  = d.icon;
+  document.getElementById('lo-tag').textContent   = d.tag;
+  document.getElementById('lo-titel').textContent = d.titel;
+  document.getElementById('lo-text').textContent  = d.text;
+  document.getElementById('lo-liste').innerHTML   = d.punkte.map(p => `<li>${p}</li>`).join('');
+  // Führt in den Anfrage-Assistenten mit vorausgewählter Leistung
+  document.getElementById('lo-cta').href = '/anfrage.html?leistung=' + id;
+
+  const ov = document.getElementById('leistung-overlay');
+  ov.hidden = false;
+  requestAnimationFrame(() => ov.classList.add('offen'));
+  document.body.style.overflow = 'hidden';
+  document.querySelector('.leistung-schliessen').focus();
+};
+
+window.schliesseLeistung = function(){
+  const ov = document.getElementById('leistung-overlay');
+  ov.classList.remove('offen');
+  document.body.style.overflow = '';
+  setTimeout(() => { ov.hidden = true; }, 280);
+  if(_zuletztFokussiert) _zuletztFokussiert.focus();
+};
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && !document.getElementById('leistung-overlay').hidden) schliesseLeistung();
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const ov = document.getElementById('leistung-overlay');
+  if(ov) ov.addEventListener('click', e => { if(e.target === ov) schliesseLeistung(); });
+
+  /* Laufband: langsam von rechts nach links. Pausiert, sobald jemand
+     selbst wischt oder mit der Maus darüber ist – sonst kämpft man
+     gegen die Bewegung an. Bei „Bewegung reduzieren" bleibt es aus. */
+  const spur = document.querySelector('.leistungen-scroll');
+  if(!spur) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  let pause = false, letzterZeitpunkt = 0;
+  ['pointerdown','touchstart','wheel','mouseenter','focusin'].forEach(ev =>
+    spur.addEventListener(ev, () => { pause = true; }, { passive:true }));
+  ['mouseleave','focusout'].forEach(ev =>
+    spur.addEventListener(ev, () => { pause = false; }, { passive:true }));
+
+  function laufen(jetzt){
+    if(!letzterZeitpunkt) letzterZeitpunkt = jetzt;
+    const delta = jetzt - letzterZeitpunkt;
+    letzterZeitpunkt = jetzt;
+    if(!pause && document.visibilityState === 'visible'){
+      const max = spur.scrollWidth - spur.clientWidth;
+      if(max > 0){
+        spur.scrollLeft = spur.scrollLeft >= max - 1 ? 0 : spur.scrollLeft + (delta * 0.022);
+      }
+    }
+    requestAnimationFrame(laufen);
+  }
+  requestAnimationFrame(laufen);
+});
+
 // PAKET-GRUPPEN AUF- UND ZUKLAPPEN
 window.togglePaketGruppe = function(btn){
   const gruppe = btn.closest('.paket-gruppe');

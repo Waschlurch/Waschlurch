@@ -936,6 +936,31 @@ window.zurueckZurLeistungsauswahl = function(){
 };
 window._applySelectedPaket();
 
+/* Direkteinstieg über eine einzelne Leistung: /anfrage.html?leistung=fenster
+   Kommt von den Leistungskacheln der Startseite. Ohne Paket, deshalb
+   bleibt Schritt 1 erhalten – die Leistung ist nur vorausgewählt. */
+(function(){
+  const wunsch = new URLSearchParams(window.location.search).get('leistung');
+  if(!wunsch || window._selectedPaket) return;
+  const tile = tilesEl.querySelector(`.tile[data-id="${wunsch}"]`);
+  if(!tile || selectedServices.has(wunsch)) return;
+  selectedServices.add(wunsch);
+  tile.classList.add('selected');
+  const svc = SERVICES.find(s => s.id === wunsch);
+  const banner = document.getElementById('paket-banner');
+  if(banner && svc){
+    banner.innerHTML = `
+      <div class="paket-banner">
+        <span class="paket-banner-icon">${svc.icon}</span>
+        <span class="paket-banner-text">
+          <strong>${svc.name}</strong>
+          <span class="paket-banner-sub">vorausgewählt – Sie können weitere Leistungen ergänzen</span>
+        </span>
+      </div>`;
+    banner.style.display = 'block';
+  }
+})();
+
 // ── SCROLL-NACH-OBEN BUTTON ─────────────────────
 window.addEventListener('scroll', () => {
   const btn = document.getElementById('scroll-top-btn');
