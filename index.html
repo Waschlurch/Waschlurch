@@ -287,6 +287,14 @@ nav {
 .lang-switch button.active {
   background:var(--black); color:var(--white);
 }
+.lang-switch button:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
+.lang-hinweis { text-align:center; font-size:12px; color:var(--gray-500); margin-top:8px; font-style:italic; }
+@media(max-width:768px){
+  /* Im Kopf ist auf dem Handy kein Platz – der Umschalter wandert
+     ins aufklappbare Menü, bleibt aber erreichbar. */
+  nav .lang-switch { display:none; }
+  .mobile-menu .lang-switch { display:flex; margin:8px 0 0; align-self:flex-start; }
+}
 .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:4px; }
 .hamburger span { width:24px; height:2px; background:var(--black); border-radius:2px; transition:.3s; }
 
@@ -1210,28 +1218,49 @@ footer {
     <span style="font-size:28px;font-weight:800;color:var(--black);letter-spacing:-0.5px">Wasch<span style="font-size:28px;font-weight:800;color:var(--green);letter-spacing:-0.5px">lurch</span></span>
   </a>
   <ul class="nav-links">
-    <li><a href="#preise">Pakete</a></li>
-    <li><a href="#leistungen">Leistungen</a></li>
-    <li><a href="#ueber">Über uns</a></li>
-    <li><a href="#referenzen">Referenzen</a></li>
-    <li><a href="#faq">FAQ</a></li>
-    <li><a href="/anfrage.html" class="nav-cta">Jetzt anfragen</a></li>
+    <li><a href="#preise" data-i18n="nav.pakete">Pakete</a></li>
+    <li><a href="#leistungen" data-i18n="nav.leistungen">Leistungen</a></li>
+    <li><a href="#ueber" data-i18n="nav.ueber">Über uns</a></li>
+    <li><a href="#referenzen" data-i18n="nav.referenzen">Referenzen</a></li>
+    <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
+    <li><a href="/anfrage.html" class="nav-cta" data-i18n="nav.anfragen">Jetzt anfragen</a></li>
   </ul>
-  <div class="lang-switch">
-    <button class="active" onclick="setLanguage('de')">DE</button>
-    <
+  <div class="lang-switch" role="group" aria-label="Sprache wählen">
+    <button type="button" class="active" data-lang="de" onclick="setLanguage('de')" aria-pressed="true">DE</button>
+    <button type="button" data-lang="en" onclick="setLanguage('en')" aria-pressed="false">EN</button>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#preise" onclick="toggleMenu()">Pakete</a>
+  <a href="#leistungen" onclick="toggleMenu()">Leistungen</a>
+  <a href="#ueber" onclick="toggleMenu()">Über uns</a>
+  <a href="#referenzen" onclick="toggleMenu()">Referenzen</a>
+  <a href="#faq" onclick="toggleMenu()">FAQ</a>
+  <a href="/anfrage.html" style="color:var(--green)">Jetzt anfragen →</a>
+  <div class="lang-switch" role="group" aria-label="Sprache wählen">
+    <button type="button" class="active" data-lang="de" onclick="setLanguage('de')" aria-pressed="true">DE</button>
+    <button type="button" data-lang="en" onclick="setLanguage('en')" aria-pressed="false">EN</button>
+  </div>
+</div>
+
+<!-- HERO -->
 <section id="hero">
   <div class="hero-bg"></div>
   <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
   <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
   <div class="hero-inner">
     <div>
-      <div class="hero-badge">Ihr Reinigungsprofi im Rhein-Sieg-Kreis</div>
-      <h1 class="hero-title"><span class="hero-line">Sauber.</span><span class="hero-line accent">Zuverlässig.</span><span class="hero-line">Vor Ort.</span></h1>
+      <div class="hero-badge" data-i18n="hero.badge">Ihr Reinigungsprofi im Rhein-Sieg-Kreis</div>
+      <h1 class="hero-title"><span class="hero-line" data-i18n="hero.zeile1">Sauber.</span><span class="hero-line accent" data-i18n="hero.zeile2">Zuverlässig.</span><span class="hero-line" data-i18n="hero.zeile3">Vor Ort.</span></h1>
       <p class="hero-sub">Professionelle Reinigung & Hausmeisterservice für Privat und Gewerbe – in Eitorf und der gesamten Region.</p>
       <div class="hero-btns">
-        <a href="/anfrage.html" class="btn-primary">Kostenlos anfragen →</a>
-        <a href="tel:+4917684674451" class="btn-secondary">📞 Jetzt anrufen</a>
+        <a href="/anfrage.html" class="btn-primary" data-i18n="hero.cta">Kostenlos anfragen →</a>
+        <a href="tel:+4917684674451" class="btn-secondary" data-i18n="hero.anrufen">📞 Jetzt anrufen</a>
       </div>
       <div class="hero-stats">
         <div><div class="hero-stat-val">63+</div><div class="hero-stat-lbl">Zufriedene Kunden</div></div>
@@ -1428,7 +1457,8 @@ footer {
       </div>
     </div>
     <div class="leistungen-punkte" id="leistungen-punkte" aria-hidden="true"></div>
-    <p class="leistungen-hinweis">Tippen Sie auf eine Leistung für alle Details</p>
+    <p class="leistungen-hinweis" data-i18n="leistungen.hinweis">Tippen Sie auf eine Leistung für alle Details</p>
+    <p class="lang-hinweis" id="lang-hinweis" style="display:none">Package names, references and FAQ entries are maintained in German only.</p>
   </div>
 </section>
 
@@ -1759,6 +1789,91 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(laufen);
   }
   requestAnimationFrame(laufen);
+});
+
+/* ── SPRACHUMSCHALTUNG ─────────────────────────────────────────
+   Übersetzt ausschließlich fest im HTML stehende Texte. Inhalte
+   aus der Datenbank – Paketnamen, FAQ, Referenzen – bleiben
+   deutsch; sie müssten sonst doppelt gepflegt werden.
+
+   Elemente werden über data-i18n ausgezeichnet. Der deutsche
+   Originaltext wird beim ersten Umschalten gesichert, damit der
+   Rückweg verlustfrei ist. */
+const UEBERSETZUNG = {
+  'nav.pakete':        'Packages',
+  'nav.leistungen':    'Services',
+  'nav.ueber':         'About us',
+  'nav.referenzen':    'References',
+  'nav.faq':           'FAQ',
+  'nav.anfragen':      'Get a quote',
+  'hero.badge':        'Your cleaning professional in the Rhein-Sieg district',
+  'hero.zeile1':       'Clean.',
+  'hero.zeile2':       'Reliable.',
+  'hero.zeile3':       'Local.',
+  'hero.sub':          'Professional cleaning and facility services for homes and businesses – in Eitorf and across the region.',
+  'hero.cta':          'Request a free quote →',
+  'hero.anrufen':      '📞 Call now',
+  'hero.stat1':        'Happy customers',
+  'hero.stat2':        'Rating',
+  'hero.stat3':        'Response time',
+  'preise.tag':        'Packages',
+  'preise.titel':      'Clear packages',
+  'leistungen.tag':    'Services',
+  'leistungen.titel':  'What we do for you',
+  'leistungen.hinweis':'Tap a service for full details',
+  'ueber.tag':         'About us',
+  'referenzen.tag':    'References',
+  'faq.tag':           'FAQ',
+  'faq.titel':         'Frequently asked questions',
+  'kontakt.tag':       'Contact',
+  'kontakt.telefon':   'Phone',
+  'kontakt.email':     'Email',
+  'kontakt.standort':  'Location',
+  'kontakt.zeiten':    'Available',
+  'form.vorname':      'First name',
+  'form.nachname':     'Last name',
+  'form.email':        'Email',
+  'form.telefon':      'Phone',
+  'form.leistung':     'Service required',
+  'form.nachricht':    'Message',
+  'footer.impressum':  'Legal notice',
+  'footer.datenschutz':'Privacy policy',
+  'footer.agb':        'Terms',
+  'footer.login':      'Login'
+};
+
+window.setLanguage = function(sprache){
+  const ziele = document.querySelectorAll('[data-i18n]');
+
+  ziele.forEach(el => {
+    // Deutschen Originaltext einmalig sichern
+    if(!el.dataset.i18nDe) el.dataset.i18nDe = el.textContent.trim();
+    const schluessel = el.dataset.i18n;
+    if(sprache === 'en' && UEBERSETZUNG[schluessel]){
+      el.textContent = UEBERSETZUNG[schluessel];
+    } else {
+      el.textContent = el.dataset.i18nDe;
+    }
+  });
+
+  document.documentElement.lang = sprache;
+  document.querySelectorAll('.lang-switch button').forEach(b => {
+    const aktiv = b.dataset.lang === sprache;
+    b.classList.toggle('active', aktiv);
+    b.setAttribute('aria-pressed', aktiv ? 'true' : 'false');
+  });
+
+  try { localStorage.setItem('waschlurch_sprache', sprache); } catch(e){}
+
+  // Datenbankinhalte bleiben deutsch – einmalig darauf hinweisen
+  const hinweis = document.getElementById('lang-hinweis');
+  if(hinweis) hinweis.style.display = sprache === 'en' ? '' : 'none';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  let gespeichert = null;
+  try { gespeichert = localStorage.getItem('waschlurch_sprache'); } catch(e){}
+  if(gespeichert === 'en') window.setLanguage('en');
 });
 
 // PAKET-GRUPPEN AUF- UND ZUKLAPPEN
