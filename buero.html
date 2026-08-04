@@ -58,27 +58,92 @@
   --gray-200: #E5E7EB;
   --gray-100: #F9FAFB;
   --white: #FFFFFF;
+
+  /* ── Bausteinwerte aus DESIGN.md ─────────────────────────────
+     Diese Seite kannte bisher nur Farben. Ecken, Zeiten und
+     Kurven standen als lose Zahlen in jeder einzelnen Regel –
+     deshalb 12px, 14px, 16px, 18px, 100px nebeneinander.       */
+  --green-hover: #16A34A;
+  --eck-s:8px; --eck-m:16px; --eck-l:24px; --eck-voll:999px;
+  --ease-aus:cubic-bezier(0.16,1,0.30,1);
+  --zeit-sofort:120ms; --zeit-kurz:200ms;
+  --knopf-hoehe:52px; --feld-hoehe:52px; --tippflaeche:44px;
 }
+@media (min-width:768px){ :root { --knopf-hoehe:48px; } }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
 body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
 
 /* NAV */
-nav {
+/* ── KOPF ──────────────────────────────────────────────────────
+   Dieselbe schwebende Kapsel wie auf der Startseite, nur ohne
+   Menü. Die Seite steht auf Schwarz, deshalb dunkles Milchglas
+   statt weißem – eine weiße Leiste über schwarzem Grund war der
+   härteste Bruch im ganzen Ablauf.                             */
+:root { --kopf-hoehe:60px; --kopf-rand:12px; }
+
+.kopf {
   position:fixed; top:0; left:0; right:0; z-index:1000;
-  background:#FFFFFF;
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(0,0,0,0.08);
-  padding:0 5%; height:64px;
-  display:flex; align-items:center; justify-content:space-between;
+  padding:var(--kopf-rand) 20px 0;
+  pointer-events:none;
 }
-.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-.nav-logo img { height:36px; width:auto; }
-.nav-back { font-size:14px; font-weight:600; color:var(--gray-700); text-decoration:none; transition:color .2s; }
-.nav-back:hover { color:var(--green-dark); }
+.kopf-kapsel {
+  pointer-events:auto;
+  max-width:1100px; margin:0 auto;
+  height:var(--kopf-hoehe);
+  padding:0 8px 0 16px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  border-radius:var(--eck-l);
+  background:rgba(22,26,23,0.72);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(255,255,255,0.10);
+  box-shadow:0 12px 28px rgba(0,0,0,0.32);
+}
+.nav-logo {
+  display:flex; align-items:center; gap:10px; text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-logo img {
+  height:30px; width:auto; display:block;
+  transition:transform var(--zeit-kurz) var(--ease-aus);
+}
+.nav-logo:hover img { transform:rotate(-6deg) scale(1.06); }
+.nav-wortmarke {
+  font-size:19px; font-weight:800; letter-spacing:-0.03em; line-height:1;
+  color:var(--white); white-space:nowrap;
+}
+.nav-wortmarke b { font-weight:800; color:var(--green); }
+
+/* Der Weg zurück ist auf dieser Seite die einzige Nebenhandlung –
+   deshalb als Pille mit eigener Tippfläche statt als nackter Text
+   in 14px, den man auf dem Handy kaum trifft.                  */
+.nav-back {
+  display:inline-flex; align-items:center; gap:8px;
+  min-height:40px; padding:0 16px;
+  border-radius:var(--eck-voll);
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.12);
+  font-size:14px; font-weight:600; color:rgba(255,255,255,0.82);
+  text-decoration:none; white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus),
+             color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.nav-back:hover { background:rgba(255,255,255,0.13); border-color:rgba(255,255,255,0.24); color:var(--white); }
+.nav-back:active { transform:scale(0.97); }
+.nav-back-pfeil { transition:transform var(--zeit-kurz) var(--ease-aus); }
+.nav-back:hover .nav-back-pfeil { transform:translateX(-3px); }
+
+@media(max-width:560px){
+  .nav-wortmarke { display:none; }
+  .kopf { padding-left:16px; padding-right:16px; }
+}
 
 /* LAYOUT */
-main { padding:64px 5% 80px; min-height:100vh; }
+main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand)) 5% 80px; min-height:100vh; }
 .wizard-wrap { max-width:680px; margin:0 auto; }
 .wizard-head { text-align:center; padding:48px 0 32px; }
 .tag { font-size:13px; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:12px; }
@@ -104,7 +169,7 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .wizard-card {
   background:rgba(255,255,255,0.04);
   border:1px solid rgba(255,255,255,0.1);
-  border-radius:24px; padding:36px;
+  border-radius:var(--eck-l); padding:36px;
 }
 .step-panel { display:none; }
 .step-panel.active { display:block; animation:fadein .3s ease; }
@@ -114,15 +179,21 @@ main { padding:64px 5% 80px; min-height:100vh; }
 
 /* SERVICE TILES */
 .tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+/* Auswahlkachel. Ausgewählt wird über Fläche, Rahmen und das
+   Häkchen oben rechts kenntlich gemacht – drei Merkmale, von denen
+   keines allein auf Farbsehen angewiesen ist.                   */
 .tile {
-  background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.1);
-  border-radius:16px; padding:18px 12px; text-align:center; cursor:pointer;
-  transition:all .2s; position:relative;
+  background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:var(--eck-m); padding:18px 12px; text-align:center; cursor:pointer;
+  position:relative; -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
 }
-.tile:hover { border-color:rgba(34,197,94,0.4); }
+.tile:hover { border-color:rgba(34,197,94,0.45); background:rgba(255,255,255,0.07); }
+.tile:active { transform:scale(0.97); }
 .tile.selected { background:rgba(34,197,94,0.12); border-color:var(--green); }
-.tile-icon { font-size:28px; margin-bottom:8px; transition:filter .2s; }
-.tile.selected .tile-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.8)); }
+.tile-icon { font-size:28px; margin-bottom:8px; }
 .tile-name { font-size:13px; font-weight:600; margin-bottom:2px; }
 .tile-price { font-size:11px; color:rgba(255,255,255,0.4); }
 .tile-check {
@@ -132,23 +203,70 @@ main { padding:64px 5% 80px; min-height:100vh; }
 }
 .tile.selected .tile-check { display:flex; }
 
-/* FIELDS */
+/* ── FORMULARFELDER ────────────────────────────────────────────
+   · Schriftgröße 14px → 16px. Unter 16px zoomt iOS beim Antippen
+     in das Feld hinein und der Rest der Seite rutscht aus dem Bild.
+   · Feste Höhe 52px statt Polster-Rechnerei
+   · Ecken 12px → 8px (--eck-s)
+   · Beschriftung 12px/Versalien/50 % → 13px/Normalschrift/72 %.
+     Versalien bei 50 % Deckkraft lagen unter dem Mindestkontrast.
+   · Fokus bekommt einen Ring statt nur einen 1px-Rahmenwechsel  */
 .field { margin-bottom:18px; }
-.field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
-.field input, .field select, .field textarea {
-  width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.12); border-radius:12px;
-  font-family:inherit; font-size:14px; color:var(--white); outline:none; transition:border .2s;
+.field label {
+  display:block; font-size:13px; font-weight:600; line-height:1.4;
+  color:rgba(255,255,255,0.72); letter-spacing:0; margin-bottom:8px;
+  cursor:pointer;
 }
-.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.25); }
-.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green); }
-.field select option { background:var(--gray-900); }
-.field textarea { min-height:90px; resize:vertical; }
+.field input, .field select, .field textarea {
+  width:100%; min-height:var(--feld-hoehe); padding:14px 16px;
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.14); border-radius:var(--eck-s);
+  font-family:inherit; font-size:16px; line-height:1.4;
+  color:var(--white); outline:none;
+  transition:border-color var(--zeit-kurz) var(--ease-aus),
+             background-color var(--zeit-kurz) var(--ease-aus);
+}
+.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.32); }
+.field input:hover, .field select:hover, .field textarea:hover { border-color:rgba(255,255,255,0.24); }
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color:var(--green); background:rgba(255,255,255,0.09);
+  outline:3px solid rgba(34,197,94,0.25); outline-offset:0;
+  border-radius:var(--eck-s);
+}
+/* Eigener Pfeil: ohne `appearance:none` zeichnet Windows einen
+   grauen Kasten, der auf dunklem Grund als heller Block auffällt. */
+.field select {
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  padding-right:44px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 16px center;
+}
+.field select option { background:var(--gray-900); color:var(--white); }
+.field textarea { min-height:110px; resize:vertical; }
+/* Ankreuz- und Auswahlkästchen sind keine Eingabefelder. Ohne
+   diese Ausnahme erbten sie die 52px Mindesthöhe von oben und das
+   Kästchen wurde darin mittig gezeichnet – es stand dadurch neben
+   der zweiten statt der ersten Textzeile.                       */
+.field input[type="checkbox"], .field input[type="radio"] {
+  width:18px; height:18px; min-height:0; min-width:0;
+  padding:0; border:none; background:none; border-radius:0;
+  accent-color:var(--green); cursor:pointer;
+}
+/* Vom Browser ausgefüllte Felder behielten Chromes hellen
+   Standardgrund – ein weißer Block mitten im dunklen Formular. */
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus {
+  -webkit-text-fill-color:var(--white);
+  -webkit-box-shadow:0 0 0 1000px #1f1f1f inset;
+  caret-color:var(--white);
+  transition:background-color 9999s ease-out 0s;
+}
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.field-error { display:none; color:#F87171; font-size:12px; margin-top:6px; }
+.field-error { display:none; color:#F87171; font-size:13px; margin-top:6px; }
 
 /* SUMMARY */
-.summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px; margin-bottom:24px; }
+.summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-m); padding:20px; margin-bottom:24px; }
 .summary-row { display:flex; justify-content:space-between; gap:12px; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
 .summary-row:last-child { border-bottom:none; }
 .summary-row span:first-child { color:rgba(255,255,255,0.45); }
@@ -161,32 +279,72 @@ main { padding:64px 5% 80px; min-height:100vh; }
   background:linear-gradient(to top, var(--black) 60%, transparent);
   padding:16px 0 20px; z-index:50;
 }
+/* Fehlerhaftes Feld: roter Rahmen plus roter Ring in derselben
+   Machart wie der grüne Fokusring – gleicher Bauplan, andere
+   Bedeutung.                                                   */
 .field input.invalid, .field select.invalid, .field textarea.invalid {
-  border-color:#F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15);
+  border-color:#F87171 !important;
+  outline:3px solid rgba(248,113,113,0.22); outline-offset:0;
   animation:shakeInvalid .35s;
 }
-.cb-group.invalid, .code-input.invalid { border:1px solid #F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15); border-radius:12px; padding:8px; }
+.cb-group.invalid, .code-input.invalid {
+  border:1.5px solid #F87171 !important;
+  outline:3px solid rgba(248,113,113,0.22); outline-offset:0;
+  border-radius:var(--eck-s); padding:8px;
+}
 @keyframes shakeInvalid { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+@media(prefers-reduced-motion: reduce){
+  .field input.invalid, .field select.invalid, .field textarea.invalid { animation:none; }
+}
+/* Der grüne Schein unter diesem Knopf (0 6px 20px rgba(34,197,94,.4))
+   war einer der beiden Leuchteffekte, die DESIGN.md §7 ausschließt.
+   Erhebung entsteht jetzt über Versatz und Weichzeichnung.      */
 .scroll-top-btn {
   position:fixed; bottom:24px; right:24px; z-index:100;
-  width:48px; height:48px; border-radius:50%;
+  width:48px; height:48px; border-radius:var(--eck-voll);
   background:var(--green); color:var(--white); border:none;
-  font-size:20px; cursor:pointer; box-shadow:0 6px 20px rgba(34,197,94,0.4);
+  font-size:20px; cursor:pointer;
+  box-shadow:0 12px 24px rgba(16,40,24,0.28), 0 4px 8px rgba(16,40,24,0.18);
   display:none; align-items:center; justify-content:center;
-  transition:transform .15s;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
 }
-.scroll-top-btn:hover { transform:scale(1.08); }
+.scroll-top-btn:hover { background:var(--green-hover); }
+.scroll-top-btn:active { transform:scale(0.92); }
 .scroll-top-btn.visible { display:flex; }
 .paket-back-link { display:inline-block; margin-top:14px; font-size:13px; color:rgba(255,255,255,0.5); cursor:pointer; text-decoration:underline; }
 .paket-back-link:hover { color:var(--green); }
 .paket-unavailable { text-align:center; padding:80px 20px; }
 .paket-unavailable-icon { font-size:48px; margin-bottom:16px; }
-.btn { flex:1; padding:15px; border-radius:100px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; border:none; text-align:center; }
-.btn-back { background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); flex:0 0 auto; padding:15px 24px; }
-.btn-back:hover { background:rgba(255,255,255,0.06); }
+/* ── SCHALTFLÄCHEN ─────────────────────────────────────────────
+   `transition:all` ersetzt durch die Eigenschaften, die sich
+   tatsächlich ändern. Gedrückt schrumpft die Fläche um 3 % – auf
+   dem Handy war das bisher die einzige fehlende Rückmeldung
+   zwischen Antippen und Schrittwechsel.                        */
+.btn {
+  flex:1; min-height:var(--knopf-hoehe); padding:0 28px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border-radius:var(--eck-voll); border:none;
+  font-size:16px; font-weight:600; line-height:1.25;
+  font-family:inherit; text-align:center; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus),
+             color var(--zeit-kurz) var(--ease-aus),
+             box-shadow var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.btn:active { transform:scale(0.97); }
+.btn:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-back {
+  background:transparent; border:1.5px solid rgba(255,255,255,0.18);
+  color:rgba(255,255,255,0.72); flex:0 0 auto; padding:0 24px;
+}
+.btn-back:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.32); color:var(--white); }
 .btn-next { background:var(--green); color:var(--white); }
-.btn-next:hover { background:var(--green-dark); }
-.btn-next:disabled { opacity:.5; cursor:not-allowed; }
+.btn-next:hover { background:var(--green-hover); box-shadow:0 4px 8px rgba(16,40,24,0.28), 0 2px 4px rgba(16,40,24,0.18); }
+.btn-next:disabled:hover { background:var(--green); box-shadow:none; }
 
 /* SUCCESS */
 .success-icon { width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,0.15); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 20px; }
@@ -196,30 +354,67 @@ main { padding:64px 5% 80px; min-height:100vh; }
 .submit-error { display:none; color:#F87171; font-size:13px; text-align:center; margin-top:14px; }
 .code-input {
   width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px;
-  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px;
-  font-family:inherit; color:var(--white); outline:none; transition:border .2s;
+  background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.14); border-radius:var(--eck-s);
+  font-family:inherit; color:var(--white); outline:none;
+  transition:border-color var(--zeit-kurz) var(--ease-aus),
+             background-color var(--zeit-kurz) var(--ease-aus);
 }
-.code-input:focus { border-color:var(--green); }
+.code-input:focus {
+  border-color:var(--green); background:rgba(255,255,255,0.09);
+  outline:3px solid rgba(34,197,94,0.25); outline-offset:0;
+  border-radius:var(--eck-s);
+}
 .code-hint { font-size:13px; color:rgba(255,255,255,0.5); text-align:center; margin-bottom:16px; }
 .code-resend { text-align:center; margin-top:16px; font-size:13px; }
 .code-resend button { background:transparent; border:none; color:var(--green); font-size:13px; cursor:pointer; font-family:inherit; font-weight:600; }
 .code-resend span { color:rgba(255,255,255,0.4); }
 
 /* DYNAMIC SERVICE FIELDS */
-.service-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px; margin-bottom:16px; }
+.service-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-m); padding:18px; margin-bottom:16px; }
 .service-block-title { font-size:14px; font-weight:700; color:var(--green); margin-bottom:14px; }
 .optional-toggle { font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); cursor:pointer; padding:8px 0; user-select:none; }
 .optional-toggle:hover { color:var(--white); }
 .optional-box { margin-top:10px; }
-.field label.bool-label { text-transform:none; letter-spacing:0; font-size:14px; color:var(--white); display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0; font-weight:500; }
-.field label.bool-label input { width:auto; }
+/* Häkchen oben ausgerichtet, nicht mittig: Bei einer mehrzeiligen
+   Frage stand das Kästchen sonst irgendwo in der Mitte und wirkte,
+   als gehöre es zu keiner der Zeilen.                           */
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:15px; line-height:1.5; color:var(--white); display:flex; align-items:flex-start; gap:12px; cursor:pointer; margin-bottom:0; font-weight:500; min-height:var(--tippflaeche); padding:4px 0; }
+.field label.bool-label input { flex-shrink:0; margin-top:3px; }
 .cb-group { display:flex; flex-wrap:wrap; gap:8px; }
-.cb-chip { display:flex; align-items:center; gap:6px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; font-size:12px; cursor:pointer; text-transform:none; }
-.cb-chip input { width:auto; }
+/* Ankreuz-Pille. Mindesthöhe 44px, sonst ist sie mit dem Daumen
+   nicht zuverlässig zu treffen – vorher stand sie bei 33px.
+
+   Die Pille ist ein <label> innerhalb von .field und würde deshalb
+   die allgemeine Beschriftungsregel darüber erben (display:block,
+   Abstand nach unten). Der zweite, spezifischere Selektor hält sie
+   davon frei.                                                   */
+.cb-chip, .field label.cb-chip {
+  display:inline-flex; align-items:center; gap:8px; margin-bottom:0;
+  color:var(--white); letter-spacing:0; font-weight:500;
+  min-height:var(--tippflaeche); padding:0 16px;
+  background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.14);
+  border-radius:var(--eck-voll); font-size:14px; cursor:pointer; text-transform:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus);
+}
+.cb-chip:hover, .field label.cb-chip:hover { background:rgba(255,255,255,0.10); border-color:rgba(255,255,255,0.24); }
+.cb-chip:has(input:checked), .field label.cb-chip:has(input:checked) { background:rgba(34,197,94,0.14); border-color:var(--green); }
+.cb-chip input { width:auto; accent-color:var(--green); }
 .paket-banner {
   margin-top:20px; display:inline-flex; align-items:center; gap:10px;
   background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3);
   border-radius:100px; padding:10px 20px; font-size:13px; font-weight:600; color:var(--green);
+}
+
+/* ── Sichtbarer Tastaturfokus ──────────────────────────────────
+   Fehlte auf diesen Seiten vollständig. Wer mit der Tastatur
+   ausfüllt, sah nicht, wo er sich befindet (WCAG 2.4.7).       */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible,
+[tabindex]:focus-visible, .tile:focus-visible {
+  outline: 3px solid var(--green, #22C55E);
+  outline-offset: 3px;
 }
 
 @media(max-width:600px) {
@@ -234,16 +429,37 @@ main { padding:64px 5% 80px; min-height:100vh; }
   .paket-banner { font-size:12px; padding:9px 14px; text-align:left; }
   .wizard-head { padding:32px 0 24px; }
 }
+
+/* Der "Entfernen"-Knopf bei hochgeladenen Dateien stand als
+   Klumpen aus Inline-Angaben im JavaScript und war mit 29px Höhe
+   und 11px Schrift weit unter der Mindesttippfläche.          */
+.datei-entfernen {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 16px;
+  border-radius:var(--eck-voll);
+  background:rgba(248,113,113,0.10); border:1.5px solid rgba(248,113,113,0.35);
+  color:#F87171; font-size:14px; font-weight:600;
+  cursor:pointer; font-family:inherit;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.datei-entfernen:hover { background:rgba(248,113,113,0.18); border-color:rgba(248,113,113,0.55); }
+.datei-entfernen:active { transform:scale(0.97); }
 </style>
 </head>
 <body>
 
-<nav>
-  <a href="/" class="nav-logo">
-    <img src="/logo.png?v=5" alt="Waschlurch" style="height:36px;width:auto">
-  </a>
-  <a href="/" class="nav-back">← Zur Startseite</a>
-</nav>
+<header class="kopf">
+  <div class="kopf-kapsel">
+    <a href="/" class="nav-logo" aria-label="Waschlurch – zur Startseite">
+      <img src="/logo.png?v=5" alt="" width="50" height="30" fetchpriority="high" decoding="async">
+      <span class="nav-wortmarke">Wasch<b>lurch</b></span>
+    </a>
+    <a href="/" class="nav-back"><span class="nav-back-pfeil" aria-hidden="true">←</span>Zur Startseite</a>
+  </div>
+</header>
 
 <main>
 <button class="scroll-top-btn" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Nach oben">↑</button>
@@ -683,7 +899,7 @@ function fieldHTML(domId, field, required){
       <input type="file" id="${domId}_input" accept="image/*" onchange="handleDynFileUpload('${domId}', this)">
       <div id="${domId}_preview" style="margin-top:8px;display:none">
         <img id="${domId}_preview_img" style="max-width:160px;border-radius:10px;display:block;margin-bottom:6px">
-        <button type="button" onclick="removeDynFile('${domId}')" style="padding:6px 12px;border-radius:100px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;font-size:11px;cursor:pointer;font-family:inherit">Entfernen</button>
+        <button type="button" onclick="removeDynFile('${domId}')" class="datei-entfernen">Entfernen</button>
       </div>
       <input type="hidden" id="${domId}" value="">
     </div>`;

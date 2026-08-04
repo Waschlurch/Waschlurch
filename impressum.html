@@ -58,10 +58,50 @@
 :root { --green:#22C55E; --green-dark:#15803D; --black:#0A0A0A; --gray-700:#374151; --white:#FFFFFF; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
-nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:#FFFFFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; }
-.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-.nav-logo img { height:36px; width:auto; }
-main { padding:110px 5% 80px; min-height:100vh; max-width:720px; margin:0 auto; }
+:root { --eck-l:24px; --eck-voll:999px; --zeit-kurz:200ms; --ease-aus:cubic-bezier(0.16,1,0.30,1); }
+/* ── KOPF ──────────────────────────────────────────────────────
+   Dieselbe schwebende Kapsel wie auf der Startseite, nur ohne
+   Menü. Diese Seite steht auf Weiß, deshalb helles Milchglas.   */
+:root { --kopf-hoehe:60px; --kopf-rand:12px; }
+
+.kopf {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  padding:var(--kopf-rand) 20px 0;
+  pointer-events:none;
+}
+.kopf-kapsel {
+  pointer-events:auto;
+  max-width:1100px; margin:0 auto;
+  height:var(--kopf-hoehe);
+  padding:0 8px 0 16px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  border-radius:var(--eck-l);
+  background:rgba(255,255,255,0.82);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(10,10,10,0.07);
+  box-shadow:0 4px 8px rgba(16,40,24,0.05), 0 2px 4px rgba(16,40,24,0.04);
+}
+.nav-logo {
+  display:flex; align-items:center; gap:10px; text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-logo img {
+  height:30px; width:auto; display:block;
+  transition:transform var(--zeit-kurz) var(--ease-aus);
+}
+.nav-logo:hover img { transform:rotate(-6deg) scale(1.06); }
+.nav-wortmarke {
+  font-size:19px; font-weight:800; letter-spacing:-0.03em; line-height:1;
+  color:var(--black); white-space:nowrap;
+}
+.nav-wortmarke b { font-weight:800; color:var(--green); }
+
+@media(max-width:560px){
+  .nav-wortmarke { display:none; }
+  .kopf { padding-left:16px; padding-right:16px; }
+}
+main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand) + 28px) 5% 80px; min-height:100vh; max-width:720px; margin:0 auto; }
 h1 { font-size:clamp(28px,4vw,36px); font-weight:700; letter-spacing:-1px; margin-bottom:36px; }
 #impressum-content h2 { font-size:16px; font-weight:700; color:var(--green-dark); margin:28px 0 8px; }
 #impressum-content h2:first-child { margin-top:0; }
@@ -71,7 +111,14 @@ h1 { font-size:clamp(28px,4vw,36px); font-weight:700; letter-spacing:-1px; margi
 </head>
 <body>
 
-<nav><a href="/" class="nav-logo"><img src="/logo.png?v=5" alt="Waschlurch"></a></nav>
+<header class="kopf">
+  <div class="kopf-kapsel">
+    <a href="/" class="nav-logo" aria-label="Waschlurch – zur Startseite">
+      <img src="/logo.png?v=5" alt="" width="50" height="30" fetchpriority="high" decoding="async">
+      <span class="nav-wortmarke">Wasch<b>lurch</b></span>
+    </a>
+  </div>
+</header>
 
 <main>
   <h1>Impressum</h1>
