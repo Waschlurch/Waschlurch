@@ -28,51 +28,187 @@
   window._db = db; window._collection = collection; window._addDoc = addDoc; window._serverTimestamp = serverTimestamp;
 </script>
 <style>
-:root { --green:#22C55E; --green-dark:#15803D; --black:#0A0A0A; --gray-500:#6B7280; --white:#FFFFFF; }
+:root {
+  --green:#22C55E; --green-hover:#16A34A; --green-dark:#15803D;
+  --black:#0A0A0A; --gray-500:#6B7280; --white:#FFFFFF;
+
+  /* Bausteinwerte aus DESIGN.md – vier Ecken statt sechs loser
+     Zahlen, eine Kurve statt keiner.                            */
+  --eck-s:8px; --eck-m:16px; --eck-l:24px; --eck-voll:999px;
+  --ease-aus:cubic-bezier(0.16,1,0.30,1);
+  --zeit-sofort:120ms; --zeit-kurz:200ms;
+  --knopf-hoehe:52px; --feld-hoehe:52px; --tippflaeche:44px;
+}
+@media (min-width:768px){ :root { --knopf-hoehe:48px; } }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
 body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
-nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:#FFFFFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; }
-.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-.nav-logo img { height:36px; width:auto; }
-main { padding:100px 5% 80px; min-height:100vh; }
+/* ── KOPF ──────────────────────────────────────────────────────
+   Dieselbe schwebende Kapsel wie auf der Startseite, nur ohne
+   Menü. Die Seite steht auf Schwarz, deshalb dunkles Milchglas
+   statt weißem – eine weiße Leiste über schwarzem Grund war der
+   härteste Bruch im ganzen Ablauf.                             */
+:root { --kopf-hoehe:60px; --kopf-rand:12px; }
+
+.kopf {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  padding:var(--kopf-rand) 20px 0;
+  pointer-events:none;
+}
+.kopf-kapsel {
+  pointer-events:auto;
+  max-width:1100px; margin:0 auto;
+  height:var(--kopf-hoehe);
+  padding:0 8px 0 16px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  border-radius:var(--eck-l);
+  background:rgba(22,26,23,0.72);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(255,255,255,0.10);
+  box-shadow:0 12px 28px rgba(0,0,0,0.32);
+}
+.nav-logo {
+  display:flex; align-items:center; gap:10px; text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-logo img {
+  height:30px; width:auto; display:block;
+  transition:transform var(--zeit-kurz) var(--ease-aus);
+}
+.nav-logo:hover img { transform:rotate(-6deg) scale(1.06); }
+.nav-wortmarke {
+  font-size:19px; font-weight:800; letter-spacing:-0.03em; line-height:1;
+  color:var(--white); white-space:nowrap;
+}
+.nav-wortmarke b { font-weight:800; color:var(--green); }
+
+@media(max-width:560px){
+  .nav-wortmarke { display:none; }
+  .kopf { padding-left:16px; padding-right:16px; }
+}
+main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand) + 28px) 5% 80px; min-height:100vh; }
 .wrap { max-width:640px; margin:0 auto; }
 .tag { display:inline-block; background:rgba(34,197,94,0.15); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:100px; margin-bottom:16px; }
 h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margin-bottom:12px; }
 .sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.6; margin-bottom:36px; }
-.card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:36px; }
+.card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-l); padding:36px; }
 .field { margin-bottom:18px; }
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.field label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
-.field input, .field select, .field textarea {
-  width:100%; padding:13px 16px; background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.12); border-radius:12px;
-  font-family:inherit; font-size:16px; color:var(--white); outline:none; transition:border .2s;
+/* ── FORMULARFELDER ────────────────────────────────────────────
+   Feste Höhe 52px, Ecken 8px, Beschriftung in Normalschrift statt
+   Versalien bei 50 % Deckkraft. Fokus bekommt einen Ring statt
+   nur einen 1px-Rahmenwechsel – der ist bei Sonnenlicht auf dem
+   Handy praktisch unsichtbar.                                  */
+.field label {
+  display:block; font-size:13px; font-weight:600; line-height:1.4;
+  color:rgba(255,255,255,0.72); letter-spacing:0; margin-bottom:8px;
+  cursor:pointer;
 }
-.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.25); }
-.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green); }
-.field select option { background:#111827; }
-.field textarea { min-height:80px; resize:vertical; }
-.field input.invalid, .field select.invalid { border-color:#F87171 !important; box-shadow:0 0 0 3px rgba(248,113,113,0.15); }
-.field label.bool-label { text-transform:none; letter-spacing:0; font-size:14px; color:var(--white); display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0; font-weight:500; }
-.field label.bool-label input { width:auto; }
+.field input, .field select, .field textarea {
+  width:100%; min-height:var(--feld-hoehe); padding:14px 16px;
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.14); border-radius:var(--eck-s);
+  font-family:inherit; font-size:16px; line-height:1.4;
+  color:var(--white); outline:none;
+  transition:border-color var(--zeit-kurz) var(--ease-aus),
+             background-color var(--zeit-kurz) var(--ease-aus);
+}
+.field input::placeholder, .field textarea::placeholder { color:rgba(255,255,255,0.32); }
+.field input:hover, .field select:hover, .field textarea:hover { border-color:rgba(255,255,255,0.24); }
+/* `outline` statt `box-shadow`: sonst legt die allgemeine
+   :focus-visible-Regel weiter unten einen zweiten Ring darüber. */
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color:var(--green); background:rgba(255,255,255,0.09);
+  outline:3px solid rgba(34,197,94,0.25); outline-offset:0;
+  border-radius:var(--eck-s);
+}
+.field select {
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  padding-right:44px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 16px center;
+}
+.field select option { background:#111827; color:var(--white); }
+.field textarea { min-height:100px; resize:vertical; }
+/* Ankreuz- und Auswahlkästchen sind keine Eingabefelder. Ohne
+   diese Ausnahme erbten sie die 52px Mindesthöhe von oben: Das
+   Kästchen selbst wurde innerhalb dieser Fläche mittig gezeichnet
+   und stand dadurch neben der zweiten statt der ersten Textzeile. */
+.field input[type="checkbox"], .field input[type="radio"] {
+  width:18px; height:18px; min-height:0; min-width:0;
+  padding:0; border:none; background:none; border-radius:0;
+  accent-color:var(--green); cursor:pointer;
+}
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus {
+  -webkit-text-fill-color:var(--white);
+  -webkit-box-shadow:0 0 0 1000px #1f1f1f inset;
+  caret-color:var(--white);
+  transition:background-color 9999s ease-out 0s;
+}
+.field input.invalid, .field select.invalid, .field textarea.invalid {
+  border-color:#F87171 !important;
+  outline:3px solid rgba(248,113,113,0.22); outline-offset:0;
+}
+/* Häkchen oben ausgerichtet, nicht mittig: Bei einer vierzeiligen
+   Einwilligung stand das Kästchen sonst irgendwo in der Mitte und
+   wirkte, als gehöre es zu keiner der Zeilen.                   */
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:15px; line-height:1.5; color:var(--white); display:flex; align-items:flex-start; gap:12px; cursor:pointer; margin-bottom:0; font-weight:500; min-height:var(--tippflaeche); padding:4px 0; }
+/* Kein `width:auto` mehr – das war spezifischer als die
+   Kästchen-Regel darüber und drückte die Breite auf den
+   Vorgabewert 13px zurück, während die Höhe bei 18 blieb.     */
+.field label.bool-label input { flex-shrink:0; margin-top:3px; }
 .section-label { font-size:14px; font-weight:700; color:var(--green); margin:28px 0 14px; }
 .field-error { display:none; color:#F87171; font-size:13px; margin-top:-8px; margin-bottom:16px; }
+/* Gedrückt schrumpft die Fläche um 3 % – bisher gab es zwischen
+   Antippen und Antwort des Servers keinerlei Rückmeldung.      */
 .btn-primary {
-  width:100%; padding:16px; border-radius:100px; border:none; cursor:pointer;
-  background:var(--green); color:var(--white); font-size:15px; font-weight:700;
-  font-family:inherit; transition:background .2s; margin-top:8px;
+  width:100%; min-height:var(--knopf-hoehe); padding:0 28px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border-radius:var(--eck-voll); border:none; cursor:pointer;
+  background:var(--green); color:var(--white);
+  font-size:16px; font-weight:600; line-height:1.25;
+  font-family:inherit; margin-top:8px;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             box-shadow var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
 }
-.btn-primary:hover { background:var(--green-dark); }
-.btn-primary:disabled { opacity:.6; cursor:not-allowed; }
+.btn-primary:hover { background:var(--green-hover); box-shadow:0 4px 8px rgba(16,40,24,0.28), 0 2px 4px rgba(16,40,24,0.18); }
+.btn-primary:active { transform:scale(0.97); }
+.btn-primary:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-primary:disabled:hover { background:var(--green); }
 .code-hint { font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:16px; text-align:center; }
-.code-input { width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; font-family:inherit; color:var(--white); outline:none; margin-bottom:14px; }
-.code-input:focus { border-color:var(--green); }
+.code-input { width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.14); border-radius:var(--eck-s); font-family:inherit; color:var(--white); outline:none; margin-bottom:14px; }
+.code-input:focus { border-color:var(--green); background:rgba(255,255,255,0.09); outline:3px solid rgba(34,197,94,0.25); outline-offset:0; border-radius:var(--eck-s); }
 .code-resend { text-align:center; font-size:13px; color:rgba(255,255,255,0.4); margin-top:14px; }
 .code-resend button { background:none; border:none; color:var(--green); font-weight:600; cursor:pointer; font-family:inherit; font-size:13px; }
 .success-panel { text-align:center; padding:40px 0; }
 .success-icon { width:64px; height:64px; border-radius:50%; background:rgba(34,197,94,0.15); color:var(--green); font-size:32px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
-input[type="file"] { color:rgba(255,255,255,0.6); font-size:13px; }
+/* Dateiauswahl: Der Knopf, den der Browser selbst zeichnet, sah als
+   grauer Systemkasten auf dunklem Grund wie ein Fremdkörper aus.
+   ::file-selector-button färbt genau diesen Knopf ein, ohne den
+   Auswahldialog anzufassen.                                     */
+input[type="file"] {
+  color:rgba(255,255,255,0.72); font-size:14px;
+  padding:12px 16px; min-height:var(--feld-hoehe);
+}
+input[type="file"]::file-selector-button {
+  /* Schmal gehalten: Daneben steht der vom Browser gesetzte Text
+     „Keine ausgewählt". Bei 16px Polster blieb dafür zu wenig
+     Platz und der Browser kürzte ihn mitten im Wort.           */
+  margin-right:12px; padding:8px 14px;
+  border:1.5px solid rgba(255,255,255,0.18); border-radius:var(--eck-voll);
+  background:rgba(255,255,255,0.08); color:var(--white);
+  font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus);
+}
+input[type="file"]::file-selector-button:hover {
+  background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.32);
+}
 @media(max-width:600px){ .field-row { grid-template-columns:1fr; gap:0; } main { padding:84px 5% 60px; } .card { padding:24px; } }
 
 /* COOKIE BANNER */
@@ -80,28 +216,62 @@ input[type="file"] { color:rgba(255,255,255,0.6); font-size:13px; }
   display:none; position:fixed; bottom:16px; left:16px; right:16px; z-index:2000;
   max-width:640px; margin:0 auto;
   background:var(--black); border:1px solid rgba(255,255,255,0.12);
-  border-radius:20px; padding:20px 24px;
-  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  border-radius:var(--eck-l); padding:20px 24px;
+  box-shadow:0 24px 48px rgba(0,0,0,0.38), 0 8px 16px rgba(0,0,0,0.24);
   flex-direction:column; gap:16px;
 }
 .cookie-banner.visible { display:flex; }
-.cookie-banner-text { font-size:13px; line-height:1.6; color:rgba(255,255,255,0.7); }
+.cookie-banner-text { font-size:14px; line-height:1.6; color:rgba(255,255,255,0.72); }
 .cookie-banner-text strong { color:var(--white); }
 .cookie-banner-text a { color:var(--green); }
 .cookie-banner-actions { display:flex; gap:10px; }
+/* Mindesthöhe 44px statt 12px Polster – darunter ist das Ziel auf
+   dem Handy nicht sicher zu treffen. Polster 12px, weil sich auf
+   375px zwei Knöpfe eine Zeile teilen.                          */
 .cookie-btn-primary, .cookie-btn-secondary {
-  flex:1; padding:12px; border-radius:100px; font-size:13px; font-weight:600;
+  flex:1; min-height:var(--tippflaeche); padding:0 12px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:var(--eck-voll); font-size:15px; font-weight:600; line-height:1.25;
   cursor:pointer; font-family:inherit; border:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
 }
+.cookie-btn-primary:active, .cookie-btn-secondary:active { transform:scale(0.97); }
 .cookie-btn-primary { background:var(--green); color:var(--white); }
-.cookie-btn-primary:hover { background:var(--green-dark); }
-.cookie-btn-secondary { background:rgba(255,255,255,0.08); color:var(--white); border:1px solid rgba(255,255,255,0.15); }
-.cookie-btn-secondary:hover { background:rgba(255,255,255,0.14); }
+.cookie-btn-primary:hover { background:var(--green-hover); }
+.cookie-btn-secondary { background:rgba(255,255,255,0.08); color:var(--white); border:1.5px solid rgba(255,255,255,0.18); }
+.cookie-btn-secondary:hover { background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.32); }
+
+/* ── Sichtbarer Tastaturfokus ──────────────────────────────────
+   Fehlte auf dieser Seite vollständig. Wer mit der Tastatur
+   ausfüllt, sah nicht, wo er sich befindet (WCAG 2.4.7). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+.tile:focus-visible {
+  outline: 3px solid var(--green, #22C55E);
+  outline-offset: 3px;
+}
+/* `border-radius:4px` stand hier bis zuletzt mit drin und wurde beim
+   Tabben auf das Element selbst angewandt – der Absenden-Knopf
+   (999px) wurde im Moment des Fokus zum Rechteck.               */
 </style>
 </head>
 <body>
 
-<nav><a href="/" class="nav-logo"><img src="/logo.png?v=5" alt="Waschlurch"></a></nav>
+<header class="kopf">
+  <div class="kopf-kapsel">
+    <a href="/" class="nav-logo" aria-label="Waschlurch – zur Startseite">
+      <img src="/logo.png?v=5" alt="" width="50" height="30" fetchpriority="high" decoding="async">
+      <span class="nav-wortmarke">Wasch<b>lurch</b></span>
+    </a>
+  </div>
+</header>
 
 <main>
 <div class="wrap">
