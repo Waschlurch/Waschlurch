@@ -657,9 +657,20 @@ textarea:focus-visible,
 
 /* SECTIONS */
 section { padding:var(--sekt-gross) var(--rand); }
-/* Rhythmus: tragende Abschnitte bekommen mehr Luft als Nebenabschnitte */
+/* ── Rhythmus ──────────────────────────────────────────────────
+   Der Abstand erzählt die Gliederung: Vor einem Abschnitt, der
+   etwas Neues eröffnet, steht mehr Luft als zwischen verwandten
+   Blöcken.
+
+   Pakete und Kontakt sind die beiden Stellen, an denen etwas
+   entschieden wird – sie bekommen den größten Anlauf. Leistungen
+   und Über uns erläutern und stehen enger. Referenzen und FAQ
+   belegen und stehen am engsten.                              */
+#preise, #kontakt   { padding-block:var(--sekt-gross); }
 #leistungen, #ueber { padding-block:var(--sekt-klein); }
-#trust { padding-block:var(--sekt-band); }
+#referenzen, #faq   { padding-block:var(--sekt-klein); }
+#karriere           { padding-block:var(--sekt-gross); }
+#trust              { padding-block:var(--sekt-band); }
 /* ── ETIKETTEN UND ABZEICHEN ───────────────────────────────────
    Es gab sechs eigenständige Fassungen desselben Bauteils:
    .section-tag (12px/600/0,08em), .leistung-tag (11px/700/0,073em),
@@ -684,6 +695,79 @@ section { padding:var(--sekt-gross) var(--rand); }
 .section-head { margin-bottom:var(--r-7); }
 .center { text-align:center; }
 .center .section-sub { margin:0 auto; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ABSCHNITTSLAYOUT
+
+   Vorher trug **jeder** Abschnittskopf dieselbe Auszeichnung:
+   `class="section-head center"` plus derselbe Inline-Stil
+   `max-width:1100px; margin:0 auto 56px`. Fünf identisch
+   zentrierte Köpfe untereinander sind das deutlichste
+   Baukastenmerkmal einer Seite – der Blick bekommt bei jedem
+   Abschnitt dieselbe Mitte und findet keinen Anhaltspunkt, wo er
+   sich befindet.
+
+   Neu: zwei Kopfformen und drei Containerbreiten. Der zentrierte
+   Kopf bleibt – aber nur noch **einmal**, ganz am Ende, wo die
+   Seite zum Abschluss einlädt. Dadurch liest er sich als Absicht
+   statt als Vorgabe.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Containerbreiten ───────────────────────────────────────── */
+.bahn        { max-width:var(--breite-mittel); margin-inline:auto; width:100%; }
+.bahn-weit   { max-width:var(--breite-weit);   margin-inline:auto; width:100%; }
+.bahn-lesen  { max-width:720px;                margin-inline:auto; width:100%; }
+
+/* ── Kopfform A: zweispaltig ────────────────────────────────────
+   Titel links, Beschreibung rechts. Der Blick läuft von der
+   Überschrift diagonal in den Text und von dort in den Inhalt –
+   statt in einer Mittelachse stehenzubleiben.                  */
+.kopf-zweispaltig {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(24px,4vw,64px);
+  align-items:end;
+  margin-bottom:clamp(36px,4vw,60px);
+}
+.kopf-zweispaltig .section-sub { max-width:38em; padding-bottom:2px; }
+@media (max-width:860px) {
+  .kopf-zweispaltig { grid-template-columns:1fr; gap:16px; align-items:start; }
+}
+
+/* ── Kopfform B: seitlich stehend ───────────────────────────────
+   Der Kopf bleibt beim Scrollen stehen, während der Inhalt daneben
+   durchläuft. Für Abschnitte mit langer Liste – man weiß dort
+   sonst nach dem dritten Eintrag nicht mehr, worum es geht.    */
+.abschnitt-seitlich {
+  display:grid;
+  grid-template-columns:minmax(0,0.62fr) minmax(0,1fr);
+  gap:clamp(32px,5vw,88px);
+  align-items:start;
+}
+.abschnitt-seitlich .section-head {
+  position:sticky; top:calc(var(--kopf-hoehe) + var(--kopf-rand) + 32px);
+  margin-bottom:0;
+}
+@media (max-width:900px) {
+  .abschnitt-seitlich { grid-template-columns:1fr; gap:28px; }
+  .abschnitt-seitlich .section-head { position:static; }
+}
+
+/* ── Übergänge zwischen den Abschnitten ─────────────────────────
+   Eine Haarlinie statt eines harten Farbwechsels. Sie steht nur
+   zwischen zwei **hellen** Abschnitten – dort, wo der Wechsel
+   hell/dunkel die Gliederung ohnehin trägt, wäre sie doppelt. */
+.grenze-oben { border-top:1px solid var(--gray-200); }
+
+/* Nachsatz am Fuß eines Abschnitts. War zentriert bei 14px in
+   --gray-500 – diese Graustufe ist erst ab 15px zugelassen, und
+   zentrierter Fließtext unter linksbündigem Inhalt bricht die
+   Achse ohne Grund.                                            */
+.abschnitt-fussnote {
+  margin-top:clamp(28px,3vw,40px);
+  font-size:15px; line-height:1.6; color:var(--gray-500);
+  max-width:64em;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    HERO
@@ -718,11 +802,24 @@ section { padding:var(--sekt-gross) var(--rand); }
 #hero:focus-visible { outline:3px solid var(--green); outline-offset:-6px; }
 /* Grundstimmung: zwei sehr weiche Lichtquellen statt einer, damit
    die Fläche nicht wie ein zentrierter Farbverlauf aussieht.     */
+/* ── Hintergrund: EINE Lichtquelle ─────────────────────────────
+   Vorher lagen hier vier Grünquellen übereinander – zwei
+   Farbverläufe plus zwei weichgezeichnete Lichtpunkte, die
+   zusätzlich über 22 und 29 Sekunden umherwanderten. Das Ergebnis
+   war eine grün waschende Fläche ohne Richtung.
+
+   Jetzt ein Licht, hinter dem Gegenstand angesetzt, plus eine
+   ruhige Abdunklung nach unten. Beides steht still. Was Tiefe
+   erzeugt, ist die Staffelung der Ebenen beim Scrollen – nicht
+   die Anzahl der Farbflecken.                                   */
 .hero-bg {
-  position:absolute; inset:-10%;
+  position:absolute; inset:0;
   background:
-    radial-gradient(ellipse 55% 45% at 72% 42%, rgba(34,197,94,0.22) 0%, transparent 62%),
-    radial-gradient(ellipse 60% 50% at 18% 78%, rgba(21,128,61,0.16) 0%, transparent 66%);
+    radial-gradient(ellipse 78% 62% at 66% 34%,
+      rgba(34,197,94,0.17) 0%,
+      rgba(34,197,94,0.06) 34%,
+      transparent 66%),
+    linear-gradient(180deg, rgba(0,0,0,0.34) 0%, transparent 26%, transparent 74%, rgba(0,0,0,0.42) 100%);
   z-index:0;
 }
 /* Hier stand ein feines Linienraster als Textur. Wieder entfernt:
@@ -732,10 +829,15 @@ section { padding:var(--sekt-gross) var(--rand); }
    Verlaufsflächen als Deko. Die Tiefe tragen die beiden
    Lichtquellen oben und die Bühne; das Raster war eine Zutat, die
    nur nach Vorlage aussah.                                       */
+/* Textspalte schmaler, Bühne größer, mehr Luft dazwischen.
+   Vorher 1,05 : 0,95 mit bis zu 80px Abstand – zwei fast gleich
+   breite Spalten lesen sich als Tabelle, nicht als Komposition.
+   Jetzt 1 : 1,08: Der Gegenstand bekommt die größere Fläche, der
+   Text die ruhigere.                                            */
 .hero-inner {
   max-width:var(--breite-weit); margin:0 auto; width:100%;
-  display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,0.95fr);
-  gap:clamp(32px,5vw,80px); align-items:center;
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+  gap:clamp(40px,6vw,104px); align-items:center;
   position:relative; z-index:2;
 }
 
@@ -743,35 +845,43 @@ section { padding:var(--sekt-gross) var(--rand); }
    War ein reines Farbetikett. Jetzt trägt sie einen ruhig
    pulsierenden Punkt – dasselbe Zeichen, das Karten für „hier"
    verwenden. Das macht aus einer Behauptung ein Ortssignal.    */
+/* Zurückgenommen: Die Fläche ist jetzt neutral statt grün getönt,
+   der Rahmen fast unsichtbar. Grün bleibt am Ortspunkt – dort trägt
+   es Bedeutung, auf der Fläche war es nur Farbe.                */
 .hero-badge {
   display:inline-flex; align-items:center; gap:10px;
-  background:rgba(34,197,94,0.10);
-  border:1px solid rgba(34,197,94,0.28);
-  color:#86EFAC; padding:7px 16px 7px 12px; border-radius:var(--eck-voll);
-  font-size:13px; font-weight:600; letter-spacing:0.01em;
-  margin-bottom:var(--r-5);
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.10);
+  color:rgba(255,255,255,0.80); padding:7px 16px 7px 12px; border-radius:var(--eck-voll);
+  font-size:13px; font-weight:500; letter-spacing:0.005em;
+  margin-bottom:var(--r-6);
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
 }
 .hero-badge-punkt {
-  width:7px; height:7px; border-radius:50%; background:var(--green);
+  width:6px; height:6px; border-radius:50%; background:var(--green);
   flex-shrink:0; position:relative;
 }
 /* Der Ring läuft nach außen und verblasst – kein Leuchtschein,
-   sondern ein zweites Element, das skaliert.                    */
+   sondern ein zweites Element, das skaliert. Auf 4,5s verlangsamt:
+   Ein Ortssignal darf man bemerken, es soll nicht blinken.      */
 .hero-badge-punkt::after {
   content:''; position:absolute; inset:0; border-radius:50%;
   border:1.5px solid var(--green);
-  animation:heroOrtPuls 2.8s var(--ease-aus) infinite;
+  animation:heroOrtPuls 4.5s var(--ease-aus) infinite;
 }
 @keyframes heroOrtPuls {
-  0%       { transform:scale(1);   opacity:.7; }
-  70%,100% { transform:scale(3.4); opacity:0; }
+  0%       { transform:scale(1);   opacity:.55; }
+  60%,100% { transform:scale(3.2); opacity:0; }
 }
 
+/* Enger gesetzt und dichter geführt: -0,045em statt -0,03em,
+   Zeilenabstand 1,0 statt 1,05. Bei 76px trägt jede Hundertstel
+   Laufweite sichtbar – große Schrift verträgt und braucht mehr
+   negative Laufweite als kleine.                                */
 .hero-title {
   font-size:var(--t-display); font-weight:700;
-  color:var(--white); letter-spacing:var(--ls-display); line-height:var(--lh-display);
-  margin-bottom:var(--r-5);
+  color:var(--white); letter-spacing:-0.045em; line-height:1.0;
+  margin-bottom:var(--r-6);
 }
 .hero-title .hero-line { display:block; }
 /* Die grüne Zeile bekommt einen Wischzug, der sich einmal selbst
@@ -795,11 +905,14 @@ section { padding:var(--sekt-gross) var(--rand); }
   to   { transform:scaleX(1); opacity:.85; }
 }
 
+/* Schmaler gesetzt (30em statt 34) und mit mehr Luft nach unten.
+   Ein kurzer Absatz unter einer sehr großen Überschrift wirkt
+   ruhiger, wenn er die Titelbreite nicht ausreizt.              */
 .hero-sub {
-  font-size:var(--t-lead); color:rgba(255,255,255,0.72);
-  line-height:var(--lh-lead); margin-bottom:var(--r-6); max-width:var(--lesebreite);
+  font-size:var(--t-lead); color:rgba(255,255,255,0.70);
+  line-height:1.62; margin-bottom:var(--r-7); max-width:30em;
 }
-.hero-btns { display:flex; gap:12px; flex-wrap:wrap; }
+.hero-btns { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
 
 /* ── SCHALTFLÄCHEN ─────────────────────────────────────────────
    Eine gemeinsame Grundlage für jeden Knopf der Seite. Vorher
@@ -855,25 +968,40 @@ section { padding:var(--sekt-gross) var(--rand); }
   border:1.5px solid rgba(255,255,255,0.18);
 }
 .btn-secondary:hover { background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.34); }
-/* ── Kennzahlen ────────────────────────────────────────────────
-   Vorher drei Blöcke mit 32px Abstand und einer Linie darüber.
-   Jetzt ein Band mit senkrechten Trennern: Die drei Werte lesen
-   sich als eine Aussage, nicht als drei lose Angaben.          */
-.hero-stats {
-  display:flex; margin-top:var(--r-7); padding-top:var(--r-6);
-  border-top:1px solid rgba(255,255,255,0.10);
+
+/* Im Hero tritt die zweite Handlung zurück: kein gefüllter Grund,
+   nur ein Rahmen. Zwei gleich starke Knöpfe nebeneinander sind
+   keine Führung – DESIGN.md §9: eine primäre Schaltfläche je
+   Bildschirm. Das Ziel und die Beschriftung bleiben unverändert. */
+.hero-btns .btn-secondary {
+  background:transparent;
+  border-color:rgba(255,255,255,0.16);
+  color:rgba(255,255,255,0.86);
 }
-.hero-stats > div { padding-right:clamp(20px,3vw,36px); }
-.hero-stats > div + div {
-  border-left:1px solid rgba(255,255,255,0.10);
-  padding-left:clamp(20px,3vw,36px);
+.hero-btns .btn-secondary:hover {
+  background:rgba(255,255,255,0.07);
+  border-color:rgba(255,255,255,0.30);
+  color:var(--white);
+}
+
+/* ── Kennzahlen ────────────────────────────────────────────────
+   Deutlich zurückgenommen. Die Zahlen standen bei bis zu 32px und
+   zogen den Blick von der Überschrift ab – sie sind ein Beleg,
+   keine zweite Schlagzeile. Jetzt kleiner, weiter auseinander und
+   ohne Trennlinien: Abstand gruppiert zuverlässiger als Striche. */
+.hero-stats {
+  display:flex; gap:clamp(28px,4vw,52px);
+  margin-top:var(--r-8); padding-top:var(--r-6);
+  border-top:1px solid rgba(255,255,255,0.08);
 }
 .hero-stat-val {
-  font-size:clamp(26px,2.4vw,32px); font-weight:700; color:var(--white);
-  letter-spacing:-0.02em; line-height:1.1;
+  font-size:clamp(21px,1.7vw,24px); font-weight:650; color:var(--white);
+  letter-spacing:-0.025em; line-height:1.15;
 }
+/* Beschriftung von 55 % auf 62 % – gemessen lag sie zuvor knapp
+   unter dem Mindestkontrast für Nebentext.                      */
 .hero-stat-lbl {
-  font-size:13px; color:rgba(255,255,255,0.55); margin-top:5px; line-height:1.35;
+  font-size:13px; color:rgba(255,255,255,0.62); margin-top:6px; line-height:1.4;
 }
 
 /* ═══ DIE BÜHNE ════════════════════════════════════════════════ */
@@ -887,46 +1015,31 @@ section { padding:var(--sekt-gross) var(--rand); }
   perspective-origin:50% 45%;
 }
 
-/* Ebene 1 – Lichtscheibe. Ein Kreis aus drei Farbstufen, der die
-   Bühne ausleuchtet. Kein `box-shadow` mit Versatz 0, sondern eine
-   echte Fläche mit Verlauf.                                     */
-/* Der Behälter trägt die Parallaxe, das ::before das Atmen.
-   Beides auf dasselbe Element zu legen ginge nicht: Eine laufende
-   CSS-Animation überschreibt ein inline gesetztes `transform`,
-   die Parallaxe bliebe wirkungslos. Derselbe Grund, aus dem der
-   Frosch aus zwei Hüllen besteht.                               */
+/* Ebene 1 – Das Licht auf dem Gegenstand.
+
+   Eine einzige weiche Scheibe, oben links angesetzt wie eine
+   Lichtquelle im Raum. Sie **atmet nicht mehr**: Ein pulsierender
+   Hintergrund zieht den Blick genau dorthin, wo nichts zu lesen
+   ist. Die Fläche steht still, bewegt wird nur über die Parallaxe. */
 .hero-scheibe {
-  position:absolute; inset:6%;
+  position:absolute; inset:4%;
   border-radius:50%;
   will-change:transform;
-}
-.hero-scheibe::before {
-  content:''; position:absolute; inset:0; border-radius:50%;
   background:
-    radial-gradient(circle at 42% 36%, rgba(134,239,172,0.20) 0%, transparent 46%),
-    radial-gradient(circle at 50% 50%, rgba(34,197,94,0.15) 0%, rgba(21,128,61,0.06) 52%, transparent 72%);
-  animation:heroScheibeAtmen 11s ease-in-out infinite;
+    radial-gradient(circle at 38% 30%, rgba(134,239,172,0.16) 0%, transparent 44%),
+    radial-gradient(circle at 50% 52%, rgba(34,197,94,0.11) 0%, rgba(21,128,61,0.05) 54%, transparent 74%);
 }
-@keyframes heroScheibeAtmen {
-  0%,100% { transform:scale(1);    opacity:.9; }
-  50%     { transform:scale(1.05); opacity:1; }
-}
-/* Ebene 1b – ein dünner Ring als Bühnenkante. Gibt der Scheibe
-   einen Rand, ohne sie zu einem Kasten zu machen.               */
-.hero-ring {
-  position:absolute; inset:9%;
-  border-radius:50%;
-  border:1px solid rgba(134,239,172,0.14);
-}
-.hero-ring::before {
-  content:''; position:absolute; inset:9%;
-  border-radius:50%;
-  border:1px solid rgba(134,239,172,0.07);
-}
-
 /* Ebene 2 – Der Wischzug. Ein schmaler Lichtstreifen, der schräg
    über die Bühne fährt wie der Abzieher über eine Scheibe.
-   Läuft alle 9s einmal durch, nicht im Dauerlauf.               */
+
+   Das ist die **einzige** wiederkehrende Bewegung im Hintergrund.
+   Vorher liefen hier acht Schleifen gleichzeitig: zwei driftende
+   Lichtpunkte, die atmende Scheibe, fünf Tropfen, zwei schwebende
+   Plättchen und der Frosch. Nichts davon war für sich falsch – aber
+   zusammen ergaben sie ein Bild, in dem der Blick keinen Halt fand.
+
+   Ein Takt von 14s statt 9s: Die Geste soll auffallen, wenn sie
+   kommt, und nicht als Dauerlauf im Augenwinkel liegen.        */
 .hero-wischzug {
   position:absolute; inset:0;
   border-radius:50%;
@@ -936,119 +1049,94 @@ section { padding:var(--sekt-gross) var(--rand); }
 .hero-wischzug::after {
   content:''; position:absolute;
   top:-60%; bottom:-60%; left:-40%;
-  width:26%;
+  width:24%;
   background:linear-gradient(90deg,
     rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.07) 38%,
-    rgba(190,255,215,0.16) 50%,
-    rgba(255,255,255,0.07) 62%,
+    rgba(255,255,255,0.05) 38%,
+    rgba(214,255,229,0.13) 50%,
+    rgba(255,255,255,0.05) 62%,
     rgba(255,255,255,0) 100%);
   transform:rotate(18deg) translateX(0);
-  animation:heroWisch 9s cubic-bezier(0.5,0,0.35,1) 2.2s infinite;
+  animation:heroWisch 14s cubic-bezier(0.45,0,0.3,1) 2.4s infinite;
 }
 @keyframes heroWisch {
   0%      { transform:rotate(18deg) translateX(0);    opacity:0; }
-  8%      { opacity:1; }
-  38%     { opacity:1; }
-  46%,100%{ transform:rotate(18deg) translateX(560%); opacity:0; }
+  5%      { opacity:1; }
+  26%     { opacity:1; }
+  32%,100%{ transform:rotate(18deg) translateX(560%); opacity:0; }
 }
 
-/* Ebene 3 – Der Frosch. Schwebt und neigt sich langsam. Zwei
-   getrennte Hüllen, damit sich Schwebe-Schleife und Zeigerparallaxe
-   nicht gegenseitig überschreiben.                              */
-.hero-frosch-parallax { position:relative; width:82%; will-change:transform; }
-.hero-frosch-schwebe { animation:heroSchweben 9s ease-in-out infinite; }
+/* Ebene 3 – Der Frosch.
+
+   Bewegung fast auf null zurückgenommen: ±5px und ±0,7° über 16s
+   statt ±16px und ±1,6° über 9s. Das liest sich nicht mehr als
+   Hüpfen, sondern als Atmen – der Gegenstand steht, er turnt
+   nicht. Zwei getrennte Hüllen, weil eine laufende Animation ein
+   inline gesetztes `transform` der Parallaxe überschreiben würde. */
+.hero-frosch-parallax { position:relative; width:88%; will-change:transform; }
+.hero-frosch-schwebe { animation:heroSchweben 16s ease-in-out infinite; }
 .hero-frosch-parallax img {
   display:block; width:100%; height:auto;
-  /* Bodenschatten als weicher, grünlich getönter Abwurf – gehört
-     zur Schattenleiter aus DESIGN.md, kein farbiges Leuchten.  */
-  filter:drop-shadow(0 26px 34px rgba(6,26,14,0.55));
+  filter:drop-shadow(0 30px 40px rgba(4,18,10,0.62));
 }
 @keyframes heroSchweben {
-  0%,100% { transform:translate3d(0,0,0)     rotate(-1.6deg); }
-  50%     { transform:translate3d(0,-16px,0) rotate(1.6deg); }
+  0%,100% { transform:translate3d(0,0,0)    rotate(-0.7deg); }
+  50%     { transform:translate3d(0,-5px,0) rotate(0.7deg); }
 }
 
-/* Ebene 4 – Tropfen. Steigen unterschiedlich schnell auf und
-   bilden damit die vorderste Tiefenebene.                       */
-.hero-tropfen { position:absolute; inset:0; pointer-events:none; }
-.hero-tropfen i {
-  position:absolute; display:block;
-  background:radial-gradient(circle at 34% 28%, rgba(255,255,255,0.55), rgba(134,239,172,0.30) 45%, rgba(34,197,94,0.12) 75%);
-  border:1px solid rgba(255,255,255,0.14);
+/* Bodenschatten. Ohne ihn schwebt der Frosch im Nichts; mit ihm
+   steht er auf einer Fläche. Eine gestauchte Ellipse, kein
+   Leuchten – sie ist dunkler als der Grund, nicht heller.      */
+.hero-boden {
+  position:absolute; left:50%; bottom:11%;
+  width:56%; height:5%;
+  transform:translateX(-50%);
   border-radius:50%;
-  animation:heroTropfen linear infinite;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.28) 45%, transparent 72%);
+  pointer-events:none;
 }
-@keyframes heroTropfen {
-  0%   { transform:translate3d(0,10px,0) scale(.85); opacity:0; }
-  14%  { opacity:.85; }
-  76%  { opacity:.5; }
-  100% { transform:translate3d(14px,-190px,0) scale(1.06); opacity:0; }
-}
-.hero-tropfen i:nth-child(1){ width:12px;height:12px; left:14%; top:64%; animation-duration:12s; animation-delay:0s; }
-.hero-tropfen i:nth-child(2){ width:7px; height:7px;  left:29%; top:78%; animation-duration:9s;  animation-delay:1.6s; }
-.hero-tropfen i:nth-child(3){ width:16px;height:16px; left:73%; top:70%; animation-duration:14s; animation-delay:3.1s; }
-.hero-tropfen i:nth-child(4){ width:9px; height:9px;  left:86%; top:56%; animation-duration:10s; animation-delay:5.4s; }
-.hero-tropfen i:nth-child(5){ width:5px; height:5px;  left:52%; top:84%; animation-duration:8s;  animation-delay:2.4s; }
 
 /* ── Belegplättchen auf der Bühne ──────────────────────────────
-   Zwei Aussagen, die sonst nur im Laufband stehen. Sie schweben
-   leicht versetzt zum Frosch – dadurch liegen sie sichtbar vor
-   bzw. hinter ihm, statt aufgeklebt zu wirken.                 */
-/* Halter = Position und Parallaxe. Plättchen = Aussehen und
-   Schwebe. Wieder getrennt, weil eine laufende Animation ein
-   inline gesetztes `transform` überschreiben würde.             */
+   Zwei Aussagen, die sonst nur im Laufband stehen.
+
+   Sie stehen jetzt **still**. Zwei unabhängig schwebende Pillen
+   neben einem schwebenden Frosch waren drei Bewegungen auf engem
+   Raum; die Tiefe tragen Milchglas, Schatten und die Parallaxe.  */
 .hero-beleg-halter { position:absolute; z-index:3; will-change:transform; }
-.hero-beleg-1 { left:-4%;  top:20%; }
-.hero-beleg-2 { right:-3%; bottom:19%; }
+.hero-beleg-1 { left:-2%;  top:16%; }
+.hero-beleg-2 { right:-1%; bottom:15%; }
 .hero-beleg {
-  display:inline-flex; align-items:center; gap:10px;
-  padding:11px 16px;
-  background:rgba(14,20,16,0.62);
-  border:1px solid rgba(255,255,255,0.12);
+  display:inline-flex; align-items:center; gap:9px;
+  padding:9px 14px;
+  background:rgba(12,18,14,0.58);
+  border:1px solid rgba(255,255,255,0.10);
   border-radius:var(--eck-voll);
-  backdrop-filter:blur(14px) saturate(140%);
-  -webkit-backdrop-filter:blur(14px) saturate(140%);
-  box-shadow:0 12px 24px rgba(0,0,0,0.34);
-  font-size:13.5px; font-weight:600; color:rgba(255,255,255,0.92);
+  backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  box-shadow:0 10px 22px rgba(0,0,0,0.30);
+  font-size:13px; font-weight:600; letter-spacing:-0.005em;
+  color:rgba(255,255,255,0.88);
   white-space:nowrap;
 }
-.hero-beleg svg { flex-shrink:0; }
-@keyframes heroBelegSchweben {
-  0%,100% { transform:translate3d(0,0,0); }
-  50%     { transform:translate3d(0,-9px,0); }
-}
+.hero-beleg svg { flex-shrink:0; opacity:.9; }
 
 /* ── HERO: ANIMATION ─────────────────────────────────────────── */
 @keyframes heroRise {
   from { opacity:0; transform:translateY(26px); }
   to   { opacity:1; transform:translateY(0); }
 }
-@keyframes heroOrbDrift {
-  0%,100% { transform:translate3d(0,0,0) scale(1); }
-  33%     { transform:translate3d(6%,-5%,0) scale(1.14); }
-  66%     { transform:translate3d(-5%,5%,0) scale(0.92); }
-}
 @keyframes heroScrollHint {
   0%,100% { transform:translateY(0); opacity:.45; }
   50%     { transform:translateY(9px); opacity:1; }
 }
 
-/* Weiche Lichtpunkte, die langsam durch den Hintergrund wandern */
-.hero-orb {
-  position:absolute; border-radius:50%;
-  filter:blur(70px); pointer-events:none; z-index:0;
-}
-.hero-orb-1 {
-  width:420px; height:420px; top:-90px; right:-70px;
-  background:radial-gradient(circle, rgba(34,197,94,0.30), transparent 70%);
-  animation:heroOrbDrift 22s ease-in-out infinite;
-}
-.hero-orb-2 {
-  width:340px; height:340px; bottom:-110px; left:-90px;
-  background:radial-gradient(circle, rgba(21,128,61,0.30), transparent 70%);
-  animation:heroOrbDrift 29s ease-in-out infinite reverse;
-}
+/* Die beiden weichgezeichneten Lichtpunkte sind entfallen.
+
+   Sie waren mit `filter:blur(70px)` auf je 420 bzw. 340px die
+   teuerste Ebene des Hero – zwei dauerhaft neu gezeichnete
+   Weichzeichnungsflächen – und trugen zusammen mit den zwei
+   Farbverläufen darunter zu einer grün waschenden Fläche bei.
+   Das Licht kommt jetzt aus einer Quelle in .hero-bg.          */
 
 /* Gestaffelter Auftritt beim Laden. Die Bühne kommt früh und
    langsamer als der Text – sie ist der Gegenstand, um den herum
@@ -1073,19 +1161,16 @@ section { padding:var(--sekt-gross) var(--rand); }
   to   { opacity:1; transform:scale(1)   translateY(0); }
 }
 .hero-buehne { animation:heroBuehneAuftritt 1.25s var(--ease-aus) .18s both; }
-/* Zwei Läufe je Plättchen: einmaliger Auftritt, danach die
-   endlose Schwebe. Die Längen stehen als Kurzschreibweise, die
-   Abweichungen je Plättchen danach als Einzelwerte.            */
+/* Nur noch der einmalige Auftritt – die endlose Schwebe ist raus. */
 .hero-beleg {
-  animation:heroBelegAuftritt .7s var(--ease-aus) both,
-            heroBelegSchweben 7.5s ease-in-out infinite;
+  animation:heroBelegAuftritt .7s var(--ease-aus) both;
 }
 @keyframes heroBelegAuftritt {
   from { opacity:0; transform:translateY(10px) scale(.94); }
   to   { opacity:1; transform:translateY(0)    scale(1); }
 }
-.hero-beleg-1 .hero-beleg { animation-delay:1.05s, 0s; }
-.hero-beleg-2 .hero-beleg { animation-delay:1.20s, .9s; animation-duration:.7s, 8.5s; }
+.hero-beleg-1 .hero-beleg { animation-delay:1.05s; }
+.hero-beleg-2 .hero-beleg { animation-delay:1.20s; }
 
 /* ── HERO unter 1024px: eine Spalte, Bühne dahinter ────────────
    Zwei Spalten brauchen Platz. Zwischen 769 und 1023px bliebe für
@@ -1127,7 +1212,7 @@ section { padding:var(--sekt-gross) var(--rand); }
   .hero-frosch-parallax { width:64%; opacity:.38; }
   .hero-frosch-parallax img { filter:none; }
   .hero-beleg-halter { display:none; }
-  .hero-ring { display:none; }
+  .hero-boden { display:none; }
   .hero-scheibe { inset:12%; }
   /* Schleier über der Bühne. Ohne ihn liefe die Schrift
      stellenweise über die helle Bauchpartie des Frosches.      */
@@ -1166,12 +1251,10 @@ section { padding:var(--sekt-gross) var(--rand); }
    Störungen ist sie körperlich unangenehm – der Hero bleibt in
    seinem Endzustand stehen, nichts verschwindet.                */
 @media (prefers-reduced-motion: reduce) {
-  .hero-orb, .hero-scroll span,
-  .hero-scheibe::before, .hero-frosch-schwebe, .hero-tropfen i,
+  .hero-scroll span, .hero-frosch-schwebe,
   .hero-wischzug::after, .hero-badge-punkt::after {
     animation:none;
   }
-  .hero-tropfen { display:none; }
   .hero-wischzug::after { opacity:0; }
   .hero-badge, .hero-title .hero-line, .hero-sub, .hero-btns,
   .hero-stats, .hero-buehne, .hero-beleg, .hero-scroll {
@@ -1181,13 +1264,28 @@ section { padding:var(--sekt-gross) var(--rand); }
 }
 
 /* TRUST BAR — LAUFBAND/TICKER */
+/* ── Vertrauensband ────────────────────────────────────────────
+   Es sitzt zwischen dem schwarzen Hero und den hellen Paketen und
+   war bisher flächig hellgrün mit grünen Linien oben und unten –
+   eine dritte Farbe an der Stelle, an der der Rhythmus hell/dunkel
+   die Gliederung schon trägt. Das Band schrie lauter als die
+   Aussagen darauf.
+
+   Jetzt fast weiß, mit Haarlinien statt Farbrändern. Die Symbole
+   bleiben grün: dort trägt die Farbe Bedeutung.
+
+   Zusätzlich blenden die Ränder aus – dadurch liest sich das
+   Laufband als durchlaufender Streifen und endet nicht hart an
+   der Bildkante.                                                */
 #trust {
-  padding:16px 0;
-  background:var(--green-light);
-  border-top:1px solid rgba(34,197,94,0.2);
-  border-bottom:1px solid rgba(34,197,94,0.2);
+  padding:18px 0;
+  background:var(--gray-050);
+  border-top:1px solid var(--gray-200);
+  border-bottom:1px solid var(--gray-200);
   overflow:hidden;
   white-space:nowrap;
+  mask-image:linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
 }
 .trust-inner {
   display:inline-flex; align-items:center;
@@ -1196,9 +1294,9 @@ section { padding:var(--sekt-gross) var(--rand); }
 #trust:hover .trust-inner { animation-play-state:paused; }
 .trust-item {
   display:inline-flex; align-items:center; gap:10px;
-  font-size:14px; font-weight:600; color:var(--green-dark);
+  font-size:15px; font-weight:500; color:var(--gray-700);
   white-space:nowrap; flex-shrink:0;
-  padding:0 32px;
+  padding:0 30px;
 }
 .trust-item span:first-child { font-size:20px; transition:filter .25s,transform .25s; }
 /* Der grüne Schein beim Überfahren ist entfallen – DESIGN.md §7
@@ -1277,9 +1375,13 @@ section { padding:var(--sekt-gross) var(--rand); }
 
 /* ABOUT */
 #ueber { background:var(--black); }
+/* 0,82 : 1 statt 1 : 1. Zwei exakt gleich breite Spalten lesen
+   sich als Gegenüberstellung; hier soll das Bild den Text aber
+   begleiten, nicht mit ihm konkurrieren.                       */
 .ueber-inner {
   max-width:var(--breite-mittel); margin:0 auto;
-  display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center;
+  display:grid; grid-template-columns:minmax(0,0.82fr) minmax(0,1fr);
+  gap:clamp(40px,6vw,96px); align-items:center;
 }
 .ueber-img {
   background:linear-gradient(135deg,rgba(34,197,94,0.2),rgba(34,197,94,0.05));
@@ -1364,7 +1466,24 @@ section { padding:var(--sekt-gross) var(--rand); }
   white-space:nowrap;
 }
 .preis-icon { font-size:32px; margin-bottom:10px; }
-.preis-img { width:100%; height:auto; max-height:260px; object-fit:contain; display:block; border-radius:var(--eck-m); margin-bottom:14px; background:var(--gray-100); }
+/* `cover` mit festem Seitenverhältnis statt `contain` mit
+   Höhenbegrenzung. Vorher stand jedes Bild in einem hellen
+   Briefkastenrahmen – auf der breiten Karte waren das über 200px
+   graue Fläche links und rechts, und auf der schwarzen Karte
+   leuchtete dieser Rahmen als heller Block.
+
+   Das Verhältnis richtet sich nach der Kartenbreite: Ein breites
+   Bild im Hochformat wirkt beschnitten, ein schmales im
+   Breitformat gequetscht.                                      */
+.preis-img {
+  width:100%; height:auto; aspect-ratio:4/3; object-fit:cover;
+  display:block; border-radius:var(--eck-m); margin-bottom:16px;
+  background:var(--gray-100);
+}
+@media (min-width:1024px) {
+  .paket-gruppe-karten > *:nth-child(4n+1) .preis-img,
+  .paket-gruppe-karten > *:nth-child(4n+4) .preis-img { aspect-ratio:16/9; }
+}
 .preis-name { margin-bottom:6px; }
 .preis-card.featured .preis-name { color:#86EFAC; }
 .preis-title { font-size:19px; font-weight:700; color:var(--black); margin-bottom:8px; letter-spacing:-0.02em; line-height:1.3; }
@@ -1498,13 +1617,37 @@ section { padding:var(--sekt-gross) var(--rand); }
 .paket-gruppe.offen .paket-gruppe-inhalt { grid-template-rows:1fr; }
 .paket-gruppe-karten { overflow:hidden; }
 .paket-gruppe.offen .paket-gruppe-karten { padding-top:14px; }
+/* ── Paketraster: Zwölftel statt gleicher Spalten ───────────────
+   Vorher `repeat(auto-fill, minmax(280px,1fr))` – vier exakt gleich
+   breite Karten nebeneinander. Ein gleichmäßiges Raster liest sich
+   als Liste; alle Angebote wirken darin gleich wichtig.
+
+   Jetzt ein Zwölftelraster, in dem sich die Breiten paarweise
+   abwechseln: 7–5, dann 5–7. Dadurch entsteht ein Wechsel, ohne
+   dass eine Karte bevorzugt wird – die Reihenfolge aus der
+   Datenbank bleibt unangetastet.
+
+   Die Muster greifen erst ab 1024px. Darunter zwei Spalten, auf
+   dem Handy eine.                                              */
 .paket-gruppe-karten {
   display:grid; gap:20px;
-  /* auto-FILL statt auto-FIT: auto-fit lässt ungenutzte Spalten
-     zusammenfallen und würde die Karten einer kleinen Gruppe auf die
-     volle Breite strecken (559px statt ~300px). */
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  grid-template-columns:repeat(12,minmax(0,1fr));
 }
+.paket-gruppe-karten > * { grid-column:span 12; }
+@media (min-width:768px) {
+  .paket-gruppe-karten > * { grid-column:span 6; }
+}
+@media (min-width:1024px) {
+  .paket-gruppe-karten > *:nth-child(4n+1) { grid-column:span 7; }
+  .paket-gruppe-karten > *:nth-child(4n+2) { grid-column:span 5; }
+  .paket-gruppe-karten > *:nth-child(4n+3) { grid-column:span 5; }
+  .paket-gruppe-karten > *:nth-child(4n+4) { grid-column:span 7; }
+}
+/* Bewusst **keine** Sonderregel für eine allein stehende letzte
+   Karte. Sie auf volle Breite zu ziehen ergab bei 1320px eine
+   1297px breite Karte mit einer einzigen Leistungszeile – das
+   liest sich als Fehler. Links ausgerichtet in ihrer Musterbreite
+   stehenzubleiben ist die ruhigere Lösung.                     */
 
 /* SCROLL-ANIMATION */
 .reveal { opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
@@ -1514,9 +1657,36 @@ section { padding:var(--sekt-gross) var(--rand); }
 
 /* REFERENZEN */
 #referenzen { background:var(--white); }
+/* ── Referenzraster: eine große, zwei kleine ───────────────────
+   Vorher `repeat(3,1fr)` – drei exakt gleiche Karten nebeneinander.
+   Das ist der Baukasten-Reflex und steht so auch in DESIGN.md §9
+   unter „Nie drei gleiche Karten nebeneinander".
+
+   Jetzt: Die erste Referenz bekommt sieben Zwölftel und ein
+   breiteres Bild, die folgenden fünf. Ab der vierten kehrt sich
+   das Muster um. Wer drei Referenzen einpflegt, bekommt eine
+   Hauptarbeit und zwei Belege – nicht dreimal dasselbe.       */
 .ref-grid {
-  max-width:var(--breite-mittel); margin:0 auto;
-  display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+  display:grid; gap:20px;
+  grid-template-columns:repeat(12,minmax(0,1fr));
+}
+.ref-grid > * { grid-column:span 12; }
+@media (min-width:768px) {
+  .ref-grid > * { grid-column:span 6; }
+}
+@media (min-width:1024px) {
+  .ref-grid > *:nth-child(6n+1) { grid-column:span 7; }
+  .ref-grid > *:nth-child(6n+2) { grid-column:span 5; }
+  .ref-grid > *:nth-child(6n+3) { grid-column:span 5; }
+  .ref-grid > *:nth-child(6n+4) { grid-column:span 7; }
+  .ref-grid > *:nth-child(6n+5) { grid-column:span 6; }
+  .ref-grid > *:nth-child(6n+6) { grid-column:span 6; }
+}
+/* Die große Karte bekommt auch ein höheres Bild – sonst wäre sie
+   nur breiter, nicht wichtiger.                                */
+@media (min-width:1024px) {
+  .ref-grid > *:nth-child(6n+1) .ref-img,
+  .ref-grid > *:nth-child(6n+4) .ref-img { height:280px; }
 }
 .ref-card {
   border-radius:var(--eck-m); overflow:hidden;
@@ -1542,7 +1712,10 @@ section { padding:var(--sekt-gross) var(--rand); }
 
 /* FAQ */
 #faq { background:var(--gray-100); }
-.faq-inner { max-width:720px; margin:0 auto; }
+/* Volle Breite der eigenen Spalte – die Begrenzung auf 720px und
+   die Zentrierung stammen aus der Zeit, als der Kopf darüber stand
+   und die Liste allein in der Mitte lag.                       */
+.faq-inner { width:100%; }
 /* ── KARTEN: FAQ ───────────────────────────────────────────────
    Vorher lief das Aufklappen über `max-height: 0 → 200px`. Das
    hatte zwei Fehler: Höhe zu animieren erzwingt bei jedem Bild
@@ -1593,12 +1766,15 @@ section { padding:var(--sekt-gross) var(--rand); }
 
 /* KONTAKT */
 #kontakt { background:var(--black); }
+/* 0,86 : 1 – das Formular bekommt die größere Spalte. Es ist die
+   Handlung dieses Abschnitts; die Angaben daneben sind Beiwerk. */
 .kontakt-inner {
   max-width:var(--breite-mittel); margin:0 auto;
-  display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start;
+  display:grid; grid-template-columns:minmax(0,0.86fr) minmax(0,1fr);
+  gap:clamp(40px,5vw,80px); align-items:start;
 }
 .kontakt-info .section-title { color:var(--white); }
-.kontakt-info .section-sub { color:rgba(255,255,255,0.6); margin-bottom:36px; }
+.kontakt-info .section-sub { color:rgba(255,255,255,0.72); margin-bottom:36px; }
 .kontakt-items { display:flex; flex-direction:column; gap:20px; }
 .kontakt-item {
   display:flex; align-items:center; gap:16px;
@@ -1802,16 +1978,66 @@ section { padding:var(--sekt-gross) var(--rand); }
 .knopf-text:active { transform:scale(0.97); }
 .code-timer { font-size:14px; color:rgba(255,255,255,0.62); line-height:1.5; }
 
-/* FOOTER */
+/* ── KARRIERE ──────────────────────────────────────────────────
+   Zwei gleich große, mittig ausgerichtete Karten – die eine
+   Stelle, an der eine Gegenüberstellung richtig ist: Es sind
+   zwei gleichrangige Einladungen. Deshalb bleibt hier auch der
+   einzige zentrierte Abschnittskopf der Seite stehen.
+
+   Die Karten trugen ihre Gestaltung bisher als Inline-Angaben im
+   HTML – dadurch ließ sich weder ein Hover-Zustand noch ein
+   Verhalten auf schmalen Geräten festlegen.                    */
+.karriere-grid {
+  max-width:920px; margin:0 auto;
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:24px; align-items:stretch;
+}
+.karriere-karte {
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  background:var(--white); border:1px solid var(--gray-200);
+  border-radius:var(--eck-m); padding:clamp(28px,3vw,40px);
+  box-shadow:var(--schatten-1);
+  transition:transform var(--zeit-kurz) var(--ease-aus),
+             box-shadow var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus);
+}
+.karriere-karte:hover { transform:translateY(-2px); box-shadow:var(--schatten-3); border-color:var(--green); }
+.karriere-karte-dunkel { background:var(--black); border-color:rgba(255,255,255,0.10); }
+.karriere-icon { font-size:32px; line-height:1; margin-bottom:14px; }
+.karriere-titel { font-size:20px; font-weight:700; letter-spacing:-0.02em; line-height:1.3; margin-bottom:10px; color:var(--black); }
+.karriere-karte-dunkel .karriere-titel { color:var(--white); }
+.karriere-text {
+  font-size:15px; line-height:1.6; color:var(--gray-700);
+  margin-bottom:26px; max-width:34em;
+}
+.karriere-karte-dunkel .karriere-text { color:rgba(255,255,255,0.72); }
+/* `margin-top:auto` schiebt den Knopf beider Karten auf dieselbe
+   Höhe, auch wenn der Text darüber unterschiedlich lang ist.   */
+.karriere-karte .btn-primary,
+.karriere-karte .preis-btn { margin-top:auto; width:auto; align-self:center; padding:0 28px; }
+@media (max-width:720px) {
+  .karriere-grid { grid-template-columns:1fr; }
+}
+
+/* ── FUSSZEILE ─────────────────────────────────────────────────
+   War eine einzige Flex-Zeile mit `space-between`: Logo, Links,
+   Social und Zeile umbrachen bei mittleren Breiten in beliebiger
+   Reihenfolge nebeneinander. Jetzt ein Raster mit klarer
+   Zuordnung – Marke links, Wege rechts, Rechtliches darunter. */
 footer {
   background:var(--black);
   border-top:1px solid rgba(255,255,255,0.08);
-  padding:48px 5% 32px;
+  padding:clamp(48px,6vw,72px) var(--rand) 32px;
 }
 .footer-inner {
   max-width:var(--breite-mittel); margin:0 auto;
-  display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:24px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:32px clamp(32px,5vw,72px);
+  align-items:center;
+}
+@media (max-width:720px) {
+  .footer-inner { grid-template-columns:1fr; justify-items:center; text-align:center; }
 }
 .footer-logo { display:flex; align-items:center; gap:10px; }
 .footer-logo img { height:32px; }
@@ -1975,9 +2201,6 @@ footer {
      wirklich nur auf kleinen Geräten gilt.                     */
   #hero { padding-top:64px; }
   .hero-inner { padding:40px 0 44px; }
-  .hero-orb-1 { width:300px; height:300px; top:-70px; right:-90px; }
-  .hero-orb-2 { width:240px; height:240px; bottom:-60px; left:-90px; }
-  .hero-tropfen i:nth-child(3), .hero-tropfen i:nth-child(4) { display:none; }
 
   .hero-badge { font-size:12px; padding:6px 14px 6px 11px; margin-bottom:20px; }
   /* Größe kommt jetzt aus --t-display */
@@ -2213,8 +2436,6 @@ footer {
 <!-- HERO -->
 <section id="hero" tabindex="-1">
   <div class="hero-bg" aria-hidden="true"></div>
-  <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
-  <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
   <div class="hero-inner">
     <div class="hero-text">
       <!-- `data-i18n` sitzt auf dem inneren <span>, nicht auf dem
@@ -2238,21 +2459,17 @@ footer {
          Bildschirmleser ausgeblendet – jede Aussage darin steht
          auch als Text auf der Seite. -->
     <div class="hero-buehne" aria-hidden="true">
-      <div class="hero-scheibe hero-tiefe" data-tiefe="0.10"></div>
-      <div class="hero-ring hero-tiefe" data-tiefe="0.16"></div>
+      <div class="hero-scheibe hero-tiefe" data-tiefe="0.08"></div>
       <div class="hero-wischzug"></div>
 
-      <div class="hero-frosch-parallax hero-tiefe" data-tiefe="0.42">
+      <div class="hero-boden hero-tiefe" data-tiefe="0.30"></div>
+      <div class="hero-frosch-parallax hero-tiefe" data-tiefe="0.38">
         <div class="hero-frosch-schwebe">
           <img src="/logo.png?v=5" alt="" width="497" height="300" fetchpriority="high" decoding="async">
         </div>
       </div>
 
-      <div class="hero-tropfen hero-tiefe" data-tiefe="0.70">
-        <i></i><i></i><i></i><i></i><i></i>
-      </div>
-
-      <div class="hero-beleg-halter hero-beleg-1 hero-tiefe" data-tiefe="0.55">
+      <div class="hero-beleg-halter hero-beleg-1 hero-tiefe" data-tiefe="0.52">
         <div class="hero-beleg">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
           <span>Haftpflichtversichert</span>
@@ -2287,27 +2504,31 @@ footer {
 
 <!-- PREISE -->
 <section id="preise">
-  <div>
-    <div class="section-head center" style="max-width:var(--breite-mittel);margin:0 auto 56px">
-      <div class="section-tag">Preise</div>
-      <h2 class="section-title">Unsere Pakete</h2>
+  <div class="bahn-weit">
+    <div class="section-head kopf-zweispaltig">
+      <div>
+        <div class="section-tag">Preise</div>
+        <h2 class="section-title">Unsere Pakete</h2>
+      </div>
       <p class="section-sub">Wählen Sie den passenden Bereich und stellen Sie unverbindlich eine Anfrage. Sie erhalten ein individuelles Angebot innerhalb von 24 Stunden.</p>
     </div>
     <div class="preise-grid" id="pakete-grid">
-      <p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Pakete werden geladen ...</p>
+      <p style="color:var(--gray-700)">Pakete werden geladen ...</p>
     </div>
-    <p style="text-align:center;margin-top:28px;font-size:14px;color:var(--gray-500)">
+    <p class="abschnitt-fussnote">
       Individuelle Angebote auf Anfrage · Zahlung per Rechnung nach Leistung · §35a EStG – bis zu 20% steuerlich absetzbar
     </p>
   </div>
 </section>
 
 <!-- LEISTUNGEN -->
-<section id="leistungen">
-  <div>
-    <div class="section-head center" style="max-width:var(--breite-mittel);margin:0 auto 56px">
-      <div class="section-tag">Leistungen</div>
-      <h2 class="section-title">Was wir für Sie tun</h2>
+<section id="leistungen" class="grenze-oben">
+  <div class="bahn-weit">
+    <div class="section-head kopf-zweispaltig">
+      <div>
+        <div class="section-tag">Leistungen</div>
+        <h2 class="section-title">Was wir für Sie tun</h2>
+      </div>
       <p class="section-sub">Von der regelmäßigen Haushaltsreinigung bis zum kompletten Hausmeisterservice – alles aus einer Hand.</p>
     </div>
     <div class="leistungen-scroll">
@@ -2454,27 +2675,29 @@ footer {
 
 <!-- REFERENZEN -->
 <section id="referenzen">
-  <div>
-    <div class="section-head center" style="max-width:var(--breite-mittel);margin:0 auto 56px">
-      <div class="section-tag">Referenzen</div>
-      <h2 class="section-title">Unsere Arbeit spricht für sich</h2>
+  <div class="bahn-weit">
+    <div class="section-head kopf-zweispaltig">
+      <div>
+        <div class="section-tag">Referenzen</div>
+        <h2 class="section-title">Unsere Arbeit spricht für sich</h2>
+      </div>
       <p class="section-sub">Echte Ergebnisse aus dem Rhein-Sieg-Kreis – von Privathaushalten bis zu Gewerbeimmobilien.</p>
     </div>
     <div class="ref-grid" id="ref-grid">
-      <p style="text-align:center;color:var(--gray-500);grid-column:1/-1">Referenzen werden geladen ...</p>
+      <p style="color:var(--gray-700);grid-column:1/-1">Referenzen werden geladen ...</p>
     </div>
   </div>
 </section>
 
 <!-- FAQ -->
-<section id="faq">
-  <div>
-    <div class="section-head center" style="max-width:var(--breite-mittel);margin:0 auto 56px">
+<section id="faq" class="grenze-oben">
+  <div class="bahn-weit abschnitt-seitlich">
+    <div class="section-head">
       <div class="section-tag">FAQ</div>
       <h2 class="section-title">Häufige Fragen</h2>
     </div>
     <div class="faq-inner" id="faq-inner">
-      <p style="text-align:center;color:var(--gray-500)">FAQ wird geladen ...</p>
+      <p style="color:var(--gray-700)">FAQ wird geladen ...</p>
     </div>
   </div>
 </section>
@@ -2582,17 +2805,17 @@ footer {
     <h2 class="section-title">Werde Teil von Waschlurch</h2>
     <p class="section-sub">Egal ob als Mitarbeiter oder als Kooperationspartner – wir freuen uns auf dich.</p>
   </div>
-  <div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:24px">
-    <div style="background:var(--black);border:1px solid var(--gray-200);border-radius:var(--eck-m);padding:36px;text-align:center;box-shadow:var(--schatten-1)">
-      <div style="font-size:32px;margin-bottom:12px">🙋</div>
-      <div style="font-size:19px;font-weight:700;color:var(--white);margin-bottom:8px">Jetzt bewerben</div>
-      <p style="font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.6">Du packst gerne mit an und suchst einen zuverlässigen Job in der Region? Wir suchen laufend motivierte Unterstützung.</p>
-      <a href="/bewerbung.html" class="btn-primary" style="display:inline-flex">Jetzt bewerben →</a>
+  <div class="karriere-grid">
+    <div class="karriere-karte karriere-karte-dunkel">
+      <div class="karriere-icon">🙋</div>
+      <div class="karriere-titel">Jetzt bewerben</div>
+      <p class="karriere-text">Du packst gerne mit an und suchst einen zuverlässigen Job in der Region? Wir suchen laufend motivierte Unterstützung.</p>
+      <a href="/bewerbung.html" class="btn-primary">Jetzt bewerben →</a>
     </div>
-    <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--eck-m);padding:36px;text-align:center;box-shadow:var(--schatten-1)">
-      <div style="font-size:32px;margin-bottom:12px">🤝</div>
-      <div style="font-size:19px;font-weight:700;color:var(--black);margin-bottom:8px">Jetzt Partner werden</div>
-      <p style="font-size:14px;color:var(--gray-500);margin-bottom:24px;line-height:1.6">Du hast einen Handwerks- oder Dienstleistungsbetrieb und möchtest kooperieren? Lass uns gemeinsam wachsen.</p>
+    <div class="karriere-karte">
+      <div class="karriere-icon">🤝</div>
+      <div class="karriere-titel">Jetzt Partner werden</div>
+      <p class="karriere-text">Du hast einen Handwerks- oder Dienstleistungsbetrieb und möchtest kooperieren? Lass uns gemeinsam wachsen.</p>
       <a href="/partner.html" class="preis-btn">Jetzt Partner werden →</a>
     </div>
   </div>
