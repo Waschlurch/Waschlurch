@@ -305,8 +305,13 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); animation:pageLoadFade .6s ease; }
-@keyframes pageLoadFade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+/* Die ganze Seite blendete beim Laden ein (`pageLoadFade`, 0,6s).
+   Das ist entfallen: Es verzögert den Moment, in dem der Besucher
+   etwas erkennt, legt sich über den eigenen gestaffelten Auftritt
+   des Hero – und eine Seite, die als Ganzes hereinwischt, ist ein
+   Effekt ohne Aussage. Der Hero bringt seine Einführung selbst
+   mit; alles darunter tritt beim Scrollen auf.                 */
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
 @media (prefers-reduced-motion: reduce) { body { animation:none; } }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -580,7 +585,7 @@ textarea:focus-visible,
 }
 .mobile-menu.open .mobile-menu-liste a {
   opacity:1; transform:translateY(0);
-  transition:opacity .5s var(--ease-aus), transform .5s var(--ease-aus),
+  transition:opacity var(--zeit-lang) var(--ease-aus), transform var(--zeit-lang) var(--ease-aus),
              color var(--zeit-kurz) var(--ease-aus);
 }
 .mobile-menu.open .mobile-menu-liste a:nth-child(1) { transition-delay:.05s,.05s,0s; }
@@ -605,7 +610,7 @@ textarea:focus-visible,
 }
 .mobile-menu.open .mobile-menu-fuss {
   opacity:1; transform:translateY(0);
-  transition:opacity .5s var(--ease-aus) .3s, transform .5s var(--ease-aus) .3s;
+  transition:opacity var(--zeit-lang) var(--ease-aus) .3s, transform var(--zeit-lang) var(--ease-aus) .3s;
 }
 .mobile-menu-cta { width:100%; }
 .mobile-menu-zeile { display:flex; align-items:center; justify-content:space-between; gap:16px; }
@@ -1146,7 +1151,7 @@ section { padding:var(--sekt-gross) var(--rand); }
 .hero-sub,
 .hero-btns,
 .hero-stats {
-  animation:heroRise .85s cubic-bezier(.2,.7,.3,1) both;
+  animation:heroRise .85s var(--ease-aus) both;
 }
 .hero-badge                          { animation-delay:.10s; }
 .hero-title .hero-line:nth-child(1)  { animation-delay:.22s; }
@@ -1224,18 +1229,28 @@ section { padding:var(--sekt-gross) var(--rand); }
   .hero-sub { max-width:32em; }
 }
 
-/* Scroll-Hinweis am unteren Rand */
+/* ── Scroll-Hinweis ────────────────────────────────────────────
+   Er lief bisher endlos weiter – auch dann noch, wenn der Besucher
+   längst gescrollt hatte. Ein Hinweis, der nach seiner Erfüllung
+   weiterwinkt, ist kein Hinweis mehr, sondern Zappeln.
+
+   Jetzt blendet er aus, sobald gescrollt wurde (`.weg`, gesetzt im
+   Scroll-Handler), und der Takt ist von 1,9 s auf 2,6 s
+   verlangsamt.                                                  */
 .hero-scroll {
   position:absolute; left:50%; bottom:28px; margin-left:-12px;
   width:24px; height:38px; border-radius:12px;
   border:2px solid rgba(255,255,255,0.22);
   display:flex; justify-content:center; padding-top:7px;
   z-index:3;
-  animation:heroRise .85s cubic-bezier(.2,.7,.3,1) 1.4s both;
+  animation:heroRise .85s var(--ease-aus) 1.4s both;
+  transition:opacity var(--zeit-mittel) var(--ease-aus),
+             transform var(--zeit-mittel) var(--ease-aus);
 }
+.hero-scroll.weg { opacity:0; transform:translateY(8px); pointer-events:none; }
 .hero-scroll span {
   width:3px; height:8px; border-radius:2px; background:var(--green);
-  animation:heroScrollHint 1.9s ease-in-out infinite;
+  animation:heroScrollHint 2.6s ease-in-out infinite;
 }
 /* Der Hinweis „hier geht es weiter" ergibt nur Sinn, solange der
    Hero den ganzen Bildschirm füllt. Unter 1024px tut er das nicht
@@ -1298,7 +1313,11 @@ section { padding:var(--sekt-gross) var(--rand); }
   white-space:nowrap; flex-shrink:0;
   padding:0 30px;
 }
-.trust-item span:first-child { font-size:20px; transition:filter .25s,transform .25s; }
+/* `filter` wurde noch mit übergeben, obwohl der Leuchtschein
+   längst entfernt ist – ein Übergang, der ins Leere zeigt und
+   den Browser dennoch bei jedem Zustandswechsel prüfen lässt.
+   `filter` ist zudem eine Mal-Eigenschaft und teuer.         */
+.trust-item span:first-child { font-size:20px; transition:transform var(--zeit-kurz) var(--ease-aus); }
 /* Der grüne Schein beim Überfahren ist entfallen – DESIGN.md §7
    schließt farbiges Leuchten aus. Das Anheben genügt als
    Rückmeldung; das Laufband hält dabei ohnehin an.            */
@@ -1406,7 +1425,7 @@ section { padding:var(--sekt-gross) var(--rand); }
   width:28px; height:28px; border-radius:50%;
   background:rgba(34,197,94,0.2); display:flex; align-items:center; justify-content:center;
   flex-shrink:0; font-size:13px; margin-top:1px;
-  transition:filter .25s,background .25s;
+  transition:background-color var(--zeit-kurz) var(--ease-aus);
 }
 .ueber-punkt:hover .ueber-punkt-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.9)); background:rgba(34,197,94,0.35); }
 
@@ -1542,7 +1561,7 @@ section { padding:var(--sekt-gross) var(--rand); }
   position:fixed; inset:0; z-index:2000;
   background:rgba(0,0,0,0.72); backdrop-filter:blur(6px);
   display:flex; align-items:center; justify-content:center; padding:24px;
-  opacity:0; transition:opacity .28s var(--weich);
+  opacity:0; transition:opacity var(--zeit-mittel) var(--ease-aus);
 }
 .leistung-overlay[hidden] { display:none; }
 .leistung-overlay.offen { opacity:1; }
@@ -1552,7 +1571,7 @@ section { padding:var(--sekt-gross) var(--rand); }
   position:relative; text-align:left;
   box-shadow:var(--schatten-4);
   transform:translateY(18px) scale(.97);
-  transition:transform .32s var(--federn);
+  transition:transform var(--zeit-mittel) var(--ease-aus);
 }
 .leistung-overlay.offen .leistung-dialog { transform:translateY(0) scale(1); }
 /* Volle 44px. Die vorherigen 40 waren mit „Luft ringsum" begründet –
@@ -1607,12 +1626,12 @@ section { padding:var(--sekt-gross) var(--rand); }
 .paket-gruppe.offen .paket-gruppe-meta { color:var(--green-dark); }
 .paket-gruppe-pfeil {
   font-size:18px; color:var(--gray-500); flex-shrink:0;
-  transition:transform .35s var(--weich), color .25s ease;
+  transition:transform var(--zeit-mittel) var(--ease-aus), color var(--zeit-kurz) var(--ease-aus);
 }
 .paket-gruppe.offen .paket-gruppe-pfeil { transform:rotate(180deg); color:var(--green-dark); }
 .paket-gruppe-inhalt {
   display:grid; grid-template-rows:0fr;
-  transition:grid-template-rows .45s var(--weich);
+  transition:grid-template-rows var(--zeit-mittel) var(--ease-aus);
 }
 .paket-gruppe.offen .paket-gruppe-inhalt { grid-template-rows:1fr; }
 .paket-gruppe-karten { overflow:hidden; }
@@ -1649,11 +1668,56 @@ section { padding:var(--sekt-gross) var(--rand); }
    liest sich als Fehler. Links ausgerichtet in ihrer Musterbreite
    stehenzubleiben ist die ruhigere Lösung.                     */
 
-/* SCROLL-ANIMATION */
-.reveal { opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
+/* ── SCROLL-AUFTRITT ───────────────────────────────────────────
+   Weg von 28px auf 16px und von 0,7s auf --zeit-lang mit der
+   Kurve des Systems. Ein Auftritt aus 28px Entfernung liest sich
+   als Bewegung; aus 16px als Ankunft. Die Kurve stand als
+   handgeschriebenes cubic-bezier(.2,.7,.3,1) an zwei Stellen –
+   dicht an --ease-aus, aber eben nicht dasselbe.               */
+.reveal {
+  opacity:0; transform:translateY(16px);
+  transition:opacity var(--zeit-lang) var(--ease-aus),
+             transform var(--zeit-lang) var(--ease-aus);
+}
 .reveal.visible { opacity:1; transform:translateY(0); }
-@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-.preis-card { animation:fadeInUp .6s ease both; }
+
+/* `.preis-card { animation:fadeInUp .6s ease both }` ist entfallen.
+
+   Die Regel lief auf **jeder** Paketkarte sofort beim Rendern –
+   bei 24 Karten also 24 Läufe gleichzeitig, unsichtbar, weil die
+   Karten in einer zugeklappten Gruppe liegen. Wenn der Besucher
+   die Gruppe später öffnet, ist die Animation längst vorbei.
+
+   Der Auftritt hängt jetzt am Öffnen der Gruppe (siehe
+   `.paket-gruppe.offen .preis-card`) – dort, wo er etwas
+   erklärt: Diese Karten sind gerade neu dazugekommen.         */
+@keyframes karteAuftritt {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+/* Bewusst als `animation` mit `backwards` – nicht als `transition`
+   auf `.paket-gruppe.offen .preis-card`.
+
+   Eine solche Regel wäre mit drei Klassen spezifischer als
+   `.preis-card:hover` (zwei) und hätte das Anheben beim Überfahren
+   dauerhaft blockiert. Eine Animation ohne `forwards` gibt die
+   Eigenschaft nach dem Lauf wieder frei; `backwards` verhindert
+   dabei das Aufblitzen während der Verzögerung.               */
+.paket-gruppe.offen .preis-card {
+  animation:karteAuftritt var(--zeit-mittel) var(--ease-aus) backwards;
+}
+/* Gestaffelt, gedeckelt bei sechs – ohne Deckel warten späte
+   Karten sekundenlang (DESIGN.md §11).                        */
+.paket-gruppe.offen .preis-card:nth-child(1) { animation-delay:.04s; }
+.paket-gruppe.offen .preis-card:nth-child(2) { animation-delay:.08s; }
+.paket-gruppe.offen .preis-card:nth-child(3) { animation-delay:.12s; }
+.paket-gruppe.offen .preis-card:nth-child(4) { animation-delay:.16s; }
+.paket-gruppe.offen .preis-card:nth-child(5) { animation-delay:.20s; }
+.paket-gruppe.offen .preis-card:nth-child(n+6) { animation-delay:.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .paket-gruppe.offen .preis-card { animation:none; }
+}
 
 /* REFERENZEN */
 #referenzen { background:var(--white); }
@@ -1789,7 +1853,7 @@ section { padding:var(--sekt-gross) var(--rand); }
   width:44px; height:44px; border-radius:var(--eck-s);
   background:rgba(34,197,94,0.15);
   display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
-  transition:filter .25s,background .25s;
+  transition:background-color var(--zeit-kurz) var(--ease-aus);
 }
 .kontakt-item:hover .kontakt-item-icon { background:rgba(34,197,94,0.28); }
 /* War 12px in Weiß bei 40 % auf der Kartenfläche – gemessen
@@ -2048,13 +2112,13 @@ footer {
   color:rgba(255,255,255,0.55); text-decoration:none;
   border:1px solid rgba(255,255,255,0.14); border-radius:100px;
   padding:8px 16px; font-size:13px; font-weight:600;
-  transition:color .2s, border-color .2s, background .2s;
+  transition:color var(--zeit-kurz) var(--ease-aus), border-color var(--zeit-kurz) var(--ease-aus), background-color var(--zeit-kurz) var(--ease-aus);
 }
 .footer-social a:hover { color:var(--white); border-color:var(--green); background:rgba(34,197,94,0.10); }
 .footer-ort { color:inherit; text-decoration:none; border-bottom:1px dotted rgba(255,255,255,0.3); }
 .footer-ort:hover { color:var(--green); border-bottom-color:var(--green); }
 .footer-links { display:flex; gap:24px; }
-.footer-links a { font-size:13px; color:rgba(255,255,255,0.4); text-decoration:none; transition:color .2s; }
+.footer-links a { font-size:13px; color:rgba(255,255,255,0.4); text-decoration:none; transition:color var(--zeit-kurz) var(--ease-aus); }
 .footer-links a:hover { color:var(--white); }
 .footer-copy { font-size:13px; color:rgba(255,255,255,0.3); }
 
@@ -2105,12 +2169,17 @@ footer {
 
 /* ═══ MODERNE BAUSTEINE (überwiegend mobil) ══════════════════ */
 :root {
-  --weich:  cubic-bezier(.22,1,.36,1);      /* sanftes Ausrollen  */
-  /* War eine überschwingende Kurve (.34,1.4,.64,1). Echte Gegenstände
-     schwingen beim Abbremsen nicht über – sie werden exponentiell
-     langsamer. Siehe DESIGN.md, Abschnitt 8. Name bleibt, damit die
-     vier Verwendungsstellen unverändert weiterlaufen. */
-  --federn: cubic-bezier(0.16,1,0.30,1);
+  /* `--weich` ist der zweite Kurvenname des Projekts und entspricht
+     dem `--ease-weich` aus DESIGN.md §8 – für längere Wege.     */
+  --weich: cubic-bezier(.22,1,.36,1);
+
+  /* `--federn` ist entfallen.
+
+     Die Variable hieß „federn", trug aber seit dem Designsystem-
+     Umbau längst die exponentielle Kurve. Ein Name, der das
+     Gegenteil seines Werts behauptet, ist eine Falle: Wer ihn
+     liest, erwartet ein Überschwingen und baut es woanders nach.
+     Die drei Verwendungsstellen nutzen jetzt `--ease-aus`.     */
 }
 
 /* Lesefortschritt am oberen Rand */
@@ -2118,26 +2187,49 @@ footer {
   display:none; position:fixed; top:0; left:0; right:0; height:2px;
   z-index:1001; background:rgba(255,255,255,0.06); pointer-events:none;
 }
+/* Der Balken wächst über `scaleX`, nicht über `width`.
+
+   `width` zu animieren zwingt den Browser bei **jedem** Scrollbild
+   zu Layout und Neuzeichnung – und das hier lief bei jedem
+   einzelnen Scrollereignis. `scaleX` läuft auf der Grafikeinheit.
+
+   Der grüne Schein ist entfallen: ein Schlagschatten mit Versatz 0
+   und Farbe, den DESIGN.md §7 ausschließt – der letzte der beiden
+   verbliebenen.                                                  */
 .scroll-fortschritt span {
-  display:block; height:100%; width:0%;
+  display:block; height:100%; width:100%;
+  transform:scaleX(0); transform-origin:left center;
   background:linear-gradient(90deg, var(--green), #4ADE80);
-  box-shadow:0 0 10px rgba(34,197,94,0.7);
-  transition:width .1s linear;
+  will-change:transform;
 }
 
-/* Punkte unter dem Leistungs-Karussell */
-.leistungen-punkte { display:none; justify-content:center; gap:7px; margin-top:20px; }
+/* Punkte unter dem Leistungs-Karussell.
+
+   Vorher wuchs der aktive Punkt von 6 auf 22px – eine
+   `width`-Animation, und zwar bei jedem Wischen.
+
+   Ein Umbau auf `scaleX` hätte das Layout verzerrt: Der Kasten
+   müsste dann durchgehend 22px breit sein, wodurch zwischen zwei
+   zusammengestauchten Punkten 23px Luft stünden statt 7.
+
+   Deshalb der ruhigere Weg: **alle Punkte gleich groß**, der
+   aktive unterscheidet sich durch Farbe und eine kaum merkliche
+   Vergrößerung. Das ist dieselbe Lösung, die iOS für Seitenpunkte
+   verwendet – und sie bewegt ausschließlich `transform`.       */
+.leistungen-punkte { display:none; justify-content:center; align-items:center; gap:9px; margin-top:20px; }
 .leistungen-punkt {
-  width:6px; height:6px; border-radius:100px; background:var(--gray-200);
-  transition:width .4s var(--federn), background .3s ease;
+  width:7px; height:7px; border-radius:100px;
+  background:var(--gray-300);
+  transition:transform var(--zeit-kurz) var(--ease-aus),
+             background-color var(--zeit-kurz) var(--ease-aus);
 }
-.leistungen-punkt.aktiv { width:22px; background:var(--green); }
+.leistungen-punkt.aktiv { background:var(--green); transform:scale(1.3); }
 
 /* Gestaffelter Auftritt von Karten innerhalb eines Abschnitts */
 .reveal-kind { opacity:0; transform:translateY(22px); }
 .reveal-kind.sichtbar {
   opacity:1; transform:translateY(0);
-  transition:opacity .65s var(--weich), transform .65s var(--weich);
+  transition:opacity var(--zeit-lang) var(--ease-aus), transform var(--zeit-lang) var(--ease-aus);
 }
 
 @media(prefers-reduced-motion: reduce){
@@ -2178,7 +2270,7 @@ footer {
   .section-tag::before {
     content:''; width:22px; height:2px; border-radius:2px; background:var(--green);
     transform:scaleX(0); transform-origin:left center;
-    transition:transform .7s var(--weich) .15s;
+    transition:transform var(--zeit-lang) var(--ease-aus) .15s;
   }
   .reveal.visible .section-tag::before,
   .section-head.visible .section-tag::before { transform:scaleX(1); }
@@ -2292,7 +2384,7 @@ footer {
   .preis-card:active { transform:scale(0.97); }
   .preis-card.expanded { box-shadow:var(--schatten-3); border-color:var(--green); }
   .preis-header { cursor:pointer; }
-  .preis-toggle-icon { display:inline-block; float:right; font-size:16px; transition:transform .3s cubic-bezier(.4,0,.2,1); color:var(--gray-500); }
+  .preis-toggle-icon { display:inline-block; float:right; font-size:16px; transition:transform var(--zeit-mittel) var(--ease-aus); color:var(--gray-500); }
   .preis-card.expanded .preis-toggle-icon { transform:rotate(180deg); }
   .preis-img, .preis-icon { margin-bottom:8px; }
   .preis-val { font-size:24px; }
@@ -2310,7 +2402,7 @@ footer {
      einen Streifen stehen, ein `margin-top` würde mitanimiert. */
   .preis-details {
     display:grid; grid-template-rows:0fr;
-    transition:grid-template-rows .4s var(--ease-aus);
+    transition:grid-template-rows var(--zeit-mittel) var(--ease-aus);
   }
   .preis-details-inner { overflow:hidden; min-height:0; }
   .preis-details-inner::before { content:''; display:block; height:16px; }
@@ -2340,9 +2432,9 @@ footer {
     -webkit-backdrop-filter:blur(22px) saturate(180%);
     border-top:1px solid rgba(0,0,0,0.06);
   }
-  .quicknav-item { transition:transform .25s var(--federn), color .2s ease; }
+  .quicknav-item { transition:transform var(--zeit-kurz) var(--ease-aus), color var(--zeit-kurz) var(--ease-aus); }
   .quicknav-item:active { transform:scale(0.88); }
-  .quicknav-item span:first-child { transition:transform .25s var(--federn); }
+  .quicknav-item span:first-child { transition:transform var(--zeit-kurz) var(--ease-aus); }
   .quicknav-item:active span:first-child { transform:translateY(-2px) scale(1.12); }
 
   /* ── KONTAKTFORMULAR ──
@@ -3224,7 +3316,7 @@ document.addEventListener('keydown', e => {
 (function(){
   const kopf = document.getElementById('kopf');
   const balken = document.getElementById('scroll-balken');
-  let laeuft = false;
+  const scrollHinweis = document.querySelector('.hero-scroll');
 
   /* ── Tiefe im Hero ────────────────────────────────────────────
      Die Ebenen der Bühne verschieben sich unterschiedlich schnell.
@@ -3266,17 +3358,48 @@ document.addEventListener('keydown', e => {
        Inline-Stil gesetzt – das überschrieb die CSS-Regel und ließ
        sich von dort aus nicht mehr ändern.                      */
     if(kopf) kopf.classList.toggle('kopf-klein', y > 40);
+    /* Der Scroll-Hinweis hat seinen Zweck erfüllt, sobald gescrollt
+       wurde. Danach wäre seine Schleife nur noch Zappeln.        */
+    if(scrollHinweis) scrollHinweis.classList.toggle('weg', y > 60);
     if(balken){
       const hoehe = document.documentElement.scrollHeight - window.innerHeight;
-      balken.style.width = (hoehe > 0 ? Math.min(100, (y / hoehe) * 100) : 0) + '%';
+      /* `scaleX` statt `width`: Der Balken wird bei jedem
+         Scrollbild neu gesetzt – als Breitenänderung hieße das
+         Layout und Neuzeichnung im Takt des Scrollens.        */
+      const anteil = hoehe > 0 ? Math.min(1, y / hoehe) : 0;
+      balken.style.transform = 'scaleX(' + anteil.toFixed(4) + ')';
     }
     zeichneTiefe(y);
-    laeuft = false;
   }
 
+  /* ── Warum ein Bildzähler statt eines Sperrflags ───────────────
+     Vorher stand hier `if(!laeuft){ laeuft = true; rAF(...) }` und
+     `aktualisiere()` setzte das Flag am Ende zurück.
+
+     Das hat einen Haken: `requestAnimationFrame` läuft **nicht**,
+     solange der Tab im Hintergrund liegt. Wird die Seite genau
+     zwischen Anforderung und Ausführung ausgeblendet, kommt der
+     Rückruf nie – das Flag bleibt auf `true` und der gesamte
+     Scroll-Handler ist bis zum Neuladen tot: kein Kopfwechsel,
+     kein Lesefortschritt, keine Tiefe. Beim Testen genau so
+     eingetreten.
+
+     Jetzt merkt sich der Zähler die Bildkennung, der Rückruf setzt
+     sie selbst zurück, und beim Zurückkehren auf den Tab wird
+     einmal sauber nachgezogen.                                  */
+  let bild = 0;
   window.addEventListener('scroll', () => {
-    if(!laeuft){ laeuft = true; requestAnimationFrame(aktualisiere); }
+    if(bild) return;
+    bild = requestAnimationFrame(() => { bild = 0; aktualisiere(); });
   }, { passive:true });
+
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'visible') return;
+    if(bild) cancelAnimationFrame(bild);
+    bild = 0;
+    aktualisiere();
+  });
+
   aktualisiere();
 })();
 
@@ -3292,16 +3415,16 @@ document.addEventListener('keydown', e => {
   if(!hero || !window.matchMedia('(pointer:fine)').matches) return;
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  let laeuft = false, zx = 0, zy = 0;
+  /* Bildkennung statt Sperrflag – siehe Begründung beim
+     Scroll-Handler weiter oben.                                 */
+  let bild = 0, zx = 0, zy = 0;
 
   hero.addEventListener('pointermove', e => {
     const r = hero.getBoundingClientRect();
     zx = (e.clientX - r.left) / r.width  * 2 - 1;
     zy = (e.clientY - r.top)  / r.height * 2 - 1;
-    if(!laeuft){
-      laeuft = true;
-      requestAnimationFrame(() => { window._heroZeiger?.(zx, zy); laeuft = false; });
-    }
+    if(bild) return;
+    bild = requestAnimationFrame(() => { bild = 0; window._heroZeiger?.(zx, zy); });
   }, { passive:true });
 
   // Beim Verlassen sanft in die Mitte zurück.
@@ -3324,15 +3447,16 @@ document.addEventListener('keydown', e => {
     });
     const punkte = punkteBox.querySelectorAll('.leistungen-punkt');
 
-    let laeuft = false;
+    /* Bildkennung statt Sperrflag – siehe Begründung beim
+       Scroll-Handler weiter oben.                               */
+    let bild = 0;
     spur.addEventListener('scroll', () => {
-      if(laeuft) return;
-      laeuft = true;
-      requestAnimationFrame(() => {
+      if(bild) return;
+      bild = requestAnimationFrame(() => {
+        bild = 0;
         const breite = karten[0].offsetWidth + 14;   // Karte + Abstand
         const aktiv = Math.round(spur.scrollLeft / breite);
         punkte.forEach((p, i) => p.classList.toggle('aktiv', i === aktiv));
-        laeuft = false;
       });
     }, { passive:true });
   });

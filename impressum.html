@@ -107,6 +107,20 @@ h1 { font-size:clamp(28px,4vw,36px); font-weight:700; letter-spacing:-1px; margi
 #impressum-content h2:first-child { margin-top:0; }
 #impressum-content p { font-size:15px; line-height:1.7; color:var(--gray-700); }
 #impressum-content a { color:var(--green-dark); }
+
+/* Bewegung abschaltbar. Auf diesen Seiten bewegt sich nur das
+   Logo beim Überfahren – auch das gehört unter die Regel: Für
+   Menschen mit vestibulären Störungen ist Bewegung körperlich
+   unangenehm, unabhängig davon, wie klein sie ist.            */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+    scroll-behavior:auto !important;
+  }
+  .nav-logo:hover img { transform:none; }
+}
 </style>
 </head>
 <body>
