@@ -520,7 +520,9 @@ textarea:focus-visible,
    wurden dadurch im Moment des Fokus zu Rechtecken, Eingabefelder
    sprangen von 8px auf 4px. Der Rahmen der Umrandung folgt dem
    Radius des Elements ohnehin von selbst.                        */
-.lang-hinweis { text-align:center; font-size:12px; color:var(--gray-500); margin-top:8px; font-style:italic; }
+/* War 12px in --gray-500 und kursiv. Diese Graustufe ist erst ab
+   15px zugelassen, und Systemschriften haben schwache Kursive.  */
+.lang-hinweis { text-align:center; font-size:14px; line-height:1.5; color:var(--gray-700); margin-top:8px; }
 
 /* ── Hamburger ─────────────────────────────────────────────────
    Zwei Striche statt drei. Drei Striche sind das Klischee; zwei
@@ -658,7 +660,25 @@ section { padding:var(--sekt-gross) var(--rand); }
 /* Rhythmus: tragende Abschnitte bekommen mehr Luft als Nebenabschnitte */
 #leistungen, #ueber { padding-block:var(--sekt-klein); }
 #trust { padding-block:var(--sekt-band); }
-.section-tag { font-size:var(--t-label); font-weight:600; color:var(--green-dark); text-transform:uppercase; letter-spacing:var(--ls-label); line-height:var(--lh-label); margin-bottom:var(--r-3); }
+/* ── ETIKETTEN UND ABZEICHEN ───────────────────────────────────
+   Es gab sechs eigenständige Fassungen desselben Bauteils:
+   .section-tag (12px/600/0,08em), .leistung-tag (11px/700/0,073em),
+   .leistung-dialog-tag (11px/700/0,082em), .preis-name
+   (13px/600/0,038em) und je ein .tag auf den Formularseiten.
+   Fünf davon hatten keine Zeilenhöhe.
+
+   Zwei Stufen reichen: das **Etikett** über einer Überschrift
+   (reiner Text) und das **Abzeichen** an einer Karte (Pille).   */
+.section-tag,
+.leistung-tag,
+.leistung-dialog-tag,
+.preis-name {
+  font-size:var(--t-label); font-weight:600;
+  color:var(--green-dark);
+  text-transform:uppercase;
+  letter-spacing:var(--ls-label); line-height:var(--lh-label);
+}
+.section-tag { margin-bottom:var(--r-3); }
 .section-title { font-size:var(--t-h2); font-weight:700; color:var(--black); letter-spacing:var(--ls-h2); line-height:var(--lh-h2); margin-bottom:var(--r-4); }
 .section-sub { font-size:var(--t-body); color:var(--gray-700); line-height:var(--lh-body); max-width:var(--lesebreite); }
 .section-head { margin-bottom:var(--r-7); }
@@ -705,18 +725,13 @@ section { padding:var(--sekt-gross) var(--rand); }
     radial-gradient(ellipse 60% 50% at 18% 78%, rgba(21,128,61,0.16) 0%, transparent 66%);
   z-index:0;
 }
-/* Feines Raster, das nach außen ausblendet. Gibt der schwarzen
-   Fläche eine Textur, ohne als Muster aufzufallen – ohne das wirkt
-   Schwarz auf großen Bildschirmen wie ein Loch.                  */
-.hero-raster {
-  position:absolute; inset:0; z-index:0; pointer-events:none;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-  background-size:64px 64px;
-  mask-image:radial-gradient(ellipse 70% 60% at 50% 45%, #000 0%, transparent 75%);
-  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 45%, #000 0%, transparent 75%);
-}
+/* Hier stand ein feines Linienraster als Textur. Wieder entfernt:
+   Ein gekacheltes Hairline-Raster über dunklem Grund ist genau das
+   Erkennungszeichen maschinell erzeugter Oberflächen, das
+   DESIGN.md ausschließt – dieselbe Kerbe wie Leuchtschein und
+   Verlaufsflächen als Deko. Die Tiefe tragen die beiden
+   Lichtquellen oben und die Bühne; das Raster war eine Zutat, die
+   nur nach Vorlage aussah.                                       */
 .hero-inner {
   max-width:var(--breite-weit); margin:0 auto; width:100%;
   display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,0.95fr);
@@ -1186,7 +1201,10 @@ section { padding:var(--sekt-gross) var(--rand); }
   padding:0 32px;
 }
 .trust-item span:first-child { font-size:20px; transition:filter .25s,transform .25s; }
-.trust-item:hover span:first-child { filter:drop-shadow(0 0 10px rgba(34,197,94,0.9)); transform:scale(1.15); }
+/* Der grüne Schein beim Überfahren ist entfallen – DESIGN.md §7
+   schließt farbiges Leuchten aus. Das Anheben genügt als
+   Rückmeldung; das Laufband hält dabei ohnehin an.            */
+.trust-item:hover span:first-child { transform:translateY(-2px); }
 @keyframes trustTicker {
   from { transform:translateX(0); }
   to { transform:translateX(-50%); }
@@ -1248,9 +1266,13 @@ section { padding:var(--sekt-gross) var(--rand); }
   background:var(--gray-100);
   padding:18px 20px 20px;
 }
-.leistung-tag { font-size:11px; font-weight:700; color:var(--green-dark); text-transform:uppercase; letter-spacing:.8px; margin-bottom:5px; }
-.leistung-title { font-size:18px; font-weight:700; color:var(--black); margin-bottom:5px; letter-spacing:-0.3px; }
-.leistung-desc { font-size:13px; color:var(--gray-500); line-height:1.5; margin-bottom:10px; }
+/* Größe, Gewicht und Laufweite kommen aus der Etikettenregel oben. */
+.leistung-tag { margin-bottom:6px; }
+.leistung-title { font-size:18px; font-weight:700; color:var(--black); margin-bottom:6px; letter-spacing:-0.02em; line-height:1.3; }
+/* 13px in --gray-500 lag unter dem Mindestkontrast: Diese Graustufe
+   ist laut DESIGN.md §3 erst ab 15px zugelassen. Jetzt 14px in
+   --gray-700 – dieselbe Rolle, aber lesbar.                     */
+.leistung-desc { font-size:14px; color:var(--gray-700); line-height:1.55; margin-bottom:10px; }
 .leistung-ab { font-size:13px; font-weight:600; color:var(--gray-700); display:none; }
 
 /* ABOUT */
@@ -1323,32 +1345,57 @@ section { padding:var(--sekt-gross) var(--rand); }
   background:var(--black);
   box-shadow:var(--schatten-2);
 }
-.preis-card.featured:hover { box-shadow:var(--schatten-4); }
+/* Stufe 4 ist laut Schattenleiter für Dialoge und Überlagerungen
+   bestimmt. Auf einer Karte im Raster standen dadurch drei Stufen
+   gleichzeitig im Bild – DESIGN.md §7 erlaubt höchstens zwei.   */
+.preis-card.featured:hover { box-shadow:var(--schatten-3); }
+
+/* Das Abzeichen an der Karte. Bewusst die kräftige Fassung: Es
+   markiert genau ein Paket und hat damit Signalwirkung. Größe,
+   Gewicht und Laufweite folgen der Etikettenregel.             */
 .preis-badge {
-  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+  position:absolute; top:-13px; left:50%; transform:translateX(-50%);
+  display:inline-flex; align-items:center; min-height:26px; padding:0 12px;
   background:var(--green); color:var(--white);
-  font-size:12px; font-weight:700; padding:4px 16px; border-radius:var(--eck-voll);
+  font-size:var(--t-label); font-weight:600;
+  letter-spacing:var(--ls-label); line-height:1;
+  border-radius:var(--eck-voll);
+  box-shadow:var(--schatten-2);
   white-space:nowrap;
 }
 .preis-icon { font-size:32px; margin-bottom:10px; }
 .preis-img { width:100%; height:auto; max-height:260px; object-fit:contain; display:block; border-radius:var(--eck-m); margin-bottom:14px; background:var(--gray-100); }
-.preis-name { font-size:13px; font-weight:600; color:var(--green-dark); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
-.preis-card.featured .preis-name { color:var(--green); }
-.preis-title { font-size:19px; font-weight:700; color:var(--black); margin-bottom:8px; letter-spacing:-0.3px; }
+.preis-name { margin-bottom:6px; }
+.preis-card.featured .preis-name { color:#86EFAC; }
+.preis-title { font-size:19px; font-weight:700; color:var(--black); margin-bottom:8px; letter-spacing:-0.02em; line-height:1.3; }
 .preis-card.featured .preis-title { color:var(--white); }
-.preis-desc { font-size:13px; color:var(--gray-500); margin-bottom:18px; line-height:1.5; }
-.preis-card.featured .preis-desc { color:rgba(255,255,255,0.5); }
-.preis-val { font-size:34px; font-weight:700; color:var(--black); letter-spacing:-1px; }
+/* 13px/14px in --gray-500 lagen unter dem Mindestkontrast – diese
+   Graustufe ist erst ab 15px zugelassen.                        */
+.preis-desc { font-size:14px; color:var(--gray-700); margin-bottom:18px; line-height:1.55; }
+.preis-card.featured .preis-desc { color:rgba(255,255,255,0.72); }
+.preis-val { font-size:34px; font-weight:700; color:var(--black); letter-spacing:-0.03em; line-height:1.1; }
 .preis-card.featured .preis-val { color:var(--white); }
-.preis-unit { font-size:14px; color:var(--gray-500); margin-bottom:24px; }
-.preis-card.featured .preis-unit { color:rgba(255,255,255,0.5); }
-.preis-features { list-style:none; display:flex; flex-direction:column; gap:12px; margin-bottom:28px; flex:1; }
+.preis-unit { font-size:15px; color:var(--gray-500); margin-bottom:24px; line-height:1.5; }
+.preis-card.featured .preis-unit { color:rgba(255,255,255,0.62); }
+.preis-features { list-style:none; display:flex; flex-direction:column; gap:11px; margin-bottom:28px; flex:1; }
+/* `align-items:flex-start` statt `center`: Bei einer zweizeiligen
+   Leistung saß das Häkchen sonst mittig zwischen beiden Zeilen und
+   wirkte, als gehöre es zu keiner.                              */
 .preis-features li {
-  display:flex; align-items:center; gap:10px;
-  font-size:14px; color:var(--gray-700);
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:15px; line-height:1.5; color:var(--gray-700);
 }
 .preis-card.featured .preis-features li { color:rgba(255,255,255,0.8); }
-.preis-features li::before { content:'✓'; color:var(--green); font-weight:700; }
+/* Das Häkchen als gezeichnetes Zeichen in fester Größe statt als
+   Schriftglyphe: `content:'✓'` wird je nach System unterschiedlich
+   breit gesetzt, wodurch der Text der Zeilen um bis zu 3px
+   gegeneinander versprang.                                      */
+.preis-features li::before {
+  content:''; flex-shrink:0;
+  width:18px; height:18px; margin-top:2px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322C55E' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:100%;
+}
 /* Sekundäre Schaltfläche: 1,5px Rahmen in --gray-300 statt 2px in
    Schwarz. Zwei schwarze Rahmen nebeneinander konkurrierten mit
    der einen grünen Hauptaktion um die Aufmerksamkeit.           */
@@ -1389,10 +1436,11 @@ section { padding:var(--sekt-gross) var(--rand); }
   transition:transform .32s var(--federn);
 }
 .leistung-overlay.offen .leistung-dialog { transform:translateY(0) scale(1); }
-/* 40px statt 36px: unter 44px braucht ein Ziel Luft ringsum, damit
-   die Tippfläche trotzdem trifft – die gibt der Dialograhmen her. */
+/* Volle 44px. Die vorherigen 40 waren mit „Luft ringsum" begründet –
+   das ist eine Ausnahmeregel, und hier gibt es keinen Grund für
+   eine Ausnahme: Der Platz im Dialog ist da.                    */
 .leistung-schliessen {
-  position:absolute; top:16px; right:16px; width:40px; height:40px;
+  position:absolute; top:14px; right:14px; width:44px; height:44px;
   border:none; border-radius:var(--eck-voll); background:var(--gray-100);
   font-size:22px; line-height:1; color:var(--gray-700); cursor:pointer;
   display:flex; align-items:center; justify-content:center;
@@ -1404,7 +1452,7 @@ section { padding:var(--sekt-gross) var(--rand); }
 .leistung-schliessen:hover { background:var(--gray-200); color:var(--black); }
 .leistung-schliessen:active { transform:scale(0.92); }
 .leistung-dialog-icon { font-size:52px; margin-bottom:10px; }
-.leistung-dialog-tag { font-size:11px; font-weight:700; color:var(--green-dark); text-transform:uppercase; letter-spacing:.9px; margin-bottom:6px; }
+.leistung-dialog-tag { margin-bottom:6px; }
 .leistung-dialog-titel { font-size:26px; font-weight:700; letter-spacing:-0.6px; margin-bottom:10px; color:var(--black); }
 .leistung-dialog-text { font-size:15px; line-height:1.65; color:var(--gray-700); margin-bottom:18px; }
 .leistung-dialog-liste { list-style:none; display:flex; flex-direction:column; gap:9px; margin-bottom:26px; }
@@ -1567,8 +1615,15 @@ section { padding:var(--sekt-gross) var(--rand); }
   display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
   transition:filter .25s,background .25s;
 }
-.kontakt-item:hover .kontakt-item-icon { filter:drop-shadow(0 0 10px rgba(34,197,94,0.9)); background:rgba(34,197,94,0.28); }
-.kontakt-item-lbl { font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:3px; text-transform:uppercase; letter-spacing:.8px; }
+.kontakt-item:hover .kontakt-item-icon { background:rgba(34,197,94,0.28); }
+/* War 12px in Weiß bei 40 % auf der Kartenfläche – gemessen
+   3,8:1 und damit unter dem Mindestwert 4,5:1. Jetzt 72 %, plus
+   das Gewicht, das der Etikettenregel entspricht.              */
+.kontakt-item-lbl {
+  font-size:var(--t-label); font-weight:600;
+  color:rgba(255,255,255,0.72); margin-bottom:4px;
+  text-transform:uppercase; letter-spacing:var(--ls-label); line-height:var(--lh-label);
+}
 .kontakt-item-val { font-size:15px; font-weight:600; color:var(--white); text-decoration:none; }
 .kontakt-item-val:hover { color:var(--green); }
 
@@ -1660,14 +1715,17 @@ section { padding:var(--sekt-gross) var(--rand); }
 .form-submit:disabled:hover { background:var(--green); }
 
 /* Zweitrangige Schaltfläche im Formular („← Zurück"). Stand bisher
-   als Klumpen aus Inline-Angaben im HTML und war 24px flacher als
-   der Knopf darüber.                                            */
+   als Klumpen aus Inline-Angaben im HTML.
+
+   Höhe und Schrift jetzt wie beim Knopf direkt darüber: Ein 44px
+   hoher Knopf unter einem 52px hohen sah aus, als hätte einer der
+   beiden einen Fehler.                                          */
 .form-secondary {
-  width:100%; min-height:var(--tippflaeche); margin-top:10px;
+  width:100%; min-height:var(--knopf-hoehe); margin-top:10px;
   display:inline-flex; align-items:center; justify-content:center;
   padding:0 20px; border-radius:var(--eck-voll);
   background:transparent; border:1.5px solid rgba(255,255,255,0.18);
-  color:rgba(255,255,255,0.72); font-family:inherit; font-size:14px; font-weight:600;
+  color:rgba(255,255,255,0.72); font-family:inherit; font-size:16px; font-weight:600;
   cursor:pointer; -webkit-tap-highlight-color:transparent;
   transition:background-color var(--zeit-kurz) var(--ease-aus),
              border-color var(--zeit-kurz) var(--ease-aus),
@@ -1679,17 +1737,70 @@ section { padding:var(--sekt-gross) var(--rand); }
 .form-success {
   display:none; text-align:center; padding:32px;
 }
+/* ── ERFOLG ────────────────────────────────────────────────────
+   Das Häkchen zeichnet sich, statt als Emoji zu erscheinen –
+   DESIGN.md §11: „Häkchen zeichnet sich, kein Konfetti, 400ms".
+   Ein Emoji sieht auf jedem System anders aus und lässt sich
+   nicht einfärben.                                             */
 .form-success-icon {
   width:64px; height:64px; border-radius:50%;
-  background:rgba(34,197,94,0.15); display:flex; align-items:center; justify-content:center;
-  font-size:28px; margin:0 auto 16px;
+  background:rgba(34,197,94,0.15);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 16px;
+  font-size:0;            /* blendet das Emoji im Markup aus */
 }
-.form-success h3 { color:var(--white); font-size:20px; margin-bottom:8px; }
-.form-success p { color:rgba(255,255,255,0.5); font-size:14px; }
+.form-success-icon::before {
+  content:''; display:block; width:30px; height:30px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322C55E' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:100%;
+  /* Der Strich wird gezogen: 40 Einheiten Pfadlänge, von ganz
+     versetzt auf null. `clip-path` statt `stroke-dashoffset`,
+     weil der Pfad hier als Hintergrundbild liegt.              */
+  clip-path:inset(0 100% 0 0);
+  animation:haekchenZeichnen .4s var(--ease-aus) .15s forwards;
+}
+@keyframes haekchenZeichnen {
+  to { clip-path:inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .form-success-icon::before { animation:none; clip-path:none; }
+}
+.form-success h3 { color:var(--white); font-size:20px; line-height:1.3; margin-bottom:8px; }
+.form-success p { color:rgba(255,255,255,0.72); font-size:15px; line-height:1.6; }
+
+/* ── FEHLERMELDUNG ─────────────────────────────────────────────
+   War roter Text auf dunklem Grund, 13px, ohne Fläche. Jetzt ein
+   abgesetzter Hinweiskasten in derselben Machart wie der rote
+   Fokusring am fehlerhaften Feld.
+
+   Bleibt bewusst `display:block`: Das JavaScript schaltet diese
+   Meldungen über `style.display='block'` ein – ein `flex` in der
+   CSS-Regel würde davon überschrieben.                         */
 .form-error {
-  display:none; color:#F87171; font-size:13px;
-  text-align:center; margin-top:10px;
+  display:none; color:#FCA5A5; font-size:14px; line-height:1.5;
+  text-align:center; margin-top:12px;
+  padding:10px 14px; border-radius:var(--eck-s);
+  background:rgba(248,113,113,0.10);
+  border:1px solid rgba(248,113,113,0.28);
 }
+
+/* ── TEXTKNOPF ─────────────────────────────────────────────────
+   Für Nebenhandlungen, die keine Fläche brauchen („Code erneut
+   senden"). Stand vorher als Klumpen aus Inline-Angaben im HTML
+   und war 18px hoch – weit unter der Mindesttippfläche.       */
+.knopf-text {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 14px;
+  background:transparent; border:none; border-radius:var(--eck-voll);
+  color:var(--green); font-family:inherit; font-size:15px; font-weight:600;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.knopf-text:hover { background:rgba(34,197,94,0.12); color:#86EFAC; }
+.knopf-text:active { transform:scale(0.97); }
+.code-timer { font-size:14px; color:rgba(255,255,255,0.62); line-height:1.5; }
 
 /* FOOTER */
 footer {
@@ -1830,16 +1941,24 @@ footer {
   /* ── RHYTHMUS & ABSCHNITTSKÖPFE ── */
   section { padding:var(--sekt-gross) var(--rand); position:relative; }
   .section-head { margin-bottom:28px; }
-  .section-tag {
-    font-size:11px; margin-bottom:10px; display:inline-flex; align-items:center; gap:8px;
-  }
-  /* Kleine Linie, die neben der Bereichsbezeichnung aufzieht */
+  /* Größe bleibt bei --t-label (12px). Sie war hier auf 11px
+     heruntergesetzt – die Skala kennt aber mobil wie am Desktop
+     nur einen Wert für Etiketten.                              */
+  .section-tag { margin-bottom:10px; display:inline-flex; align-items:center; gap:8px; }
+  /* Kleine Linie, die neben der Bereichsbezeichnung aufzieht.
+     Sie wächst jetzt über `scaleX` statt über `width`: Breite zu
+     animieren zwingt den Browser bei jedem Bild zu einer neuen
+     Layoutberechnung.                                          */
   .section-tag::before {
-    content:''; width:0; height:2px; border-radius:2px; background:var(--green);
-    transition:width .7s var(--weich) .15s;
+    content:''; width:22px; height:2px; border-radius:2px; background:var(--green);
+    transform:scaleX(0); transform-origin:left center;
+    transition:transform .7s var(--weich) .15s;
   }
   .reveal.visible .section-tag::before,
-  .section-head.visible .section-tag::before { width:22px; }
+  .section-head.visible .section-tag::before { transform:scaleX(1); }
+  @media (prefers-reduced-motion: reduce) {
+    .section-tag::before { transition:none; transform:scaleX(1); }
+  }
   /* Größe kommt jetzt aus --t-h2 (Designsystem) */
   /* Größe kommt jetzt aus --t-body */
 
@@ -1858,7 +1977,6 @@ footer {
   .hero-inner { padding:40px 0 44px; }
   .hero-orb-1 { width:300px; height:300px; top:-70px; right:-90px; }
   .hero-orb-2 { width:240px; height:240px; bottom:-60px; left:-90px; }
-  .hero-raster { background-size:44px 44px; }
   .hero-tropfen i:nth-child(3), .hero-tropfen i:nth-child(4) { display:none; }
 
   .hero-badge { font-size:12px; padding:6px 14px 6px 11px; margin-bottom:20px; }
@@ -1946,7 +2064,9 @@ footer {
   /* ── PAKETE: gleiche Kartenrundung überall ── */
   .preise-grid { gap:14px; }
   .preis-card { padding:22px; }
-  .preis-card:active { transform:scale(0.985); }
+  /* 0,97 wie bei jedem anderen gedrückten Element. 0,985 war ein
+     eigener Faktor, den das System sonst nirgends kennt.        */
+  .preis-card:active { transform:scale(0.97); }
   .preis-card.expanded { box-shadow:var(--schatten-3); border-color:var(--green); }
   .preis-header { cursor:pointer; }
   .preis-toggle-icon { display:inline-block; float:right; font-size:16px; transition:transform .3s cubic-bezier(.4,0,.2,1); color:var(--gray-500); }
@@ -2093,7 +2213,6 @@ footer {
 <!-- HERO -->
 <section id="hero" tabindex="-1">
   <div class="hero-bg" aria-hidden="true"></div>
-  <div class="hero-raster" aria-hidden="true"></div>
   <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
   <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
   <div class="hero-inner">
@@ -2311,7 +2430,7 @@ footer {
     <div class="ueber-img">
       <div class="ueber-img-bg"></div>
       <div style="display:flex;flex-direction:column;gap:16px;width:100%">
-        <img src="/daniel-foto.jpg" alt="Daniel Lurch – Waschlurch" width="600" height="700" loading="lazy" decoding="async" style="width:100%;border-radius:20px;object-fit:cover;max-height:420px;display:block">
+        <img src="/daniel-foto.jpg" alt="Daniel Lurch – Waschlurch" width="600" height="700" loading="lazy" decoding="async" style="width:100%;border-radius:var(--eck-m);object-fit:cover;max-height:420px;display:block">
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;text-align:center">
           <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:6px">Einsatzgebiet</div>
           <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.8)">Eitorf · Siegburg · Hennef · Troisdorf · Bad Honnef · Lohmar</div>
@@ -2390,7 +2509,7 @@ footer {
         <div class="form-field">
           <label for="f-tel">Telefon * <span style="font-size:12px;color:rgba(255,255,255,0.5);font-weight:400">(muss mit 0 oder +49 beginnen)</span></label>
           <input type="tel" id="f-tel" placeholder="0176 12345678 oder +49 176 12345678">
-          <div id="tel-error" style="display:none;color:#F87171;font-size:13px;margin-top:6px">⚠️ Bitte eine gültige deutsche Nummer eingeben (beginnt mit 0 oder +49)</div>
+          <div id="tel-error" class="form-error" style="text-align:left">⚠️ Bitte eine gültige deutsche Nummer eingeben (beginnt mit 0 oder +49)</div>
         </div>
         <div class="form-field"><label for="f-leistung">Gewünschte Leistung</label>
           <select id="f-leistung">
@@ -2409,7 +2528,7 @@ footer {
         </div>
         <div class="form-field"><label for="f-nachricht">Nachricht *</label><textarea id="f-nachricht" placeholder="Beschreiben Sie kurz Ihr Anliegen ..."></textarea></div>
         <button class="form-submit" id="send-code-btn" onclick="sendVerificationCode()">E-Mail verifizieren & weiter →</button>
-        <p id="f-error" style="display:none;color:#F87171;font-size:13px;text-align:center;margin-top:10px"></p>
+        <p id="f-error" class="form-error"></p>
       </div>
 
       <!-- SCHRITT 2: Code eingeben -->
@@ -2422,13 +2541,13 @@ footer {
         <div class="form-field">
           <label for="f-code">Bestätigungscode *</label>
           <input type="text" id="f-code" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:8px">
-          <div id="code-error" style="display:none;color:#F87171;font-size:13px;margin-top:6px;text-align:center">⚠️ Falscher Code. Bitte erneut versuchen.</div>
+          <div id="code-error" class="form-error">⚠️ Falscher Code. Bitte erneut versuchen.</div>
         </div>
         <button class="form-submit" onclick="verifyCode()">Code bestätigen & Anfrage senden →</button>
         <button class="form-secondary" onclick="document.getElementById('step-1').style.display='';document.getElementById('step-2').style.display='none'">← Zurück</button>
         <div style="text-align:center;margin-top:14px">
-          <span id="resend-timer" style="font-size:12px;color:rgba(255,255,255,0.4)">Code erneut senden in <span id="countdown">60</span>s</span>
-          <button id="resend-btn" onclick="resendCode()" style="display:none;background:transparent;border:none;color:var(--green);font-size:13px;cursor:pointer;font-family:inherit">Code erneut senden</button>
+          <span id="resend-timer" class="code-timer">Code erneut senden in <span id="countdown">60</span>s</span>
+          <button id="resend-btn" class="knopf-text" onclick="resendCode()" style="display:none">Code erneut senden</button>
         </div>
       </div>
 

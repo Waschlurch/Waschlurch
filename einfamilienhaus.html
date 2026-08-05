@@ -146,23 +146,60 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',
 main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand)) 5% 80px; min-height:100vh; }
 .wizard-wrap { max-width:680px; margin:0 auto; }
 .wizard-head { text-align:center; padding:48px 0 32px; }
-.tag { font-size:13px; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:12px; }
+/* ── ETIKETTEN ─────────────────────────────────────────────────
+   Eine Fassung für alle Kleinbeschriftungen. .tag stand auf
+   13px/600/0,092em, .step-label auf 12px/700/0,067em und
+   .service-block-title auf 14px/700 – drei Fassungen desselben
+   Bauteils auf einer Seite.                                    */
+.tag, .step-label, .service-block-title {
+  font-size:12px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.08em; line-height:1.4;
+  color:#86EFAC;
+}
+.tag { margin-bottom:12px; }
 .wizard-title { font-size:clamp(28px,4vw,40px); font-weight:700; letter-spacing:-1px; line-height:1.15; margin-bottom:14px; }
 .wizard-sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.6; max-width:480px; margin:0 auto; }
 
 /* PROGRESS */
 .progress { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:40px; }
+/* ── SCHRITTANZEIGE ────────────────────────────────────────────
+   `transition:all` ersetzt durch die Eigenschaften, die sich
+   tatsächlich ändern. Der aktive Schritt trug einen Ring aus
+   `box-shadow:0 0 0 4px` – ein Schlagschatten mit Versatz 0 und
+   Farbe ist genau der Leuchtschein, den DESIGN.md §7 ausschließt.
+   Jetzt eine `outline`: gleicher Ring, kein Schatten.          */
 .progress-dot {
   width:32px; height:32px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   font-size:13px; font-weight:700;
-  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);
-  color:rgba(255,255,255,0.4);
-  transition:all .3s; flex-shrink:0;
+  background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.18);
+  color:rgba(255,255,255,0.55);
+  flex-shrink:0;
+  transition:background-color var(--zeit-mittel) var(--ease-aus),
+             border-color var(--zeit-mittel) var(--ease-aus),
+             color var(--zeit-mittel) var(--ease-aus),
+             outline-color var(--zeit-mittel) var(--ease-aus);
+  outline:3px solid rgba(34,197,94,0); outline-offset:0;
 }
-.progress-line { width:20px; height:2px; background:rgba(255,255,255,0.12); transition:background .3s; }
-.progress-dot.done { background:var(--green); border-color:var(--green); color:var(--white); }
-.progress-dot.active { border-color:var(--green); color:var(--green); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
+.progress-line {
+  width:20px; height:2px; background:rgba(255,255,255,0.12);
+  transition:background-color var(--zeit-mittel) var(--ease-aus);
+}
+/* Erledigte Schritte tragen ein gezeichnetes Häkchen statt der
+   Ziffer – die Zahl bleibt im Markup für Bildschirmleser.      */
+.progress-dot.done {
+  background:var(--green); border-color:var(--green);
+  color:transparent; position:relative;
+}
+.progress-dot.done::after {
+  content:''; position:absolute; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:16px 16px;
+}
+.progress-dot.active {
+  border-color:var(--green); color:var(--green);
+  outline-color:rgba(34,197,94,0.22);
+}
 .progress-line.done { background:var(--green); }
 
 /* CARD */
@@ -174,7 +211,9 @@ main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand)) 5% 80px; min-height:10
 .step-panel { display:none; }
 .step-panel.active { display:block; animation:fadein .3s ease; }
 @keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-.step-label { font-size:12px; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+/* Größe, Gewicht, Laufweite und Farbe kommen aus der
+   Etikettenregel weiter oben. */
+.step-label { margin-bottom:6px; }
 .step-heading { font-size:22px; font-weight:700; margin-bottom:24px; letter-spacing:-0.3px; }
 
 /* SERVICE TILES */
@@ -247,10 +286,39 @@ main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand)) 5% 80px; min-height:10
    diese Ausnahme erbten sie die 52px Mindesthöhe von oben und das
    Kästchen wurde darin mittig gezeichnet – es stand dadurch neben
    der zweiten statt der ersten Textzeile.                       */
+/* Eigengezeichnet statt nur `accent-color`: Der Systemstil sieht
+   auf Windows, macOS und Android jeweils anders aus und lässt sich
+   weder in Rahmenstärke noch in Ecken an das übrige Formular
+   angleichen. `appearance:none` schaltet ihn ab, das Element
+   bleibt ein echtes <input> mit allen Zuständen.               */
 .field input[type="checkbox"], .field input[type="radio"] {
-  width:18px; height:18px; min-height:0; min-width:0;
-  padding:0; border:none; background:none; border-radius:0;
-  accent-color:var(--green); cursor:pointer;
+  appearance:none; -webkit-appearance:none;
+  position:relative; flex-shrink:0;
+  width:20px; height:20px; min-height:0; min-width:0;
+  padding:0; margin:0;
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.28);
+  cursor:pointer;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus);
+}
+.field input[type="checkbox"] { border-radius:6px; }
+.field input[type="radio"]    { border-radius:50%; }
+.field input[type="checkbox"]:hover, .field input[type="radio"]:hover {
+  border-color:rgba(255,255,255,0.44);
+}
+.field input[type="checkbox"]:checked, .field input[type="radio"]:checked {
+  background:var(--green); border-color:var(--green);
+}
+.field input[type="checkbox"]:checked::after {
+  content:''; position:absolute; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:13px 13px;
+}
+.field input[type="radio"]:checked::after {
+  content:''; position:absolute; top:50%; left:50%;
+  width:8px; height:8px; margin:-4px 0 0 -4px;
+  border-radius:50%; background:var(--white);
 }
 /* Vom Browser ausgefüllte Felder behielten Chromes hellen
    Standardgrund – ein weißer Block mitten im dunklen Formular. */
@@ -263,13 +331,267 @@ main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand)) 5% 80px; min-height:10
   transition:background-color 9999s ease-out 0s;
 }
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.field-error { display:none; color:#F87171; font-size:13px; margin-top:6px; }
+/* Hinweiskasten statt nacktem rotem Text – dieselbe Machart wie
+   der rote Ring am fehlerhaften Feld. Bleibt `display:block`, weil
+   das JavaScript diese Meldungen über `style.display='block'`
+   einschaltet; ein `flex` in der Regel würde überschrieben.    */
+.field-error {
+  display:none; color:#FCA5A5; font-size:14px; line-height:1.5; margin-top:8px;
+  padding:9px 12px; border-radius:var(--eck-s);
+  background:rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.28);
+}
 
 /* SUMMARY */
 .summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-m); padding:20px; margin-bottom:24px; }
-.summary-row { display:flex; justify-content:space-between; gap:12px; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.summary-row { display:flex; justify-content:space-between; gap:16px; font-size:14px; line-height:1.5; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
 .summary-row:last-child { border-bottom:none; }
-.summary-row span:first-child { color:rgba(255,255,255,0.45); }
+/* War 13px in Weiß bei 45 % – gemessen 4,4:1 und damit knapp unter
+   dem Mindestwert. Diese Zeile trägt die Zusammenfassung dessen,
+   was der Kunde gleich absendet; sie muss lesbar sein.         */
+.summary-row span:first-child { color:rgba(255,255,255,0.66); }
+.summary-row span:last-child { font-weight:600; text-align:right; }
+
+/* NAV BUTTONS */
+.wizard-nav {
+  display:flex; gap:12px; margin-top:32px;
+  position:sticky; bottom:0; left:0; right:0;
+  background:linear-gradient(to top, var(--black) 60%, transparent);
+  padding:16px 0 20px; z-index:50;
+}
+/* Fehlerhaftes Feld: roter Rahmen plus roter Ring in derselben
+   Machart wie der grüne Fokusring – gleicher Bauplan, andere
+   Bedeutung. `outline` statt `box-shadow`, sonst liegen beim
+   Tabben auf ein fehlerhaftes Feld zwei Ringe übereinander.    */
+.field input.invalid, .field select.invalid, .field textarea.invalid {
+  border-color:#F87171 !important;
+  outline:3px solid rgba(248,113,113,0.22); outline-offset:0;
+  animation:shakeInvalid .35s;
+}
+.cb-group.invalid, .code-input.invalid {
+  border:1.5px solid #F87171 !important;
+  outline:3px solid rgba(248,113,113,0.22); outline-offset:0;
+  border-radius:var(--eck-s); padding:8px;
+}
+@keyframes shakeInvalid { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+@media(prefers-reduced-motion: reduce){
+  .field input.invalid, .field select.invalid, .field textarea.invalid { animation:none; }
+}
+/* Der grüne Schein unter diesem Knopf (0 6px 20px rgba(34,197,94,.4))
+   war einer der beiden Leuchteffekte, die DESIGN.md §7 ausschließt.
+   Erhebung entsteht jetzt über Versatz und Weichzeichnung.      */
+.scroll-top-btn {
+  position:fixed; bottom:24px; right:24px; z-index:100;
+  width:48px; height:48px; border-radius:var(--eck-voll);
+  background:var(--green); color:var(--white); border:none;
+  font-size:20px; cursor:pointer;
+  box-shadow:0 12px 24px rgba(16,40,24,0.28), 0 4px 8px rgba(16,40,24,0.18);
+  display:none; align-items:center; justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.scroll-top-btn:hover { background:var(--green-hover); }
+.scroll-top-btn:active { transform:scale(0.92); }
+.scroll-top-btn.visible { display:flex; }
+.paket-back-link { display:inline-block; margin-top:14px; font-size:13px; color:rgba(255,255,255,0.5); cursor:pointer; text-decoration:underline; }
+.paket-back-link:hover { color:var(--green); }
+.paket-unavailable { text-align:center; padding:80px 20px; }
+.paket-unavailable-icon { font-size:48px; margin-bottom:16px; }
+/* ── SCHALTFLÄCHEN ─────────────────────────────────────────────
+   `transition:all` ersetzt durch die Eigenschaften, die sich
+   tatsächlich ändern. Gedrückt schrumpft die Fläche um 3 % – auf
+   dem Handy war das bisher die einzige fehlende Rückmeldung
+   zwischen Antippen und Schrittwechsel.                        */
+.btn {
+  flex:1; min-height:var(--knopf-hoehe); padding:0 28px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border-radius:var(--eck-voll); border:none;
+  font-size:16px; font-weight:600; line-height:1.25;
+  font-family:inherit; text-align:center; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus),
+             color var(--zeit-kurz) var(--ease-aus),
+             box-shadow var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.btn:active { transform:scale(0.97); }
+.btn:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-back {
+  background:transparent; border:1.5px solid rgba(255,255,255,0.18);
+  color:rgba(255,255,255,0.72); flex:0 0 auto; padding:0 24px;
+}
+.btn-back:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.32); color:var(--white); }
+.btn-next { background:var(--green); color:var(--white); }
+.btn-next:hover { background:var(--green-hover); box-shadow:0 4px 8px rgba(16,40,24,0.28), 0 2px 4px rgba(16,40,24,0.18); }
+.btn-next:disabled:hover { background:var(--green); box-shadow:none; }
+
+/* SUCCESS */
+/* Das Häkchen zeichnet sich, statt als Emoji zu erscheinen –
+   DESIGN.md §11: „Häkchen zeichnet sich, kein Konfetti, 400ms".  */
+.success-icon {
+  width:72px; height:72px; border-radius:50%;
+  background:rgba(34,197,94,0.15);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 20px; font-size:0;
+}
+.success-icon::before {
+  content:''; display:block; width:34px; height:34px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322C55E' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:100%;
+  clip-path:inset(0 100% 0 0);
+  animation:haekchenZeichnen .4s var(--ease-aus) .15s forwards;
+}
+@keyframes haekchenZeichnen { to { clip-path:inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .success-icon::before { animation:none; clip-path:none; }
+}
+.success-title { font-size:24px; font-weight:700; text-align:center; margin-bottom:10px; line-height:1.25; }
+.success-text { font-size:16px; color:rgba(255,255,255,0.72); text-align:center; line-height:1.6; margin-bottom:28px; }
+.success-link {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 16px; margin:0 auto;
+  color:var(--green); font-size:15px; font-weight:600; text-decoration:none;
+  border-radius:var(--eck-voll);
+  transition:background-color var(--zeit-kurz) var(--ease-aus);
+}
+.success-link:hover { background:rgba(34,197,94,0.12); }
+.submit-error {
+  display:none; color:#FCA5A5; font-size:14px; line-height:1.5;
+  text-align:center; margin-top:14px;
+  padding:10px 14px; border-radius:var(--eck-s);
+  background:rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.28);
+}
+.code-input {
+  width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px;
+  background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.14); border-radius:var(--eck-s);
+  font-family:inherit; color:var(--white); outline:none;
+  transition:border-color var(--zeit-kurz) var(--ease-aus),
+             background-color var(--zeit-kurz) var(--ease-aus);
+}
+.code-input:focus {
+  border-color:var(--green); background:rgba(255,255,255,0.09);
+  outline:3px solid rgba(34,197,94,0.25); outline-offset:0;
+  border-radius:var(--eck-s);
+}
+.code-hint { font-size:15px; color:rgba(255,255,255,0.72); text-align:center; line-height:1.55; margin-bottom:16px; }
+.code-resend { text-align:center; margin-top:12px; }
+/* Textknopf für Nebenhandlungen. Vorher 13px ohne Polster und ohne
+   Mindesthöhe – die Tippfläche lag bei rund 18px.              */
+.code-resend button {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 14px;
+  background:transparent; border:none; border-radius:var(--eck-voll);
+  color:var(--green); font-size:15px; font-weight:600;
+  cursor:pointer; font-family:inherit;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.code-resend button:hover { background:rgba(34,197,94,0.12); color:#86EFAC; }
+.code-resend button:active { transform:scale(0.97); }
+.code-resend span { color:rgba(255,255,255,0.62); font-size:14px; line-height:1.5; }
+
+/* DYNAMIC SERVICE FIELDS */
+.service-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-m); padding:18px; margin-bottom:16px; }
+/* Größe, Gewicht und Farbe kommen aus der Etikettenregel oben. */
+.service-block-title { margin-bottom:14px; }
+/* War ein <div>, ist jetzt ein <button> (Tastaturzugang).
+   Höhe von rund 32px auf die Mindesttippfläche gebracht und um
+   eine gedrückte Rückmeldung ergänzt; 13px bei 50 % Deckkraft lag
+   zudem unter dem Mindestkontrast.                             */
+.optional-toggle {
+  display:flex; align-items:center; width:100%;
+  min-height:var(--tippflaeche); padding:0;
+  font-size:15px; font-weight:600; color:rgba(255,255,255,0.72);
+  background:none; border:none; font-family:inherit; text-align:left;
+  cursor:pointer; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.optional-toggle:hover { color:var(--white); }
+.optional-toggle:active { transform:scale(0.99); }
+.optional-box { margin-top:10px; }
+/* Häkchen oben ausgerichtet, nicht mittig: Bei einer mehrzeiligen
+   Frage stand das Kästchen sonst irgendwo in der Mitte und wirkte,
+   als gehöre es zu keiner der Zeilen. Mindesthöhe 44px, damit es
+   sich mit dem Daumen sicher treffen lässt.                     */
+.field label.bool-label { text-transform:none; letter-spacing:0; font-size:15px; line-height:1.5; color:var(--white); display:flex; align-items:flex-start; gap:12px; cursor:pointer; margin-bottom:0; font-weight:500; min-height:var(--tippflaeche); padding:4px 0; }
+/* Kein `width:auto` mehr – das war spezifischer als die
+   Kästchen-Regel darüber und drückte die Breite auf den
+   Vorgabewert 13px zurück, während die Höhe bei 18 blieb.     */
+.field label.bool-label input { flex-shrink:0; margin-top:3px; }
+.cb-group { display:flex; flex-wrap:wrap; gap:8px; }
+/* Ankreuz-Pille. Mindesthöhe 44px, sonst ist sie mit dem Daumen
+   nicht zuverlässig zu treffen – vorher stand sie bei 33px.
+
+   Die Pille ist ein <label> innerhalb von .field und würde deshalb
+   die allgemeine Beschriftungsregel darüber erben (display:block,
+   Abstand nach unten). Der zweite, spezifischere Selektor hält sie
+   davon frei.                                                   */
+.cb-chip, .field label.cb-chip {
+  display:inline-flex; align-items:center; gap:8px; margin-bottom:0;
+  color:var(--white); letter-spacing:0; font-weight:500;
+  min-height:var(--tippflaeche); padding:0 16px;
+  background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.14);
+  border-radius:var(--eck-voll); font-size:14px; cursor:pointer; text-transform:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus);
+}
+.cb-chip:hover, .field label.cb-chip:hover { background:rgba(255,255,255,0.10); border-color:rgba(255,255,255,0.24); }
+.cb-chip:has(input:checked), .field label.cb-chip:has(input:checked) { background:rgba(34,197,94,0.14); border-color:var(--green); }
+.cb-chip input { width:auto; accent-color:var(--green); }
+.paket-banner {
+  margin-top:20px; display:flex; align-items:center; gap:14px; text-align:left;
+  background:rgba(34,197,94,0.10); border:1px solid rgba(34,197,94,0.3);
+  border-radius:var(--eck-m); padding:16px 20px; max-width:520px; margin-left:auto; margin-right:auto;
+}
+.paket-banner-icon { font-size:28px; flex-shrink:0; }
+.paket-banner-text { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.paket-banner-text strong { font-size:16px; font-weight:700; color:var(--green); }
+.paket-banner-sub { font-size:13px; color:rgba(255,255,255,0.55); line-height:1.45; }
+
+/* Hinweis in Schritt 2: was das Paket abdeckt, plus Weg zurück */
+.leistungen-anpassen {
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);
+  border-radius:var(--eck-m); padding:12px 16px; margin-bottom:22px;
+  font-size:14px; color:rgba(255,255,255,0.72); line-height:1.5;
+}
+.leistungen-anpassen strong { color:rgba(255,255,255,0.88); font-weight:600; }
+.leistungen-anpassen button {
+  margin-left:auto; display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 18px;
+  background:transparent; border:1.5px solid rgba(34,197,94,0.45);
+  color:var(--green); border-radius:var(--eck-voll);
+  font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.leistungen-anpassen button:hover { background:rgba(34,197,94,0.14); border-color:var(--green); }
+.leistungen-anpassen button:active { transform:scale(0.97); }
+
+@media(max-width:600px) {
+  /* `minmax(0,1fr)` statt `1fr`: Ein `1fr` kann nicht unter seine
+     Mindestinhaltsbreite schrumpfen. „Treppenhausreinigung" hielt
+     die Spalte bei 132px, zwei davon passten nicht in 320px – die
+     ganze Seite ließ sich dadurch seitlich schieben.           */
+  .tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tile-name { overflow-wrap:anywhere; }
+
+/* SUMMARY */
+.summary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-m); padding:20px; margin-bottom:24px; }
+.summary-row { display:flex; justify-content:space-between; gap:16px; font-size:14px; line-height:1.5; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.summary-row:last-child { border-bottom:none; }
+/* War 13px in Weiß bei 45 % – gemessen 4,4:1 und damit knapp unter
+   dem Mindestwert. Diese Zeile trägt die Zusammenfassung dessen,
+   was der Kunde gleich absendet; sie muss lesbar sein.         */
+.summary-row span:first-child { color:rgba(255,255,255,0.66); }
 .summary-row span:last-child { font-weight:600; text-align:right; }
 
 /* NAV BUTTONS */
@@ -347,11 +669,41 @@ main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand)) 5% 80px; min-height:10
 .btn-next:disabled:hover { background:var(--green); box-shadow:none; }
 
 /* SUCCESS */
-.success-icon { width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,0.15); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 20px; }
-.success-title { font-size:24px; font-weight:700; text-align:center; margin-bottom:10px; }
-.success-text { font-size:15px; color:rgba(255,255,255,0.6); text-align:center; line-height:1.6; margin-bottom:28px; }
-.success-link { display:block; text-align:center; color:var(--green); font-size:14px; font-weight:600; text-decoration:none; }
-.submit-error { display:none; color:#F87171; font-size:13px; text-align:center; margin-top:14px; }
+/* Das Häkchen zeichnet sich, statt als Emoji zu erscheinen –
+   DESIGN.md §11: „Häkchen zeichnet sich, kein Konfetti, 400ms".  */
+.success-icon {
+  width:72px; height:72px; border-radius:50%;
+  background:rgba(34,197,94,0.15);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 20px; font-size:0;
+}
+.success-icon::before {
+  content:''; display:block; width:34px; height:34px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322C55E' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:100%;
+  clip-path:inset(0 100% 0 0);
+  animation:haekchenZeichnen .4s var(--ease-aus) .15s forwards;
+}
+@keyframes haekchenZeichnen { to { clip-path:inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .success-icon::before { animation:none; clip-path:none; }
+}
+.success-title { font-size:24px; font-weight:700; text-align:center; margin-bottom:10px; line-height:1.25; }
+.success-text { font-size:16px; color:rgba(255,255,255,0.72); text-align:center; line-height:1.6; margin-bottom:28px; }
+.success-link {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 16px; margin:0 auto;
+  color:var(--green); font-size:15px; font-weight:600; text-decoration:none;
+  border-radius:var(--eck-voll);
+  transition:background-color var(--zeit-kurz) var(--ease-aus);
+}
+.success-link:hover { background:rgba(34,197,94,0.12); }
+.submit-error {
+  display:none; color:#FCA5A5; font-size:14px; line-height:1.5;
+  text-align:center; margin-top:14px;
+  padding:10px 14px; border-radius:var(--eck-s);
+  background:rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.28);
+}
 .code-input {
   width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px;
   background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.14); border-radius:var(--eck-s);
@@ -364,15 +716,43 @@ main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand)) 5% 80px; min-height:10
   outline:3px solid rgba(34,197,94,0.25); outline-offset:0;
   border-radius:var(--eck-s);
 }
-.code-hint { font-size:13px; color:rgba(255,255,255,0.5); text-align:center; margin-bottom:16px; }
-.code-resend { text-align:center; margin-top:16px; font-size:13px; }
-.code-resend button { background:transparent; border:none; color:var(--green); font-size:13px; cursor:pointer; font-family:inherit; font-weight:600; }
-.code-resend span { color:rgba(255,255,255,0.4); }
+.code-hint { font-size:15px; color:rgba(255,255,255,0.72); text-align:center; line-height:1.55; margin-bottom:16px; }
+.code-resend { text-align:center; margin-top:12px; }
+/* Textknopf für Nebenhandlungen. Vorher 13px ohne Polster und ohne
+   Mindesthöhe – die Tippfläche lag bei rund 18px.              */
+.code-resend button {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 14px;
+  background:transparent; border:none; border-radius:var(--eck-voll);
+  color:var(--green); font-size:15px; font-weight:600;
+  cursor:pointer; font-family:inherit;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.code-resend button:hover { background:rgba(34,197,94,0.12); color:#86EFAC; }
+.code-resend button:active { transform:scale(0.97); }
+.code-resend span { color:rgba(255,255,255,0.62); font-size:14px; line-height:1.5; }
 
 /* DYNAMIC SERVICE FIELDS */
 .service-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-m); padding:18px; margin-bottom:16px; }
-.service-block-title { font-size:14px; font-weight:700; color:var(--green); margin-bottom:14px; }
-.optional-toggle { font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); cursor:pointer; padding:8px 0; user-select:none; }
+/* Größe, Gewicht und Farbe kommen aus der Etikettenregel oben. */
+.service-block-title { margin-bottom:14px; }
+/* War ein <div>, ist jetzt ein <button> (Tastaturzugang).
+   Höhe von rund 32px auf die Mindesttippfläche gebracht und um
+   eine gedrückte Rückmeldung ergänzt; 13px bei 50 % Deckkraft lag
+   zudem unter dem Mindestkontrast.                             */
+.optional-toggle {
+  display:flex; align-items:center; width:100%;
+  min-height:var(--tippflaeche); padding:0;
+  font-size:15px; font-weight:600; color:rgba(255,255,255,0.72);
+  background:none; border:none; font-family:inherit; text-align:left;
+  cursor:pointer; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
 .optional-toggle:hover { color:var(--white); }
 .optional-box { margin-top:10px; }
 /* Häkchen oben ausgerichtet, nicht mittig: Bei einer mehrzeiligen
@@ -418,7 +798,12 @@ select:focus-visible, textarea:focus-visible,
 }
 
 @media(max-width:600px) {
-  .tiles { grid-template-columns:repeat(2,1fr); }
+  /* minmax(0,1fr) statt 1fr: Ein 1fr kann nicht unter seine
+     Mindestinhaltsbreite schrumpfen. „Treppenhausreinigung" hielt
+     die Spalte bei 132px, zwei davon passten nicht in 320px – die
+     ganze Seite ließ sich dadurch seitlich schieben.           */
+  .tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tile-name { overflow-wrap:anywhere; }
   .field-row { grid-template-columns:1fr; gap:0; }
   .wizard-card { padding:20px; }
   .progress-dot { width:26px; height:26px; font-size:11px; }

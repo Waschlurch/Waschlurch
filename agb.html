@@ -89,7 +89,10 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',
 }
 main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand) + 28px) 5% 80px; min-height:100vh; max-width:760px; margin:0 auto; }
 h1 { font-size:clamp(28px,4vw,36px); font-weight:700; letter-spacing:-1px; margin-bottom:12px; }
-.stand { font-size:13px; color:#9CA3AF; margin-bottom:36px; }
+/* War 13px in #9CA3AF auf Weiß – gemessen 2,5:1 und damit weit
+   unter dem Mindestwert. #9CA3AF steht zudem in keiner Palette
+   des Systems. Jetzt --gray-500 ab 15px, wie zugelassen.       */
+.stand { font-size:15px; line-height:1.5; color:#6B7280; margin-bottom:36px; }
 h2 { font-size:17px; font-weight:700; color:var(--green-dark); margin:30px 0 8px; }
 p, li { font-size:15px; line-height:1.7; color:var(--gray-700); }
 ul { margin:8px 0 8px 22px; }

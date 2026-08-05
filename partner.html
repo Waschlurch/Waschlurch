@@ -89,7 +89,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',
 }
 main { padding:calc(var(--kopf-hoehe) + var(--kopf-rand) + 28px) 5% 80px; min-height:100vh; }
 .wrap { max-width:640px; margin:0 auto; }
-.tag { display:inline-block; background:rgba(34,197,94,0.15); color:var(--green); font-size:12px; font-weight:700; padding:6px 14px; border-radius:100px; margin-bottom:16px; }
+/* ── ABZEICHEN ─────────────────────────────────────────────────
+   Nach DESIGN.md §9: Höhe 24px, Polster 0 10px, Ecken --eck-voll,
+   Schrift 12px/600 mit 0,08em Laufweite. Vorher 700er Gewicht,
+   Radius 100px und ein eigener Grünton – drei Abweichungen an
+   einem Bauteil, das nur einmal auf der Seite vorkommt.        */
+.tag {
+  display:inline-flex; align-items:center; min-height:26px; padding:0 12px;
+  background:rgba(34,197,94,0.14); color:#86EFAC;
+  font-size:12px; font-weight:600; letter-spacing:0.08em; line-height:1;
+  text-transform:uppercase;
+  border-radius:var(--eck-voll); margin-bottom:16px;
+}
 h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margin-bottom:12px; }
 .sub { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.6; margin-bottom:36px; }
 .card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--eck-l); padding:36px; }
@@ -131,14 +142,39 @@ h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margi
 }
 .field select option { background:#111827; color:var(--white); }
 .field textarea { min-height:110px; resize:vertical; }
-/* Ankreuz- und Auswahlkästchen sind keine Eingabefelder. Ohne
-   diese Ausnahme erbten sie die 52px Mindesthöhe von oben: Das
-   Kästchen selbst wurde innerhalb dieser Fläche mittig gezeichnet
-   und stand dadurch neben der zweiten statt der ersten Textzeile. */
+/* Eigengezeichnet statt nur `accent-color`: Der Systemstil sieht
+   auf Windows, macOS und Android jeweils anders aus und lässt sich
+   weder in Rahmenstärke noch in Ecken an das übrige Formular
+   angleichen. `appearance:none` schaltet ihn ab, das Element
+   bleibt ein echtes <input> mit allen Zuständen.               */
 .field input[type="checkbox"], .field input[type="radio"] {
-  width:18px; height:18px; min-height:0; min-width:0;
-  padding:0; border:none; background:none; border-radius:0;
-  accent-color:var(--green); cursor:pointer;
+  appearance:none; -webkit-appearance:none;
+  position:relative; flex-shrink:0;
+  width:20px; height:20px; min-height:0; min-width:0;
+  padding:0; margin:0;
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.28);
+  cursor:pointer;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             border-color var(--zeit-kurz) var(--ease-aus);
+}
+.field input[type="checkbox"] { border-radius:6px; }
+.field input[type="radio"]    { border-radius:50%; }
+.field input[type="checkbox"]:hover, .field input[type="radio"]:hover {
+  border-color:rgba(255,255,255,0.44);
+}
+.field input[type="checkbox"]:checked, .field input[type="radio"]:checked {
+  background:var(--green); border-color:var(--green);
+}
+.field input[type="checkbox"]:checked::after {
+  content:''; position:absolute; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:13px 13px;
+}
+.field input[type="radio"]:checked::after {
+  content:''; position:absolute; top:50%; left:50%;
+  width:8px; height:8px; margin:-4px 0 0 -4px;
+  border-radius:50%; background:var(--white);
 }
 .field input:-webkit-autofill,
 .field input:-webkit-autofill:hover,
@@ -160,7 +196,15 @@ h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margi
    Kästchen-Regel darüber und drückte die Breite auf den
    Vorgabewert 13px zurück, während die Höhe bei 18 blieb.     */
 .field label.bool-label input { flex-shrink:0; margin-top:3px; }
-.field-error { display:none; color:#F87171; font-size:13px; margin-top:-8px; margin-bottom:16px; }
+/* Hinweiskasten statt nacktem rotem Text – dieselbe Machart wie
+   der rote Ring am fehlerhaften Feld. Bleibt display:block, weil
+   das JavaScript ihn über style.display einschaltet.           */
+.field-error {
+  display:none; color:#FCA5A5; font-size:14px; line-height:1.5;
+  margin-top:-4px; margin-bottom:16px;
+  padding:9px 12px; border-radius:var(--eck-s);
+  background:rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.28);
+}
 /* Gedrückt schrumpft die Fläche um 3 % – bisher gab es zwischen
    Antippen und Antwort des Servers keinerlei Rückmeldung.      */
 .btn-primary {
@@ -179,13 +223,44 @@ h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margi
 .btn-primary:active { transform:scale(0.97); }
 .btn-primary:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
 .btn-primary:disabled:hover { background:var(--green); }
-.code-hint { font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:16px; text-align:center; }
+.code-hint { font-size:15px; color:rgba(255,255,255,0.72); line-height:1.55; margin-bottom:16px; text-align:center; }
 .code-input { width:100%; padding:16px; text-align:center; font-size:26px; font-weight:700; letter-spacing:10px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.14); border-radius:var(--eck-s); font-family:inherit; color:var(--white); outline:none; margin-bottom:14px; }
 .code-input:focus { border-color:var(--green); background:rgba(255,255,255,0.09); outline:3px solid rgba(34,197,94,0.25); outline-offset:0; border-radius:var(--eck-s); }
-.code-resend { text-align:center; font-size:13px; color:rgba(255,255,255,0.4); margin-top:14px; }
-.code-resend button { background:none; border:none; color:var(--green); font-weight:600; cursor:pointer; font-family:inherit; font-size:13px; }
+.code-resend { text-align:center; font-size:14px; line-height:1.5; color:rgba(255,255,255,0.62); margin-top:12px; }
+/* Textknopf für Nebenhandlungen. Vorher ohne Polster und ohne
+   Mindesthöhe – die Tippfläche lag bei rund 18px.             */
+.code-resend button {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--tippflaeche); padding:0 14px;
+  background:none; border:none; border-radius:var(--eck-voll);
+  color:var(--green); font-weight:600; font-family:inherit; font-size:15px;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--zeit-kurz) var(--ease-aus),
+             color var(--zeit-kurz) var(--ease-aus),
+             transform var(--zeit-sofort) var(--ease-aus);
+}
+.code-resend button:hover { background:rgba(34,197,94,0.12); color:#86EFAC; }
+.code-resend button:active { transform:scale(0.97); }
 .success-panel { text-align:center; padding:40px 0; }
-.success-icon { width:64px; height:64px; border-radius:50%; background:rgba(34,197,94,0.15); color:var(--green); font-size:32px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
+/* Das Häkchen zeichnet sich, statt als Emoji zu erscheinen –
+   DESIGN.md §11: "Häkchen zeichnet sich, kein Konfetti, 400ms".  */
+.success-icon {
+  width:64px; height:64px; border-radius:50%;
+  background:rgba(34,197,94,0.15);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 20px; font-size:0;
+}
+.success-icon::before {
+  content:''; display:block; width:30px; height:30px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322C55E' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:center; background-size:100%;
+  clip-path:inset(0 100% 0 0);
+  animation:haekchenZeichnen .4s var(--ease-aus) .15s forwards;
+}
+@keyframes haekchenZeichnen { to { clip-path:inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .success-icon::before { animation:none; clip-path:none; }
+}
 @media(max-width:600px){ .field-row { grid-template-columns:1fr; gap:0; } main { padding:84px 5% 60px; } .card { padding:24px; } }
 
 /* COOKIE BANNER */
