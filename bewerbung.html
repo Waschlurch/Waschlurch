@@ -7,7 +7,6 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
@@ -42,7 +41,15 @@
 @media (min-width:768px){ :root { --knopf-hoehe:48px; } }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
+/* `--cookie-freiraum` hält so viel Platz am Seitenende frei, wie der
+   Cookie-Hinweis gerade einnimmt. Ohne ihn legt sich der Hinweis über
+   den Absende-Knopf: Bei 375px lag der Knopf bei y 675–727, der Hinweis
+   bei y 604–796 – 122px Überdeckung, 0 von 9 Prüfpunkten frei,
+   nachgemessen mit `document.elementFromPoint()`. Der Knopf ist die
+   einzige Möglichkeit, das Formular abzuschicken.
+   Den Wert setzt `initCookieBanner()`, weil die Höhe des Hinweises von
+   Breite und Textlänge abhängt und nicht fest verdrahtet werden darf. */
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); padding-bottom:var(--cookie-freiraum, 0px); }
 /* ── KOPF ──────────────────────────────────────────────────────
    Dieselbe schwebende Kapsel wie auf der Startseite, nur ohne
    Menü. Die Seite steht auf Schwarz, deshalb dunkles Milchglas
@@ -267,17 +274,25 @@ h1 { font-size:clamp(28px,4vw,38px); font-weight:700; letter-spacing:-1px; margi
    ::file-selector-button färbt genau diesen Knopf ein, ohne den
    Auswahldialog anzufassen.                                     */
 input[type="file"] {
-  color:rgba(255,255,255,0.72); font-size:14px;
+  color:rgba(255,255,255,0.72); font-size:16px;
   padding:12px 16px; min-height:var(--feld-hoehe);
 }
 input[type="file"]::file-selector-button {
-  /* Schmal gehalten: Daneben steht der vom Browser gesetzte Text
-     „Keine ausgewählt". Bei 16px Polster blieb dafür zu wenig
-     Platz und der Browser kürzte ihn mitten im Wort.           */
-  margin-right:12px; padding:8px 14px;
+  /* Das Feld steht auf 16px – DESIGN.md §9: „16px Schriftgröße,
+     ohne Ausnahme". Dadurch wächst der vom Browser gesetzte Text
+     daneben („Keine ausgewählt", später der Dateiname) um 15px und
+     wurde bei 375px erstmals gekürzt. Zurückgeholt wird der Platz
+     am Polster und am Abstand (je 8px statt 12/14), nicht an der
+     Schriftgröße: gemessen 254px Innenraum, davon braucht der Text
+     123px – mit 8/8 bleiben 123px übrig, der Text steht wieder
+     vollständig. Bei 320px kürzt der Browser weiterhin, genau wie
+     vor der Umstellung. 14px ist --t-small aus der Skala; 13px war
+     eine erfundene Zwischengröße, und der Knopf im Feld ist ein
+     Knopf, kein Eingabefeld – die 16px-Pflicht greift hier nicht. */
+  margin-right:8px; padding:8px 8px;
   border:1.5px solid rgba(255,255,255,0.18); border-radius:var(--eck-voll);
   background:rgba(255,255,255,0.08); color:var(--white);
-  font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+  font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;
   transition:background-color var(--zeit-kurz) var(--ease-aus),
              border-color var(--zeit-kurz) var(--ease-aus);
 }
@@ -394,7 +409,11 @@ textarea:focus-visible,
         <label class="bool-label"><input type="checkbox" id="b-datenschutz"> Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zur Bearbeitung dieser Bewerbung zu. *</label>
       </div>
       <div class="field-error" id="b-err">Bitte alle Pflichtfelder korrekt ausfüllen und der Datenschutzerklärung zustimmen.</div>
-      <button class="btn-primary" id="b-next-btn" onclick="sendVerificationCode()">Code senden & Bewerbung abschließen →</button>
+      <!-- Zwei Wörter, kein Pfeil: Die Funktion verschickt hier nur den
+           Code und blendet das Code-Feld ein – abgeschlossen wird erst
+           im nächsten Schritt. Der Pfeil versprach zudem einen
+           Seitenwechsel, der nicht stattfindet.                       -->
+      <button class="btn-primary" id="b-next-btn" onclick="sendVerificationCode()">Code anfordern</button>
     </div>
 
     <div id="code-panel" style="display:none">
@@ -498,7 +517,7 @@ window.sendVerificationCode = function(){
       console.error(err);
       document.getElementById('b-err').textContent = 'Fehler beim Senden des Codes. Bitte erneut versuchen.';
       document.getElementById('b-err').style.display = 'block';
-      btn.disabled = false; btn.textContent = 'Code senden & Bewerbung abschließen →';
+      btn.disabled = false; btn.textContent = 'Code anfordern';
     });
 };
 
@@ -573,17 +592,54 @@ window.verifyCodeAndSubmit = function(){
   });
 };
 
+/* COOKIE-HINWEIS
+   Der Hinweis liegt fest am unteren Rand (`position:fixed`) und deckte
+   damit den Absende-Knopf ab (122px Überdeckung bei 375px). Wer nach
+   unten scrollte, konnte die Bewerbung nicht abschicken, solange er den
+   Hinweis nicht wegklickte.
+
+   Deshalb hält die Seite jetzt unten so viel Platz frei, wie der
+   Hinweis tatsächlich einnimmt. Gemessen statt geraten: Die Höhe hängt
+   von der Fensterbreite und der Textlänge ab. Ein `ResizeObserver`
+   zieht den Wert nach, wenn sich die Höhe ändert – das ist billiger und
+   genauer als ein weiterer Scroll- oder Resize-Handler. */
+let _bannerBeobachter = null;
+
+function setzeCookieFreiraum(banner){
+  const hoehe = banner.getBoundingClientRect().height;
+  /* 16px ist der Abstand des Hinweises zum unteren Rand (`bottom:16px`),
+     die zweiten 16px geben dem Seitenende Luft darüber.             */
+  document.documentElement.style.setProperty('--cookie-freiraum', (hoehe + 32) + 'px');
+}
+
+function loescheCookieFreiraum(){
+  document.documentElement.style.removeProperty('--cookie-freiraum');
+  if(_bannerBeobachter){ _bannerBeobachter.disconnect(); _bannerBeobachter = null; }
+}
+
+function initCookieBanner(){
+  const consent = localStorage.getItem('waschlurch_cookie_consent');
+  if(consent) return;
+  const banner = document.getElementById('cookie-banner');
+  if(!banner) return;
+  banner.classList.add('visible');
+  setzeCookieFreiraum(banner);
+  if(typeof ResizeObserver === 'function'){
+    _bannerBeobachter = new ResizeObserver(() => setzeCookieFreiraum(banner));
+    _bannerBeobachter.observe(banner);
+  }
+}
 window.acceptAllCookies = function(){
   localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:true, date:Date.now()}));
   document.getElementById('cookie-banner').classList.remove('visible');
+  loescheCookieFreiraum();
 };
 window.acceptNecessaryCookies = function(){
   localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:false, date:Date.now()}));
   document.getElementById('cookie-banner').classList.remove('visible');
+  loescheCookieFreiraum();
 };
-document.addEventListener('DOMContentLoaded', function(){
-  if(!localStorage.getItem('waschlurch_cookie_consent')) document.getElementById('cookie-banner').classList.add('visible');
-});
+document.addEventListener('DOMContentLoaded', initCookieBanner);
 </script>
 
 <div id="cookie-banner" class="cookie-banner">

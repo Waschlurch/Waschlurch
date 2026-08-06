@@ -7,7 +7,6 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
@@ -252,6 +251,11 @@
   --gray-300: #D1D5DB;
   --gray-200: #E5E7EB;
   --gray-100: #F9FAFB;
+  /* Wurde in `#trust` benutzt, war aber nie definiert – die Regel
+     `background:var(--gray-050)` fiel dadurch stillschweigend aus
+     und das Vertrauensband stand ohne Fläche auf Weiß.
+     Wert nach DESIGN.md §3 (--grau-050).                        */
+  --gray-050: #FAFAFA;
   --white: #FFFFFF;
 
   /* ── DESIGNSYSTEM (DESIGN.md) ─────────────────────────────
@@ -311,7 +315,16 @@ html { scroll-behavior:smooth; }
    des Hero – und eine Seite, die als Ganzes hereinwischt, ist ein
    Effekt ohne Aussage. Der Hero bringt seine Einführung selbst
    mit; alles darunter tritt beim Scrollen auf.                 */
-body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); }
+/* `--cookie-freiraum` hält so viel Platz am Seitenende frei, wie der
+   Cookie-Hinweis gerade einnimmt. Ohne ihn legt sich der Hinweis über
+   die gesamte Fußzeile: Bei 375px verdeckte er alle sieben Links, auch
+   Impressum, Datenschutz und AGB – nachgemessen mit
+   `document.elementFromPoint()`, das dort den Hinweis traf statt der
+   Links. Das Impressum ist auf dieser Seite **nur** in der Fußzeile
+   verlinkt und muss ständig verfügbar sein.
+   Den Wert setzt `initCookieBanner()`, weil die Höhe des Hinweises von
+   Breite und Textlänge abhängt und nicht fest verdrahtet werden darf. */
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--black); background:var(--white); padding-bottom:var(--cookie-freiraum, 0px); }
 @media (prefers-reduced-motion: reduce) { body { animation:none; } }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -690,9 +703,23 @@ section { padding:var(--sekt-gross) var(--rand); }
 .leistung-dialog-tag,
 .preis-name {
   font-size:var(--t-label); font-weight:600;
-  color:var(--green-dark);
+  /* Neutral statt grün. DESIGN.md §3: „Grün ist Handlung, nicht
+     Dekoration. Eine grüne Fläche ohne Handlung dahinter entwertet
+     jede echte Schaltfläche." Hinter diesen 24 Textstellen steht
+     keine Handlung – sie benennen nur den Abschnitt.
+     --gray-500 (#6B7280) auf Weiß = 4,90:1, für 12px ausreichend. */
+  color:var(--gray-500);
   text-transform:uppercase;
   letter-spacing:var(--ls-label); line-height:var(--lh-label);
+}
+/* Drei dieser Etiketten stehen auf dunklem Grund (Über uns,
+   Kontakt, sowie .preis-name auf der schwarzen Paketkarte). Dort
+   wäre --gray-500 mit 1,88:1 unlesbar. DESIGN.md §3 gibt für
+   Nebentext auf dunklem Grund rgba(255,255,255,0.55) vor – auf
+   --black gemessen 6,28:1.                                      */
+#ueber .section-tag,
+#kontakt .section-tag {
+  color:rgba(255,255,255,0.55);
 }
 .section-tag { margin-bottom:var(--r-3); }
 .section-title { font-size:var(--t-h2); font-weight:700; color:var(--black); letter-spacing:var(--ls-h2); line-height:var(--lh-h2); margin-bottom:var(--r-4); }
@@ -1427,7 +1454,15 @@ section { padding:var(--sekt-gross) var(--rand); }
   flex-shrink:0; font-size:13px; margin-top:1px;
   transition:background-color var(--zeit-kurz) var(--ease-aus);
 }
-.ueber-punkt:hover .ueber-punkt-icon { filter:drop-shadow(0 0 8px rgba(34,197,94,0.9)); background:rgba(34,197,94,0.35); }
+/* Der `filter:drop-shadow(0 0 8px rgba(34,197,94,0.9))` ist
+   entfallen. DESIGN.md §7 verbietet den farbigen Leuchtschein –
+   Versatz 0 plus Farbe ist über `filter` genau dasselbe wie über
+   `box-shadow`, nur unter anderem Namen; deshalb ist er bei den
+   beiden früheren Durchgängen (Lesefortschritt, Nach-oben-Knopf)
+   durchgerutscht. `filter` ist zusätzlich eine teure
+   Mal-Eigenschaft. Der Flächenwechsel bleibt: er ist eine
+   Helligkeitsänderung, kein Leuchten.                           */
+.ueber-punkt:hover .ueber-punkt-icon { background:rgba(34,197,94,0.35); }
 
 /* PREISE */
 #preise { background:var(--gray-100); }
@@ -1471,17 +1506,35 @@ section { padding:var(--sekt-gross) var(--rand); }
    gleichzeitig im Bild – DESIGN.md §7 erlaubt höchstens zwei.   */
 .preis-card.featured:hover { box-shadow:var(--schatten-3); }
 
-/* Das Abzeichen an der Karte. Bewusst die kräftige Fassung: Es
-   markiert genau ein Paket und hat damit Signalwirkung. Größe,
-   Gewicht und Laufweite folgen der Etikettenregel.             */
+/* Das Abzeichen an der Karte – jetzt die ruhige Fassung aus
+   DESIGN.md §9 (Fläche --green-light, Text --green-dark).
+
+   Die frühere Begründung („bewusst die kräftige Fassung, sie
+   markiert genau ein Paket und hat damit Signalwirkung") trägt aus
+   zwei Gründen nicht mehr:
+
+   1. Der Kontrast fällt durch. Weiß auf --green ergibt bei 12px/600
+      gemessen 2,28:1; DESIGN.md §3 verlangt für Fließtextgrößen
+      4,5:1. Das ist kein Stilfehler, sondern ein Durchfaller.
+      --green-dark auf --green-light ergibt 4,57:1 – bestanden.
+   2. Die Voraussetzung stimmt nicht. Im Browser sind **zwei**
+      Abzeichen gleichzeitig sichtbar, nicht eines: zwei Pakete
+      tragen `beliebt` in Firestore. Ein Merkmal, das zweimal
+      auftritt, hat keine Signalwirkung mehr. (Datenseite – wird im
+      Dashboard bereinigt, nicht hier im CSS.)
+
+   Ohne Schatten: DESIGN.md §7 erlaubt höchstens zwei Stufen im
+   Bild, und im Paketbereich sind Stufe 1 (Gruppenkopf, ruhende
+   Karte) und Stufe 3 (Karte beim Überfahren) bereits vergeben. Der
+   Schatten trug ohnehin nur die laute grüne Pille; die helle Fläche
+   hebt sich auf der schwarzen Karte von selbst deutlich ab.      */
 .preis-badge {
   position:absolute; top:-13px; left:50%; transform:translateX(-50%);
   display:inline-flex; align-items:center; min-height:26px; padding:0 12px;
-  background:var(--green); color:var(--white);
+  background:var(--green-light); color:var(--green-dark);
   font-size:var(--t-label); font-weight:600;
   letter-spacing:var(--ls-label); line-height:1;
   border-radius:var(--eck-voll);
-  box-shadow:var(--schatten-2);
   white-space:nowrap;
 }
 .preis-icon { font-size:32px; margin-bottom:10px; }
@@ -1504,7 +1557,10 @@ section { padding:var(--sekt-gross) var(--rand); }
   .paket-gruppe-karten > *:nth-child(4n+4) .preis-img { aspect-ratio:16/9; }
 }
 .preis-name { margin-bottom:6px; }
-.preis-card.featured .preis-name { color:#86EFAC; }
+/* Dritter dunkler Fall der Etikettenregel: die schwarze Karte.
+   Vorher #86EFAC – wieder Grün ohne Handlung dahinter. Jetzt der
+   Nebentextwert aus DESIGN.md §3 für dunklen Grund.             */
+.preis-card.featured .preis-name { color:rgba(255,255,255,0.55); }
 .preis-title { font-size:19px; font-weight:700; color:var(--black); margin-bottom:8px; letter-spacing:-0.02em; line-height:1.3; }
 .preis-card.featured .preis-title { color:var(--white); }
 /* 13px/14px in --gray-500 lagen unter dem Mindestkontrast – diese
@@ -1762,12 +1818,16 @@ section { padding:var(--sekt-gross) var(--rand); }
              border-color var(--zeit-kurz) var(--ease-aus);
 }
 .ref-card:hover { transform:translateY(-2px); box-shadow:var(--schatten-3); border-color:var(--green); }
+/* Ruhige Fläche statt Verlauf: Sie ist nur der Rückfall, wenn eine
+   Referenz kein Bild hat, und soll nichts behaupten. Der alte
+   Verlauf war Deko ohne Aussage, und #BBF7D0 stand in keiner
+   Palette.                                                      */
 .ref-img {
   height:200px; width:100%;
   display:flex; align-items:center; justify-content:center;
   font-size:48px;
   position:relative; overflow:hidden;
-  background:linear-gradient(135deg,#DCFCE7,#BBF7D0);
+  background:var(--gray-100);
 }
 .ref-img img { width:100%; height:100%; object-fit:cover; }
 .ref-body { padding:20px; }
@@ -2241,8 +2301,15 @@ footer {
 @media(max-width:768px) {
   /* ── GLOBAL ── */
   /* Untere Schnellnavigation entfernt: Sie verdeckte dauerhaft 64px
-     Bildschirm und doppelte das Hamburger-Menü. */
-  body { padding-bottom:0; }
+     Bildschirm und doppelte das Hamburger-Menü.
+
+     Das zugehörige `body { padding-bottom:0 }` ist entfallen. Es
+     überschrieb die Freihaltung für den Cookie-Hinweis – und zwar
+     ausgerechnet unterhalb 768px, wo der Hinweis am meisten Platz
+     einnimmt (214px bei 375px Breite) und die Fußzeile vollständig
+     verdeckte. Ohne die Angabe greift die Grundregel mit
+     `var(--cookie-freiraum, 0px)`; ist kein Hinweis sichtbar, ist der
+     Wert nicht gesetzt und der Rückfall 0px gilt. */
   .mobile-quicknav { display:none; }
   .cookie-banner { bottom:16px; left:16px; right:16px; }
   #karriere > div[style*="grid-template-columns"] { grid-template-columns:1fr!important; }
@@ -2423,7 +2490,53 @@ footer {
 
   /* ── FOOTER ── */
   .footer-inner { flex-direction:column; text-align:center; gap:24px; }
-  .footer-links { flex-wrap:wrap; justify-content:center; gap:16px 24px; }
+
+  /* ── TIPPFLÄCHEN ───────────────────────────────────────────────
+     DESIGN.md §10: mindestens 44 × 44px, dazwischen mindestens 8px.
+     Bei 375px gemessen waren dies die kleinsten Ziele im Bestand:
+     Fußzeilenlinks 17px, Kontaktwerte 20px, Ortsangabe 18px,
+     Cookie-Link 19px hoch.
+
+     Vergrößert wird nur die **Fläche**, nie die Schrift: senkrechtes
+     Polster über `min-height` plus `inline-flex` mit
+     `align-items:center`. Der sichtbare Text bleibt exakt gleich
+     groß.                                                        */
+  .footer-links a,
+  .kontakt-item-val,
+  .footer-ort,
+  .cookie-banner-text a {
+    display:inline-flex; align-items:center;
+    min-height:var(--tippflaeche);
+  }
+
+  /* Die Fußzeilenlinks dürfen als einzige wirklich wachsen – unter
+     ihnen steht nichts im Weg. Der Zeilenabstand geht dafür von 16
+     auf 8px zurück; 8px ist der Mindestabstand aus §10 und hält den
+     Zuwachs so klein wie möglich: Mitte zu Mitte der beiden Zeilen
+     sind es 52px statt vorher 33px (mit den alten 16px wären es
+     60px). Waagerecht bleiben es unverändert 24px, weil das Polster
+     nur senkrecht wirkt.                                         */
+  .footer-links { flex-wrap:wrap; justify-content:center; gap:8px 24px; }
+
+  /* Kontaktwerte, Ortsangabe und Cookie-Link stehen dagegen in einer
+     Zeile mit anderem Text bzw. in einer Karte fester Höhe. Dort
+     hebt ein negativer senkrechter Rand das Polster für das Layout
+     wieder auf: die Zeilenhöhe bleibt unverändert, die Randbox –
+     und damit die Trefferfläche – wächst trotzdem auf 44px.      */
+  .kontakt-item-val     { margin-block:-12px; }
+  .footer-ort           { margin-block:-13px; }
+  .cookie-banner-text a { margin-block:-12.5px; }
+
+  /* Die gepunktete Linie hing über `border-bottom` am unteren Rand
+     der Randbox und wäre mit dem Polster 13px unter den Text
+     gerutscht. `text-decoration` folgt der Grundlinie und behält
+     das gepunktete Aussehen bei.                                 */
+  .footer-ort {
+    border-bottom:0;
+    text-decoration:underline dotted rgba(255,255,255,0.3);
+    text-underline-offset:3px;
+  }
+  .footer-ort:hover { text-decoration-color:var(--green); }
 
   /* ── UNTERE SCHNELLNAVIGATION ── */
   .mobile-quicknav {
@@ -2451,7 +2564,6 @@ footer {
 @media(max-width:480px) {
   /* Rhythmus NICHT einebnen – nur die Token verkleinern */
   :root { --sekt-hero:48px; --sekt-gross:56px; --sekt-klein:40px; }
-  :root { --t-display:34px; }   /* sehr schmale Geräte */
   .ref-grid { grid-template-columns:1fr; }
   .ref-img { height:170px; }
   .trust-item { font-size:12px; }
@@ -2751,7 +2863,7 @@ footer {
       </div>
     </div>
     <div class="ueber-text">
-      <div class="section-tag" style="color:var(--green)">Über uns</div>
+      <div class="section-tag">Über uns</div>
       <h2 class="section-title">Ihre<br>Reinigungsprofis</h2>
       <p class="section-sub">Waschlurch steht für Verlässlichkeit, Qualität und persönlichen Service. Als lokales Unternehmen aus Eitorf kennen wir die Region und unsere Kunden persönlich.</p>
       <div class="ueber-punkte">
@@ -2798,7 +2910,7 @@ footer {
 <section id="kontakt">
   <div class="kontakt-inner">
     <div class="kontakt-info">
-      <div class="section-tag" style="color:var(--green)">Kontakt</div>
+      <div class="section-tag">Kontakt</div>
       <h2 class="section-title" style="color:var(--white)">Sprechen Sie<br>uns an</h2>
       <p class="section-sub" style="color:rgba(255,255,255,0.6);margin-bottom:36px">Kostenlos anfragen – wir melden uns innerhalb von 24 Stunden mit einem unverbindlichen Angebot.</p>
       <div class="kontakt-items">
@@ -3164,18 +3276,53 @@ window.togglePaketCard = function(headerEl){
   headerEl.setAttribute('aria-expanded', offen ? 'true' : 'false');
 };
 
-// COOKIE BANNER
+/* COOKIE BANNER
+   Der Hinweis liegt fest am unteren Rand (`position:fixed`) und deckte
+   damit die komplette Fußzeile ab – einschließlich Impressum,
+   Datenschutz und AGB. Wer zuerst nach unten scrollte, kam an die
+   Pflichtlinks nicht heran, solange er den Hinweis nicht wegklickte.
+
+   Deshalb hält die Seite jetzt unten so viel Platz frei, wie der
+   Hinweis tatsächlich einnimmt. Gemessen statt geraten: Die Höhe hängt
+   von der Fensterbreite und der Textlänge ab (bei 375px sind es
+   214px, auf breiten Fenstern deutlich weniger). Ein `ResizeObserver`
+   zieht den Wert nach, wenn sich die Höhe ändert – das ist billiger und
+   genauer als ein weiterer Scroll- oder Resize-Handler. */
+let _bannerBeobachter = null;
+
+function setzeCookieFreiraum(banner){
+  const hoehe = banner.getBoundingClientRect().height;
+  /* 16px ist der Abstand des Hinweises zum unteren Rand (`bottom:16px`),
+     die zweiten 16px geben der Fußzeile Luft darüber.               */
+  document.documentElement.style.setProperty('--cookie-freiraum', (hoehe + 32) + 'px');
+}
+
+function loescheCookieFreiraum(){
+  document.documentElement.style.removeProperty('--cookie-freiraum');
+  if(_bannerBeobachter){ _bannerBeobachter.disconnect(); _bannerBeobachter = null; }
+}
+
 function initCookieBanner(){
   const consent = localStorage.getItem('waschlurch_cookie_consent');
-  if(!consent) document.getElementById('cookie-banner').classList.add('visible');
+  if(consent) return;
+  const banner = document.getElementById('cookie-banner');
+  if(!banner) return;
+  banner.classList.add('visible');
+  setzeCookieFreiraum(banner);
+  if(typeof ResizeObserver === 'function'){
+    _bannerBeobachter = new ResizeObserver(() => setzeCookieFreiraum(banner));
+    _bannerBeobachter.observe(banner);
+  }
 }
 window.acceptAllCookies = function(){
   localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:true, date:Date.now()}));
   document.getElementById('cookie-banner').classList.remove('visible');
+  loescheCookieFreiraum();
 };
 window.acceptNecessaryCookies = function(){
   localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:false, date:Date.now()}));
   document.getElementById('cookie-banner').classList.remove('visible');
+  loescheCookieFreiraum();
 };
 document.addEventListener('DOMContentLoaded', initCookieBanner);
 

@@ -7,7 +7,6 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("uF8h6GXwmBKAdoRtY");</script>
@@ -91,7 +90,17 @@
 @media (min-width:768px){ :root { --knopf-hoehe:48px; } }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); }
+/* `--cookie-freiraum` hält so viel Platz am Seitenende frei, wie der
+   Cookie-Hinweis gerade einnimmt. Ohne ihn legt sich der Hinweis über
+   das Ende des Assistenten: Bei 375px verdeckte er den „Weiter“-Knopf
+   vollständig (Knopf y 660–712, Hinweis y 604–796, 0 von 9 Prüfpunkten
+   frei) – nachgemessen mit `document.elementFromPoint()`. Der Knopf ist
+   die einzige Möglichkeit, den Assistenten fortzusetzen.
+   Den Wert setzt `initCookieBanner()`, weil die Höhe des Hinweises von
+   Breite und Textlänge abhängt und nicht fest verdrahtet werden darf.
+   Die Seitenhöhe ändert sich hier je Schritt – ein `ResizeObserver`
+   zieht den Wert nach.                                              */
+body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); padding-bottom:var(--cookie-freiraum, 0px); }
 
 /* NAV */
 /* ── KOPF ──────────────────────────────────────────────────────
@@ -2105,17 +2114,54 @@ document.getElementById('f-ort').addEventListener('input', function(){
 
 showStep(1);
 
+/* COOKIE-HINWEIS
+   Der Hinweis liegt fest am unteren Rand (`position:fixed`) und deckte
+   damit das Ende des Assistenten ab – bei 375px den „Weiter“-Knopf
+   vollständig. Wer nach unten scrollte, kam nicht weiter, solange er
+   den Hinweis nicht wegklickte.
+
+   Deshalb hält die Seite jetzt unten so viel Platz frei, wie der
+   Hinweis tatsächlich einnimmt. Gemessen statt geraten: Die Höhe hängt
+   von der Fensterbreite und der Textlänge ab. Ein `ResizeObserver`
+   zieht den Wert nach, wenn sich die Höhe ändert – das ist billiger und
+   genauer als ein weiterer Scroll- oder Resize-Handler. */
+let _bannerBeobachter = null;
+
+function setzeCookieFreiraum(banner){
+  const hoehe = banner.getBoundingClientRect().height;
+  /* 16px ist der Abstand des Hinweises zum unteren Rand (`bottom:16px`),
+     die zweiten 16px geben dem Seitenende Luft darüber.             */
+  document.documentElement.style.setProperty('--cookie-freiraum', (hoehe + 32) + 'px');
+}
+
+function loescheCookieFreiraum(){
+  document.documentElement.style.removeProperty('--cookie-freiraum');
+  if(_bannerBeobachter){ _bannerBeobachter.disconnect(); _bannerBeobachter = null; }
+}
+
+function initCookieBanner(){
+  const consent = localStorage.getItem('waschlurch_cookie_consent');
+  if(consent) return;
+  const banner = document.getElementById('cookie-banner');
+  if(!banner) return;
+  banner.classList.add('visible');
+  setzeCookieFreiraum(banner);
+  if(typeof ResizeObserver === 'function'){
+    _bannerBeobachter = new ResizeObserver(() => setzeCookieFreiraum(banner));
+    _bannerBeobachter.observe(banner);
+  }
+}
 window.acceptAllCookies = function(){
   localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:true, date:Date.now()}));
   document.getElementById('cookie-banner').classList.remove('visible');
+  loescheCookieFreiraum();
 };
 window.acceptNecessaryCookies = function(){
   localStorage.setItem('waschlurch_cookie_consent', JSON.stringify({necessary:true, statistik:false, date:Date.now()}));
   document.getElementById('cookie-banner').classList.remove('visible');
+  loescheCookieFreiraum();
 };
-document.addEventListener('DOMContentLoaded', function(){
-  if(!localStorage.getItem('waschlurch_cookie_consent')) document.getElementById('cookie-banner').classList.add('visible');
-});
+document.addEventListener('DOMContentLoaded', initCookieBanner);
 </script>
 
 
