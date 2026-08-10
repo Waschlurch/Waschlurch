@@ -369,6 +369,30 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 }
 .auftrag-vorschau b { font-size:17px; font-weight:700; }
 
+/* ── Vorgaben ── */
+.vorgabe-zeile {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 18px;
+  align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.vorgabe-zeile:last-child { border-bottom:none; }
+.vorgabe-zeile > label { font-size:14px; font-weight:600; color:rgba(255,255,255,0.9); }
+.vorgabe-eingabe { display:flex; align-items:center; gap:8px; justify-self:end; }
+.vorgabe-eingabe input {
+  width:120px; padding:10px 12px; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15); border-radius:10px;
+  color:var(--white); font-family:inherit; font-size:16px; text-align:right;
+}
+.vorgabe-einheit { font-size:12.5px; color:rgba(255,255,255,0.6); min-width:60px; }
+.vorgabe-hilfe {
+  grid-column:1/-1; font-size:12.5px; line-height:1.55;
+  color:rgba(255,255,255,0.55); margin-top:-2px;
+}
+.vorgabe-zeile .bool-label { text-transform:none; font-size:14px; font-weight:600; }
+@media(max-width:900px){
+  .vorgabe-zeile { grid-template-columns:minmax(0,1fr); }
+  .vorgabe-eingabe { justify-self:start; }
+}
+
 .karte-aktion {
   font-size:12px; font-weight:600; padding:8px 14px; border-radius:100px; cursor:pointer;
   background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85);
@@ -389,6 +413,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 }
 .kal-legende span { display:inline-flex; align-items:center; gap:6px; }
 .kal-punkt { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.kal-punkt.termin   { background:#34D399; }
 .kal-punkt.auftrag  { background:var(--green); }
 .kal-punkt.rechnung { background:#3B82F6; }
 .kal-punkt.wunsch   { background:#FBBF24; }
@@ -440,6 +465,96 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .kal-detail-text { flex:1; min-width:0; }
 .kal-detail-titel { font-size:13.5px; font-weight:700; }
 .kal-detail-sub { font-size:12px; color:rgba(255,255,255,0.6); margin-top:2px; }
+
+/* ── Ansichtsumschalter ── */
+.kal-ansichten {
+  display:inline-flex; gap:2px; padding:3px; border-radius:100px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+}
+.kal-ansicht-knopf {
+  padding:8px 15px; border:none; border-radius:100px; background:transparent;
+  color:rgba(255,255,255,0.65); font-family:inherit; font-size:13px; font-weight:600;
+  cursor:pointer; min-height:36px;
+}
+.kal-ansicht-knopf:hover { color:var(--white); }
+.kal-ansicht-knopf.aktiv { background:rgba(34,197,94,0.18); color:var(--green); }
+
+/* ── Zeitraster für Woche und Tag ── */
+.kal-zeitraster {
+  border:1px solid rgba(255,255,255,0.1); border-radius:14px; overflow:hidden;
+  background:rgba(255,255,255,0.02);
+}
+.kal-zr-kopf, .kal-zr-ganztags, .kal-zr-zeile { display:grid; }
+.kal-zr-kopf { border-bottom:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); }
+.kal-zr-tagkopf {
+  display:flex; flex-direction:column; align-items:center; gap:1px; padding:10px 4px;
+  border:none; background:transparent; color:inherit; font-family:inherit; cursor:pointer;
+  border-left:1px solid rgba(255,255,255,0.07);
+}
+.kal-zr-tagkopf.heute { background:rgba(34,197,94,0.12); }
+.kal-zr-wochentag { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:rgba(255,255,255,0.55); }
+.kal-zr-zahl { font-size:17px; font-weight:700; }
+.kal-zr-tagkopf.heute .kal-zr-zahl { color:var(--green); }
+.kal-zr-feiertag { font-size:9.5px; font-weight:700; color:#FCA5A5; text-align:center; line-height:1.2; }
+.kal-zr-ganztags { border-bottom:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.03); min-height:34px; }
+.kal-zr-ganztagszelle { padding:4px; border-left:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:3px; }
+.kal-zr-zeile { border-bottom:1px solid rgba(255,255,255,0.06); min-height:46px; }
+.kal-zr-zeile:last-child { border-bottom:none; }
+.kal-zr-zeitspalte {
+  font-size:11px; color:rgba(255,255,255,0.5); padding:5px 8px; text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.kal-zr-zelle { border-left:1px solid rgba(255,255,255,0.07); padding:3px; cursor:pointer; display:flex; flex-direction:column; gap:3px; }
+.kal-zr-zelle:hover { background:rgba(34,197,94,0.05); }
+.kal-chip {
+  display:flex; align-items:center; gap:5px; width:100%; text-align:left;
+  padding:5px 8px; border-radius:7px; border:none; border-left:3px solid var(--green);
+  background:rgba(255,255,255,0.09); color:rgba(255,255,255,0.92);
+  font-family:inherit; font-size:11.5px; font-weight:600; cursor:pointer;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.kal-chip:hover { background:rgba(255,255,255,0.16); }
+.kal-chip.voll { flex-direction:column; align-items:flex-start; gap:1px; white-space:normal; }
+.kal-chip-zeit { font-size:10px; color:rgba(255,255,255,0.6); }
+.kal-chip-titel { overflow:hidden; text-overflow:ellipsis; width:100%; }
+
+/* ── Liste ── */
+.kal-agenda-tag {
+  display:flex; gap:16px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.kal-agenda-tag:last-child { border-bottom:none; }
+.kal-agenda-datum {
+  display:flex; flex-direction:column; align-items:center; width:52px; flex-shrink:0;
+  padding-top:4px;
+}
+.kal-agenda-tag.heute .kal-agenda-zahl { color:var(--green); }
+.kal-agenda-wochentag { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:rgba(255,255,255,0.55); }
+.kal-agenda-zahl { font-size:22px; font-weight:700; line-height:1.1; }
+.kal-agenda-monat { font-size:10.5px; color:rgba(255,255,255,0.55); }
+.kal-agenda-inhalt { flex:1; min-width:0; }
+.kal-agenda-feiertag {
+  font-size:12px; font-weight:700; color:#FCA5A5; margin-bottom:6px;
+}
+.kal-agenda-zeile {
+  display:flex; align-items:flex-start; gap:10px; width:100%; text-align:left;
+  padding:9px 11px; margin-bottom:6px; border-radius:10px;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  color:inherit; font-family:inherit; cursor:pointer;
+}
+.kal-agenda-zeile:hover { border-color:rgba(34,197,94,0.4); background:rgba(34,197,94,0.06); }
+.kal-agenda-zeile .kal-punkt { margin-top:5px; flex-shrink:0; }
+.kal-agenda-zeit { font-size:12px; font-variant-numeric:tabular-nums; color:rgba(255,255,255,0.7); width:62px; flex-shrink:0; }
+.kal-agenda-text { flex:1; min-width:0; }
+.kal-agenda-titel { display:block; font-size:13.5px; font-weight:700; }
+.kal-agenda-sub { display:block; font-size:12px; color:rgba(255,255,255,0.6); margin-top:2px; }
+
+@media(max-width:900px){
+  .kal-ansichten { width:100%; justify-content:space-between; }
+  .kal-ansicht-knopf { flex:1; padding:8px 6px; }
+  .kal-zr-zeitspalte { font-size:10px; padding:5px 4px; }
+  .kal-agenda-zeit { width:auto; }
+  .kal-agenda-zeile { flex-wrap:wrap; }
+}
 
 @media(max-width:900px){
   /* Auf dem Handy ist ein 7-Spalten-Raster mit Text unlesbar –
@@ -889,6 +1004,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     <div class="nav-item" data-view="impressumadmin" onclick="switchView('impressumadmin')"><span class="ni-icon">📜</span><span class="ni-label">Impressum</span></div>
 
     <div class="nav-group">Einstellungen</div>
+    <div class="nav-item" data-view="vorgaben" onclick="switchView('vorgaben')"><span class="ni-icon">⚙️</span><span class="ni-label">Vorgaben</span></div>
     <div class="nav-item" data-view="kalkulation" onclick="switchView('kalkulation')"><span class="ni-icon">📐</span><span class="ni-label">Kalkulation</span></div>
     <div class="nav-item" data-view="mitarbeiter" onclick="switchView('mitarbeiter')"><span class="ni-icon">🧑‍🔧</span><span class="ni-label">Mitarbeiter</span></div>
     <div class="nav-item" data-view="textbausteine" onclick="switchView('textbausteine')"><span class="ni-icon">✉️</span><span class="ni-label">Antworten</span></div>
@@ -957,20 +1073,38 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
       </div>
 
       <div class="kal-leiste">
-        <button class="karte-aktion" onclick="kalenderMonat(-1)" aria-label="Vorheriger Monat">←</button>
+        <button class="karte-aktion" onclick="kalenderBlaettern(-1)" aria-label="Zurück">←</button>
         <div class="kal-monat" id="kal-monat">—</div>
-        <button class="karte-aktion" onclick="kalenderMonat(1)" aria-label="Nächster Monat">→</button>
+        <button class="karte-aktion" onclick="kalenderBlaettern(1)" aria-label="Weiter">→</button>
         <button class="karte-aktion" onclick="kalenderHeute()">Heute</button>
+        <div class="kal-ansichten" role="tablist" aria-label="Kalenderansicht">
+          <button class="kal-ansicht-knopf" data-ansicht="monat"  onclick="kalenderAnsicht('monat')">Monat</button>
+          <button class="kal-ansicht-knopf" data-ansicht="woche"  onclick="kalenderAnsicht('woche')">Woche</button>
+          <button class="kal-ansicht-knopf" data-ansicht="tag"    onclick="kalenderAnsicht('tag')">Tag</button>
+          <button class="kal-ansicht-knopf" data-ansicht="agenda" onclick="kalenderAnsicht('agenda')">Liste</button>
+        </div>
         <div style="flex:1"></div>
+        <button class="btn btn-primary" style="width:auto;padding:10px 18px" onclick="terminFormOeffnen()">+ Termin</button>
+      </div>
+
+      <div class="kal-leiste" style="margin-bottom:16px">
+        <input type="text" id="kal-suche" placeholder="Im Kalender suchen ..." oninput="renderKalenderVerzoegert()"
+               style="flex:1;min-width:180px;padding:10px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:var(--white);font-family:inherit;font-size:16px">
+        <label class="bool-label"><input type="checkbox" id="kal-zeige-termine" checked onchange="renderKalender()"> Termine</label>
+        <label class="bool-label"><input type="checkbox" id="kal-zeige-auftraege" checked onchange="renderKalender()"> Aufträge</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-anfragen" checked onchange="renderKalender()"> Wunschtermine</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-rechnungen" checked onchange="renderKalender()"> Rechnungen</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-abwesend" checked onchange="renderKalender()"> Abwesenheiten</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-ferien" checked onchange="renderKalender()"> Ferien</label>
+        <button class="karte-aktion" onclick="kalenderAlsIcs()">Als Kalenderdatei</button>
       </div>
 
       <div class="stat-row" id="kal-stats"></div>
 
+      <div class="karte-block" id="kal-termin-form" style="display:none"></div>
+
       <div class="kal-legende">
+        <span><i class="kal-punkt termin"></i>Termin</span>
         <span><i class="kal-punkt auftrag"></i>Auftrag</span>
         <span><i class="kal-punkt rechnung"></i>Rechnung</span>
         <span><i class="kal-punkt wunsch"></i>Wunschtermin</span>
@@ -980,10 +1114,12 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <span><i class="kal-flaeche ferien"></i>Schulferien</span>
       </div>
 
-      <div class="kal-wochentage" aria-hidden="true">
+      <div class="kal-wochentage" id="kal-wochentage" aria-hidden="true">
         <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
       </div>
       <div class="kal-gitter" id="kal-gitter"></div>
+      <div id="kal-zeitraster" style="display:none"></div>
+      <div id="kal-agenda" style="display:none"></div>
 
       <div class="karte-block" id="kal-tag-detail" style="display:none"></div>
 
@@ -1610,6 +1746,15 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
       <div id="pakete-list"><div class="empty-state">Lade Pakete ...</div></div>
     </div>
 
+    <!-- VORGABEN -->
+    <div class="view" id="view-vorgaben">
+      <div class="view-head">
+        <div class="view-title">Vorgaben</div>
+        <div class="view-sub">Standardwerte, Fristen und Automatismen – hier eingestellt, wirkt es überall</div>
+      </div>
+      <div id="vorgaben-formular"></div>
+    </div>
+
     <!-- KALKULATION -->
     <div class="view" id="view-kalkulation">
       <div class="view-head">
@@ -1990,6 +2135,67 @@ function summe(liste, feld){
   return liste.reduce((s,x) => s + (Number(x[feld]) || 0), 0);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   VORGABEN – eine Stelle für alle Standardwerte und Automatismen
+   ══════════════════════════════════════════════════════════════
+   Vorher lagen diese Werte verstreut als feste Zahlen im Code
+   (14 Tage Zahlungsziel, 3/7 Tage Warnschwellen, 19 % MwSt.) oder
+   wurden aus einem Bildschirmfeld gelesen, das gar nicht gespeichert
+   sein musste. Beides ließ sich nicht einstellen und war an manchen
+   Stellen widersprüchlich. */
+const VORGABEN_STANDARD = {
+  // Steuer und Rechnung
+  mwst_satz: 19,
+  kleinunternehmer: false,
+  zahlungsziel: 14,
+  rechnung_praefix: 'RE',
+  angebot_praefix: 'ANG',
+  // Fristen
+  angebot_gueltigkeit: 14,
+  angebot_nachfassen_tage: 3,
+  angebot_ablauf_puffer: 0,
+  anfrage_warnung_tage: 3,
+  anfrage_kritisch_tage: 7,
+  mahnung_nach_tagen: 7,
+  papierkorb_monate: 3,
+  // Termine
+  termin_standarddauer: 120,
+  arbeitsbeginn: '08:00',
+  arbeitsende: '17:00',
+  // Automatismen
+  auto_angebot_ablaufen: true,
+  auto_auftrag_aus_angebot: true,
+  auto_rechnung_fragen: true,
+  auto_kunde_aus_anfrage: true
+};
+let vorgaben = Object.assign({}, VORGABEN_STANDARD);
+
+function v(schluessel){
+  const wert = vorgaben[schluessel];
+  return (wert === undefined || wert === null || wert === '') ? VORGABEN_STANDARD[schluessel] : wert;
+}
+
+/* Der Steuersatz für Rechnungen und Angebote kommt aus den
+   gespeicherten Vorgaben – nicht aus dem Eingabefeld der
+   Steuern-Ansicht. Dort tippt man zum Ausprobieren herum, und das
+   darf nicht auf einer Rechnung landen. */
+function steuerSatzFuerBelege(){
+  if(v('kleinunternehmer') === true) return 0;
+  const s = Number(v('mwst_satz'));
+  return isFinite(s) && s >= 0 ? s : 19;
+}
+
+function ladeVorgaben(){
+  return getDoc(doc(db, 'einstellungen', 'vorgaben')).then(snap => {
+    vorgaben = Object.assign({}, VORGABEN_STANDARD, snap.exists() ? snap.data() : {});
+    renderVorgabenFormular();
+    return vorgaben;
+  }).catch(err => {
+    console.warn('Vorgaben konnten nicht geladen werden, es gelten die Standardwerte:', err);
+    renderVorgabenFormular();
+  });
+}
+
 /* Beträge einheitlich deutsch: 1.234,56 € statt 1234.56 € */
 function euro(n){
   const z = Number(n);
@@ -2014,6 +2220,8 @@ let allAuftraege = [];
 let unsubAuftraege = null;
 let allAbwesenheiten = [];
 let unsubAbwesenheiten = null;
+let allTermine = [];
+let unsubTermine = null;
 let allReferenzen = [];
 let allFaqs = [];
 let allLeistungenBilder = {};
@@ -2311,6 +2519,7 @@ onAuthStateChanged(auth, (user) => {
     listenerLaufen = false;
     document.getElementById('app-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
+    if(unsubTermine) unsubTermine();
     if(unsubAbwesenheiten) unsubAbwesenheiten();
     if(unsubAuftraege) unsubAuftraege();
     if(unsubRequests) unsubRequests();
@@ -2545,6 +2754,29 @@ function renderUebersichtIntern(){
     todo.push(['kunden', erledigtNichtAbgerechnet.length + ' Auftr' + (erledigtNichtAbgerechnet.length===1?'ag':'äge') + ' noch nicht abgerechnet', 'Erledigt, aber keine Rechnung gestellt']);
   }
 
+  // Überfällige Zahlungen – das Dringendste zuerst
+  const ueberfaellig = ueberfaelligeZahlungen();
+  if(ueberfaellig.length){
+    const summeOffen = ueberfaellig.reduce((s,x) => s + x.betrag, 0);
+    const aeltester = ueberfaellig[0];
+    todo.unshift(['kunden',
+      ueberfaellig.length + ' Zahlung(en) überfällig · ' + euro(summeOffen),
+      'Am längsten offen: ' + aeltester.name + ', ' + aeltester.tage + ' Tage über dem Zahlungsziel']);
+  }
+
+  // Termine heute und morgen
+  const heuteIso = isoDatum(new Date());
+  const morgenIso = isoDatum(new Date(Date.now() + 86400000));
+  const heutigeTermine = kalenderEreignisse(heuteIso).filter(e => e.art !== 'abwesend');
+  if(heutigeTermine.length){
+    todo.unshift(['kalender', heutigeTermine.length + ' Termin(e) heute', heutigeTermine.map(e => e.titel).slice(0,2).join(' · ')]);
+  } else {
+    const morgigeTermine = kalenderEreignisse(morgenIso).filter(e => e.art !== 'abwesend');
+    if(morgigeTermine.length){
+      todo.push(['kalender', morgigeTermine.length + ' Termin(e) morgen', morgigeTermine.map(e => e.titel).slice(0,2).join(' · ')]);
+    }
+  }
+
   document.getElementById('ueb-todo').innerHTML = todo.length === 0
     ? '<div class="ueb-leer">Alles erledigt – nichts liegt an.</div>'
     : todo.map(([ziel, titel, sub]) => `
@@ -2661,11 +2893,21 @@ function startListeners(){
     renderKalender();
   }, err => meldeLadefehler(err, 'abwesenheiten', 'abwesenheiten-liste'));
 
+  /* Eigene Termine – alles, was keinen Auftrag und keine Anfrage
+     braucht: Besichtigung, Rückruf, Steuerberater, Werkstatt. */
+  unsubTermine = onSnapshot(collection(db, 'termine'), (snap) => {
+    allTermine = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderKalender();
+    renderUebersicht();
+  }, err => meldeLadefehler(err, 'termine', null));
+
   const angeboteQuery = collection(db, 'angebote');
   unsubAngebote = onSnapshot(angeboteQuery, (snap) => {
     allAngebote = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
     renderAngeboteList();
     renderUebersicht();
+    renderKalender();
+    angeboteAblaufenLassen();
   }, err => console.error(err));
 
   const refQuery = query(collection(db, 'referenzen'), orderBy('reihenfolge', 'asc'));
@@ -2701,6 +2943,11 @@ function startListeners(){
   }, err => console.error(err));
 
   loadPreise();
+  ladeVorgaben().then(() => {
+    // Erst wenn die Vorgaben da sind, stimmen Fristen und Warnschwellen
+    renderRequests(); renderAngeboteList(); renderUebersicht(); renderKalender();
+    angeboteAblaufenLassen();
+  });
   ladeSchulferien();
   renderKalender();
   loadSteuersatz();
@@ -2817,8 +3064,8 @@ function renderRequests(nurListe){
     const isUnbearbeitet = ['neu','kontaktiert'].includes(r.status);
     let staleBadge = '';
     if(isUnbearbeitet && daysSince != null && currentReqTab === 'aktiv'){
-      if(daysSince >= 7) staleBadge = `<span class="req-stale-badge critical">⚠️ Seit ${daysSince} Tagen unbeantwortet!</span>`;
-      else if(daysSince >= 3) staleBadge = `<span class="req-stale-badge warn">⏰ Seit ${daysSince} Tagen offen</span>`;
+      if(daysSince >= v('anfrage_kritisch_tage')) staleBadge = `<span class="req-stale-badge critical">Seit ${daysSince} Tagen unbeantwortet</span>`;
+      else if(daysSince >= v('anfrage_warnung_tage')) staleBadge = `<span class="req-stale-badge warn">Seit ${daysSince} Tagen offen</span>`;
     }
     const wert = r.geschaetzter_auftragswert;
     const wertBadge = (typeof wert === 'number' && isFinite(wert))
@@ -2927,7 +3174,7 @@ window.updateStatus = function(id, newStatus){
     .then(() => {
       melde('Status gespeichert: ' + newStatus);
       const r = allRequests.find(x => x.id === id);
-      if(newStatus === 'abgeschlossen' && r && !r.rechnung_nummer){
+      if(v('auto_rechnung_fragen') && newStatus === 'abgeschlossen' && r && !r.rechnung_nummer){
         if(confirm('Anfrage als abgeschlossen markiert.\n\nSoll jetzt eine Rechnung dafür erstellt werden?')){
           window.generateInvoice(id, false);
         }
@@ -3078,7 +3325,7 @@ window.emptyTrash = function(){
 };
 
 function purgeOldTrash(){
-  const threeMonthsAgo = Date.now() - (90 * 86400000);
+  const threeMonthsAgo = Date.now() - (Number(v('papierkorb_monate')) * 30 * 86400000);
   allRequests.forEach(r => {
     if(r.geloescht && r.geloescht_am && r.geloescht_am.toMillis && r.geloescht_am.toMillis() < threeMonthsAgo){
       deleteDoc(doc(db, 'anfragen', r.id)).catch(() => {});
@@ -4829,7 +5076,7 @@ async function getOrCreateInvoiceNumber(request){
     const current = (snap.exists() && typeof snap.data().naechste_nummer === 'number')
       ? snap.data().naechste_nummer : 1;
     tx.set(counterRef, { naechste_nummer: current + 1 }, { merge:true });
-    return `RE-${jahr}-${String(current).padStart(4,'0')}`;
+    return v('rechnung_praefix') + '-' + jahr + '-' + String(current).padStart(4,'0');
   });
 
   const rechnungDatum = new Date().toISOString().slice(0,10);
@@ -4845,103 +5092,384 @@ function pdfVerfuegbar(){
   return !!(window.jspdf && window.jspdf.jsPDF);
 }
 
-function buildInvoicePDF(request, nummer, netto, mwst, brutto, mwstSatz){
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit:'mm', format:'a4' });
+/* ══════════════════════════════════════════════════════════════
+   PDF-HANDWERKSZEUG
+   ══════════════════════════════════════════════════════════════
+   Gemeinsame Bausteine für Rechnung und Angebot. Vorher war beides
+   getrennt aufgebaut und lief auseinander; Beträge standen zudem
+   linksbündig und liefen bei langen Texten aus dem Blatt.
 
-  if(LOGO_IMG_EL && LOGO_IMG_EL.complete && LOGO_IMG_EL.naturalWidth > 0){
-    try { pdf.addImage(LOGO_IMG_EL, 'PNG', 158, 14, 30, 26); } catch(e){ console.warn('Logo konnte nicht eingefügt werden', e); }
+   Maße nach DIN 5008: 20 mm Rand links und rechts, Anschriftenfeld
+   ab 45 mm, damit es im Fensterumschlag sichtbar ist. */
+const PDF_MASS = {
+  randLinks: 20, randRechts: 190, breite: 170,
+  betragRechts: 190,          // rechte Kante der Betragsspalte
+  fussOben: 272, seitenEnde: 258
+};
+const PDF_FARBE = {
+  text:    [26, 26, 26],
+  leise:   [110, 110, 110],
+  linie:   [214, 214, 214],
+  band:    [243, 246, 244],
+  gruen:   [34, 197, 94],
+  gruenDunkel: [21, 128, 61]
+};
+
+/* Beträge im PDF: deutsche Schreibweise, aber ohne geschütztes
+   Leerzeichen – jsPDF bildet das in der Standardschrift nicht ab. */
+function pdfEuro(n){
+  const z = Number(n);
+  return (isFinite(z) ? z : 0)
+    .toLocaleString('de-DE', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' EUR';
+}
+function pdfDatum(d){
+  const x = (d instanceof Date) ? d : new Date(d);
+  return isNaN(x) ? '–' : x.toLocaleDateString('de-DE');
+}
+
+/* Logo seitenverhältnisgetreu einsetzen.
+   Vorher stand fest 30 x 26 mm im Code – das Logo ist aber 494 x 300
+   Bildpunkte. Es wurde damit auf jeder Rechnung um rund 30 Prozent
+   gestaucht. Jetzt gibt nur die Höhe den Ton an, die Breite folgt. */
+/* Das Logo liegt als 170-KB-PNG vor und wurde unverkleinert in jedes
+   PDF eingebettet – eine Rechnung wog damit 590 KB. Für 18 mm Höhe
+   im Druck genügen rund 300 Bildpunkte (etwa 420 dpi). Einmal
+   verkleinert, danach gemerkt. */
+let logoFuerPdf = null;
+function pdfLogoDaten(){
+  if(logoFuerPdf !== null) return logoFuerPdf;
+  const el = LOGO_IMG_EL;
+  if(!el || !el.complete || !el.naturalWidth){ return null; }
+  try {
+    const zielHoehe = 300;
+    const zielBreite = Math.round(zielHoehe * (el.naturalWidth / el.naturalHeight));
+    const leinwand = document.createElement('canvas');
+    leinwand.width = zielBreite; leinwand.height = zielHoehe;
+    const ctx = leinwand.getContext('2d');
+    // Weißer Grund: Das Logo ist teils durchsichtig, PDF-Seiten sind weiß.
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, zielBreite, zielHoehe);
+    ctx.drawImage(el, 0, 0, zielBreite, zielHoehe);
+    logoFuerPdf = { daten: leinwand.toDataURL('image/jpeg', 0.9),
+                    verhaeltnis: el.naturalWidth / el.naturalHeight };
+    return logoFuerPdf;
+  } catch(e){
+    console.warn('Logo konnte nicht verkleinert werden:', e);
+    logoFuerPdf = null;
+    return null;
   }
+}
 
-  let y = 20;
+function pdfLogo(pdf, rechtsX, obenY, maxHoehe){
+  const logo = pdfLogoDaten();
+  if(!logo) return 0;
+  const hoehe = maxHoehe;
+  const breite = hoehe * logo.verhaeltnis;   // Seitenverhältnis bleibt erhalten
+  try {
+    pdf.addImage(logo.daten, 'JPEG', rechtsX - breite, obenY, breite, hoehe);
+    return breite;
+  } catch(e){
+    console.warn('Logo konnte nicht eingebettet werden', e);
+    return 0;
+  }
+}
+
+/* Kopfbereich: Wortmarke links, Logo rechts, grüne Linie darunter. */
+function pdfKopf(pdf){
+  pdfLogo(pdf, PDF_MASS.randRechts, 14, 18);
+
   pdf.setFont('helvetica','bold');
-  pdf.setFontSize(18);
-  pdf.setTextColor(20,20,20);
-  pdf.text(firmaData.name || 'Waschlurch', 20, y);
-  y += 12;
+  pdf.setFontSize(20);
+  pdf.setTextColor(...PDF_FARBE.text);
+  pdf.text(firmaData.name || 'Waschlurch', PDF_MASS.randLinks, 24);
 
   pdf.setFont('helvetica','normal');
-  pdf.setFontSize(8);
-  pdf.setTextColor(120,120,120);
-  pdf.text(`${firmaData.name||'Waschlurch'} · ${firmaData.strasse||''} · ${firmaData.plz||''} ${firmaData.ort||''}`, 20, y);
-  y += 7;
+  pdf.setFontSize(9);
+  pdf.setTextColor(...PDF_FARBE.leise);
+  pdf.text('Reinigung und Hausmeisterservice', PDF_MASS.randLinks, 29.5);
+
+  pdf.setDrawColor(...PDF_FARBE.gruen);
+  pdf.setLineWidth(0.8);
+  pdf.line(PDF_MASS.randLinks, 34, PDF_MASS.randRechts, 34);
+  pdf.setLineWidth(0.2);
+}
+
+/* Anschriftenfeld nach DIN 5008 inklusive Rücksendeangabe. */
+function pdfEmpfaenger(pdf, zeilen){
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(...PDF_FARBE.leise);
+  const absender = [firmaData.name||'Waschlurch', firmaData.strasse||'',
+                    ((firmaData.plz||'') + ' ' + (firmaData.ort||'')).trim()]
+                   .filter(Boolean).join(' · ');
+  pdf.text(absender, PDF_MASS.randLinks, 45);
+  pdf.setDrawColor(...PDF_FARBE.linie);
+  pdf.line(PDF_MASS.randLinks, 46.5, 105, 46.5);
 
   pdf.setFontSize(11);
-  pdf.setTextColor(20,20,20);
-  pdf.text(`${request.vorname||''} ${request.nachname||''}`, 20, y); y += 5;
-  pdf.text(`${request.strasse||''}`, 20, y); y += 5;
-  pdf.text(`${request.plz||''} ${request.ort||''}`, 20, y);
+  pdf.setTextColor(...PDF_FARBE.text);
+  let y = 53;
+  zeilen.filter(Boolean).forEach(z => { pdf.text(String(z), PDF_MASS.randLinks, y); y += 5.2; });
+  return y;
+}
 
-  let metaY = 48;
-  pdf.setFontSize(10);
-  pdf.text(`Rechnungsnummer: ${nummer}`, 118, metaY); metaY += 6;
-  pdf.text(`Rechnungsdatum: ${new Date().toLocaleDateString('de-DE')}`, 118, metaY); metaY += 6;
-  pdf.text(`Leistungsdatum: ${request.wunschtermin || new Date().toLocaleDateString('de-DE')}`, 118, metaY); metaY += 6;
-  pdf.text(`Kundennr.: ${request.id.slice(0,8).toUpperCase()}`, 118, metaY);
+/* Kennzahlenblock rechts neben der Anschrift. */
+function pdfMeta(pdf, paare){
+  let y = 45;
+  paare.filter(Boolean).forEach(([bez, wert]) => {
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...PDF_FARBE.leise);
+    pdf.text(bez, 120, y);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(9.5);
+    pdf.setTextColor(...PDF_FARBE.text);
+    pdf.text(String(wert), PDF_MASS.randRechts, y, { align:'right' });
+    y += 5.4;
+  });
+  return y;
+}
 
-  y = Math.max(y, metaY) + 16;
-
+function pdfTitel(pdf, text, y){
   pdf.setFont('helvetica','bold');
-  pdf.setFontSize(16);
-  pdf.text('RECHNUNG', 20, y);
+  pdf.setFontSize(17);
+  pdf.setTextColor(...PDF_FARBE.gruenDunkel);
+  pdf.text(text, PDF_MASS.randLinks, y);
+  pdf.setTextColor(...PDF_FARBE.text);
+  return y + 9;
+}
+
+/* Tabellenkopf; wird bei jedem Seitenumbruch wiederholt. */
+function pdfTabellenKopf(pdf, y){
+  pdf.setFillColor(...PDF_FARBE.band);
+  pdf.rect(PDF_MASS.randLinks, y, PDF_MASS.breite, 8, 'F');
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(...PDF_FARBE.leise);
+  pdf.text('POS', PDF_MASS.randLinks + 2, y + 5.3);
+  pdf.text('LEISTUNG', PDF_MASS.randLinks + 12, y + 5.3);
+  pdf.text('MENGE', 135, y + 5.3, { align:'right' });
+  pdf.text('BETRAG', PDF_MASS.betragRechts - 2, y + 5.3, { align:'right' });
+  pdf.setTextColor(...PDF_FARBE.text);
+  return y + 12;
+}
+
+/* Positionen setzen – mit Umbruch bei langen Texten UND mit
+   Seitenumbruch. Vorher lief beides aus dem Blatt heraus. */
+function pdfPositionen(pdf, positionen, y){
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(10);
+  positionen.forEach((pos, i) => {
+    const textBreite = 95;
+    const zeilen = pdf.splitTextToSize(String(pos.text || '–'), textBreite);
+    const hoehe = Math.max(zeilen.length * 5, 7);
+
+    if(y + hoehe > PDF_MASS.seitenEnde){
+      pdf.addPage();
+      y = 24;
+      y = pdfTabellenKopf(pdf, y);
+      pdf.setFont('helvetica','normal');
+      pdf.setFontSize(10);
+    }
+
+    pdf.setTextColor(...PDF_FARBE.leise);
+    pdf.text(String(i + 1), PDF_MASS.randLinks + 2, y);
+    pdf.setTextColor(...PDF_FARBE.text);
+    pdf.text(zeilen, PDF_MASS.randLinks + 12, y);
+    if(pos.menge) pdf.text(String(pos.menge), 135, y, { align:'right' });
+    pdf.text(pdfEuro(pos.betrag), PDF_MASS.betragRechts - 2, y, { align:'right' });
+
+    if(pos.hinweis){
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(...PDF_FARBE.leise);
+      const hz = pdf.splitTextToSize(String(pos.hinweis), textBreite);
+      pdf.text(hz, PDF_MASS.randLinks + 12, y + zeilen.length * 5);
+      pdf.setFontSize(10);
+      pdf.setTextColor(...PDF_FARBE.text);
+      y += hz.length * 4.2;
+    }
+
+    y += hoehe;
+    pdf.setDrawColor(...PDF_FARBE.linie);
+    pdf.line(PDF_MASS.randLinks, y - 2.5, PDF_MASS.randRechts, y - 2.5);
+  });
+  return y + 4;
+}
+
+/* Summenblock rechts, Beträge rechtsbündig. */
+function pdfSummen(pdf, zeilen, y){
+  if(y + zeilen.length * 6 + 14 > PDF_MASS.seitenEnde){ pdf.addPage(); y = 24; }
+  const linksX = 118;
+  zeilen.forEach(([bez, wert, betont]) => {
+    if(betont){
+      pdf.setDrawColor(...PDF_FARBE.text);
+      pdf.setLineWidth(0.4);
+      pdf.line(linksX, y - 4, PDF_MASS.randRechts, y - 4);
+      pdf.setLineWidth(0.2);
+      pdf.setFont('helvetica','bold');
+      pdf.setFontSize(12.5);
+      y += 2;
+    } else {
+      pdf.setFont('helvetica','normal');
+      pdf.setFontSize(10);
+    }
+    pdf.text(bez, linksX, y);
+    pdf.text(wert, PDF_MASS.betragRechts, y, { align:'right' });
+    y += betont ? 9 : 6;
+  });
+  return y;
+}
+
+/* Hinweiskasten mit heller Fläche – z. B. Zahlungsbedingungen. */
+function pdfKasten(pdf, ueberschrift, zeilen, y){
+  const inhalt = zeilen.filter(Boolean);
+  const hoehe = 9 + inhalt.length * 5;
+  if(y + hoehe > PDF_MASS.seitenEnde){ pdf.addPage(); y = 24; }
+  pdf.setFillColor(...PDF_FARBE.band);
+  pdf.roundedRect(PDF_MASS.randLinks, y, PDF_MASS.breite, hoehe, 2, 2, 'F');
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(9.5);
+  pdf.setTextColor(...PDF_FARBE.gruenDunkel);
+  pdf.text(ueberschrift, PDF_MASS.randLinks + 5, y + 6.5);
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(9.5);
+  pdf.setTextColor(...PDF_FARBE.text);
+  let zy = y + 12;
+  inhalt.forEach(z => { pdf.text(String(z), PDF_MASS.randLinks + 5, zy); zy += 5; });
+  return y + hoehe + 8;
+}
+
+function pdfKleingedrucktes(pdf, text, y){
+  const zeilen = pdf.splitTextToSize(text, PDF_MASS.breite);
+  const hoehe = zeilen.length * 3.6;
+  if(y + hoehe > PDF_MASS.seitenEnde){ pdf.addPage(); y = 24; }
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(...PDF_FARBE.leise);
+  pdf.text(zeilen, PDF_MASS.randLinks, y);
+  pdf.setTextColor(...PDF_FARBE.text);
+  return y + hoehe + 4;
+}
+
+/* Fußzeile auf JEDER Seite, dreispaltig, mit Seitenzahl.
+   Wird zum Schluss über alle Seiten gelegt. */
+function pdfFussAufAllenSeiten(pdf){
+  const gesamt = pdf.internal.getNumberOfPages();
+  for(let i = 1; i <= gesamt; i++){
+    pdf.setPage(i);
+    const y = PDF_MASS.fussOben;
+    pdf.setDrawColor(...PDF_FARBE.linie);
+    pdf.line(PDF_MASS.randLinks, y, PDF_MASS.randRechts, y);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(...PDF_FARBE.leise);
+
+    const spalte1 = [firmaData.name||'Waschlurch', firmaData.inhaber||'',
+                     firmaData.strasse||'', ((firmaData.plz||'')+' '+(firmaData.ort||'')).trim()].filter(Boolean);
+    const spalte2 = ['Tel. ' + (firmaData.telefon||'–'), firmaData.email||'',
+                     'waschlurch.com'].filter(Boolean);
+    const spalte3 = [firmaData.bank||'', firmaData.iban ? 'IBAN ' + firmaData.iban : '',
+                     firmaData.bic ? 'BIC ' + firmaData.bic : '',
+                     firmaData.steuernummer ? 'St.-Nr. ' + firmaData.steuernummer : ''].filter(Boolean);
+
+    [ [spalte1, PDF_MASS.randLinks], [spalte2, 85], [spalte3, 135] ].forEach(([sp, x]) => {
+      let fy = y + 4.5;
+      sp.forEach(z => { pdf.text(String(z), x, fy); fy += 3.4; });
+    });
+
+    if(gesamt > 1){
+      pdf.text('Seite ' + i + ' von ' + gesamt, PDF_MASS.randRechts, y + 4.5, { align:'right' });
+    }
+  }
+}
+
+/* ── RECHNUNG ─────────────────────────────────────────────── */
+function buildInvoicePDF(request, nummer, netto, mwst, brutto, mwstSatz, positionen){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit:'mm', format:'a4' });
+  pdf.setProperties({
+    title: 'Rechnung ' + nummer,
+    subject: 'Rechnung',
+    author: firmaData.name || 'Waschlurch',
+    creator: firmaData.name || 'Waschlurch'
+  });
+
+  pdfKopf(pdf);
+
+  const empfaenger = [
+    ((request.vorname||'') + ' ' + (request.nachname||'')).trim(),
+    request.firma || '',
+    request.strasse || '',
+    ((request.plz||'') + ' ' + (request.ort||'')).trim()
+  ];
+  const yAdresse = pdfEmpfaenger(pdf, empfaenger);
+
+  const leistungsdatum = request.leistungsdatum || request.wunschtermin || request.rechnung_datum;
+  const yMeta = pdfMeta(pdf, [
+    ['Rechnungsnummer', nummer],
+    ['Rechnungsdatum',  pdfDatum(request.rechnung_datum || new Date())],
+    ['Leistungsdatum',  leistungsdatum ? pdfDatum(leistungsdatum) : pdfDatum(new Date())],
+    ['Kundennummer',    String(request.id || '').slice(0,8).toUpperCase()]
+  ]);
+
+  let y = Math.max(yAdresse, yMeta) + 12;
+  y = pdfTitel(pdf, 'Rechnung', y);
+
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(...PDF_FARBE.text);
+  const anrede = request.vorname
+    ? 'vielen Dank für Ihren Auftrag. Wie besprochen berechnen wir Ihnen folgende Leistungen:'
+    : 'wir berechnen Ihnen folgende Leistungen:';
+  pdf.text('Sehr geehrte Damen und Herren,', PDF_MASS.randLinks, y); y += 5.5;
+  pdf.text(pdf.splitTextToSize(anrede, PDF_MASS.breite), PDF_MASS.randLinks, y);
   y += 10;
 
-  pdf.setFillColor(240,240,240);
-  pdf.rect(20, y, 170, 8, 'F');
-  pdf.setFontSize(10);
-  pdf.text('Beschreibung', 22, y+5.5);
-  pdf.text('Betrag (netto)', 163, y+5.5);
-  y += 13;
+  y = pdfTabellenKopf(pdf, y);
 
-  pdf.setFont('helvetica','normal');
-  pdf.text(request.leistungen || 'Reinigungsleistung', 22, y);
-  pdf.text(netto.toFixed(2) + ' €', 163, y);
-  y += 6;
+  const posten = (Array.isArray(positionen) && positionen.length)
+    ? positionen
+    : [{
+        text: request.leistungen || 'Reinigungsleistung',
+        hinweis: [
+          request.haeufigkeit ? 'Häufigkeit: ' + request.haeufigkeit : '',
+          (request.strasse || request.ort)
+            ? 'Leistungsort: ' + [request.strasse, ((request.plz||'')+' '+(request.ort||'')).trim()].filter(Boolean).join(', ')
+            : ''
+        ].filter(Boolean).join('   ·   '),
+        betrag: netto
+      }];
+  y = pdfPositionen(pdf, posten, y);
 
-  pdf.setFontSize(9);
-  pdf.setTextColor(110,110,110);
-  if(request.haeufigkeit){ pdf.text(`Häufigkeit: ${request.haeufigkeit}`, 22, y); y += 5; }
-  if(request.strasse || request.ort){ pdf.text(`Leistungsort: ${request.strasse||''}, ${request.plz||''} ${request.ort||''}`, 22, y); y += 5; }
-  pdf.setTextColor(20,20,20);
-  pdf.setFontSize(10);
+  const kleinunternehmer = !mwstSatz || mwstSatz <= 0;
+  y = pdfSummen(pdf, [
+    ['Zwischensumme (netto)', pdfEuro(netto)],
+    kleinunternehmer ? null : ['zzgl. ' + zahl(mwstSatz,1) + ' % USt.', pdfEuro(mwst)],
+    ['Rechnungsbetrag', pdfEuro(brutto), true]
+  ].filter(Boolean), y + 4);
 
-  y += 6;
-  pdf.setDrawColor(210,210,210);
-  pdf.line(20, y, 190, y);
-  y += 8;
+  const ziel = Number(firmaData.zahlungsziel) || 14;
+  const faellig = new Date(Date.now() + ziel * 86400000);
+  y = pdfKasten(pdf, 'Zahlung', [
+    'Bitte überweisen Sie ' + pdfEuro(brutto) + ' bis zum ' + pdfDatum(faellig) + ' ohne Abzug.',
+    'Verwendungszweck: ' + nummer,
+    [firmaData.bank ? firmaData.bank : '', firmaData.iban ? 'IBAN ' + firmaData.iban : '',
+     firmaData.bic ? 'BIC ' + firmaData.bic : ''].filter(Boolean).join('   ·   ')
+  ], y + 6);
 
-  pdf.text('Zwischensumme (netto)', 118, y);
-  pdf.text(netto.toFixed(2) + ' €', 163, y);
-  y += 6;
-  pdf.text(`zzgl. ${mwstSatz}% USt.`, 118, y);
-  pdf.text(mwst.toFixed(2) + ' €', 163, y);
-  y += 8;
-  pdf.line(118, y-3, 190, y-3);
-  pdf.setFont('helvetica','bold');
-  pdf.setFontSize(12);
-  pdf.text('Gesamtbetrag', 118, y+3);
-  pdf.text(brutto.toFixed(2) + ' €', 163, y+3);
-  y += 20;
+  if(kleinunternehmer){
+    y = pdfKleingedrucktes(pdf,
+      'Gemäß § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).', y);
+  }
+  y = pdfKleingedrucktes(pdf,
+    'Für Privathaushalte: Die enthaltenen Arbeitskosten können nach § 35a EStG mit 20 Prozent, ' +
+    'höchstens 4.000 EUR im Jahr, von der Steuerschuld abgezogen werden. Voraussetzung ist die ' +
+    'Zahlung per Überweisung.', y);
+  y = pdfKleingedrucktes(pdf,
+    'Diese Rechnung steht im Zusammenhang mit einer Leistung an einem Grundstück. Gemäß § 14b Abs. 1 ' +
+    'Satz 5 UStG ist der Rechnungsempfänger verpflichtet, diese Rechnung, einen Zahlungsbeleg oder eine ' +
+    'andere beweiskräftige Unterlage zwei Jahre lang aufzubewahren.', y);
 
-  pdf.setFont('helvetica','normal');
-  pdf.setFontSize(10);
-  pdf.text(`Bitte überweisen Sie den Betrag innerhalb von ${firmaData.zahlungsziel || 14} Tagen ohne Abzug auf folgendes Konto:`, 20, y);
-  y += 7;
-  pdf.text(`${firmaData.bank || '–'}   ·   IBAN: ${firmaData.iban || '–'}   ·   BIC: ${firmaData.bic || '–'}`, 20, y);
-  y += 14;
-
-  pdf.setFontSize(8);
-  pdf.setTextColor(120,120,120);
-  pdf.text('Hinweis: Diese Rechnung steht im Zusammenhang mit einer Leistung an einem Grundstück. Gemäß § 14b Abs. 1 Satz 5 UStG ist der Rechnungsempfänger verpflichtet, diese Rechnung, einen Zahlungsbeleg oder eine andere beweiskräftige Unterlage zwei Jahre lang aufzubewahren.', 20, y, { maxWidth:170 });
-
-  const footerY = 280;
-  pdf.setDrawColor(220,220,220);
-  pdf.line(20, footerY-6, 190, footerY-6);
-  pdf.setFontSize(8);
-  pdf.setTextColor(120,120,120);
-  pdf.text(`${firmaData.name||'Waschlurch'} · ${firmaData.inhaber||'Daniel Lurch'} · ${firmaData.strasse||''} · ${firmaData.plz||''} ${firmaData.ort||''}`, 20, footerY);
-  pdf.text(`Steuernummer: ${firmaData.steuernummer||'–'}${firmaData.ustid ? ' · USt-IdNr.: '+firmaData.ustid : ''} · Tel: ${firmaData.telefon||'–'} · ${firmaData.email||'–'}`, 20, footerY+4);
-
+  pdfFussAufAllenSeiten(pdf);
   return pdf.output('blob');
 }
 
@@ -4954,15 +5482,51 @@ window.generateInvoice = async function(requestId, alsoEmail){
   if(!request){ alert('Anfrage nicht gefunden.'); return; }
   if(!request.vorname && !request.nachname){ alert('Für diese Anfrage fehlen Kundendaten.'); return; }
 
-  const vorschlag = (request.geschaetzter_auftragswert || 0).toFixed(2);
-  const eingabe = prompt(`Rechnungsbetrag bestätigen (Brutto, inkl. MwSt., in €):`, vorschlag);
+  /* Betrag und Positionen möglichst aus einem angenommenen Angebot
+     übernehmen, statt sie abtippen zu lassen. Das ist der häufigste
+     Fall: Angebot ging raus, Kunde hat zugesagt, Rechnung folgt. */
+  const angebot = allAngebote.find(x =>
+    x.anfrage_id === requestId && ['angenommen','versendet'].includes(x.status));
+  let positionen = null;
+  let vorschlag = Number(request.geschaetzter_auftragswert) || 0;
+
+  if(angebot && angebot.bruttoGesamt){
+    if(confirm('Zu dieser Anfrage gibt es das Angebot ' + (angebot.nummer||'') +
+               ' über ' + euro(angebot.bruttoGesamt) + '.\n\n' +
+               'Sollen Betrag und Einzelposten daraus übernommen werden?')){
+      vorschlag = Number(angebot.bruttoGesamt);
+      positionen = (angebot.zeilen || []).map(z => ({
+        text: z.name,
+        menge: z.qty2 ? (z.qty + ' ' + (z.unit||'') + ' + ' + z.qty2 + ' ' + (z.unit2||''))
+                      : ((z.qty || '') + ' ' + (z.unit||'')).trim(),
+        betrag: z.price
+      }));
+      if(angebot.fahrtkosten > 0) positionen.push({ text:'Anfahrt', menge: zahl(angebot.km*2,1)+' km', betrag: angebot.fahrtkosten });
+      if(angebot.zuschlagBetrag > 0) positionen.push({ text:'Zuschläge', hinweis:(angebot.zuschlaege||[]).join(', '), betrag: angebot.zuschlagBetrag });
+      if(angebot.zusatzkosten > 0) positionen.push({ text:'Material und Zusatzkosten', betrag: angebot.zusatzkosten });
+    }
+  }
+
+  const eingabe = prompt('Rechnungsbetrag bestätigen (brutto, in Euro):',
+                         vorschlag ? vorschlag.toFixed(2).replace('.', ',') : '');
   if(eingabe === null) return;
-  const brutto = parseFloat(eingabe.replace(',','.'));
+  const brutto = parseFloat(String(eingabe).replace(/\./g,'').replace(',','.'));
   if(!brutto || brutto <= 0){ alert('Bitte einen gültigen Betrag eingeben.'); return; }
 
-  const mwstSatz = zahlAusFeld(document.getElementById('steuer-mwst-satz'), 19);
+  /* Steuersatz aus den gespeicherten Einstellungen, nicht aus dem
+     Bildschirmfeld der Steuern-Ansicht: Sonst landet auf der Rechnung,
+     was dort gerade zum Ausprobieren eingetippt wurde. */
+  const mwstSatz = steuerSatzFuerBelege();
   const netto = brutto / (1 + mwstSatz/100);
   const mwst = brutto - netto;
+
+  /* Positionen auf den bestätigten Betrag prüfen – weicht die Summe
+     ab, lieber eine ehrliche Sammelposition als eine Rechnung, deren
+     Einzelposten nicht zum Gesamtbetrag passen. */
+  if(positionen && positionen.length){
+    const summePos = positionen.reduce((s,x) => s + (Number(x.betrag)||0), 0);
+    if(Math.abs(summePos - netto) > 0.02) positionen = null;
+  }
 
   let nummer;
   try {
@@ -4973,7 +5537,7 @@ window.generateInvoice = async function(requestId, alsoEmail){
     return;
   }
 
-  const blob = buildInvoicePDF(request, nummer, netto, mwst, brutto, mwstSatz);
+  const blob = buildInvoicePDF(request, nummer, netto, mwst, brutto, mwstSatz, positionen);
   const filename = `${nummer}_${(request.nachname||'Rechnung').replace(/[^a-zA-Z0-9]/g,'')}.pdf`;
   triggerFileDownload(blob, filename);
 
@@ -5049,8 +5613,8 @@ function deriveKundenList(){
     };
   });
 
-  // 2) Aus Anfragen ableiten bzw. ergänzen
-  allRequests.forEach(r => {
+  // 2) Aus Anfragen ableiten bzw. ergänzen (abschaltbar in den Vorgaben)
+  (v('auto_kunde_aus_anfrage') === false ? [] : allRequests).forEach(r => {
     if(r.geloescht) return;
     if(!r.email) return;
     const key = emailToKey(r.email);
@@ -5745,12 +6309,75 @@ function tageZwischen(von, bis){
   return Math.round((ausIso(bis) - ausIso(von)) / 86400000) + 1;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   EIGENE TERMINE
+   ══════════════════════════════════════════════════════════════
+   Datenmodell: { titel, datum, ganztags, von, bis, ort, notiz,
+   kategorie, kunde_key, mitarbeiter_id,
+   serie: {muster:'woche'|'zwei_wochen'|'monat', bis:'YYYY-MM-DD'} }
+
+   Serien werden NICHT als einzelne Dokumente gespeichert, sondern
+   beim Anzeigen ausgerechnet. Ein wöchentlicher Termin über ein Jahr
+   wären sonst 52 Dokumente, die man einzeln pflegen müsste – und beim
+   Verschieben liefen sie auseinander. */
+const TERMIN_KATEGORIEN = {
+  einsatz:     { text:'Einsatz',      farbe:'#22C55E' },
+  besichtigung:{ text:'Besichtigung', farbe:'#3B82F6' },
+  rueckruf:    { text:'Rückruf',      farbe:'#FBBF24' },
+  buero:       { text:'Büro',         farbe:'#A78BFA' },
+  privat:      { text:'Privat',       farbe:'#94A3B8' }
+};
+const SERIEN_MUSTER = {
+  woche:      { text:'Wöchentlich',  tage:7 },
+  zwei_wochen:{ text:'Alle 14 Tage', tage:14 },
+  monat:      { text:'Monatlich',    tage:null }
+};
+
+/* Fällt ein Serientermin auf diesen Tag? */
+function serieTrifft(t, iso){
+  if(!t.datum) return false;
+  if(t.datum === iso) return true;
+  if(!t.serie || !t.serie.muster) return false;
+  if(iso < t.datum) return false;
+  if(t.serie.bis && iso > t.serie.bis) return false;
+  if(Array.isArray(t.serie.ausnahmen) && t.serie.ausnahmen.includes(iso)) return false;
+
+  const start = ausIso(t.datum), tag = ausIso(iso);
+  if(t.serie.muster === 'monat'){
+    return start.getDate() === tag.getDate();
+  }
+  const schritt = SERIEN_MUSTER[t.serie.muster] ? SERIEN_MUSTER[t.serie.muster].tage : null;
+  if(!schritt) return false;
+  const abstand = Math.round((tag - start) / 86400000);
+  return abstand >= 0 && abstand % schritt === 0;
+}
+
+function termineAmTag(iso){
+  return allTermine.filter(t => serieTrifft(t, iso));
+}
+
 /* ── Ereignisse eines Tages einsammeln ─────────────────────── */
 function kalenderEreignisse(iso){
   const zeige = id => { const el = document.getElementById(id); return el ? el.checked : true; };
   const ereignisse = [];
 
-  allAuftraege.filter(a => a.datum === iso).forEach(a => {
+  if(zeige('kal-zeige-termine')) termineAmTag(iso).forEach(t => {
+    const kat = TERMIN_KATEGORIEN[t.kategorie] || TERMIN_KATEGORIEN.einsatz;
+    const zeit = t.ganztags ? 'ganztägig' : ((t.von||'') + (t.bis ? '–' + t.bis : '') + ' Uhr');
+    const m = t.mitarbeiter_id ? allMitarbeiter.find(x => x.id === t.mitarbeiter_id) : null;
+    ereignisse.push({
+      art:'termin', kategorie: t.kategorie || 'einsatz', farbe: kat.farbe,
+      zeit: t.ganztags ? '' : (t.von || ''),
+      ganztags: !!t.ganztags,
+      titel: t.titel || 'Termin',
+      sub: [zeit, t.ort, m ? m.name : '', t.serie && t.serie.muster ? 'Serie' : '', t.notiz]
+             .filter(Boolean).join(' · '),
+      terminId: t.id, terminIso: iso,
+      ziel: () => window.terminFormOeffnen(t.id, iso)
+    });
+  });
+
+  if(zeige('kal-zeige-auftraege')) allAuftraege.filter(a => a.datum === iso).forEach(a => {
     ereignisse.push({
       art:'auftrag',
       titel: a.titel || 'Auftrag',
@@ -5807,30 +6434,282 @@ function kalenderEreignisse(iso){
     });
   }
 
-  return ereignisse;
+  /* Nach Uhrzeit sortieren – ganztägige und zeitlose Einträge zuerst,
+     danach chronologisch. Ohne das stünde ein 7-Uhr-Termin unter
+     einem um 16 Uhr, je nachdem welche Sammlung zuerst lud. */
+  return ereignisse.sort((a,b) => {
+    const az = a.zeit || '', bz = b.zeit || '';
+    if(!az && !bz) return 0;
+    if(!az) return -1;
+    if(!bz) return 1;
+    return az.localeCompare(bz);
+  });
 }
 
-/* ── Monatsansicht ─────────────────────────────────────────── */
+/* ── Terminformular ───────────────────────────────────────── */
+window.terminFormOeffnen = function(terminId, isoVorgabe){
+  const t = terminId ? allTermine.find(x => x.id === terminId) : null;
+  const iso = isoVorgabe || kalenderGewaehlt || isoDatum(new Date());
+  const el = document.getElementById('kal-termin-form');
+  if(!el) return;
+
+  const dauer = Number(v('termin_standarddauer')) || 120;
+  const startVorgabe = v('arbeitsbeginn') || '08:00';
+  const endeVorgabe = (() => {
+    const [h,m] = String(startVorgabe).split(':').map(Number);
+    const d = new Date(2000,0,1,h||8,m||0);
+    d.setMinutes(d.getMinutes() + dauer);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  })();
+
+  const kunden = deriveKundenList().filter(k => !k.ausgeblendet)
+    .sort((a,b) => a.anzeigename.localeCompare(b.anzeigename,'de'));
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="karte-block-titel">${t ? 'Termin bearbeiten' : 'Neuer Termin'}</div>
+    <input type="hidden" id="tm-id" value="${sicher(terminId || '')}">
+    <div class="field"><label for="tm-titel">Titel</label>
+      <input type="text" id="tm-titel" placeholder="z. B. Besichtigung Treppenhaus" value="${sicher(t ? t.titel : '')}"></div>
+    <div class="field-row">
+      <div class="field"><label for="tm-datum">Datum</label>
+        <input type="date" id="tm-datum" value="${sicher(t ? t.datum : iso)}"></div>
+      <div class="field"><label for="tm-kategorie">Kategorie</label>
+        <select id="tm-kategorie">
+          ${Object.entries(TERMIN_KATEGORIEN).map(([k,o]) =>
+            `<option value="${k}" ${t && t.kategorie===k ? 'selected':''}>${o.text}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="field">
+      <label class="bool-label"><input type="checkbox" id="tm-ganztags" ${t && t.ganztags ? 'checked':''}
+        onchange="terminZeitenUmschalten()"> Ganztägig</label>
+    </div>
+    <div class="field-row" id="tm-zeiten" style="${t && t.ganztags ? 'display:none' : ''}">
+      <div class="field"><label for="tm-von">Von</label>
+        <input type="time" id="tm-von" value="${sicher(t && t.von ? t.von : startVorgabe)}"></div>
+      <div class="field"><label for="tm-bis">Bis</label>
+        <input type="time" id="tm-bis" value="${sicher(t && t.bis ? t.bis : endeVorgabe)}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="tm-kunde">Kunde (optional)</label>
+        <select id="tm-kunde">
+          <option value="">– keiner –</option>
+          ${kunden.map(k => `<option value="${sicher(k.key)}" ${t && t.kunde_key===k.key ? 'selected':''}>${sicher(k.anzeigename)}</option>`).join('')}
+        </select></div>
+      <div class="field"><label for="tm-mitarbeiter">Mitarbeiter (optional)</label>
+        <select id="tm-mitarbeiter">
+          <option value="">– niemand –</option>
+          ${allMitarbeiter.filter(m => m.status !== 'inaktiv').map(m =>
+            `<option value="${sicher(m.id)}" ${t && t.mitarbeiter_id===m.id ? 'selected':''}>${sicher(m.name)}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="field"><label for="tm-ort">Ort (optional)</label>
+      <input type="text" id="tm-ort" placeholder="Straße, Ort" value="${sicher(t ? t.ort : '')}"></div>
+    <div class="field"><label for="tm-notiz">Notiz (optional)</label>
+      <input type="text" id="tm-notiz" value="${sicher(t ? t.notiz : '')}"></div>
+
+    <div class="field-row">
+      <div class="field"><label for="tm-serie">Wiederholung</label>
+        <select id="tm-serie" onchange="terminSerieUmschalten()">
+          <option value="">Einmalig</option>
+          ${Object.entries(SERIEN_MUSTER).map(([k,o]) =>
+            `<option value="${k}" ${t && t.serie && t.serie.muster===k ? 'selected':''}>${o.text}</option>`).join('')}
+        </select></div>
+      <div class="field" id="tm-serie-bis-feld" style="${t && t.serie && t.serie.muster ? '' : 'display:none'}">
+        <label for="tm-serie-bis">Wiederholen bis</label>
+        <input type="date" id="tm-serie-bis" value="${sicher(t && t.serie ? t.serie.bis : '')}"></div>
+    </div>
+
+    <div class="feld-fehler" id="tm-fehler"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-primary" style="width:auto;padding:12px 22px" id="tm-save-btn" onclick="saveTermin()">
+        ${t ? 'Änderungen speichern' : 'Termin anlegen'}</button>
+      <button class="btn btn-sekundaer" onclick="terminFormSchliessen()">Abbrechen</button>
+      ${t ? `<button class="karte-aktion gefahr" style="min-height:44px" onclick="deleteTermin('${sicherJs(terminId)}','${sicher(iso)}')">Löschen</button>` : ''}
+    </div>`;
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  setTimeout(() => { const f = document.getElementById('tm-titel'); if(f) f.focus(); }, 200);
+};
+
+window.terminZeitenUmschalten = function(){
+  const ganz = document.getElementById('tm-ganztags').checked;
+  document.getElementById('tm-zeiten').style.display = ganz ? 'none' : '';
+};
+window.terminSerieUmschalten = function(){
+  const muster = document.getElementById('tm-serie').value;
+  document.getElementById('tm-serie-bis-feld').style.display = muster ? '' : 'none';
+};
+window.terminFormSchliessen = function(){
+  const el = document.getElementById('kal-termin-form');
+  if(el){ el.style.display = 'none'; el.innerHTML = ''; }
+};
+
+window.saveTermin = function(){
+  const btn = document.getElementById('tm-save-btn');
+  const fehlerBox = document.getElementById('tm-fehler');
+  if(!btn || !fehlerBox) return;
+  fehlerBox.classList.remove('sichtbar');
+  const zeige = (text, feldId) => {
+    fehlerBox.textContent = text; fehlerBox.classList.add('sichtbar');
+    const f = document.getElementById(feldId); if(f) f.focus();
+  };
+
+  const id = document.getElementById('tm-id').value;
+  const titel = document.getElementById('tm-titel').value.trim();
+  const datum = document.getElementById('tm-datum').value;
+  const ganztags = document.getElementById('tm-ganztags').checked;
+  const von = document.getElementById('tm-von').value;
+  const bis = document.getElementById('tm-bis').value;
+  const muster = document.getElementById('tm-serie').value;
+  const serieBis = document.getElementById('tm-serie-bis').value;
+
+  if(!titel){ zeige('Bitte einen Titel eintragen.', 'tm-titel'); return; }
+  if(!datum){ zeige('Bitte ein Datum wählen.', 'tm-datum'); return; }
+  if(!ganztags){
+    if(!von || !bis){ zeige('Bitte Beginn und Ende angeben – oder „Ganztägig" anhaken.', 'tm-von'); return; }
+    if(bis <= von){ zeige('Das Ende liegt vor dem Beginn.', 'tm-bis'); return; }
+  }
+  if(muster && serieBis && serieBis < datum){
+    zeige('Die Serie kann nicht enden, bevor sie beginnt.', 'tm-serie-bis'); return;
+  }
+  if(muster && !serieBis){
+    zeige('Bitte angeben, bis wann sich der Termin wiederholt.', 'tm-serie-bis'); return;
+  }
+
+  const daten = {
+    titel, datum, ganztags,
+    von: ganztags ? '' : von,
+    bis: ganztags ? '' : bis,
+    kategorie: document.getElementById('tm-kategorie').value,
+    kunde_key: document.getElementById('tm-kunde').value || null,
+    mitarbeiter_id: document.getElementById('tm-mitarbeiter').value || null,
+    ort: document.getElementById('tm-ort').value.trim(),
+    notiz: document.getElementById('tm-notiz').value.trim(),
+    serie: muster ? { muster, bis: serieBis, ausnahmen: [] } : null
+  };
+
+  btn.disabled = true; btn.textContent = 'Speichere ...';
+  const versprechen = id
+    ? updateDoc(doc(db, 'termine', id), daten)
+    : addDoc(collection(db, 'termine'), Object.assign({}, daten, { createdAt: serverTimestamp() }));
+
+  versprechen
+    .then(() => { window.terminFormSchliessen(); melde(id ? 'Termin aktualisiert.' : 'Termin angelegt.'); })
+    .catch(err => meldeSchreibfehler(err, 'Das Speichern des Termins'))
+    .finally(() => { btn.disabled = false; btn.textContent = id ? 'Änderungen speichern' : 'Termin anlegen'; });
+};
+
+window.deleteTermin = function(id, iso){
+  const t = allTermine.find(x => x.id === id);
+  if(!t) return;
+
+  /* Bei einer Serie muss gefragt werden, was gemeint ist – sonst
+     löscht ein Klick versehentlich ein ganzes Jahr an Terminen. */
+  if(t.serie && t.serie.muster){
+    const nurDieser = confirm('„' + (t.titel||'Termin') + '" ist ein Serientermin.\n\n' +
+      'OK  = nur diesen einen Termin am ' + datumLesbar(iso) + ' entfernen\n' +
+      'Abbrechen = die ganze Serie löschen');
+    if(nurDieser){
+      const ausnahmen = (t.serie.ausnahmen || []).concat([iso]);
+      updateDoc(doc(db, 'termine', id), { serie: Object.assign({}, t.serie, { ausnahmen }) })
+        .then(() => { window.terminFormSchliessen(); melde('Dieser eine Termin wurde entfernt.'); })
+        .catch(err => meldeSchreibfehler(err, 'Das Entfernen des Termins'));
+      return;
+    }
+    if(!confirm('Wirklich die GESAMTE Serie „' + (t.titel||'Termin') + '" löschen?')) return;
+  } else {
+    if(!confirm('Termin „' + (t.titel||'') + '" am ' + datumLesbar(t.datum) + ' löschen?')) return;
+  }
+
+  deleteDoc(doc(db, 'termine', id))
+    .then(() => { window.terminFormSchliessen(); melde('Termin gelöscht.'); })
+    .catch(err => meldeSchreibfehler(err, 'Das Löschen des Termins'));
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ANSICHTEN: Monat · Woche · Tag · Liste
+   ══════════════════════════════════════════════════════════════ */
 let kalenderStand = new Date();
 let kalenderGewaehlt = null;
+let kalenderAnsichtName = 'monat';
 
-window.kalenderMonat = function(delta){
-  kalenderStand = new Date(kalenderStand.getFullYear(), kalenderStand.getMonth() + delta, 1);
+window.kalenderAnsicht = function(name){
+  kalenderAnsichtName = name;
+  kalenderGewaehlt = null;
+  renderKalender();
+};
+
+/* Ein Knopf für vor und zurück – die Schrittweite hängt von der
+   Ansicht ab. Vorher blätterte auch die Wochenansicht monatsweise. */
+window.kalenderBlaettern = function(richtung){
+  if(kalenderAnsichtName === 'monat'){
+    kalenderStand = new Date(kalenderStand.getFullYear(), kalenderStand.getMonth() + richtung, 1);
+  } else if(kalenderAnsichtName === 'woche'){
+    kalenderStand = new Date(kalenderStand.getTime() + richtung * 7 * 86400000);
+  } else if(kalenderAnsichtName === 'tag'){
+    kalenderStand = new Date(kalenderStand.getTime() + richtung * 86400000);
+  } else {
+    kalenderStand = new Date(kalenderStand.getFullYear(), kalenderStand.getMonth() + richtung, 1);
+  }
   kalenderGewaehlt = null;
   renderKalender();
   renderFerienVerwaltung();
 };
+window.kalenderMonat = window.kalenderBlaettern;
+
 window.kalenderHeute = function(){
   kalenderStand = new Date();
   kalenderGewaehlt = isoDatum(new Date());
   renderKalender();
   renderFerienVerwaltung();
-  kalenderTagOeffnen(kalenderGewaehlt);
+  if(kalenderAnsichtName === 'monat') kalenderTagOeffnen(kalenderGewaehlt);
 };
+
+let kalSuchTimer = null;
+window.renderKalenderVerzoegert = function(){
+  if(kalSuchTimer) clearTimeout(kalSuchTimer);
+  kalSuchTimer = setTimeout(renderKalender, 220);
+};
+
+function kalenderSuchbegriff(){
+  const el = document.getElementById('kal-suche');
+  return el ? el.value.toLowerCase().trim() : '';
+}
+function passtZurSuche(e, begriff){
+  if(!begriff) return true;
+  return ((e.titel||'') + ' ' + (e.sub||'')).toLowerCase().includes(begriff);
+}
+
+/* Woche: Montag als erster Tag – in Deutschland üblich, anders als
+   die Vorgabe von getDay(). */
+function wochenStart(d){
+  const versatz = (d.getDay() + 6) % 7;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - versatz);
+}
 
 function renderKalender(){
   const gitter = document.getElementById('kal-gitter');
   if(!gitter) return;
+
+  document.querySelectorAll('.kal-ansicht-knopf').forEach(k =>
+    k.classList.toggle('aktiv', k.dataset.ansicht === kalenderAnsichtName));
+
+  const zeitraster = document.getElementById('kal-zeitraster');
+  const agenda = document.getElementById('kal-agenda');
+  const wochentage = document.getElementById('kal-wochentage');
+
+  if(kalenderAnsichtName === 'woche' || kalenderAnsichtName === 'tag'){
+    gitter.style.display = 'none'; wochentage.style.display = 'none';
+    agenda.style.display = 'none'; zeitraster.style.display = 'block';
+    return renderKalenderZeitraster();
+  }
+  if(kalenderAnsichtName === 'agenda'){
+    gitter.style.display = 'none'; wochentage.style.display = 'none';
+    zeitraster.style.display = 'none'; agenda.style.display = 'block';
+    return renderKalenderAgenda();
+  }
+  gitter.style.display = ''; wochentage.style.display = '';
+  zeitraster.style.display = 'none'; agenda.style.display = 'none';
 
   const jahr  = kalenderStand.getFullYear();
   const monat = kalenderStand.getMonth();
@@ -5855,7 +6734,8 @@ function renderKalender(){
     const wochenende = tag.getDay() === 0 || tag.getDay() === 6;
     const feiertag = feiertagAm(iso);
     const ferien = zeigeFerien ? ferienAm(iso) : null;
-    const ereignisse = kalenderEreignisse(iso);
+    const suche = kalenderSuchbegriff();
+    const ereignisse = kalenderEreignisse(iso).filter(e => passtZurSuche(e, suche));
 
     if(imMonat){
       ereignisse.forEach(e => {
@@ -5904,6 +6784,228 @@ function renderKalender(){
   if(kalenderGewaehlt) kalenderTagOeffnen(kalenderGewaehlt, true);
 }
 
+/* ── Woche und Tag: Raster mit Uhrzeiten ──────────────────── */
+function renderKalenderZeitraster(){
+  const el = document.getElementById('kal-zeitraster');
+  if(!el) return;
+
+  const tage = [];
+  if(kalenderAnsichtName === 'woche'){
+    const start = wochenStart(kalenderStand);
+    for(let i = 0; i < 7; i++) tage.push(new Date(start.getFullYear(), start.getMonth(), start.getDate()+i));
+    const ende = tage[6];
+    document.getElementById('kal-monat').textContent =
+      tage[0].toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}) + ' – ' +
+      ende.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  } else {
+    tage.push(new Date(kalenderStand));
+    document.getElementById('kal-monat').textContent =
+      kalenderStand.toLocaleDateString('de-DE',{ weekday:'long', day:'numeric', month:'long' });
+  }
+
+  const beginn = String(v('arbeitsbeginn') || '08:00');
+  const ende   = String(v('arbeitsende') || '17:00');
+  let stundeVon = parseInt(beginn.split(':')[0], 10); if(!isFinite(stundeVon)) stundeVon = 8;
+  let stundeBis = parseInt(ende.split(':')[0], 10) + 1; if(!isFinite(stundeBis)) stundeBis = 18;
+
+  const suche = kalenderSuchbegriff();
+  const proTag = tage.map(t => {
+    const iso = isoDatum(t);
+    return { t, iso, ereignisse: kalenderEreignisse(iso).filter(e => passtZurSuche(e, suche)) };
+  });
+
+  // Ausschnitt erweitern, wenn Termine davor oder danach liegen
+  proTag.forEach(d => d.ereignisse.forEach(e => {
+    if(!e.zeit) return;
+    const h = parseInt(String(e.zeit).split(':')[0], 10);
+    if(isFinite(h)){ stundeVon = Math.min(stundeVon, h); stundeBis = Math.max(stundeBis, h + 1); }
+  }));
+
+  const heute = isoDatum(new Date());
+  const stunden = [];
+  for(let h = stundeVon; h < stundeBis; h++) stunden.push(h);
+
+  const kopf = `<div class="kal-zr-kopf" style="grid-template-columns:56px repeat(${tage.length},minmax(0,1fr))">
+    <div></div>
+    ${proTag.map(d => {
+      const feiertag = feiertagAm(d.iso);
+      return `<button type="button" class="kal-zr-tagkopf ${d.iso===heute?'heute':''}" onclick="kalenderTagOeffnen('${d.iso}')">
+        <span class="kal-zr-wochentag">${sicher(d.t.toLocaleDateString('de-DE',{weekday:'short'}))}</span>
+        <span class="kal-zr-zahl">${d.t.getDate()}</span>
+        ${feiertag ? `<span class="kal-zr-feiertag">${sicher(feiertag)}</span>` : ''}
+      </button>`;
+    }).join('')}
+  </div>`;
+
+  // Ganztägige und zeitlose Einträge über dem Raster
+  const ganztags = `<div class="kal-zr-ganztags" style="grid-template-columns:56px repeat(${tage.length},minmax(0,1fr))">
+    <div class="kal-zr-zeitspalte">ganztägig</div>
+    ${proTag.map(d => `<div class="kal-zr-ganztagszelle">
+      ${d.ereignisse.filter(e => !e.zeit).map(e => `
+        <button type="button" class="kal-chip" style="border-left-color:${e.farbe || 'var(--green)'}"
+                onclick="kalenderSpringeDirekt('${d.iso}', ${d.ereignisse.indexOf(e)})">
+          <i class="kal-punkt ${e.art}"></i>${sicher(e.titel)}
+        </button>`).join('')}
+    </div>`).join('')}
+  </div>`;
+
+  const raster = stunden.map(h => `
+    <div class="kal-zr-zeile" style="grid-template-columns:56px repeat(${tage.length},minmax(0,1fr))">
+      <div class="kal-zr-zeitspalte">${String(h).padStart(2,'0')}:00</div>
+      ${proTag.map(d => {
+        const drin = d.ereignisse.filter(e => e.zeit && parseInt(String(e.zeit).split(':')[0],10) === h);
+        return `<div class="kal-zr-zelle" onclick="terminAnlegenUm('${d.iso}','${String(h).padStart(2,'0')}:00')">
+          ${drin.map(e => `
+            <button type="button" class="kal-chip voll" style="border-left-color:${e.farbe || 'var(--green)'}"
+                    onclick="event.stopPropagation();kalenderSpringeDirekt('${d.iso}', ${d.ereignisse.indexOf(e)})">
+              <span class="kal-chip-zeit">${sicher(e.zeit)}</span>
+              <span class="kal-chip-titel">${sicher(e.titel)}</span>
+            </button>`).join('')}
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  el.innerHTML = `<div class="kal-zeitraster">${kopf}${ganztags}${raster}</div>`;
+
+  const statsEl = document.getElementById('kal-stats');
+  if(statsEl){
+    const alle = proTag.flatMap(d => d.ereignisse);
+    const auftraege = alle.filter(e => e.art === 'auftrag').length;
+    const termine = alle.filter(e => e.art === 'termin').length;
+    const abwesend = alle.filter(e => e.art === 'abwesend').length;
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-val">${alle.length}</div><div class="stat-lbl">Einträge im Zeitraum</div></div>
+      <div class="stat-card"><div class="stat-val">${termine}</div><div class="stat-lbl">Termine</div></div>
+      <div class="stat-card"><div class="stat-val">${auftraege}</div><div class="stat-lbl">Aufträge</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:${abwesend?'#F87171':'inherit'}">${abwesend}</div><div class="stat-lbl">Abwesenheiten</div></div>`;
+  }
+}
+
+/* Klick auf eine leere Rasterzelle legt einen Termin zu dieser
+   Uhrzeit an – das erwartet man von einem Kalender. */
+window.terminAnlegenUm = function(iso, uhrzeit){
+  window.terminFormOeffnen(null, iso);
+  setTimeout(() => {
+    const von = document.getElementById('tm-von');
+    const bis = document.getElementById('tm-bis');
+    if(!von || !bis) return;
+    von.value = uhrzeit;
+    const [h,m] = uhrzeit.split(':').map(Number);
+    const d = new Date(2000,0,1,h,m);
+    d.setMinutes(d.getMinutes() + (Number(v('termin_standarddauer')) || 120));
+    bis.value = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }, 60);
+};
+
+window.kalenderSpringeDirekt = function(iso, index){
+  const liste = kalenderEreignisse(iso).filter(e => passtZurSuche(e, kalenderSuchbegriff()));
+  const e = liste[index];
+  if(e && typeof e.ziel === 'function') e.ziel();
+  else kalenderTagOeffnen(iso);
+};
+
+/* ── Liste: alles Kommende chronologisch ──────────────────── */
+function renderKalenderAgenda(){
+  const el = document.getElementById('kal-agenda');
+  if(!el) return;
+
+  const start = new Date(kalenderStand.getFullYear(), kalenderStand.getMonth(), 1);
+  const tage = 62;   // laufender und folgender Monat
+  const suche = kalenderSuchbegriff();
+  const heute = isoDatum(new Date());
+
+  document.getElementById('kal-monat').textContent =
+    'Ab ' + start.toLocaleDateString('de-DE',{ month:'long', year:'numeric' });
+
+  const bloecke = [];
+  for(let i = 0; i < tage; i++){
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const iso = isoDatum(d);
+    const ereignisse = kalenderEreignisse(iso).filter(e => passtZurSuche(e, suche));
+    const feiertag = feiertagAm(iso);
+    if(ereignisse.length === 0 && !feiertag) continue;
+    bloecke.push({ d, iso, ereignisse, feiertag });
+  }
+
+  const statsEl = document.getElementById('kal-stats');
+  if(statsEl){
+    const alle = bloecke.flatMap(b => b.ereignisse);
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-val">${bloecke.length}</div><div class="stat-lbl">Tage mit Einträgen</div></div>
+      <div class="stat-card"><div class="stat-val">${alle.length}</div><div class="stat-lbl">Einträge gesamt</div></div>
+      <div class="stat-card"><div class="stat-val">${alle.filter(e=>e.art==='termin').length}</div><div class="stat-lbl">Termine</div></div>
+      <div class="stat-card"><div class="stat-val">${alle.filter(e=>e.art==='auftrag').length}</div><div class="stat-lbl">Aufträge</div></div>`;
+  }
+
+  if(bloecke.length === 0){
+    el.innerHTML = `<div class="empty-state">${suche
+      ? 'Nichts gefunden zu „' + sicher(suche) + '".'
+      : 'In den nächsten zwei Monaten ist nichts eingetragen.'}</div>`;
+    return;
+  }
+
+  el.innerHTML = bloecke.map(b => `
+    <div class="kal-agenda-tag ${b.iso===heute?'heute':''}">
+      <div class="kal-agenda-datum">
+        <span class="kal-agenda-wochentag">${sicher(b.d.toLocaleDateString('de-DE',{weekday:'short'}))}</span>
+        <span class="kal-agenda-zahl">${b.d.getDate()}</span>
+        <span class="kal-agenda-monat">${sicher(b.d.toLocaleDateString('de-DE',{month:'short'}))}</span>
+      </div>
+      <div class="kal-agenda-inhalt">
+        ${b.feiertag ? `<div class="kal-agenda-feiertag">${sicher(b.feiertag)}</div>` : ''}
+        ${b.ereignisse.map((e,i) => `
+          <button type="button" class="kal-agenda-zeile" onclick="kalenderSpringeDirekt('${b.iso}', ${i})">
+            <i class="kal-punkt ${e.art}"></i>
+            <span class="kal-agenda-zeit">${sicher(e.zeit || (e.ganztags ? 'ganztägig' : '—'))}</span>
+            <span class="kal-agenda-text">
+              <span class="kal-agenda-titel">${sicher(e.titel)}</span>
+              <span class="kal-agenda-sub">${sicher(e.sub)}</span>
+            </span>
+          </button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+/* ── Kalenderdatei für Outlook, Apple, Google ──────────────── */
+window.kalenderAlsIcs = function(){
+  const start = new Date(kalenderStand.getFullYear(), kalenderStand.getMonth(), 1);
+  const zeilen = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Waschlurch//Kalender//DE','CALSCALE:GREGORIAN'];
+  let anzahl = 0;
+
+  for(let i = 0; i < 62; i++){
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const iso = isoDatum(d);
+    kalenderEreignisse(iso).forEach((e, index) => {
+      if(e.art === 'abwesend') return;
+      anzahl++;
+      const kompakt = iso.replace(/-/g,'');
+      zeilen.push('BEGIN:VEVENT');
+      zeilen.push('UID:' + kompakt + '-' + index + '@waschlurch.com');
+      zeilen.push('DTSTAMP:' + formatICSDate(new Date()));
+      if(e.zeit){
+        const [h,m] = e.zeit.split(':').map(Number);
+        const von = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h||0, m||0);
+        const bis = new Date(von.getTime() + (Number(v('termin_standarddauer'))||120) * 60000);
+        zeilen.push('DTSTART:' + formatICSDate(von));
+        zeilen.push('DTEND:' + formatICSDate(bis));
+      } else {
+        const naechster = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+        zeilen.push('DTSTART;VALUE=DATE:' + kompakt);
+        zeilen.push('DTEND;VALUE=DATE:' + isoDatum(naechster).replace(/-/g,''));
+      }
+      zeilen.push('SUMMARY:' + escapeICS(e.titel || 'Termin'));
+      if(e.sub) zeilen.push('DESCRIPTION:' + escapeICS(e.sub));
+      zeilen.push('END:VEVENT');
+    });
+  }
+  zeilen.push('END:VCALENDAR');
+
+  if(anzahl === 0){ melde('In diesem Zeitraum gibt es nichts zu exportieren.', 'fehler'); return; }
+  const blob = new Blob([zeilen.join('\r\n')], { type:'text/calendar;charset=utf-8' });
+  triggerFileDownload(blob, 'Waschlurch_' + isoDatum(start).slice(0,7) + '.ics');
+  melde(anzahl + ' Termine als Kalenderdatei gespeichert.');
+};
+
 window.kalenderTagOeffnen = function(iso, nurAuffrischen){
   const el = document.getElementById('kal-tag-detail');
   if(!el) return;
@@ -5935,6 +7037,7 @@ window.kalenderTagOeffnen = function(iso, nurAuffrischen){
           <button class="karte-aktion" onclick="kalenderSpringe(${i})">Öffnen</button>
         </div>`).join('')}
     <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn btn-primary" style="width:auto;padding:10px 18px" onclick="terminFormOeffnen(null,'${sicher(iso)}')">+ Termin an diesem Tag</button>
       <button class="karte-aktion" onclick="kalenderDetailSchliessen()">Schließen</button>
     </div>`;
   if(!nurAuffrischen) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
@@ -6124,6 +7227,199 @@ window.auftragAusAnfrage = function(kundeKey, anfrageId){
     notiz:  ''
   });
   melde('Aus der Anfrage übernommen – bitte Umsatz und Kosten prüfen.');
+};
+
+/* ══════════════════════════════════════════════════════════════
+   AUTOMATISMEN
+   ══════════════════════════════════════════════════════════════
+   Grundsatz: Ein Automatismus darf aufräumen und erinnern, aber
+   niemals Geld bewegen oder eine Nummer vergeben. Alles, was eine
+   Rechnungsnummer verbraucht oder einen Betrag festschreibt, fragt
+   vorher. Deshalb ist „Angebot abgelaufen" automatisch, „Rechnung
+   erstellen" dagegen nicht. */
+
+/* Versendete Angebote, deren Gültigkeit verstrichen ist, auf
+   „abgelaufen" setzen. Reine Aufräumarbeit – der Betrag bleibt
+   unangetastet, und angenommene Angebote werden nie angefasst. */
+let ablaufLaeuft = false;
+function angeboteAblaufenLassen(){
+  if(ablaufLaeuft) return;
+  if(v('auto_angebot_ablaufen') !== true) return;
+  const puffer = Number(v('angebot_ablauf_puffer')) || 0;
+  const jetzt = Date.now();
+
+  const abgelaufen = allAngebote.filter(a => {
+    if(a.status !== 'versendet') return false;
+    if(!a.createdAt || !a.createdAt.toMillis) return false;
+    const gueltig = Number(a.gueltigkeit) || Number(v('angebot_gueltigkeit')) || 14;
+    return jetzt > a.createdAt.toMillis() + (gueltig + puffer) * 86400000;
+  });
+  if(abgelaufen.length === 0) return;
+
+  ablaufLaeuft = true;
+  Promise.all(abgelaufen.map(a =>
+    updateDoc(doc(db, 'angebote', a.id), { status:'abgelaufen' }).catch(err => {
+      console.warn('Angebot ' + a.nummer + ' konnte nicht als abgelaufen markiert werden:', err);
+    })
+  )).then(() => {
+    melde(abgelaufen.length + ' Angebot(e) als abgelaufen markiert.');
+  }).finally(() => { ablaufLaeuft = false; });
+}
+
+/* Überfällige Zahlungen: abgerechnete Aufträge und gestellte
+   Rechnungen, deren Zahlungsziel verstrichen ist. */
+function ueberfaelligeZahlungen(){
+  const heute = new Date();
+  const ziel = Number(v('zahlungsziel')) || 14;
+  const mahnAb = Number(v('mahnung_nach_tagen')) || 0;
+  const liste = [];
+
+  allAuftraege.filter(a => a.status === 'abgerechnet' && a.datum).forEach(a => {
+    const faellig = new Date(ausIso(a.datum).getTime() + ziel * 86400000);
+    const tageDrueber = Math.floor((heute - faellig) / 86400000);
+    if(tageDrueber >= mahnAb){
+      liste.push({ art:'auftrag', id:a.id, kundeKey:a.kunde_key,
+        name:a.kunde_name || 'Kunde', titel:a.titel || 'Auftrag',
+        betrag:Number(a.umsatz)||0, tage:tageDrueber, faellig });
+    }
+  });
+
+  allRequests.filter(r => r.rechnung_nummer && r.rechnung_datum && !r.geloescht
+                       && r.status !== 'abgelehnt' && !r.rechnung_bezahlt).forEach(r => {
+    const faellig = new Date(ausIso(r.rechnung_datum).getTime() + ziel * 86400000);
+    const tageDrueber = Math.floor((heute - faellig) / 86400000);
+    if(tageDrueber >= mahnAb){
+      liste.push({ art:'rechnung', id:r.id,
+        name:((r.vorname||'') + ' ' + (r.nachname||'')).trim() || 'Kunde',
+        titel:'Rechnung ' + r.rechnung_nummer,
+        betrag:Number(r.geschaetzter_auftragswert)||0, tage:tageDrueber, faellig });
+    }
+  });
+
+  return liste.sort((a,b) => b.tage - a.tage);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   VORGABEN-FORMULAR
+   ══════════════════════════════════════════════════════════════ */
+const VORGABEN_FELDER = [
+  { gruppe:'Steuer und Rechnung', felder:[
+    { id:'kleinunternehmer', typ:'schalter', label:'Kleinunternehmer nach § 19 UStG',
+      hilfe:'Dann wird keine Umsatzsteuer berechnet und auf Rechnungen erscheint der Pflichthinweis.' },
+    { id:'mwst_satz', typ:'zahl', label:'Umsatzsteuersatz', einheit:'%', schritt:'0.5',
+      hilfe:'Gilt für Angebote und Rechnungen. Wird ignoriert, solange Kleinunternehmer gesetzt ist.' },
+    { id:'zahlungsziel', typ:'zahl', label:'Zahlungsziel', einheit:'Tage',
+      hilfe:'Erscheint auf der Rechnung und bestimmt, ab wann eine Zahlung als überfällig gilt.' },
+    { id:'rechnung_praefix', typ:'text', label:'Kürzel Rechnungsnummer',
+      hilfe:'Ergibt zum Beispiel RE-2026-0001. Nur ändern, wenn noch keine Rechnung gestellt wurde.' },
+    { id:'angebot_praefix', typ:'text', label:'Kürzel Angebotsnummer' }
+  ]},
+  { gruppe:'Fristen und Erinnerungen', felder:[
+    { id:'angebot_gueltigkeit', typ:'zahl', label:'Angebote gültig für', einheit:'Tage' },
+    { id:'angebot_nachfassen_tage', typ:'zahl', label:'Nachfassen erinnern nach', einheit:'Tagen',
+      hilfe:'Ab wann ein versendetes Angebot ohne Rückmeldung auffällig markiert wird.' },
+    { id:'anfrage_warnung_tage', typ:'zahl', label:'Anfrage gilt als liegengeblieben nach', einheit:'Tagen' },
+    { id:'anfrage_kritisch_tage', typ:'zahl', label:'Anfrage gilt als dringend nach', einheit:'Tagen' },
+    { id:'mahnung_nach_tagen', typ:'zahl', label:'Zahlungserinnerung fällig nach', einheit:'Tagen über Ziel',
+      hilfe:'Zählt ab dem Ende des Zahlungsziels, nicht ab dem Rechnungsdatum.' },
+    { id:'papierkorb_monate', typ:'zahl', label:'Papierkorb leert sich nach', einheit:'Monaten' }
+  ]},
+  { gruppe:'Termine', felder:[
+    { id:'termin_standarddauer', typ:'zahl', label:'Vorgeschlagene Dauer neuer Termine', einheit:'Minuten', schritt:'15' },
+    { id:'arbeitsbeginn', typ:'zeit', label:'Arbeitstag beginnt' },
+    { id:'arbeitsende', typ:'zeit', label:'Arbeitstag endet',
+      hilfe:'Legt fest, welchen Ausschnitt die Tages- und Wochenansicht zeigt.' }
+  ]},
+  { gruppe:'Automatismen', felder:[
+    { id:'auto_angebot_ablaufen', typ:'schalter', label:'Abgelaufene Angebote selbst markieren',
+      hilfe:'Setzt versendete Angebote nach Ablauf der Gültigkeit auf „abgelaufen".' },
+    { id:'auto_auftrag_aus_angebot', typ:'schalter', label:'Bei angenommenem Angebot Auftrag anbieten',
+      hilfe:'Fragt nach, ob daraus ein Auftrag beim Kunden entstehen soll. Fragt nur – legt nie ungefragt an.' },
+    { id:'auto_rechnung_fragen', typ:'schalter', label:'Bei abgeschlossener Anfrage Rechnung anbieten' },
+    { id:'auto_kunde_aus_anfrage', typ:'schalter', label:'Kunden aus Anfragen ableiten',
+      hilfe:'Ausgeschaltet erscheinen nur von Hand angelegte Karteikarten in der Kundenliste.' }
+  ]}
+];
+
+function renderVorgabenFormular(){
+  const el = document.getElementById('vorgaben-formular');
+  if(!el) return;
+
+  el.innerHTML = VORGABEN_FELDER.map(g => `
+    <div class="karte-block">
+      <div class="karte-block-titel">${sicher(g.gruppe)}</div>
+      ${g.felder.map(f => {
+        const wert = v(f.id);
+        if(f.typ === 'schalter'){
+          return `<div class="vorgabe-zeile">
+            <label class="bool-label" style="flex:1">
+              <input type="checkbox" id="vg-${sicher(f.id)}" ${wert === true ? 'checked' : ''}>
+              <span>${sicher(f.label)}</span>
+            </label>
+            ${f.hilfe ? `<div class="vorgabe-hilfe">${sicher(f.hilfe)}</div>` : ''}
+          </div>`;
+        }
+        const typAttr = f.typ === 'zahl' ? 'type="number" inputmode="decimal"'
+                      : f.typ === 'zeit' ? 'type="time"' : 'type="text"';
+        return `<div class="vorgabe-zeile">
+          <label for="vg-${sicher(f.id)}">${sicher(f.label)}</label>
+          <div class="vorgabe-eingabe">
+            <input ${typAttr} id="vg-${sicher(f.id)}" value="${sicher(wert)}"
+                   ${f.schritt ? 'step="' + sicher(f.schritt) + '"' : ''} ${f.typ==='zahl' ? 'min="0"' : ''}>
+            ${f.einheit ? `<span class="vorgabe-einheit">${sicher(f.einheit)}</span>` : ''}
+          </div>
+          ${f.hilfe ? `<div class="vorgabe-hilfe">${sicher(f.hilfe)}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`).join('') + `
+    <div class="preis-save-bar">
+      <button class="btn btn-primary" style="width:auto;padding:14px 28px" id="vg-save-btn" onclick="saveVorgaben()">Vorgaben speichern</button>
+      <button class="btn btn-sekundaer" onclick="vorgabenZuruecksetzen()">Auf Standard zurücksetzen</button>
+    </div>`;
+}
+
+window.saveVorgaben = function(){
+  const btn = document.getElementById('vg-save-btn');
+  const neu = {};
+  let fehler = null;
+
+  VORGABEN_FELDER.forEach(g => g.felder.forEach(f => {
+    const feld = document.getElementById('vg-' + f.id);
+    if(!feld) return;
+    if(f.typ === 'schalter'){ neu[f.id] = feld.checked; return; }
+    if(f.typ === 'zahl'){
+      const z = zahlAusFeld(feld, NaN);
+      if(!isFinite(z) || z < 0){ fehler = fehler || f.label; return; }
+      neu[f.id] = z;
+      return;
+    }
+    neu[f.id] = feld.value.trim();
+  }));
+
+  if(fehler){ melde('Bitte „' + fehler + '" prüfen – dort steht keine gültige Zahl.', 'fehler'); return; }
+  if(neu.arbeitsende && neu.arbeitsbeginn && neu.arbeitsende <= neu.arbeitsbeginn){
+    melde('Der Arbeitstag kann nicht enden, bevor er beginnt.', 'fehler'); return;
+  }
+  if(!neu.rechnung_praefix || !neu.angebot_praefix){
+    melde('Die Kürzel für Rechnungs- und Angebotsnummer dürfen nicht leer sein.', 'fehler'); return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Speichere ...';
+  setDoc(doc(db, 'einstellungen', 'vorgaben'), neu, { merge:true })
+    .then(() => {
+      vorgaben = Object.assign({}, VORGABEN_STANDARD, neu);
+      melde('Vorgaben gespeichert – gelten ab sofort überall.');
+      renderRequests(); renderAngeboteList(); renderUebersicht(); renderKalender();
+    })
+    .catch(err => meldeSchreibfehler(err, 'Das Speichern der Vorgaben'))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Vorgaben speichern'; });
+};
+
+window.vorgabenZuruecksetzen = function(){
+  if(!confirm('Alle Vorgaben auf die Standardwerte zurücksetzen?')) return;
+  vorgaben = Object.assign({}, VORGABEN_STANDARD);
+  renderVorgabenFormular();
+  melde('Zurückgesetzt – zum Übernehmen noch auf „Vorgaben speichern" klicken.');
 };
 
 // ── ABWESENHEITEN ─────────────────────
@@ -6539,8 +7835,9 @@ window.calcAngebot = function(){
   else if(abrechnung === 'quartal') multiplikator = haeufigkeit === 'Einmalig' ? 1 : proMonat * 3;
 
   const nettoGesamt = nettoProEinsatz * multiplikator;
-  const mwstSatzEl = document.getElementById('steuer-mwst-satz');
-  const mwstSatz = zahlAusFeld(mwstSatzEl, 19);
+  /* Aus den gespeicherten Vorgaben – nicht aus dem Eingabefeld der
+     Steuern-Ansicht, wo zum Ausprobieren getippt wird. */
+  const mwstSatz = steuerSatzFuerBelege();
   const mwstBetrag = nettoGesamt * (mwstSatz/100);
   const bruttoGesamt = nettoGesamt + mwstBetrag;
 
@@ -6856,7 +8153,7 @@ window.resetAngebotForm = function(){
   document.getElementById('ang-zu-express').checked = false;
   document.getElementById('ang-zu-erschwert').checked = false;
   document.getElementById('ang-zusatzkosten').value = 0;
-  document.getElementById('ang-gueltigkeit').value = 14;
+  document.getElementById('ang-gueltigkeit').value = v('angebot_gueltigkeit');
   document.getElementById('ang-anmerkung').value = '';
   document.querySelectorAll('.ang-svc-cb').forEach(cb => cb.checked = false);
   document.querySelectorAll('.ang-svc-qty, .ang-svc-qty2').forEach(i => i.value = '');
@@ -6873,88 +8170,115 @@ async function getOrCreateAngebotsnummer(){
     const current = (snap.exists() && typeof snap.data().naechste_nummer === 'number')
       ? snap.data().naechste_nummer : 1;
     tx.set(counterRef, { naechste_nummer: current + 1 }, { merge:true });
-    return `ANG-${jahr}-${String(current).padStart(4,'0')}`;
+    return v('angebot_praefix') + '-' + jahr + '-' + String(current).padStart(4,'0');
   });
 }
 
+/* ── ANGEBOT ──────────────────────────────────────────────────
+   Nutzt dieselben Bausteine wie die Rechnung, damit beide Dokumente
+   erkennbar zusammengehören.
+
+   ⚠️ Die Gewinnfelder dürfen NIE ins Kunden-PDF. Das gespeicherte
+   Angebot enthält Marge, Stundenlohn und Kostenschätzung. Hier wird
+   deshalb gezielt Feld für Feld gelesen – niemals in einer Schleife
+   über alle Felder. Wer das ändert, druckt Daniels Marge auf das
+   Angebot des Kunden. */
 function buildAngebotPDF(a, nummer){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit:'mm', format:'a4' });
+  pdf.setProperties({
+    title: 'Angebot ' + nummer,
+    subject: 'Angebot',
+    author: firmaData.name || 'Waschlurch',
+    creator: firmaData.name || 'Waschlurch'
+  });
 
-  if(LOGO_IMG_EL && LOGO_IMG_EL.complete && LOGO_IMG_EL.naturalWidth > 0){
-    try { pdf.addImage(LOGO_IMG_EL, 'PNG', 158, 14, 30, 26); } catch(e){}
-  }
+  pdfKopf(pdf);
 
-  let y = 20;
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(18); pdf.setTextColor(20,20,20);
-  pdf.text(firmaData.name || 'Waschlurch', 20, y); y += 12;
+  const yAdresse = pdfEmpfaenger(pdf, [
+    ((a.vorname||'') + ' ' + (a.nachname||'')).trim(),
+    a.adresse || ''
+  ]);
 
-  pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(120,120,120);
-  pdf.text(`${firmaData.name||'Waschlurch'} · ${firmaData.strasse||''} · ${firmaData.plz||''} ${firmaData.ort||''}`, 20, y); y += 7;
+  const erstellt = (a.createdAt && a.createdAt.toDate) ? a.createdAt.toDate() : new Date();
+  const gueltigBis = new Date(erstellt.getTime() + (Number(a.gueltigkeit) || 14) * 86400000);
+  const yMeta = pdfMeta(pdf, [
+    ['Angebotsnummer', nummer],
+    ['Angebotsdatum',  pdfDatum(erstellt)],
+    ['Gültig bis',     pdfDatum(gueltigBis)],
+    a.haeufigkeit ? ['Häufigkeit', a.haeufigkeit] : null
+  ]);
 
-  pdf.setFontSize(11); pdf.setTextColor(20,20,20);
-  pdf.text(`${a.vorname||''} ${a.nachname||''}`, 20, y); y += 5;
-  pdf.text(`${a.adresse||''}`, 20, y);
-
-  let metaY = 48;
-  const gueltigBis = new Date((a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : Date.now()) + (a.gueltigkeit||14)*86400000);
-  pdf.setFontSize(10);
-  pdf.text(`Angebotsnummer: ${nummer}`, 118, metaY); metaY += 6;
-  pdf.text(`Angebotsdatum: ${new Date().toLocaleDateString('de-DE')}`, 118, metaY); metaY += 6;
-  pdf.text(`Gültig bis: ${gueltigBis.toLocaleDateString('de-DE')}`, 118, metaY); metaY += 6;
-  pdf.text(`Häufigkeit: ${a.haeufigkeit||'–'}`, 118, metaY);
-
-  y = Math.max(y, metaY) + 16;
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(16);
-  pdf.text('ANGEBOT', 20, y); y += 10;
-
-  pdf.setFillColor(240,240,240); pdf.rect(20, y, 170, 8, 'F');
-  pdf.setFontSize(10);
-  pdf.text('Beschreibung', 22, y+5.5);
-  pdf.text('Betrag (netto)', 163, y+5.5);
-  y += 13;
+  let y = Math.max(yAdresse, yMeta) + 12;
+  y = pdfTitel(pdf, 'Angebot', y);
 
   pdf.setFont('helvetica','normal');
-  (a.zeilen||[]).forEach(z => {
-    const mengeText = z.qty2 ? `${z.qty} ${z.unit} + ${z.qty2} ${z.unit2}` : `${z.qty} ${z.unit}`;
-    pdf.text(`${z.name} (${mengeText})`, 22, y);
-    pdf.text(z.price.toFixed(2) + ' €', 163, y);
-    y += 6;
-  });
-  if(a.multiplikator && a.multiplikator !== 1){
-    const abrechnungLabel = a.abrechnung === 'monat' ? 'Monatsrechnung' : a.abrechnung === 'quartal' ? 'Quartalsrechnung' : 'Einzelrechnung';
-    pdf.text(`${abrechnungLabel} (${a.haeufigkeit||''}, × ${a.multiplikator.toFixed(2)})`, 22, y);
-    pdf.text((a.nettoProEinsatz||0).toFixed(2)+' € → '+a.nettoGesamt.toFixed(2)+' €', 163, y);
-    y += 6;
-  }
-  if(a.fahrtkosten > 0){ pdf.text(`Anfahrt (${(a.km*2).toFixed(1)} km)`, 22, y); pdf.text(a.fahrtkosten.toFixed(2)+' €', 163, y); y += 6; }
-  if(a.zuschlaege && a.zuschlaege.length){ pdf.text('Zuschläge: '+a.zuschlaege.join(', '), 22, y, {maxWidth:110}); pdf.text(a.zuschlagBetrag.toFixed(2)+' €', 163, y); y += 6; }
-  if(a.zusatzkosten > 0){ pdf.text('Zusatzkosten', 22, y); pdf.text(a.zusatzkosten.toFixed(2)+' €', 163, y); y += 6; }
+  pdf.setFontSize(10);
+  pdf.setTextColor(...PDF_FARBE.text);
+  pdf.text('Sehr geehrte Damen und Herren,', PDF_MASS.randLinks, y); y += 5.5;
+  pdf.text(pdf.splitTextToSize(
+    'vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen folgendes Angebot:',
+    PDF_MASS.breite), PDF_MASS.randLinks, y);
+  y += 10;
 
-  y += 6;
-  pdf.setDrawColor(210,210,210); pdf.line(20, y, 190, y); y += 8;
-  pdf.text('Zwischensumme (netto)', 118, y); pdf.text(a.nettoGesamt.toFixed(2)+' €', 163, y); y += 6;
-  pdf.text(`zzgl. ${a.mwstSatz}% USt.`, 118, y); pdf.text(a.mwstBetrag.toFixed(2)+' €', 163, y); y += 8;
-  pdf.line(118, y-3, 190, y-3);
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
-  pdf.text('Angebotssumme', 118, y+3); pdf.text(a.bruttoGesamt.toFixed(2)+' €', 163, y+3);
-  y += 20;
+  y = pdfTabellenKopf(pdf, y);
+
+  // Nur die Leistungszeilen – ausdrücklich keine Kostenfelder
+  const posten = (a.zeilen || []).map(z => ({
+    text: z.name,
+    menge: z.qty2
+      ? (z.qty + ' ' + (z.unit||'') + ' + ' + z.qty2 + ' ' + (z.unit2||''))
+      : ((z.qty || '') + ' ' + (z.unit||'')).trim(),
+    betrag: z.price
+  }));
+  if(a.fahrtkosten > 0){
+    posten.push({ text:'Anfahrt', menge: zahl(a.km*2,1) + ' km', betrag: a.fahrtkosten });
+  }
+  if(a.zuschlaege && a.zuschlaege.length){
+    posten.push({ text:'Zuschläge', hinweis: a.zuschlaege.join(', '), betrag: a.zuschlagBetrag });
+  }
+  if(a.zusatzkosten > 0){
+    posten.push({ text:'Material und Zusatzkosten', betrag: a.zusatzkosten });
+  }
+  y = pdfPositionen(pdf, posten, y);
+
+  const abrechnung = a.abrechnung === 'monat' ? 'Monatsrechnung'
+                   : a.abrechnung === 'quartal' ? 'Quartalsrechnung' : 'Einzelrechnung';
+  const mehrfach = a.multiplikator && a.multiplikator !== 1;
+  const kleinunternehmer = !a.mwstSatz || a.mwstSatz <= 0;
+
+  const summenZeilen = [];
+  if(mehrfach){
+    summenZeilen.push(['Netto je Einsatz', pdfEuro(a.nettoProEinsatz)]);
+    summenZeilen.push([abrechnung + ' (x ' + zahl(a.multiplikator,2) + ')', pdfEuro(a.nettoGesamt)]);
+  } else {
+    summenZeilen.push(['Zwischensumme (netto)', pdfEuro(a.nettoGesamt)]);
+  }
+  if(!kleinunternehmer) summenZeilen.push(['zzgl. ' + zahl(a.mwstSatz,1) + ' % USt.', pdfEuro(a.mwstBetrag)]);
+  summenZeilen.push(['Angebotssumme', pdfEuro(a.bruttoGesamt), true]);
+  y = pdfSummen(pdf, summenZeilen, y + 4);
 
   if(a.anmerkung){
-    pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(80,80,80);
-    pdf.text('Anmerkung: ' + a.anmerkung, 20, y, { maxWidth:170 });
-    y += 12;
+    y = pdfKasten(pdf, 'Anmerkung',
+      pdf.splitTextToSize(String(a.anmerkung), PDF_MASS.breite - 10), y + 6);
   }
 
-  pdf.setFontSize(8); pdf.setTextColor(120,120,120);
-  pdf.text(`Dieses Angebot ist freibleibend und gültig bis ${gueltigBis.toLocaleDateString('de-DE')}. Alle Preise verstehen sich zzgl. der gesetzlichen Mehrwertsteuer.`, 20, y, { maxWidth:170 });
+  y = pdfKasten(pdf, 'Ihre Vorteile', [
+    'Haftpflichtversichert · umweltschonende Reinigungsmittel',
+    'Zahlung ausschließlich per Rechnung, ' + (Number(firmaData.zahlungsziel)||14) + ' Tage Zahlungsziel',
+    'Ein fester Ansprechpartner – kein Callcenter'
+  ], y + (a.anmerkung ? 0 : 6));
 
-  const footerY = 280;
-  pdf.setDrawColor(220,220,220); pdf.line(20, footerY-6, 190, footerY-6);
-  pdf.setFontSize(8); pdf.setTextColor(120,120,120);
-  pdf.text(`${firmaData.name||'Waschlurch'} · ${firmaData.inhaber||'Daniel Lurch'} · ${firmaData.strasse||''} · ${firmaData.plz||''} ${firmaData.ort||''}`, 20, footerY);
-  pdf.text(`Tel: ${firmaData.telefon||'–'} · ${firmaData.email||'–'}`, 20, footerY+4);
+  if(kleinunternehmer){
+    y = pdfKleingedrucktes(pdf,
+      'Gemäß § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).', y);
+  }
+  y = pdfKleingedrucktes(pdf,
+    'Dieses Angebot ist freibleibend und gültig bis ' + pdfDatum(gueltigBis) + '. ' +
+    'Grundlage sind die von Ihnen genannten Angaben; ergeben sich vor Ort abweichende Verhältnisse, ' +
+    'stimmen wir das vorher mit Ihnen ab. Es gelten unsere Allgemeinen Geschäftsbedingungen.', y);
 
+  pdfFussAufAllenSeiten(pdf);
   return pdf.output('blob');
 }
 
@@ -7075,9 +8399,10 @@ function renderAngeboteList(){
     const daysSince = a.createdAt && a.createdAt.toDate ? Math.floor((Date.now() - a.createdAt.toDate().getTime())/86400000) : null;
     let staleBadge = '';
     if(a.status === 'versendet' && daysSince != null){
-      if(daysSince >= 14) staleBadge = '<span class="req-stale-badge critical">⚠️ Seit '+daysSince+' Tagen keine Rückmeldung</span>';
-      else if(daysSince >= 7) staleBadge = '<span class="req-stale-badge warn">⏰ Zweite Erinnerung fällig ('+daysSince+' Tage)</span>';
-      else if(daysSince >= 3) staleBadge = '<span class="req-stale-badge warn">⏰ Nachfassen ('+daysSince+' Tage)</span>';
+      const nach = Number(v('angebot_nachfassen_tage'));
+      if(daysSince >= nach * 4) staleBadge = '<span class="req-stale-badge critical">Seit '+daysSince+' Tagen keine Rückmeldung</span>';
+      else if(daysSince >= nach * 2) staleBadge = '<span class="req-stale-badge warn">Zweite Erinnerung fällig ('+daysSince+' Tage)</span>';
+      else if(daysSince >= nach) staleBadge = '<span class="req-stale-badge warn">Nachfassen ('+daysSince+' Tage)</span>';
     }
     const aj = sicherJs(a.id);
     const schonAuftrag = allAuftraege.some(t => t.angebot_id === a.id);
@@ -7175,7 +8500,7 @@ window.setAngebotStatus = function(id, status){
           .catch(err => meldeSchreibfehler(err, 'Das Markieren der Anfrage als gebucht'));
       }
       /* Kein stiller Automatismus: anbieten statt einfach machen. */
-      if(status === 'angenommen' && angebot && !allAuftraege.some(t => t.angebot_id === id)){
+      if(v('auto_auftrag_aus_angebot') && status === 'angenommen' && angebot && !allAuftraege.some(t => t.angebot_id === id)){
         if(confirm('Angebot angenommen.\n\nSoll daraus jetzt ein Auftrag beim Kunden angelegt werden?\nUmsatz und geschätzte Kosten werden übernommen.')){
           window.auftragAusAngebot(id);
         }
