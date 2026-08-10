@@ -28,6 +28,61 @@
 body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--white); background:var(--black); min-height:100vh; }
 a { color:inherit; }
 
+/* ══════════════════════════════════════════════════════════════
+   FORMULAR-GRUNDIERUNG FÜR ALLE EINGABEN
+   ══════════════════════════════════════════════════════════════
+   Bisher waren nur Eingaben INNERHALB von .field gestaltet. Überall
+   sonst – Preise, Kalkulation, Filterleisten – blieben rohe
+   Browser-Elemente stehen. Nachgemessen bei 375 px: Eingabefeld
+   110 × 22 px, Auswahlfeld 180 × 21 px. Das ist mit dem Finger nicht
+   zu treffen und sah aus wie ein halb fertiges Formular.
+
+   Diese Grundierung gilt jetzt für jede Eingabe im Dashboard; die
+   spezielleren Regeln weiter unten überschreiben sie wo nötig. */
+#app-screen input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#app-screen select,
+#app-screen textarea {
+  min-height:44px;
+  padding:11px 14px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:10px;
+  color:var(--white);
+  font-family:inherit;
+  font-size:16px;              /* unter 16px zoomt iOS beim Antippen hinein */
+  line-height:1.3;
+  outline:none;
+  transition:border-color .15s;
+  max-width:100%;
+}
+#app-screen input:focus-visible,
+#app-screen select:focus-visible,
+#app-screen textarea:focus-visible { border-color:var(--green); }
+#app-screen select option { background:var(--gray-900); color:var(--white); }
+#app-screen input[type="file"] { padding:9px 12px; line-height:1.6; }
+#app-screen input[type="date"], #app-screen input[type="time"] { min-width:0; }
+
+/* Ankreuzfelder: nativ sind sie 13 × 13 px – zu klein zum Treffen.
+   WCAG 2.5.8 verlangt mindestens 24 × 24 px. */
+#app-screen input[type="checkbox"], #app-screen input[type="radio"] {
+  width:24px; height:24px; flex-shrink:0; accent-color:var(--green); cursor:pointer;
+}
+#app-screen label.bool-label {
+  display:inline-flex; align-items:center; gap:9px;
+  min-height:44px; cursor:pointer; text-transform:none;
+}
+
+/* Mit dem Finger bedient: großzügiger. Bewusst an der Eingabeart
+   festgemacht, nicht an der Bildschirmbreite – ein Tablet mit
+   1024 px braucht es genauso. */
+@media (hover: none) and (pointer: coarse){
+  #app-screen input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  #app-screen select, #app-screen textarea { min-height:48px; font-size:16px; }
+  #app-screen input[type="checkbox"], #app-screen input[type="radio"] { width:24px; height:24px; }
+  #app-screen button, #app-screen .karte-aktion, #app-screen .range-btn,
+  #app-screen .req-tab, #app-screen .paket-card-actions button { min-height:44px; }
+}
+
 /* LOGIN */
 #login-screen {
   min-height:100vh; display:flex; align-items:center; justify-content:center; padding:5%;
@@ -407,6 +462,18 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .kal-monat { font-size:17px; font-weight:700; min-width:180px; text-align:center; }
 .kal-leiste .bool-label { font-size:12.5px; white-space:nowrap; text-transform:none; }
 
+/* Werkzeugleiste und Filter getrennt: Auf dem Handy nahmen die sechs
+   Ankreuzfelder gemessene 1100 px ein – man scrollte an lauter
+   Bedienelementen vorbei, bevor der Kalender überhaupt anfing.
+   Am Rechner bleiben sie sichtbar, auf dem Handy klappen sie auf. */
+.kal-werkzeuge { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+.kal-werkzeuge > input[type="text"] { flex:1 1 220px; min-width:0; }
+.kal-filter-knopf { display:none; }
+.kal-filter {
+  display:flex; gap:10px 18px; flex-wrap:wrap; align-items:center; margin-bottom:16px;
+}
+.kal-filter .bool-label { font-size:13px; white-space:nowrap; }
+
 .kal-legende {
   display:flex; gap:16px; flex-wrap:wrap; align-items:center;
   font-size:12px; color:rgba(255,255,255,0.65); margin-bottom:14px;
@@ -518,6 +585,118 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .kal-chip-zeit { font-size:10px; color:rgba(255,255,255,0.6); }
 .kal-chip-titel { overflow:hidden; text-overflow:ellipsis; width:100%; }
 
+/* ══════════════════════════════════════════════════════════════
+   PDF-VORSCHAU
+   ══════════════════════════════════════════════════════════════
+   Links das Formular, rechts das fertige Dokument – man sieht beim
+   Tippen, was der Kunde bekommt. Ab 1024 px eingeblendet; darunter
+   ist kein Platz für zwei Spalten, dort führt ein Knopf ins
+   Vollbild. */
+.pdf-vorschau {
+  display:none; margin-top:20px; padding-top:18px;
+  border-top:1px solid rgba(255,255,255,0.12);
+}
+.pdf-vorschau-kopf {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin-bottom:10px; font-size:13px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.7px; color:rgba(255,255,255,0.72);
+}
+.pdf-vorschau-aktionen { display:flex; gap:7px; }
+.pdf-vorschau-rahmen {
+  position:relative; width:100%; aspect-ratio:210/297;
+  background:#525659; border:1px solid rgba(255,255,255,0.14);
+  border-radius:10px; overflow:hidden;
+}
+.pdf-vorschau-rahmen iframe { width:100%; height:100%; border:none; display:block; }
+.pdf-vorschau-leer, .pdf-vorschau-laedt {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:24px; font-size:13px; line-height:1.6;
+  color:rgba(255,255,255,0.75); background:rgba(10,10,10,0.55);
+}
+.pdf-vorschau-knopf-handy { display:none; }
+
+@media(min-width:1024px){
+  .pdf-vorschau { display:block; }
+}
+@media(max-width:1023px){
+  /* Auf Handy und kleinem Tablet: Vorschau auf Wunsch im Vollbild */
+  .pdf-vorschau-knopf-handy { display:inline-flex; }
+}
+
+/* Vollbild-Vorschau, auf jeder Größe erreichbar */
+.pdf-vollbild {
+  position:fixed; inset:0; z-index:3000; background:rgba(10,10,10,0.96);
+  display:flex; flex-direction:column;
+  padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
+}
+.pdf-vollbild[hidden] { display:none; }
+.pdf-vollbild-kopf {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding-bottom:10px; font-size:15px; font-weight:700;
+}
+.pdf-vollbild-rahmen { flex:1; min-height:0; background:#525659; border-radius:10px; overflow:hidden; }
+.pdf-vollbild-rahmen iframe { width:100%; height:100%; border:none; display:block; }
+.pdf-vollbild-fuss { display:flex; gap:9px; flex-wrap:wrap; padding-top:10px; }
+
+/* ── Jahrestafel ── */
+.jahr-legende {
+  display:flex; gap:16px; flex-wrap:wrap; align-items:center;
+  font-size:12px; color:rgba(255,255,255,0.68); margin-bottom:14px;
+}
+.jahr-legende span { display:inline-flex; align-items:center; gap:6px; }
+.jahr-probe { width:14px; height:14px; border-radius:3px; display:inline-block; flex-shrink:0;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); }
+
+/* Die Farben der Eintragsarten – dieselbe Sprache wie die Punkte
+   in der Monatsansicht, nur als Fläche. */
+.jahr-probe.hat-auftrag,  .jahr-zelle.hat-auftrag  { background:rgba(34,197,94,0.55); }
+.jahr-probe.hat-termin,   .jahr-zelle.hat-termin   { background:rgba(52,211,153,0.42); }
+.jahr-probe.hat-wunsch,   .jahr-zelle.hat-wunsch   { background:rgba(251,191,36,0.45); }
+.jahr-probe.hat-abwesend, .jahr-zelle.hat-abwesend { background:rgba(248,113,113,0.55); }
+.jahr-probe.hat-rechnung, .jahr-zelle.hat-rechnung { background:rgba(59,130,246,0.45); }
+.jahr-probe.hat-angebot,  .jahr-zelle.hat-angebot  { background:rgba(167,139,250,0.45); }
+.jahr-probe.feiertag,     .jahr-zelle.feiertag     { background:rgba(248,113,113,0.20); }
+.jahr-probe.ferien,       .jahr-zelle.ferien       { background:rgba(251,191,36,0.16); }
+.jahr-probe.wochenende,   .jahr-zelle.wochenende   { background:rgba(255,255,255,0.07); }
+
+.jahr-rolle { overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; }
+.jahr-tafel {
+  min-width:760px; border:1px solid rgba(255,255,255,0.1);
+  border-radius:12px; overflow:hidden; background:rgba(255,255,255,0.02);
+}
+.jahr-zeile { display:flex; align-items:stretch; border-bottom:1px solid rgba(255,255,255,0.07); }
+.jahr-zeile:last-child { border-bottom:none; }
+.jahr-zeile.jahr-kopf { background:rgba(255,255,255,0.05); }
+.jahr-monat {
+  width:104px; flex-shrink:0; padding:6px 10px; font-size:12.5px; font-weight:700;
+  display:flex; align-items:center; position:sticky; left:0; z-index:2;
+  background:#101010; border-right:1px solid rgba(255,255,255,0.12);
+}
+.jahr-zeile.jahr-kopf .jahr-monat { background:#141414; }
+.jahr-tage { display:grid; grid-template-columns:repeat(31,minmax(0,1fr)); flex:1; }
+.jahr-kopfzahl {
+  font-size:9.5px; color:rgba(255,255,255,0.5); text-align:center; padding:5px 0;
+  font-variant-numeric:tabular-nums;
+}
+.jahr-zelle {
+  position:relative; border:none; border-left:1px solid rgba(255,255,255,0.05);
+  background:transparent; color:rgba(255,255,255,0.75); font-family:inherit;
+  min-height:26px; padding:0; cursor:pointer; display:flex;
+  align-items:center; justify-content:center;
+}
+.jahr-zelle:hover { outline:2px solid var(--green); outline-offset:-2px; z-index:1; }
+.jahr-zelle.leer { background:rgba(255,255,255,0.02); cursor:default; }
+.jahr-zelle.leer:hover { outline:none; }
+.jahr-zahl { font-size:9.5px; font-variant-numeric:tabular-nums; opacity:.75; }
+.jahr-zelle.hat-auftrag .jahr-zahl, .jahr-zelle.hat-abwesend .jahr-zahl,
+.jahr-zelle.hat-termin .jahr-zahl { color:#0A0A0A; font-weight:700; opacity:1; }
+.jahr-zelle.heute { outline:2px solid var(--green); outline-offset:-2px; z-index:1; }
+.jahr-mehr {
+  position:absolute; right:2px; top:2px; width:4px; height:4px;
+  border-radius:50%; background:rgba(0,0,0,0.55);
+}
+.jahr-hinweis { font-size:12px; color:rgba(255,255,255,0.55); margin-top:10px; line-height:1.55; }
+
 /* ── Liste ── */
 .kal-agenda-tag {
   display:flex; gap:16px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.08);
@@ -550,10 +729,72 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 
 @media(max-width:900px){
   .kal-ansichten { width:100%; justify-content:space-between; }
-  .kal-ansicht-knopf { flex:1; padding:8px 6px; }
-  .kal-zr-zeitspalte { font-size:10px; padding:5px 4px; }
+  .kal-ansicht-knopf { flex:1; padding:8px 4px; font-size:12.5px; min-height:44px; }
+
+  /* Die Wochenansicht mit sieben Spalten ergäbe bei 375 px rund
+     45 px je Tag – zu wenig für einen Termintitel. Stattdessen
+     seitlich schiebbar mit stehenbleibender Zeitspalte. */
+  #kal-zeitraster { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .kal-zeitraster { min-width:640px; }
+  .kal-zr-zeitspalte {
+    font-size:10.5px; padding:5px 6px; position:sticky; left:0; z-index:2;
+    background:#101010; border-right:1px solid rgba(255,255,255,0.1);
+  }
+  .kal-zr-kopf > div:first-child, .kal-zr-ganztags > .kal-zr-zeitspalte { position:sticky; left:0; z-index:3; background:#141414; }
+
+  /* In der Tagesansicht ist ein Schieben unnötig – dort ist Platz. */
+  .kal-tag-ansicht .kal-zeitraster { min-width:0; }
+  .kal-tag-ansicht .kal-zr-zeitspalte { position:static; }
+
   .kal-agenda-zeit { width:auto; }
   .kal-agenda-zeile { flex-wrap:wrap; }
+  .kal-agenda-datum { width:44px; }
+  .kal-agenda-zahl { font-size:19px; }
+
+  /* Filter zugeklappt, bis man sie braucht */
+  .kal-filter-knopf { display:inline-flex; }
+  .kal-filter { display:none; }
+  .kal-filter.offen {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 12px;
+    padding:12px 14px; margin-bottom:14px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px;
+  }
+  .kal-filter .bool-label { white-space:normal; }
+  .kal-werkzeuge > input[type="text"] { flex:1 1 100%; }
+  .kal-werkzeuge > .karte-aktion { flex:1 1 calc(50% - 5px); }
+  .kal-monat { flex:1 1 100%; order:-1; text-align:left; font-size:17px; }
+  /* Legende ist am Handy Beiwerk – kleiner, aber vorhanden */
+  .kal-legende { gap:8px 12px; font-size:11.5px; }
+  #view-kalender .btn-primary { flex:1 1 100%; }
+
+  /* Der Kalender gehört nach oben. Gemessen bei 320 px: Bis er
+     anfing, lagen 1020 px Bedienelemente darüber – allein die vier
+     Kennzahlkacheln 382 px. Kennzahlen und Legende wandern deshalb
+     unter den Kalender; die Reihenfolge im HTML bleibt unangetastet,
+     damit die Tastaturbedienung sinnvoll bleibt. */
+  #view-kalender.view.active { display:flex; flex-direction:column; }
+  #view-kalender > .view-head    { order:0; }
+  #view-kalender > .kal-leiste   { order:1; }
+  #view-kalender > .kal-werkzeuge{ order:2; }
+  #view-kalender > .kal-filter   { order:3; }
+  #view-kalender > #kal-termin-form { order:4; }
+  #view-kalender > .kal-wochentage,
+  #view-kalender > #kal-gitter,
+  #view-kalender > #kal-zeitraster,
+  #view-kalender > #kal-agenda,
+  #view-kalender > #kal-jahr     { order:5; }
+  #view-kalender > #kal-tag-detail { order:6; }
+  #view-kalender > .kal-legende  { order:7; margin:16px 0 0; }
+  #view-kalender > #kal-stats    { order:8; margin-top:16px; }
+  #view-kalender > .karte-block  { order:9; }
+
+  /* Zwei Spalten statt einer – die Kalenderzahlen sind kurz */
+  #kal-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+  /* Jahrestafel: schmalere Monatsspalte, damit mehr Tage sichtbar sind */
+  .jahr-monat { width:74px; font-size:11.5px; padding:6px; }
+  .jahr-tafel { min-width:700px; }
+  .jahr-zelle { min-height:30px; }
 }
 
 @media(max-width:900px){
@@ -621,7 +862,16 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .ang-leistung-qty input { width:70px; padding:8px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--white); font-family:inherit; font-size:16px; }
 .ang-leistung-price { font-size:13px; font-weight:700; color:var(--green); width:80px; text-align:right; }
 .ang-zuschlag-row { display:flex; align-items:center; gap:10px; padding:8px 0; }
-.ang-summary-sticky { position:sticky; top:20px; }
+/* Das rechte Feld bleibt beim Scrollen stehen und scrollt bei Bedarf
+   in sich selbst. Ohne die Höhenbegrenzung war es 1186 px hoch – auf
+   einem 900-px-Bildschirm war die PDF-Vorschau damit nie gleichzeitig
+   mit dem Formular zu sehen, und „sticky" hatte keine Wirkung. */
+.ang-summary-sticky {
+  position:sticky; top:20px;
+  max-height:calc(100vh - 40px);
+  overflow-y:auto;
+  scrollbar-width:thin;
+}
 .ang-summary-line { display:flex; justify-content:space-between; font-size:13px; padding:6px 0; color:rgba(255,255,255,0.6); }
 .ang-summary-line.total { font-size:18px; font-weight:700; color:var(--white); border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; padding-top:12px; }
 .ang-summary-line.gewinn { color:var(--green); font-weight:600; }
@@ -816,7 +1066,86 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   .handy-menue-punkt .hm-symbol { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
   .handy-menue-fuss { padding-top:12px; border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; }
 
-  .main { margin-left:0; padding:20px 5% 104px; }
+  .main { margin-left:0; padding:20px 16px 104px; }
+
+  /* ── Was auf dem Handy umbrechen muss statt abzuschneiden ──
+     Nachgemessen bei 375 px: „Am längsten offen: Thomas Berger,
+     26 Tage über dem Zahlungsziel" wurde nach 117 px hart
+     abgeschnitten – die eigentliche Aussage fehlte. */
+  .ueb-zeile { align-items:flex-start; }
+  .ueb-zeile-name, .ueb-zeile-sub { white-space:normal; overflow:visible; text-overflow:clip; line-height:1.4; }
+  .ueb-zeile-zeit { padding-top:2px; }
+  .kal-eintrag { white-space:normal; }
+
+  /* ── Preise: die Zeile war ein gequetschter Einzeiler ──
+     Sechs Elemente in einer Reihe bei 375 px ergaben Felder von
+     21–22 px Höhe. Auf dem Handy untereinander. */
+  .preis-edit-row { flex-direction:column; align-items:stretch; gap:10px; padding:16px; }
+  .preis-edit-icon { text-align:left; width:auto; }
+  .preis-edit-name { width:auto; font-size:15px; }
+  .preis-edit-row input { width:100%; flex:none; }
+  .preis-einheit-select { width:100%; }
+  .preis-preview { width:auto; text-align:left; font-size:13px; }
+
+  /* ── Kalkulation: gleiche Ursache, gleiche Lösung ── */
+  .kalk-row { flex-direction:column; align-items:stretch; gap:9px; padding:16px; }
+  .kalk-row-icon { text-align:left; width:auto; }
+  .kalk-row input { width:100%; }
+  .kalk-row-label { font-size:13px; }
+
+  /* ── Filterleisten: Knöpfe auf volle Breite verteilen ── */
+  .range-picker { gap:8px; }
+  .range-btn { flex:1 1 calc(50% - 4px); min-height:44px; }
+  .listen-leiste > * { flex:1 1 100%; }
+  .listen-leiste .btn-primary { flex:1 1 100%; }
+
+  /* ── Formularreihen immer einspaltig ── */
+  .field-row { grid-template-columns:minmax(0,1fr); gap:0; }
+  .karte-daten { grid-template-columns:minmax(0,1fr); }
+
+  /* ── Aktionsknöpfe auf Karten: zwei je Reihe statt gequetscht ── */
+  .req-actions button, .req-actions a { flex:1 1 calc(50% - 5px); min-height:44px; }
+  .paket-card-actions button, .ref-admin-actions button, .faq-admin-actions button { flex:1 1 calc(50% - 4px); }
+  .kunde-detail-header .karte-aktion { flex:1 1 calc(50% - 5px); }
+
+  /* ── Auftragszeile: Zahlen unter den Titel statt daneben ── */
+  .auftrag-zeile { flex-direction:column; align-items:stretch; gap:10px; }
+  .auftrag-zahlen { justify-content:space-between; gap:12px; }
+  .auftrag-zeile > div[style*="display:flex"] { width:100%; }
+  .auftrag-zeile .karte-aktion { flex:1; }
+  .auftrag-summe { gap:14px 20px; }
+
+  /* ── Angebotsrechner: Leistungszeile lesbar ── */
+  .ang-leistung-row { grid-template-columns:auto minmax(0,1fr); row-gap:10px; padding:14px 0; }
+  .ang-leistung-qty { grid-column:1/-1; gap:8px; }
+  /* min-width:0 ist hier zwingend: Flex-Kinder schrumpfen sonst nicht
+     unter ihre Eigenbreite. Ein Eingabefeld bringt rund 200 px mit –
+     bei zwei Feldern nebeneinander ergab das 97 px Überlauf bei
+     375 px, nachgemessen an .ang-svc-qty2. */
+  .ang-leistung-qty input { flex:1 1 0; min-width:0; width:auto; }
+  .ang-leistung-price { grid-column:1/-1; text-align:left; width:auto; font-size:15px; }
+
+  /* ── Tabellenkarten: Beschriftung und Wert auseinanderhalten ──
+     Bei 320 px reichte eine Zeile nicht: lange Beschreibungen wurden
+     um bis zu 28 px abgeschnitten. Jetzt darf der Wert umbrechen. */
+  .fin-table td { gap:6px 12px; align-items:baseline; flex-wrap:wrap; }
+  .fin-table td:before { flex-shrink:0; }
+  .fin-table td > * { min-width:0; }
+
+  /* Beträge in den Steuer- und Berichtskacheln dürfen umbrechen */
+  .steuer-card-val { font-size:21px; word-break:break-word; }
+  .steuer-card-lbl { word-break:break-word; }
+
+  /* ── Statistikkacheln: lange Beträge dürfen umbrechen ── */
+  .stat-val { font-size:20px; word-break:break-word; }
+  .stat-row { gap:10px; }
+
+  /* ── Bilder je Leistung: Karte war 3 px zu breit ── */
+  .bild-leistung-card { flex-wrap:wrap; gap:12px; }
+  .bild-leistung-name { min-width:0; flex:1 1 100%; }
+  .bild-leistung-actions { flex:1 1 100%; }
+  .bild-leistung-actions input[type="file"] { max-width:none; width:100%; }
+  .bild-leistung-actions button { flex:1 1 calc(50% - 4px); }
   .stat-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .tpl-layout { grid-template-columns:minmax(0,1fr); }
   .ueb-cols { grid-template-columns:minmax(0,1fr); }
@@ -926,6 +1255,80 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .bericht-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
 .bericht-print-btn { padding:14px 28px; border-radius:100px; background:var(--green); color:var(--white); border:none; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; margin-bottom:24px; }
 .bericht-section-title { font-size:15px; font-weight:700; margin:24px 0 12px; }
+
+/* ══════════════════════════════════════════════════════════════
+   NACHZÜGLER FÜR SCHMALE BILDSCHIRME
+   ══════════════════════════════════════════════════════════════
+   ⚠️ Reihenfolge beachten: Der große @media(max-width:900px)-Block
+   steht WEITER OBEN als die Grunddefinitionen von .bericht-grid,
+   .steuer-cards und .chart-row. Bei gleicher Spezifität gewinnt die
+   spätere Regel – die Handy-Anpassungen wurden deshalb wirkungslos
+   überschrieben.
+
+   Nachgemessen bei 320 px: .bericht-grid stand auf vier Spalten mit
+   je 49 px Breite; in eine solche Kachel passt keine Zahl.
+
+   Dieser Block steht bewusst ganz am Ende. Neue Handy-Regeln für
+   Bausteine, die weiter unten definiert sind, gehören hierher. */
+@media(max-width:900px){
+  .bericht-grid  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .steuer-cards  { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .chart-row     { grid-template-columns:minmax(0,1fr); }
+  .steuer-card   { padding:14px 15px; }
+  .steuer-card-val { font-size:19px; word-break:break-word; line-height:1.2; }
+  .steuer-card-lbl { font-size:11.5px; word-break:break-word; }
+  .bericht-summary { padding:16px; }
+
+  /* Der Löschknopf war nur 13–16 px breit – mit dem Finger nicht zu
+     treffen, obwohl er 44 px hoch war. */
+  /* Zwei Fallen auf einmal:
+     1. Als Flex-Kind der Tabellenzelle wurde der Knopf auf 13 px
+        zusammengedrückt – dagegen hilft flex-shrink:0.
+     2. Die weiter oben stehende Regel `.fin-table td > *` mit
+        min-width:0 ist spezifischer als `.fin-delete` und hat das
+        min-width wieder ausgehebelt. Deshalb hier derselbe Aufbau
+        mit einer Klasse mehr. */
+  .fin-table td > .fin-delete,
+  .fin-delete { min-width:44px; min-height:44px; font-size:18px; flex-shrink:0; }
+  .range-custom { width:100%; }
+  .range-custom input { flex:1 1 0; min-width:0; }
+}
+
+/* ── Tablet und schmaler Laptop (901–1200 px) ──────────────────
+   Hier greifen die Handy-Regeln nicht mehr, der Platz reicht aber
+   noch nicht für die Anordnung des großen Bildschirms. Nachgemessen
+   bei 1024 px: Neben der 220 px breiten Seitenleiste bleiben 750 px –
+   die Preiszeile quetschte darin zehn Elemente, der Angebotsrechner
+   fünfzehn. */
+@media(min-width:901px) and (max-width:1200px){
+  /* Angebotsrechner untereinander statt zweispaltig: 370 px für das
+     Formular waren zu wenig. Die PDF-Vorschau rutscht darunter und
+     bleibt sichtbar. */
+  .ang-layout { grid-template-columns:minmax(0,1fr); }
+  .ang-summary-sticky { position:static; max-height:none; overflow:visible; }
+  .pdf-vorschau-rahmen { max-width:520px; }
+
+  /* Preise und Kalkulation: umbrechen statt stauchen */
+  .preis-edit-row, .kalk-row { flex-wrap:wrap; row-gap:10px; }
+  .preis-edit-name, .kalk-row-name { width:auto; min-width:150px; }
+  .preis-edit-row input, .kalk-row input { min-width:110px; }
+  .preis-einheit-select { width:auto; min-width:180px; flex:1 1 200px; }
+  .preis-preview { width:auto; text-align:left; flex:1 1 100%; }
+
+  .tpl-layout { grid-template-columns:220px minmax(0,1fr); }
+}
+
+/* Der Löschknopf in den Finanztabellen war auch am Rechner nur
+   13–18 px breit. */
+.fin-delete { min-width:36px; min-height:36px; }
+
+@media(max-width:400px){
+  /* Bei 320 px reicht auch für zwei Spalten der Platz nicht mehr,
+     sobald ein Betrag mit Tausenderpunkt darin steht. */
+  .bericht-grid, .steuer-cards, .stat-row { grid-template-columns:minmax(0,1fr); }
+  .steuer-card-val { font-size:22px; }
+  .stat-val { font-size:22px; }
+}
 
 @media print {
   body * { visibility:hidden; }
@@ -1078,6 +1481,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <button class="karte-aktion" onclick="kalenderBlaettern(1)" aria-label="Weiter">→</button>
         <button class="karte-aktion" onclick="kalenderHeute()">Heute</button>
         <div class="kal-ansichten" role="tablist" aria-label="Kalenderansicht">
+          <button class="kal-ansicht-knopf" data-ansicht="jahr"   onclick="kalenderAnsicht('jahr')">Jahr</button>
           <button class="kal-ansicht-knopf" data-ansicht="monat"  onclick="kalenderAnsicht('monat')">Monat</button>
           <button class="kal-ansicht-knopf" data-ansicht="woche"  onclick="kalenderAnsicht('woche')">Woche</button>
           <button class="kal-ansicht-knopf" data-ansicht="tag"    onclick="kalenderAnsicht('tag')">Tag</button>
@@ -1087,16 +1491,19 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <button class="btn btn-primary" style="width:auto;padding:10px 18px" onclick="terminFormOeffnen()">+ Termin</button>
       </div>
 
-      <div class="kal-leiste" style="margin-bottom:16px">
-        <input type="text" id="kal-suche" placeholder="Im Kalender suchen ..." oninput="renderKalenderVerzoegert()"
-               style="flex:1;min-width:180px;padding:10px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:var(--white);font-family:inherit;font-size:16px">
+      <div class="kal-werkzeuge">
+        <input type="text" id="kal-suche" placeholder="Im Kalender suchen ..." oninput="renderKalenderVerzoegert()">
+        <button class="karte-aktion kal-filter-knopf" id="kal-filter-knopf"
+                aria-expanded="false" aria-controls="kal-filter" onclick="kalenderFilterUmschalten()">Filter</button>
+        <button class="karte-aktion" onclick="kalenderAlsIcs()">Als Kalenderdatei</button>
+      </div>
+      <div class="kal-filter" id="kal-filter">
         <label class="bool-label"><input type="checkbox" id="kal-zeige-termine" checked onchange="renderKalender()"> Termine</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-auftraege" checked onchange="renderKalender()"> Aufträge</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-anfragen" checked onchange="renderKalender()"> Wunschtermine</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-rechnungen" checked onchange="renderKalender()"> Rechnungen</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-abwesend" checked onchange="renderKalender()"> Abwesenheiten</label>
         <label class="bool-label"><input type="checkbox" id="kal-zeige-ferien" checked onchange="renderKalender()"> Ferien</label>
-        <button class="karte-aktion" onclick="kalenderAlsIcs()">Als Kalenderdatei</button>
       </div>
 
       <div class="stat-row" id="kal-stats"></div>
@@ -1120,6 +1527,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
       <div class="kal-gitter" id="kal-gitter"></div>
       <div id="kal-zeitraster" style="display:none"></div>
       <div id="kal-agenda" style="display:none"></div>
+      <div id="kal-jahr" style="display:none"></div>
 
       <div class="karte-block" id="kal-tag-detail" style="display:none"></div>
 
@@ -1292,6 +1700,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
           <div class="wizard-nav-inline" style="display:flex;gap:12px;margin-top:16px">
             <button class="btn btn-primary" style="width:auto;padding:13px 24px" onclick="createAngebotPDF(false)" id="ang-save-btn">📄 Angebot erstellen & herunterladen</button>
             <button class="btn" style="width:auto;padding:13px 24px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#3B82F6" onclick="createAngebotPDF(true)">✉️ Erstellen & senden</button>
+            <button class="btn karte-aktion pdf-vorschau-knopf-handy" style="min-height:44px;padding:13px 20px" onclick="pdfVollbild('ang')">Vorschau ansehen</button>
             <button class="btn" style="width:auto;padding:13px 24px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)" onclick="resetAngebotForm()">Zurücksetzen</button>
           </div>
         </div>
@@ -1299,6 +1708,21 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <div class="ang-panel ang-summary-sticky">
           <div class="paket-form-title" style="margin-bottom:16px">Live-Berechnung</div>
           <div id="ang-summary"></div>
+
+          <!-- PDF-Vorschau: ab Tabletbreite direkt daneben, auf dem
+               Handy über einen Knopf im Vollbild -->
+          <div class="pdf-vorschau" id="ang-pdf-vorschau">
+            <div class="pdf-vorschau-kopf">
+              <span>Vorschau</span>
+              <div class="pdf-vorschau-aktionen">
+                <button class="karte-aktion" onclick="angebotVorschauAktualisieren(true)" id="ang-vorschau-btn">Aktualisieren</button>
+                <button class="karte-aktion" onclick="pdfVollbild('ang')" id="ang-vollbild-btn">Groß</button>
+              </div>
+            </div>
+            <div class="pdf-vorschau-rahmen" id="ang-pdf-rahmen">
+              <div class="pdf-vorschau-leer">Leistungen wählen – die Vorschau erscheint automatisch.</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2020,6 +2444,16 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     </div>
 
   </main>
+</div>
+
+<!-- Vollbild-Vorschau für Angebot und Rechnung -->
+<div class="pdf-vollbild" id="pdf-vollbild" hidden role="dialog" aria-modal="true" aria-label="PDF-Vorschau">
+  <div class="pdf-vollbild-kopf">
+    <span id="pdf-vollbild-titel">Vorschau</span>
+    <button class="karte-aktion" onclick="pdfVollbildSchliessen()" aria-label="Vorschau schließen">Schließen</button>
+  </div>
+  <div class="pdf-vollbild-rahmen" id="pdf-vollbild-rahmen"></div>
+  <div class="pdf-vollbild-fuss" id="pdf-vollbild-fuss"></div>
 </div>
 
 <script type="module">
@@ -3089,6 +3523,7 @@ function renderRequests(nurListe){
         <button onclick="angebotAusAnfrage('${rj}')">Angebot rechnen</button>
         ${r.telefon ? `<a href="tel:${sicher(r.telefon)}">Anrufen</a>` : ''}
         <a href="https://www.google.com/maps/search/?api=1&amp;query=${sicher(mapsZiel)}" target="_blank" rel="noopener">In Maps öffnen</a>
+        <button class="invoice-btn" onclick="rechnungVorschau('${rj}')">Rechnung ansehen</button>
         <button class="invoice-btn" onclick="generateInvoice('${rj}', false)">Rechnung</button>
         <button class="invoice-btn" onclick="generateInvoice('${rj}', true)">Rechnung senden</button>
         <button onclick="addToGoogleCalendar('${rj}')">Google Kalender</button>
@@ -6642,7 +7077,9 @@ window.kalenderAnsicht = function(name){
 /* Ein Knopf für vor und zurück – die Schrittweite hängt von der
    Ansicht ab. Vorher blätterte auch die Wochenansicht monatsweise. */
 window.kalenderBlaettern = function(richtung){
-  if(kalenderAnsichtName === 'monat'){
+  if(kalenderAnsichtName === 'jahr'){
+    kalenderStand = new Date(kalenderStand.getFullYear() + richtung, kalenderStand.getMonth(), 1);
+  } else if(kalenderAnsichtName === 'monat'){
     kalenderStand = new Date(kalenderStand.getFullYear(), kalenderStand.getMonth() + richtung, 1);
   } else if(kalenderAnsichtName === 'woche'){
     kalenderStand = new Date(kalenderStand.getTime() + richtung * 7 * 86400000);
@@ -6663,6 +7100,15 @@ window.kalenderHeute = function(){
   renderKalender();
   renderFerienVerwaltung();
   if(kalenderAnsichtName === 'monat') kalenderTagOeffnen(kalenderGewaehlt);
+};
+
+window.kalenderFilterUmschalten = function(){
+  const kasten = document.getElementById('kal-filter');
+  const knopf = document.getElementById('kal-filter-knopf');
+  if(!kasten || !knopf) return;
+  const offen = kasten.classList.toggle('offen');
+  knopf.setAttribute('aria-expanded', offen ? 'true' : 'false');
+  knopf.textContent = offen ? 'Filter schließen' : 'Filter';
 };
 
 let kalSuchTimer = null;
@@ -6696,20 +7142,27 @@ function renderKalender(){
 
   const zeitraster = document.getElementById('kal-zeitraster');
   const agenda = document.getElementById('kal-agenda');
+  const jahrTafel = document.getElementById('kal-jahr');
   const wochentage = document.getElementById('kal-wochentage');
+  const alleAus = () => {
+    gitter.style.display='none'; wochentage.style.display='none';
+    zeitraster.style.display='none'; agenda.style.display='none'; jahrTafel.style.display='none';
+  };
 
+  if(kalenderAnsichtName === 'jahr'){
+    alleAus(); jahrTafel.style.display = 'block';
+    return renderKalenderJahr();
+  }
   if(kalenderAnsichtName === 'woche' || kalenderAnsichtName === 'tag'){
-    gitter.style.display = 'none'; wochentage.style.display = 'none';
-    agenda.style.display = 'none'; zeitraster.style.display = 'block';
+    alleAus(); zeitraster.style.display = 'block';
     return renderKalenderZeitraster();
   }
   if(kalenderAnsichtName === 'agenda'){
-    gitter.style.display = 'none'; wochentage.style.display = 'none';
-    zeitraster.style.display = 'none'; agenda.style.display = 'block';
+    alleAus(); agenda.style.display = 'block';
     return renderKalenderAgenda();
   }
+  alleAus();
   gitter.style.display = ''; wochentage.style.display = '';
-  zeitraster.style.display = 'none'; agenda.style.display = 'none';
 
   const jahr  = kalenderStand.getFullYear();
   const monat = kalenderStand.getMonth();
@@ -6783,6 +7236,127 @@ function renderKalender(){
 
   if(kalenderGewaehlt) kalenderTagOeffnen(kalenderGewaehlt, true);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   JAHRESANSICHT
+   ══════════════════════════════════════════════════════════════
+   Zwölf Monatszeilen, 31 Tagesspalten – das ganze Jahr auf einen
+   Blick. Jeder Tag trägt die Farbe seiner wichtigsten Eintragsart;
+   Wochenenden, Feiertage und Ferien sind als Fläche hinterlegt.
+
+   Die Reihenfolge der Prüfung bestimmt, welche Farbe gewinnt:
+   Abwesenheit schlägt Auftrag schlägt Termin. Ein Urlaubstag ist
+   die wichtigere Information, wenn beides zusammenfällt. */
+const JAHR_RANG = ['abwesend','auftrag','termin','wunsch','rechnung','angebot'];
+
+function jahresFarbeFuer(ereignisse){
+  for(const art of JAHR_RANG){
+    if(ereignisse.some(e => e.art === art)) return art;
+  }
+  return null;
+}
+
+function renderKalenderJahr(){
+  const el = document.getElementById('kal-jahr');
+  if(!el) return;
+  const jahr = kalenderStand.getFullYear();
+  document.getElementById('kal-monat').textContent = String(jahr);
+
+  const heute = isoDatum(new Date());
+  const suche = kalenderSuchbegriff();
+  const zeigeFerien = (document.getElementById('kal-zeige-ferien') || {}).checked !== false;
+
+  let zaehlung = { auftrag:0, termin:0, abwesend:0, feiertag:0 };
+
+  const zeilen = [];
+  for(let m = 0; m < 12; m++){
+    const tageImMonat = new Date(jahr, m + 1, 0).getDate();
+    const monatsName = new Date(jahr, m, 1).toLocaleDateString('de-DE', { month:'long' });
+
+    let zellen = '';
+    for(let t = 1; t <= 31; t++){
+      if(t > tageImMonat){ zellen += '<div class="jahr-zelle leer"></div>'; continue; }
+      const d = new Date(jahr, m, t);
+      const iso = isoDatum(d);
+      const wochentag = d.getDay();
+      const wochenende = wochentag === 0 || wochentag === 6;
+      const feiertag = feiertagAm(iso);
+      const ferien = zeigeFerien ? ferienAm(iso) : null;
+      const ereignisse = kalenderEreignisse(iso).filter(e => passtZurSuche(e, suche));
+      const farbe = jahresFarbeFuer(ereignisse);
+
+      if(feiertag) zaehlung.feiertag++;
+      ereignisse.forEach(e => { if(zaehlung[e.art] !== undefined) zaehlung[e.art]++; });
+
+      const klassen = ['jahr-zelle'];
+      if(wochenende) klassen.push('wochenende');
+      if(feiertag) klassen.push('feiertag');
+      else if(ferien) klassen.push('ferien');
+      if(farbe) klassen.push('hat-' + farbe);
+      if(iso === heute) klassen.push('heute');
+
+      const titel = [
+        d.toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long' }),
+        feiertag || '', ferien ? ferien.name : '',
+        ...ereignisse.map(e => e.titel)
+      ].filter(Boolean).join(' · ');
+
+      zellen += `<button type="button" class="${klassen.join(' ')}" title="${sicher(titel)}"
+        aria-label="${sicher(titel)}" onclick="jahrTagOeffnen('${iso}')">
+        <span class="jahr-zahl">${t}</span>
+        ${ereignisse.length > 1 ? '<span class="jahr-mehr"></span>' : ''}
+      </button>`;
+    }
+
+    zeilen.push(`<div class="jahr-zeile">
+      <div class="jahr-monat">${sicher(monatsName)}</div>
+      <div class="jahr-tage">${zellen}</div>
+    </div>`);
+  }
+
+  const kopfZahlen = Array.from({length:31}, (_,i) =>
+    `<div class="jahr-kopfzahl">${i+1}</div>`).join('');
+
+  el.innerHTML = `
+    <div class="jahr-legende">
+      <span><i class="jahr-probe hat-auftrag"></i>Auftrag</span>
+      <span><i class="jahr-probe hat-termin"></i>Termin</span>
+      <span><i class="jahr-probe hat-wunsch"></i>Wunschtermin</span>
+      <span><i class="jahr-probe hat-abwesend"></i>Abwesenheit</span>
+      <span><i class="jahr-probe feiertag"></i>Feiertag</span>
+      <span><i class="jahr-probe ferien"></i>Schulferien</span>
+      <span><i class="jahr-probe wochenende"></i>Wochenende</span>
+    </div>
+    <div class="jahr-rolle">
+      <div class="jahr-tafel">
+        <div class="jahr-zeile jahr-kopf">
+          <div class="jahr-monat"></div>
+          <div class="jahr-tage">${kopfZahlen}</div>
+        </div>
+        ${zeilen.join('')}
+      </div>
+    </div>
+    <p class="jahr-hinweis">Ein Klick auf einen Tag öffnet die Einzelheiten. Auf schmalen Bildschirmen lässt sich die Tafel seitlich schieben.</p>`;
+
+  const statsEl = document.getElementById('kal-stats');
+  if(statsEl){
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-val">${zaehlung.auftrag}</div><div class="stat-lbl">Aufträge ${jahr}</div></div>
+      <div class="stat-card"><div class="stat-val">${zaehlung.termin}</div><div class="stat-lbl">Termine ${jahr}</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:${zaehlung.abwesend?'#F87171':'inherit'}">${zaehlung.abwesend}</div><div class="stat-lbl">Abwesenheitstage</div></div>
+      <div class="stat-card"><div class="stat-val">${zaehlung.feiertag}</div><div class="stat-lbl">Feiertage in NRW</div></div>`;
+  }
+}
+
+/* Aus der Jahrestafel in den Monat springen und den Tag öffnen. */
+window.jahrTagOeffnen = function(iso){
+  kalenderStand = ausIso(iso);
+  kalenderAnsichtName = 'monat';
+  kalenderGewaehlt = iso;
+  renderKalender();
+  renderFerienVerwaltung();
+  kalenderTagOeffnen(iso);
+};
 
 /* ── Woche und Tag: Raster mit Uhrzeiten ──────────────────── */
 function renderKalenderZeitraster(){
@@ -6865,6 +7439,7 @@ function renderKalenderZeitraster(){
       }).join('')}
     </div>`).join('');
 
+  el.className = kalenderAnsichtName === 'tag' ? 'kal-tag-ansicht' : '';
   el.innerHTML = `<div class="kal-zeitraster">${kopf}${ganztags}${raster}</div>`;
 
   const statsEl = document.getElementById('kal-stats');
@@ -7890,7 +8465,162 @@ window.calcAngebot = function(){
       ${!kosten.bestaetigt ? '<div class="ang-gewinn-fuss">Beruht auf Branchenvorgaben. <span class="stammdaten-link" onclick="switchView(\'kalkulation\')">Eigene Kosten eintragen →</span></div>' : ''}
     </div>
   `;
+
+  // Vorschau mitziehen – entprellt, damit nicht bei jedem Tastendruck
+  // ein PDF gebaut wird.
+  if(typeof window.angebotVorschauAktualisieren === 'function') window.angebotVorschauAktualisieren();
 };
+
+/* ══════════════════════════════════════════════════════════════
+   PDF-VORSCHAU
+   ══════════════════════════════════════════════════════════════
+   Zeigt beim Tippen, was der Kunde später bekommt.
+
+   ⚠️ Die Vorschau benutzt DIESELBE Funktion wie der spätere Versand
+   (buildAngebotPDF). Eine eigene Vorschau-Fassung würde früher oder
+   später abweichen – und dann sähe man etwas anderes, als man
+   verschickt.
+
+   Blob-Adressen müssen wieder freigegeben werden, sonst hält der
+   Browser bei jedem Tastendruck ein weiteres PDF im Speicher. */
+let vorschauAdressen = { ang:null, rechnung:null };
+let vorschauTimer = null;
+
+function vorschauFreigeben(schluessel){
+  if(vorschauAdressen[schluessel]){
+    URL.revokeObjectURL(vorschauAdressen[schluessel]);
+    vorschauAdressen[schluessel] = null;
+  }
+}
+
+function vorschauZeigen(rahmenId, schluessel, blob){
+  const rahmen = document.getElementById(rahmenId);
+  if(!rahmen) return;
+  vorschauFreigeben(schluessel);
+  const adresse = URL.createObjectURL(blob);
+  vorschauAdressen[schluessel] = adresse;
+  /* #toolbar=0 blendet die Werkzeugleiste des eingebauten Anzeigers
+     aus – in einem 380 px breiten Fenster nimmt sie sonst ein
+     Drittel der Höhe ein. */
+  rahmen.innerHTML = '<iframe title="PDF-Vorschau" src="' + adresse + '#toolbar=0&navpanes=0&view=FitH"></iframe>';
+  return adresse;
+}
+
+/* Aus dem Angebotsformular ein Vorschau-Angebot bauen – ohne
+   Angebotsnummer zu verbrauchen. */
+function angebotAusFormular(){
+  if(!lastAngebotBreakdown || !lastAngebotBreakdown.zeilen || !lastAngebotBreakdown.zeilen.length) return null;
+  const holen = id => (document.getElementById(id) || {}).value || '';
+  return Object.assign({}, lastAngebotBreakdown, {
+    vorname: holen('ang-vorname').trim(),
+    nachname: holen('ang-nachname').trim(),
+    email: holen('ang-email').trim(),
+    telefon: holen('ang-telefon').trim(),
+    adresse: holen('ang-adresse').trim(),
+    haeufigkeit: holen('ang-haeufigkeit'),
+    gueltigkeit: parseInt(holen('ang-gueltigkeit'), 10) || Number(v('angebot_gueltigkeit')) || 14,
+    anmerkung: holen('ang-anmerkung').trim(),
+    createdAt: null
+  });
+}
+
+window.angebotVorschauAktualisieren = function(sofort){
+  const rahmen = document.getElementById('ang-pdf-rahmen');
+  if(!rahmen) return;
+
+  const bauen = () => {
+    if(!pdfVerfuegbar()){
+      rahmen.innerHTML = '<div class="pdf-vorschau-leer">Die PDF-Bibliothek konnte nicht geladen werden – meist ein Werbeblocker. Alles andere funktioniert.</div>';
+      return;
+    }
+    const daten = angebotAusFormular();
+    if(!daten){
+      vorschauFreigeben('ang');
+      rahmen.innerHTML = '<div class="pdf-vorschau-leer">Leistungen wählen und eine Menge eintragen – die Vorschau erscheint automatisch.</div>';
+      return;
+    }
+    try {
+      const nummer = (v('angebot_praefix') || 'ANG') + '-' + new Date().getFullYear() + '-ENTWURF';
+      vorschauZeigen('ang-pdf-rahmen', 'ang', buildAngebotPDF(daten, nummer));
+    } catch(err){
+      console.error('Vorschau fehlgeschlagen:', err);
+      rahmen.innerHTML = '<div class="pdf-vorschau-leer">Die Vorschau konnte nicht erzeugt werden. Das Angebot selbst lässt sich trotzdem erstellen.</div>';
+    }
+  };
+
+  if(sofort){ bauen(); return; }
+  // Entprellen: Bei jedem Tastendruck ein PDF zu bauen wäre zu teuer.
+  if(vorschauTimer) clearTimeout(vorschauTimer);
+  vorschauTimer = setTimeout(bauen, 550);
+};
+
+/* Vollbild – auf dem Handy der einzige sinnvolle Weg, ein A4-Blatt
+   anzusehen. */
+window.pdfVollbild = function(welche){
+  const kasten = document.getElementById('pdf-vollbild');
+  const rahmen = document.getElementById('pdf-vollbild-rahmen');
+  const fuss = document.getElementById('pdf-vollbild-fuss');
+  const titel = document.getElementById('pdf-vollbild-titel');
+  if(!kasten) return;
+
+  if(!pdfVerfuegbar()){
+    alert('Die PDF-Bibliothek konnte nicht geladen werden.\n\nMeist liegt das an einem Werbeblocker. Bitte Seite neu laden.');
+    return;
+  }
+
+  if(welche === 'ang'){
+    const daten = angebotAusFormular();
+    if(!daten){
+      melde('Bitte zuerst eine Leistung mit Menge auswählen.', 'fehler');
+      return;
+    }
+    const nummer = (v('angebot_praefix') || 'ANG') + '-' + new Date().getFullYear() + '-ENTWURF';
+    titel.textContent = 'Angebot – Vorschau';
+    vorschauZeigen('pdf-vollbild-rahmen', 'vollbild', buildAngebotPDF(daten, nummer));
+    fuss.innerHTML = `
+      <button class="btn btn-primary" style="width:auto;padding:12px 20px" onclick="pdfVollbildSchliessen();createAngebotPDF(false)">Angebot erstellen</button>
+      <button class="karte-aktion" style="min-height:44px" onclick="pdfVollbildSchliessen()">Zurück zum Formular</button>`;
+  }
+  kasten.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+};
+
+window.pdfVollbildSchliessen = function(){
+  const kasten = document.getElementById('pdf-vollbild');
+  if(!kasten || kasten.hasAttribute('hidden')) return;
+  kasten.setAttribute('hidden','');
+  document.getElementById('pdf-vollbild-rahmen').innerHTML = '';
+  vorschauFreigeben('vollbild');
+  document.body.style.overflow = '';
+};
+
+/* Rechnung vor dem Herunterladen ansehen. */
+window.rechnungVorschau = function(requestId){
+  if(!pdfVerfuegbar()){ alert('Die PDF-Bibliothek konnte nicht geladen werden.'); return; }
+  const r = allRequests.find(x => x.id === requestId);
+  if(!r){ melde('Anfrage nicht gefunden.', 'fehler'); return; }
+
+  const satz = steuerSatzFuerBelege();
+  const brutto = Number(r.geschaetzter_auftragswert) || 0;
+  const netto = brutto / (1 + satz/100);
+  const nummer = r.rechnung_nummer || ((v('rechnung_praefix') || 'RE') + '-' + new Date().getFullYear() + '-ENTWURF');
+
+  const kasten = document.getElementById('pdf-vollbild');
+  document.getElementById('pdf-vollbild-titel').textContent =
+    'Rechnung – Vorschau' + (r.rechnung_nummer ? ' ' + r.rechnung_nummer : ' (Entwurf)');
+  vorschauZeigen('pdf-vollbild-rahmen', 'vollbild',
+    buildInvoicePDF(r, nummer, netto, brutto - netto, brutto, satz, null));
+  document.getElementById('pdf-vollbild-fuss').innerHTML = `
+    <button class="btn btn-primary" style="width:auto;padding:12px 20px" onclick="pdfVollbildSchliessen();generateInvoice('${sicherJs(requestId)}', false)">Rechnung erstellen</button>
+    <button class="karte-aktion" style="min-height:44px" onclick="pdfVollbildSchliessen()">Schließen</button>`;
+  kasten.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+};
+
+// Escape schließt die Vollbild-Vorschau
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') window.pdfVollbildSchliessen();
+});
 
 function renderAngAnfrageSelect(){
   const sel = document.getElementById('ang-anfrage-select');
