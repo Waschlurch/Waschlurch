@@ -102,6 +102,25 @@ a { color:inherit; }
 .stat-val { overflow-wrap:anywhere; }
 .stat-val { font-size:24px; font-weight:700; }
 .stat-lbl { font-size:12px; color:rgba(255,255,255,0.62); margin-top:4px; }
+/* Herkunft einer Zahl sichtbar machen – „woher kommt das?" war der
+   Kern der Verwirrung zwischen Kundenkarte und Übersicht. */
+.stat-quelle { font-size:11px; color:rgba(255,255,255,0.5); }
+.herkunft-marke {
+  display:inline-block; font-size:10px; font-weight:700; letter-spacing:.4px;
+  text-transform:uppercase; padding:2px 7px; border-radius:100px; margin-left:6px;
+  background:rgba(34,197,94,0.16); color:#86EFAC; white-space:nowrap;
+}
+.herkunft-marke.manuell { background:rgba(255,255,255,0.09); color:rgba(255,255,255,0.65); }
+.rechenweg {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+  border-radius:14px; padding:16px 18px; margin-bottom:20px;
+  font-size:13px; line-height:1.7; color:rgba(255,255,255,0.72);
+}
+.rechenweg strong { color:var(--white); }
+.rechenweg table { width:100%; border-collapse:collapse; margin-top:8px; }
+.rechenweg td { padding:4px 0; }
+.rechenweg td:last-child { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rechenweg tr.ergebnis td { border-top:1px solid rgba(255,255,255,0.16); padding-top:9px; font-weight:700; color:var(--white); }
 
 /* ── ÜBERSICHT (Startbildschirm) ── */
 .stat-card.klickbar { cursor:pointer; transition:border-color .15s, background .15s; }
@@ -358,6 +377,82 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .karte-aktion:hover { background:rgba(255,255,255,0.14); color:var(--white); }
 .karte-aktion.gefahr { border-color:rgba(248,113,113,0.4); color:#FCA5A5; background:rgba(248,113,113,0.1); }
 .karte-aktion.gefahr:hover { background:rgba(248,113,113,0.2); }
+
+/* ── KALENDER ────────────────────────────────────────────────── */
+.kal-leiste { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.kal-monat { font-size:17px; font-weight:700; min-width:180px; text-align:center; }
+.kal-leiste .bool-label { font-size:12.5px; white-space:nowrap; text-transform:none; }
+
+.kal-legende {
+  display:flex; gap:16px; flex-wrap:wrap; align-items:center;
+  font-size:12px; color:rgba(255,255,255,0.65); margin-bottom:14px;
+}
+.kal-legende span { display:inline-flex; align-items:center; gap:6px; }
+.kal-punkt { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.kal-punkt.auftrag  { background:var(--green); }
+.kal-punkt.rechnung { background:#3B82F6; }
+.kal-punkt.wunsch   { background:#FBBF24; }
+.kal-punkt.angebot  { background:#A78BFA; }
+.kal-punkt.abwesend { background:#F87171; }
+.kal-flaeche { width:14px; height:9px; border-radius:3px; display:inline-block; flex-shrink:0; }
+.kal-flaeche.feiertag { background:rgba(248,113,113,0.28); }
+.kal-flaeche.ferien   { background:rgba(251,191,36,0.22); }
+
+.kal-wochentage {
+  display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px;
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+  color:rgba(255,255,255,0.5); padding:0 2px 8px;
+}
+.kal-wochentage span { text-align:center; }
+
+.kal-gitter { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; }
+.kal-tag {
+  min-height:96px; padding:8px; border-radius:12px; cursor:pointer;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  display:flex; flex-direction:column; gap:5px; text-align:left;
+  font-family:inherit; color:inherit; overflow:hidden;
+}
+.kal-tag:hover { border-color:rgba(34,197,94,0.45); background:rgba(34,197,94,0.05); }
+.kal-tag.fremder-monat { opacity:.34; }
+.kal-tag.heute { border-color:var(--green); box-shadow:inset 0 0 0 1px var(--green); }
+.kal-tag.wochenende { background:rgba(255,255,255,0.02); }
+.kal-tag.feiertag { background:rgba(248,113,113,0.12); border-color:rgba(248,113,113,0.28); }
+.kal-tag.ferien   { background:rgba(251,191,36,0.10); }
+.kal-tag.feiertag.ferien { background:rgba(248,113,113,0.14); }
+.kal-tag-kopf { display:flex; align-items:baseline; justify-content:space-between; gap:6px; }
+.kal-tag-zahl { font-size:14px; font-weight:700; }
+.kal-tag.heute .kal-tag-zahl { color:var(--green); }
+.kal-tag-marke { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:#FCA5A5; text-align:right; line-height:1.25; }
+.kal-tag.ferien .kal-tag-marke { color:#FBBF24; }
+.kal-eintrag {
+  display:flex; align-items:center; gap:5px; font-size:11px; line-height:1.35;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color:rgba(255,255,255,0.85);
+}
+.kal-eintrag .kal-punkt { width:7px; height:7px; }
+.kal-mehr { font-size:10.5px; color:rgba(255,255,255,0.55); margin-top:auto; }
+
+.kal-detail-zeile {
+  display:flex; align-items:flex-start; gap:11px; padding:11px 13px; margin-bottom:8px;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:11px;
+}
+.kal-detail-zeile .kal-punkt { margin-top:5px; }
+.kal-detail-text { flex:1; min-width:0; }
+.kal-detail-titel { font-size:13.5px; font-weight:700; }
+.kal-detail-sub { font-size:12px; color:rgba(255,255,255,0.6); margin-top:2px; }
+
+@media(max-width:900px){
+  /* Auf dem Handy ist ein 7-Spalten-Raster mit Text unlesbar –
+     stattdessen eine Liste der Tage, die überhaupt etwas enthalten. */
+  .kal-wochentage { display:none; }
+  .kal-gitter { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .kal-tag { min-height:0; flex-direction:row; align-items:flex-start; gap:12px; padding:12px 14px; }
+  .kal-tag.leer-mobil { display:none; }
+  .kal-tag.fremder-monat { display:none; }
+  .kal-tag-kopf { flex-direction:column; align-items:flex-start; min-width:56px; gap:2px; }
+  .kal-tag-inhalt { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+  .kal-monat { min-width:0; flex:1; }
+}
 
 /* WARNUNG UNBEANTWORTET */
 .req-stale-badge {
@@ -772,6 +867,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     </div>
     <div class="nav-group">Tagesgeschäft</div>
     <div class="nav-item active" data-view="uebersicht" onclick="switchView('uebersicht')"><span class="ni-icon">🏠</span><span class="ni-label">Übersicht</span></div>
+    <div class="nav-item" data-view="kalender" onclick="switchView('kalender')"><span class="ni-icon">📅</span><span class="ni-label">Kalender</span></div>
     <div class="nav-item" data-view="anfragen" onclick="switchView('anfragen')"><span class="ni-icon">📋</span><span class="ni-label">Anfragen</span></div>
     <div class="nav-item" data-view="kunden" onclick="switchView('kunden')"><span class="ni-icon">👥</span><span class="ni-label">Kunden</span></div>
     <div class="nav-item" data-view="angebote" onclick="switchView('angebote')"><span class="ni-icon">📝</span><span class="ni-label">Angebote</span></div>
@@ -850,6 +946,50 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
           <div class="ueb-panel-title">Braucht Aufmerksamkeit</div>
           <div id="ueb-todo"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- KALENDER -->
+    <div class="view" id="view-kalender">
+      <div class="view-head">
+        <div class="view-title">Kalender</div>
+        <div class="view-sub">Aufträge, Rechnungen, Wunschtermine, Abwesenheiten, Feiertage und Schulferien in NRW</div>
+      </div>
+
+      <div class="kal-leiste">
+        <button class="karte-aktion" onclick="kalenderMonat(-1)" aria-label="Vorheriger Monat">←</button>
+        <div class="kal-monat" id="kal-monat">—</div>
+        <button class="karte-aktion" onclick="kalenderMonat(1)" aria-label="Nächster Monat">→</button>
+        <button class="karte-aktion" onclick="kalenderHeute()">Heute</button>
+        <div style="flex:1"></div>
+        <label class="bool-label"><input type="checkbox" id="kal-zeige-anfragen" checked onchange="renderKalender()"> Wunschtermine</label>
+        <label class="bool-label"><input type="checkbox" id="kal-zeige-rechnungen" checked onchange="renderKalender()"> Rechnungen</label>
+        <label class="bool-label"><input type="checkbox" id="kal-zeige-abwesend" checked onchange="renderKalender()"> Abwesenheiten</label>
+        <label class="bool-label"><input type="checkbox" id="kal-zeige-ferien" checked onchange="renderKalender()"> Ferien</label>
+      </div>
+
+      <div class="stat-row" id="kal-stats"></div>
+
+      <div class="kal-legende">
+        <span><i class="kal-punkt auftrag"></i>Auftrag</span>
+        <span><i class="kal-punkt rechnung"></i>Rechnung</span>
+        <span><i class="kal-punkt wunsch"></i>Wunschtermin</span>
+        <span><i class="kal-punkt angebot"></i>Angebot läuft ab</span>
+        <span><i class="kal-punkt abwesend"></i>Abwesenheit</span>
+        <span><i class="kal-flaeche feiertag"></i>Feiertag</span>
+        <span><i class="kal-flaeche ferien"></i>Schulferien</span>
+      </div>
+
+      <div class="kal-wochentage" aria-hidden="true">
+        <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+      </div>
+      <div class="kal-gitter" id="kal-gitter"></div>
+
+      <div class="karte-block" id="kal-tag-detail" style="display:none"></div>
+
+      <div class="karte-block">
+        <div class="karte-block-titel">Schulferien in Nordrhein-Westfalen</div>
+        <div id="kal-ferien-verwaltung"></div>
       </div>
     </div>
 
@@ -1153,15 +1293,45 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         </div>
       </div>
       <div id="mitarbeiter-list"><div class="empty-state">Lade Mitarbeiter ...</div></div>
+
+      <div class="karte-block" style="margin-top:28px">
+        <div class="karte-block-titel">Urlaub, Krankheit und sonstige Abwesenheiten</div>
+        <p style="font-size:13px;line-height:1.65;color:rgba(255,255,255,0.65);margin-bottom:16px">
+          Eingetragene Zeiträume erscheinen im Kalender. So siehst du auf einen Blick,
+          wann jemand nicht einsatzbereit ist – bevor du einen Auftrag zusagst.
+        </p>
+        <div class="field-row">
+          <div class="field"><label for="abw-mitarbeiter">Mitarbeiter</label>
+            <select id="abw-mitarbeiter"></select></div>
+          <div class="field"><label for="abw-art">Art</label>
+            <select id="abw-art">
+              <option value="urlaub">Urlaub</option>
+              <option value="krank">Krank</option>
+              <option value="fortbildung">Fortbildung</option>
+              <option value="sonstiges">Sonstiges</option>
+            </select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="abw-von">Von</label><input type="date" id="abw-von"></div>
+          <div class="field"><label for="abw-bis">Bis</label><input type="date" id="abw-bis"></div>
+        </div>
+        <div class="field"><label for="abw-notiz">Notiz (optional)</label>
+          <input type="text" id="abw-notiz" placeholder="z. B. Vertretung durch Jan"></div>
+        <div class="feld-fehler" id="abw-fehler"></div>
+        <button class="btn btn-primary" style="width:auto;padding:12px 22px" id="abw-save-btn" onclick="saveAbwesenheit()">Abwesenheit eintragen</button>
+
+        <div id="abwesenheiten-liste" style="margin-top:20px"></div>
+      </div>
     </div>
 
     <!-- FINANZEN -->
     <div class="view" id="view-finanzen">
       <div class="view-head">
-        <div class="view-title">Finanzen</div>
-        <div class="view-sub">Einfache Übersicht deiner Einnahmen</div>
+        <div class="view-title">Einnahmen</div>
+        <div class="view-sub">Bezahlte Aufträge aus den Kundenkarten und alles Übrige, was hereinkommt</div>
       </div>
       <div class="stat-row" id="fin-stats"></div>
+      <div class="rechenweg" id="fin-rechenweg"></div>
       <div id="finanzen-range-picker"></div>
       <div class="chart-row">
         <div class="chart-card" style="grid-column:1/-1">
@@ -1305,6 +1475,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <span style="font-size:18px;font-weight:700">%</span>
         <span style="font-size:12px;color:rgba(255,255,255,0.35);margin-left:auto">wird automatisch gespeichert</span>
       </div>
+      <div class="rechenweg" id="steuer-rechenweg"></div>
       <div class="bericht-section-title" style="margin-top:0">Umsatzsteuer (an das Finanzamt)</div>
       <div class="steuer-cards" id="steuer-cards-ust"></div>
       <div class="bericht-section-title">Einkommensteuer (auf deinen Gewinn)</div>
@@ -1329,6 +1500,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         </div>
 
         <div class="bericht-section-title">Aufträge im Zeitraum</div>
+        <div class="rechenweg" id="bericht-auftraege-hinweis"></div>
         <div class="bericht-grid" id="bericht-auftraege-grid" style="margin-bottom:14px"></div>
         <table class="fin-table">
           <thead><tr><th>Datum</th><th>Kunde</th><th>Auftrag</th><th>Umsatz</th><th>Gewinn</th></tr></thead>
@@ -1764,6 +1936,60 @@ function sichereBildquelle(wert){
   return wert.replace(/\s/g,'');
 }
 
+/* ══════════════════════════════════════════════════════════════
+   EINE QUELLE FÜR ALLE EINNAHMEN
+   ══════════════════════════════════════════════════════════════
+   Ein bezahlter Auftrag IST eine Einnahme. Vorher lebten beide in
+   getrennten Welten: Die Kundenkarte wies 90,00 € Gewinn aus, die
+   Übersicht im selben Moment 0,00 € Einnahmen. Steuern und Bericht
+   rechneten ebenfalls nur mit der `einnahmen`-Sammlung.
+
+   Ab hier laufen alle Finanzansichten über einnahmenGesamt().
+
+   ⚠️ Warum nur `bezahlt` zählt:
+   Für die Einnahmen-Überschuss-Rechnung gilt das Zuflussprinzip
+   (§11 EStG) – Geld zählt in dem Jahr, in dem es eingeht. Ein
+   Auftrag im Status „abgerechnet" ist eine gestellte Rechnung, aber
+   noch kein Zufluss. Er erscheint deshalb unter „noch nicht bezahlt"
+   und NICHT im Umsatz. „geplant" und „erledigt" ebenso wenig.
+
+   ⚠️ Warum die Auftragskosten NICHT in die Steuerrechnung gehen:
+   Das Feld `kosten` am Auftrag ist eine Schätzung für die Marge
+   (Arbeitszeit, Fahrt, Material). Die steuerlich absetzbaren Kosten
+   sind die echten Belege unter „Ausgaben". Beides zu verrechnen
+   würde dieselben Kosten doppelt abziehen. */
+function einnahmenGesamt(){
+  const ausAuftraegen = allAuftraege
+    .filter(a => a.status === 'bezahlt')
+    .map(a => ({
+      id: 'auftrag:' + a.id,
+      auftrag_id: a.id,
+      datum: a.datum,
+      kunde: a.kunde_name || '',
+      beschreibung: a.titel || 'Auftrag',
+      betrag: Number(a.umsatz) || 0,
+      status: 'bezahlt',
+      quelle: 'auftrag'
+    }));
+  const manuell = allEinnahmen.map(e => Object.assign({ quelle: 'manuell' }, e));
+  return manuell.concat(ausAuftraegen);
+}
+
+/* Gestellt, aber noch nicht bezahlt – die offenen Forderungen. */
+function offeneForderungen(){
+  const ausAuftraegen = allAuftraege
+    .filter(a => a.status === 'abgerechnet')
+    .reduce((s,a) => s + (Number(a.umsatz)||0), 0);
+  const ausEinnahmen = allEinnahmen
+    .filter(e => e.status !== 'bezahlt')
+    .reduce((s,e) => s + (Number(e.betrag)||0), 0);
+  return ausAuftraegen + ausEinnahmen;
+}
+
+function summe(liste, feld){
+  return liste.reduce((s,x) => s + (Number(x[feld]) || 0), 0);
+}
+
 /* Beträge einheitlich deutsch: 1.234,56 € statt 1234.56 € */
 function euro(n){
   const z = Number(n);
@@ -1786,6 +2012,8 @@ let allKunden = [];
 let allAngebote = [];
 let allAuftraege = [];
 let unsubAuftraege = null;
+let allAbwesenheiten = [];
+let unsubAbwesenheiten = null;
 let allReferenzen = [];
 let allFaqs = [];
 let allLeistungenBilder = {};
@@ -2083,6 +2311,7 @@ onAuthStateChanged(auth, (user) => {
     listenerLaufen = false;
     document.getElementById('app-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
+    if(unsubAbwesenheiten) unsubAbwesenheiten();
     if(unsubAuftraege) unsubAuftraege();
     if(unsubRequests) unsubRequests();
     if(unsubEinnahmen) unsubEinnahmen();
@@ -2248,8 +2477,17 @@ function renderUebersichtIntern(){
     const d = new Date(e.datum);
     return d.getMonth() === jetzt.getMonth() && d.getFullYear() === jetzt.getFullYear();
   };
-  const umsatz  = allEinnahmen.filter(imMonat).reduce((s,e) => s + (e.betrag||0), 0);
+  /* Einnahmen aus BEIDEN Quellen: von Hand erfasste Einnahmen und
+     bezahlte Aufträge aus den Kundenkarten. Vorher fehlten die
+     Aufträge hier vollständig – die Kundenkarte zeigte Gewinn, die
+     Übersicht 0,00 €. */
+  const einnahmenMonat = einnahmenGesamt()
+    .filter(e => e.status === 'bezahlt')   // Zuflussprinzip – offene Rechnungen zählen nicht
+    .filter(imMonat);
+  const umsatz  = summe(einnahmenMonat, 'betrag');
   const ausgabe = allAusgaben.filter(imMonat).reduce((s,a) => s + (a.betrag||0), 0);
+  const gewinn  = umsatz - ausgabe;
+  const ausAuftraegen = summe(einnahmenMonat.filter(e => e.quelle === 'auftrag'), 'betrag');
 
   handyZaehlerAktualisieren(offen.length);
 
@@ -2263,16 +2501,16 @@ function renderUebersichtIntern(){
       <div class="stat-lbl">Offene Anfragen</div>
     </div>
     <div class="stat-card klickbar" onclick="switchView('finanzen')">
-      <div class="stat-val">${euro(umsatz)}</div>
-      <div class="stat-lbl">Einnahmen diesen Monat</div>
+      <div class="stat-val">${sicher(euro(umsatz))}</div>
+      <div class="stat-lbl">Einnahmen diesen Monat${ausAuftraegen ? '<br><span class="stat-quelle">davon ' + sicher(euro(ausAuftraegen)) + ' aus Aufträgen</span>' : ''}</div>
     </div>
     <div class="stat-card klickbar" onclick="switchView('ausgaben')">
-      <div class="stat-val">${euro(ausgabe)}</div>
+      <div class="stat-val">${sicher(euro(ausgabe))}</div>
       <div class="stat-lbl">Ausgaben diesen Monat</div>
     </div>
-    <div class="stat-card klickbar ${wartendeAngebote.length ? 'betont' : ''}" onclick="switchView('angebote')">
-      <div class="stat-val">${wartendeAngebote.length}</div>
-      <div class="stat-lbl">Angebote ohne Antwort</div>
+    <div class="stat-card klickbar ${gewinn < 0 ? '' : 'betont'}" onclick="switchView('steuern')">
+      <div class="stat-val" style="color:${gewinn < 0 ? '#F87171' : 'var(--green)'}">${sicher(euro(gewinn))}</div>
+      <div class="stat-lbl">Gewinn diesen Monat</div>
     </div>`;
 
   // Zuletzt eingegangene Anfragen
@@ -2385,8 +2623,10 @@ function startListeners(){
   unsubMitarbeiter = onSnapshot(collection(db, 'mitarbeiter'), (snap) => {
     allMitarbeiter = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderMitarbeiterList();
+    renderAbwesenheitenListe();
+    renderKalender();
     renderRequests();
-  }, err => console.error(err));
+  }, err => meldeLadefehler(err, 'mitarbeiter', 'mitarbeiter-list'));
 
   unsubKunden = onSnapshot(collection(db, 'kunden'), (snap) => {
     allKunden = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -2403,9 +2643,23 @@ function startListeners(){
     // Die Angebotsliste zeigt je Angebot, ob daraus schon ein Auftrag
     // entstanden ist – sie muss also mitziehen.
     renderAngeboteList();
+    /* Aufträge sind Einnahmen – deshalb müssen ALLE Finanzansichten
+       mitziehen. Fehlte renderEinnahmen() hier, zeigte die
+       Einnahmenliste hartnäckig 0,00 € aus Aufträgen. */
+    renderEinnahmen();
+    renderSteuern();
     renderBericht();
     renderUebersicht();
+    renderKalender();
   }, err => meldeLadefehler(err, 'auftraege', null));
+
+  /* Abwesenheiten: Urlaub, Krankheit, Fortbildung je Mitarbeiter.
+     Speisen den Kalender und die Warnung beim Zuweisen. */
+  unsubAbwesenheiten = onSnapshot(collection(db, 'abwesenheiten'), (snap) => {
+    allAbwesenheiten = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderAbwesenheitenListe();
+    renderKalender();
+  }, err => meldeLadefehler(err, 'abwesenheiten', 'abwesenheiten-liste'));
 
   const angeboteQuery = collection(db, 'angebote');
   unsubAngebote = onSnapshot(angeboteQuery, (snap) => {
@@ -2447,6 +2701,8 @@ function startListeners(){
   }, err => console.error(err));
 
   loadPreise();
+  ladeSchulferien();
+  renderKalender();
   loadSteuersatz();
   loadFirma();
   loadKalkulation();
@@ -2967,39 +3223,78 @@ renderTemplateList();
 function renderEinnahmen(){
   const body = document.getElementById('fin-table-body');
   const statsEl = document.getElementById('fin-stats');
+  if(!body || !statsEl) return;
 
-  const total = allEinnahmen.reduce((s,e) => s + (e.betrag||0), 0);
-  const bezahlt = allEinnahmen.filter(e => e.status === 'bezahlt').reduce((s,e) => s + (e.betrag||0), 0);
-  const offen = total - bezahlt;
+  const alle = einnahmenGesamt();
+  const bezahlt   = alle.filter(e => e.status === 'bezahlt');
+  const ausAuftr  = bezahlt.filter(e => e.quelle === 'auftrag');
+  const ausManuell= bezahlt.filter(e => e.quelle === 'manuell');
+  const offenSumme = offeneForderungen();
 
   statsEl.innerHTML = `
-    <div class="stat-card"><div class="stat-val">${sicher(euro(total))}</div><div class="stat-lbl">Gesamt</div></div>
-    <div class="stat-card"><div class="stat-val">${sicher(euro(bezahlt))}</div><div class="stat-lbl">Bezahlt</div></div>
-    <div class="stat-card"><div class="stat-val">${sicher(euro(offen))}</div><div class="stat-lbl">Offen</div></div>
-    <div class="stat-card"><div class="stat-val">${allEinnahmen.length}</div><div class="stat-lbl">Einträge</div></div>
+    <div class="stat-card"><div class="stat-val">${sicher(euro(summe(bezahlt,'betrag')))}</div><div class="stat-lbl">Eingegangen (zählt als Umsatz)</div></div>
+    <div class="stat-card"><div class="stat-val">${sicher(euro(summe(ausAuftr,'betrag')))}</div><div class="stat-lbl">davon aus Aufträgen</div></div>
+    <div class="stat-card"><div class="stat-val">${sicher(euro(summe(ausManuell,'betrag')))}</div><div class="stat-lbl">davon von Hand erfasst</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#FBBF24">${sicher(euro(offenSumme))}</div><div class="stat-lbl">Noch nicht bezahlt</div></div>
   `;
 
-  if(allEinnahmen.length === 0){
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.55);padding:30px">Noch keine Einträge. Trag oben deine erste Einnahme ein.</td></tr>';
+  /* Rechenweg offenlegen. Genau hier lag die Verwirrung: Die
+     Kundenkarte zeigte Gewinn, die Übersicht 0,00 € Einnahmen. */
+  const hinweis = document.getElementById('fin-rechenweg');
+  if(hinweis){
+    hinweis.innerHTML = `
+      <strong>Woher diese Zahlen kommen</strong>
+      <table>
+        <tr><td>Bezahlte Aufträge aus den Kundenkarten (${ausAuftr.length})</td><td>${sicher(euro(summe(ausAuftr,'betrag')))}</td></tr>
+        <tr><td>Hier von Hand erfasst, Status „bezahlt" (${ausManuell.length})</td><td>${sicher(euro(summe(ausManuell,'betrag')))}</td></tr>
+        <tr class="ergebnis"><td>Umsatz gesamt</td><td>${sicher(euro(summe(bezahlt,'betrag')))}</td></tr>
+      </table>
+      <p style="margin-top:10px;font-size:12.5px;color:rgba(255,255,255,0.6)">
+        Aufträge trägst du in der Kundenkarte ein – sie erscheinen hier automatisch, sobald du sie
+        auf <em>bezahlt</em> setzt. Von Hand nur eintragen, was <strong>kein</strong> Auftrag ist,
+        sonst zählt derselbe Betrag doppelt.
+      </p>`;
+  }
+
+  if(alle.length === 0){
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.55);padding:30px">Noch keine Einnahmen. Bezahlte Aufträge aus den Kundenkarten erscheinen hier von selbst.</td></tr>';
     renderFinanzenChart();
     return;
   }
 
-  body.innerHTML = allEinnahmen.map(e => {
+  const sortiert = [...alle].sort((a,b) => String(b.datum||'').localeCompare(String(a.datum||'')));
+
+  body.innerHTML = sortiert.map(e => {
     const status = e.status === 'bezahlt' ? 'bezahlt' : 'offen';
+    const ausAuftrag = e.quelle === 'auftrag';
     return `
     <tr>
       <td data-label="Datum">${sicher(e.datum||'–')}</td>
       <td data-label="Kunde">${sicher(e.kunde||'–')}</td>
-      <td data-label="Beschreibung">${sicher(e.beschreibung||'–')}</td>
+      <td data-label="Beschreibung">${sicher(e.beschreibung||'–')}
+        <span class="herkunft-marke ${ausAuftrag ? '' : 'manuell'}">${ausAuftrag ? 'Auftrag' : 'von Hand'}</span></td>
       <td data-label="Betrag">${sicher(euro(e.betrag))}</td>
-      <td data-label="Status"><span class="status-pill ${status}" role="button" tabindex="0"
-            onclick="toggleEinnahmeStatus('${sicherJs(e.id)}','${status}')">${status === 'bezahlt' ? 'bezahlt' : 'offen'}</span></td>
-      <td data-label=""><button class="fin-delete" aria-label="Eintrag löschen" onclick="deleteEinnahme('${sicherJs(e.id)}')">✕</button></td>
+      <td data-label="Status">${ausAuftrag
+        ? `<span class="status-pill bezahlt" title="Wird in der Kundenkarte gepflegt">bezahlt</span>`
+        : `<span class="status-pill ${status}" role="button" tabindex="0"
+             onclick="toggleEinnahmeStatus('${sicherJs(e.id)}','${status}')">${status}</span>`}</td>
+      <td data-label="">${ausAuftrag
+        ? `<button class="fin-delete" title="In der Kundenkarte bearbeiten" aria-label="Auftrag in der Kundenkarte öffnen"
+             onclick="springeZuAuftrag('${sicherJs(e.auftrag_id)}')" style="color:var(--green)">→</button>`
+        : `<button class="fin-delete" aria-label="Eintrag löschen" onclick="deleteEinnahme('${sicherJs(e.id)}')">✕</button>`}</td>
     </tr>`;
   }).join('');
   renderFinanzenChart();
 }
+
+/* Aus der Einnahmenliste zurück zur Kundenkarte, in der der Auftrag
+   gepflegt wird – sonst sucht man ihn von Hand. */
+window.springeZuAuftrag = function(auftragId){
+  const a = allAuftraege.find(x => x.id === auftragId);
+  if(!a || !a.kunde_key){ melde('Der zugehörige Auftrag wurde nicht gefunden.', 'fehler'); return; }
+  window.switchView('kunden');
+  window.openKundeDetail(a.kunde_key);
+};
 
 /* Vorher: fehlte Beschreibung oder Betrag, endete die Funktion
    kommentarlos – der Knopf wirkte tot. Und ohne Sperre erzeugten
@@ -3712,7 +4007,9 @@ function renderFinanzenChart(){
   }
   const range = finanzenRange || computeRangeFromPreset(30);
   const buckets = buildBuckets(range);
-  const values = buckets.map(b => allEinnahmen.filter(e => {
+  // Beide Quellen, damit das Diagramm zur Tabelle darunter passt
+  const einnahmenQuelle = einnahmenGesamt().filter(e => e.status === 'bezahlt');
+  const values = buckets.map(b => einnahmenQuelle.filter(e => {
     if(!e.datum) return false;
     const d = new Date(e.datum);
     return d >= b.start && d <= b.end;
@@ -3766,12 +4063,20 @@ window.renderSteuern = function(){
   if(!ustEl || !estEl) return;
 
   const range = steuernRange || computeRangeFromPreset(30);
-  const einnahmenBrutto = filterByRange(allEinnahmen, range, 'datum').reduce((s,e) => s + (e.betrag||0), 0);
+  /* Zuflussprinzip (§11 EStG): Nur was tatsächlich bezahlt wurde,
+     zählt als Einnahme – aus beiden Quellen. Offene Rechnungen
+     stehen darunter separat. */
+  const einnahmenImZeitraum = filterByRange(einnahmenGesamt().filter(e => e.status === 'bezahlt'), range, 'datum');
+  const einnahmenBrutto = summe(einnahmenImZeitraum, 'betrag');
   const ausgabenBrutto = filterByRange(allAusgaben, range, 'datum').reduce((s,a) => s + (a.betrag||0), 0);
 
-  const mwstSatz = parseFloat(document.getElementById('steuer-mwst-satz').value) || 0;
+  /* zahlAusFeld statt parseFloat(...)||0 – dasselbe Muster wie beim
+     Angebotsrechner: Eine eingetragene 0 muss 0 bleiben (Kleinunter-
+     nehmerregelung §19 UStG), ein leeres Feld darf nicht stillschweigend
+     den Satz auf 0 setzen. */
+  const mwstSatz = zahlAusFeld(document.getElementById('steuer-mwst-satz'), 19);
   const bruttoModus = document.getElementById('steuer-brutto-modus').checked;
-  const satz = parseFloat(document.getElementById('steuer-satz').value) || 0;
+  const satz = zahlAusFeld(document.getElementById('steuer-satz'), 0);
 
   let einnahmenNetto, ustAusEinnahmen, ausgabenNetto, vorsteuer;
   if(bruttoModus && mwstSatz > 0){
@@ -3807,6 +4112,35 @@ window.renderSteuern = function(){
     <div class="steuer-card"><div class="steuer-card-lbl">Gesamt ans Finanzamt</div><div class="steuer-card-val" style="color:#F87171">${sicher(euro(gesamtFinanzamt))}</div></div>
     <div class="steuer-card"><div class="steuer-card-lbl">Gewinn nach Einkommensteuer</div><div class="steuer-card-val" style="color:var(--green)">${sicher(euro(gewinnNachSteuer))}</div></div>
   `;
+
+  /* Rechenweg vollständig offenlegen – bei Steuerzahlen muss
+     nachvollziehbar sein, woher jede Zahl kommt. */
+  const weg = document.getElementById('steuer-rechenweg');
+  if(weg){
+    const ausAuftr   = einnahmenImZeitraum.filter(e => e.quelle === 'auftrag');
+    const ausManuell = einnahmenImZeitraum.filter(e => e.quelle === 'manuell');
+    const nochOffen  = offeneForderungen();
+    weg.innerHTML = `
+      <strong>So kommt der Gewinn zustande</strong>
+      <table>
+        <tr><td>Bezahlte Aufträge aus den Kundenkarten (${ausAuftr.length})</td><td>${sicher(euro(summe(ausAuftr,'betrag')))}</td></tr>
+        <tr><td>Von Hand erfasste Einnahmen, bezahlt (${ausManuell.length})</td><td>${sicher(euro(summe(ausManuell,'betrag')))}</td></tr>
+        <tr><td>Belegte Ausgaben im Zeitraum</td><td>− ${sicher(euro(ausgabenBrutto))}</td></tr>
+        <tr class="ergebnis"><td>Gewinn vor Steuern (brutto)</td><td>${sicher(euro(einnahmenBrutto - ausgabenBrutto))}</td></tr>
+      </table>
+      <p style="margin-top:12px;font-size:12.5px;color:rgba(255,255,255,0.62)">
+        Gerechnet wird nach dem <strong>Zuflussprinzip</strong> (§11 EStG): Nur tatsächlich
+        eingegangenes Geld zählt.
+        ${nochOffen > 0
+          ? `Aktuell stehen <strong style="color:#FBBF24">${sicher(euro(nochOffen))}</strong> als
+             gestellt, aber noch nicht bezahlt aus – die zählen erst, wenn sie eingehen.`
+          : 'Es stehen derzeit keine Rechnungen offen.'}
+        <br><br>
+        Als Ausgaben zählen ausschließlich die Belege aus dem Bereich <em>Ausgaben</em>.
+        Die geschätzten Auftragskosten aus den Kundenkarten fließen hier bewusst
+        <strong>nicht</strong> ein – sonst würden dieselben Kosten zweimal abgezogen.
+      </p>`;
+  }
 };
 
 // ── BERICHT ─────────────────────
@@ -3820,7 +4154,7 @@ function renderBericht(){
     const rd = r.createdAt.toDate();
     return rd >= range.start && rd <= range.end;
   });
-  const einInRange = filterByRange(allEinnahmen, range, 'datum');
+  const einInRange = filterByRange(einnahmenGesamt().filter(e => e.status === 'bezahlt'), range, 'datum');
   const ausInRange = filterByRange(allAusgaben, range, 'datum');
 
   const einnahmenSum = einInRange.reduce((s,e) => s + (e.betrag||0), 0);
@@ -3836,21 +4170,39 @@ function renderBericht(){
     return d >= range.start && d <= range.end;
   });
   const auftragUmsatz = auftrInRange.reduce((s,a) => s + (Number(a.umsatz)||0), 0);
-  const auftragGewinn = auftrInRange.reduce((s,a) => s + ((Number(a.umsatz)||0) - (Number(a.kosten)||0)), 0);
+  const auftragKosten = auftrInRange.reduce((s,a) => s + (Number(a.kosten)||0), 0);
+  const auftragGewinn = auftragUmsatz - auftragKosten;
+  const auftragBezahlt = auftrInRange.filter(a => a.status === 'bezahlt');
+  const auftragOffen   = auftrInRange.filter(a => a.status === 'abgerechnet');
 
   grid.innerHTML = `
     <div class="steuer-card"><div class="steuer-card-lbl">Anfragen</div><div class="steuer-card-val">${reqInRange.length}</div></div>
-    <div class="steuer-card"><div class="steuer-card-lbl">Einnahmen</div><div class="steuer-card-val">${sicher(euro(einnahmenSum))}</div></div>
-    <div class="steuer-card"><div class="steuer-card-lbl">Ausgaben</div><div class="steuer-card-val">${sicher(euro(ausgabenSum))}</div></div>
-    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn</div><div class="steuer-card-val" style="color:var(--green)">${sicher(euro(gewinn))}</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Einnahmen (bezahlt)</div><div class="steuer-card-val">${sicher(euro(einnahmenSum))}</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Ausgaben (Belege)</div><div class="steuer-card-val">${sicher(euro(ausgabenSum))}</div></div>
+    <div class="steuer-card"><div class="steuer-card-lbl">Gewinn</div><div class="steuer-card-val" style="color:${gewinn < 0 ? '#F87171' : 'var(--green)'}">${sicher(euro(gewinn))}</div></div>
   `;
 
   const auftragGrid = document.getElementById('bericht-auftraege-grid');
   if(auftragGrid){
+    /* Diese Zahlen sind eine AUFSCHLÜSSELUNG der Einnahmen oben, kein
+       zusätzlicher Umsatz. Der Gewinn hier beruht auf den geschätzten
+       Auftragskosten (Zeit, Fahrt, Material) – der Gewinn oben auf den
+       echten Belegen. Die beiden Zahlen dürfen abweichen. */
     auftragGrid.innerHTML = `
-      <div class="steuer-card"><div class="steuer-card-lbl">Aufträge</div><div class="steuer-card-val">${auftrInRange.length}</div></div>
-      <div class="steuer-card"><div class="steuer-card-lbl">Umsatz aus Aufträgen</div><div class="steuer-card-val">${sicher(euro(auftragUmsatz))}</div></div>
-      <div class="steuer-card"><div class="steuer-card-lbl">Gewinn aus Aufträgen</div><div class="steuer-card-val" style="color:var(--green)">${sicher(euro(auftragGewinn))}</div></div>`;
+      <div class="steuer-card"><div class="steuer-card-lbl">Aufträge im Zeitraum</div><div class="steuer-card-val">${auftrInRange.length}</div></div>
+      <div class="steuer-card"><div class="steuer-card-lbl">davon bezahlt</div><div class="steuer-card-val">${sicher(euro(summe(auftragBezahlt,'umsatz')))}</div></div>
+      <div class="steuer-card"><div class="steuer-card-lbl">davon offen</div><div class="steuer-card-val" style="color:#FBBF24">${sicher(euro(summe(auftragOffen,'umsatz')))}</div></div>
+      <div class="steuer-card"><div class="steuer-card-lbl">Rohertrag nach Auftragskosten</div><div class="steuer-card-val" style="color:${auftragGewinn < 0 ? '#F87171' : 'var(--green)'}">${sicher(euro(auftragGewinn))}</div></div>`;
+  }
+  const auftragHinweis = document.getElementById('bericht-auftraege-hinweis');
+  if(auftragHinweis){
+    auftragHinweis.innerHTML = `
+      <strong>Aufschlüsselung, kein zusätzlicher Umsatz.</strong>
+      Bezahlte Aufträge stecken bereits in den Einnahmen oben.
+      Der <em>Rohertrag</em> hier rechnet mit den geschätzten Auftragskosten
+      (Arbeitszeit, Fahrt, Material) und beantwortet „hat sich der Auftrag gelohnt?".
+      Der <em>Gewinn</em> oben rechnet mit den echten Belegen aus dem Bereich Ausgaben
+      und ist die Grundlage für die Steuer. Beide Zahlen dürfen auseinandergehen.`;
   }
   const auftragBody = document.getElementById('bericht-auftraege-body');
   if(auftragBody){
@@ -4750,8 +5102,21 @@ function deriveKundenList(){
     k.umsatzGesamt = k.auftraege.reduce((s,a) => s + (Number(a.umsatz)||0), 0);
     k.kostenGesamt = k.auftraege.reduce((s,a) => s + (Number(a.kosten)||0), 0);
     k.gewinnGesamt = k.umsatzGesamt - k.kostenGesamt;
+
+    /* Vier Status, drei Bedeutungen fürs Geld:
+       geplant/erledigt = noch keine Rechnung gestellt
+       abgerechnet      = Rechnung raus, Geld fehlt  → offene Forderung
+       bezahlt          = Geld da                    → zählt als Umsatz
+       Vorher galt alles außer „bezahlt" als offene Forderung – auch
+       ein Auftrag, der erst nächste Woche stattfindet. */
+    k.bezahltBetrag = k.auftraege
+      .filter(a => a.status === 'bezahlt')
+      .reduce((s,a) => s + (Number(a.umsatz)||0), 0);
     k.offenerBetrag = k.auftraege
-      .filter(a => a.status !== 'bezahlt')
+      .filter(a => a.status === 'abgerechnet')
+      .reduce((s,a) => s + (Number(a.umsatz)||0), 0);
+    k.nichtAbgerechnet = k.auftraege
+      .filter(a => a.status === 'geplant' || a.status === 'erledigt')
       .reduce((s,a) => s + (Number(a.umsatz)||0), 0);
 
     k.status = k.statusManuell || computeAutoStatus(k);
@@ -4795,15 +5160,16 @@ function renderKunden(){
   const alle = deriveKundenList();
   const sichtbareBasis = alle.filter(k => !k.ausgeblendet);
 
-  const umsatz = sichtbareBasis.reduce((s,k) => s + k.umsatzGesamt, 0);
-  const gewinn = sichtbareBasis.reduce((s,k) => s + k.gewinnGesamt, 0);
-  const offen  = sichtbareBasis.reduce((s,k) => s + k.offenerBetrag, 0);
+  const umsatz  = sichtbareBasis.reduce((s,k) => s + k.umsatzGesamt, 0);
+  const gewinn  = sichtbareBasis.reduce((s,k) => s + k.gewinnGesamt, 0);
+  const bezahlt = sichtbareBasis.reduce((s,k) => s + k.bezahltBetrag, 0);
+  const offen   = sichtbareBasis.reduce((s,k) => s + k.offenerBetrag, 0);
 
   statsEl.innerHTML = `
     <div class="stat-card"><div class="stat-val">${sichtbareBasis.length}</div><div class="stat-lbl">Kunden</div></div>
-    <div class="stat-card"><div class="stat-val">${sicher(euro(umsatz))}</div><div class="stat-lbl">Umsatz aus Aufträgen</div></div>
-    <div class="stat-card betont"><div class="stat-val">${sicher(euro(gewinn))}</div><div class="stat-lbl">Gewinn aus Aufträgen</div></div>
-    <div class="stat-card"><div class="stat-val">${sicher(euro(offen))}</div><div class="stat-lbl">Noch nicht bezahlt</div></div>`;
+    <div class="stat-card"><div class="stat-val">${sicher(euro(umsatz))}</div><div class="stat-lbl">Auftragswert gesamt<br><span class="stat-quelle">davon ${sicher(euro(bezahlt))} bezahlt</span></div></div>
+    <div class="stat-card betont"><div class="stat-val" style="color:${gewinn < 0 ? '#F87171' : 'var(--green)'}">${sicher(euro(gewinn))}</div><div class="stat-lbl">Rohertrag nach Auftragskosten</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${offen > 0 ? '#FBBF24' : 'inherit'}">${sicher(euro(offen))}</div><div class="stat-lbl">Abgerechnet, noch offen</div></div>`;
 
   const suchfeld = document.getElementById('kunden-search');
   const suche = suchfeld ? suchfeld.value.toLowerCase().trim() : '';
@@ -5145,11 +5511,17 @@ function renderAuftragListe(k){
     </div>`;
   }).join('') + `
     <div class="auftrag-summe">
-      <span>Umsatz gesamt<b>${sicher(euro(k.umsatzGesamt))}</b></span>
-      <span>Kosten gesamt<b>${sicher(euro(k.kostenGesamt))}</b></span>
-      <span class="${gewinnKlasse}">Gewinn gesamt<b>${sicher(euro(k.gewinnGesamt))}</b></span>
-      ${k.offenerBetrag > 0 ? `<span style="color:#FBBF24">Noch nicht bezahlt<b>${sicher(euro(k.offenerBetrag))}</b></span>` : ''}
-    </div>`;
+      <span>Auftragswert<b>${sicher(euro(k.umsatzGesamt))}</b></span>
+      <span>Kosten<b>${sicher(euro(k.kostenGesamt))}</b></span>
+      <span class="${gewinnKlasse}">Rohertrag<b>${sicher(euro(k.gewinnGesamt))}</b></span>
+      <span style="color:var(--green)">Davon bezahlt<b>${sicher(euro(k.bezahltBetrag))}</b></span>
+      ${k.offenerBetrag > 0 ? `<span style="color:#FBBF24">Abgerechnet, offen<b>${sicher(euro(k.offenerBetrag))}</b></span>` : ''}
+      ${k.nichtAbgerechnet > 0 ? `<span style="color:rgba(255,255,255,0.6)">Noch nicht abgerechnet<b>${sicher(euro(k.nichtAbgerechnet))}</b></span>` : ''}
+    </div>
+    <p style="margin-top:12px;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.55)">
+      Nur <strong>bezahlte</strong> Aufträge zählen als Umsatz in Übersicht, Einnahmen, Steuern und Bericht.
+      Der Rohertrag hier beruht auf deinen geschätzten Auftragskosten, nicht auf den Belegen aus dem Bereich Ausgaben.
+    </p>`;
 }
 
 window.backToKundenList = function(){
@@ -5172,6 +5544,411 @@ window.saveKundeNotiz = function(key){
   setDoc(doc(db, 'kunden', key), { notizen: feld.value }, { merge:true })
     .then(() => melde('Notiz gespeichert.'))
     .catch(err => meldeSchreibfehler(err, 'Das Speichern der Notiz'));
+};
+
+/* ══════════════════════════════════════════════════════════════
+   KALENDER
+   ══════════════════════════════════════════════════════════════ */
+
+/* Datum als YYYY-MM-DD in ORTSZEIT.
+   toISOString() rechnet nach UTC um – in Deutschland läge der
+   1. März damit als 28. Februar im Kalender. */
+function isoDatum(d){
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const t = String(d.getDate()).padStart(2,'0');
+  return d.getFullYear() + '-' + m + '-' + t;
+}
+function ausIso(s){
+  const [j,m,t] = String(s).split('-').map(Number);
+  return new Date(j, (m||1)-1, t||1);
+}
+
+/* ── Feiertage in NRW ──────────────────────────────────────────
+   Berechnet, nicht abgetippt. Ostersonntag nach dem Verfahren von
+   Meeus/Jones/Butcher für den gregorianischen Kalender; alle
+   beweglichen Feiertage hängen als feste Abstände daran.
+   NRW-spezifisch sind Fronleichnam und Allerheiligen – beide sind
+   in anderen Bundesländern keine Feiertage. */
+function ostersonntag(jahr){
+  const a = jahr % 19;
+  const b = Math.floor(jahr / 100);
+  const c = jahr % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19*a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2*e + 2*i - h - k) % 7;
+  const m = Math.floor((a + 11*h + 22*l) / 451);
+  const monat = Math.floor((h + l - 7*m + 114) / 31);
+  const tag   = ((h + l - 7*m + 114) % 31) + 1;
+  return new Date(jahr, monat - 1, tag);
+}
+
+const feiertageZwischenspeicher = {};
+function feiertageNRW(jahr){
+  if(feiertageZwischenspeicher[jahr]) return feiertageZwischenspeicher[jahr];
+  const ostern = ostersonntag(jahr);
+  const versetzt = (tage) => {
+    const d = new Date(ostern);
+    d.setDate(d.getDate() + tage);
+    return isoDatum(d);
+  };
+  const liste = {};
+  liste[jahr + '-01-01'] = 'Neujahr';
+  liste[versetzt(-2)]    = 'Karfreitag';
+  liste[versetzt(1)]     = 'Ostermontag';
+  liste[jahr + '-05-01'] = 'Tag der Arbeit';
+  liste[versetzt(39)]    = 'Christi Himmelfahrt';
+  liste[versetzt(50)]    = 'Pfingstmontag';
+  liste[versetzt(60)]    = 'Fronleichnam';
+  liste[jahr + '-10-03'] = 'Tag der Deutschen Einheit';
+  liste[jahr + '-11-01'] = 'Allerheiligen';
+  liste[jahr + '-12-25'] = '1. Weihnachtstag';
+  liste[jahr + '-12-26'] = '2. Weihnachtstag';
+  feiertageZwischenspeicher[jahr] = liste;
+  return liste;
+}
+function feiertagAm(iso){
+  const jahr = Number(String(iso).slice(0,4));
+  return feiertageNRW(jahr)[iso] || null;
+}
+
+/* ── Schulferien ───────────────────────────────────────────────
+   Ferientermine legt das Land fest, sie lassen sich nicht berechnen.
+   Sie werden deshalb NICHT geraten, sondern in
+   einstellungen/schulferien gepflegt – entweder von Hand oder über
+   den Knopf „Aus dem Netz laden". Schlägt das fehl, bleibt der
+   Kalender nutzbar und sagt, dass keine Ferien hinterlegt sind. */
+let schulferien = [];   // [{name, von, bis}]
+
+function ferienAm(iso){
+  return schulferien.find(f => f.von && f.bis && iso >= f.von && iso <= f.bis) || null;
+}
+
+function ladeSchulferien(){
+  getDoc(doc(db, 'einstellungen', 'schulferien')).then(snap => {
+    schulferien = (snap.exists() && Array.isArray(snap.data().zeitraeume)) ? snap.data().zeitraeume : [];
+    renderFerienVerwaltung();
+    renderKalender();
+  }).catch(err => {
+    console.warn('Schulferien konnten nicht geladen werden:', err);
+    renderFerienVerwaltung();
+  });
+}
+
+window.ferienAusNetzLaden = async function(){
+  const btn = document.getElementById('ferien-laden-btn');
+  const jahr = kalenderStand.getFullYear();
+  if(btn){ btn.disabled = true; btn.textContent = 'Lade ' + jahr + ' ...'; }
+  try {
+    const antwort = await fetch('https://ferien-api.de/api/v1/holidays/NW/' + jahr);
+    if(!antwort.ok) throw new Error('HTTP ' + antwort.status);
+    const daten = await antwort.json();
+    if(!Array.isArray(daten) || daten.length === 0) throw new Error('leere Antwort');
+
+    const neue = daten.map(f => ({
+      name: String(f.name || 'Ferien').replace(/\b\w/g, c => c.toUpperCase()),
+      von:  String(f.start || '').slice(0,10),
+      bis:  String(f.end   || '').slice(0,10)
+    })).filter(f => f.von && f.bis);
+
+    // Bestehende Einträge desselben Jahres ersetzen, andere Jahre behalten
+    const andere = schulferien.filter(f => !String(f.von).startsWith(String(jahr)));
+    schulferien = andere.concat(neue).sort((a,b) => a.von.localeCompare(b.von));
+    await speichereFerien();
+    melde(neue.length + ' Ferienzeiträume für ' + jahr + ' geladen.');
+  } catch(err){
+    console.warn('Ferien-Abruf fehlgeschlagen:', err);
+    alert('Die Ferientermine konnten nicht automatisch geladen werden.\n\n'
+        + 'Grund: ' + (err.message || 'unbekannt') + '\n\n'
+        + 'Du kannst sie unten von Hand eintragen. Die amtlichen Termine stehen auf schulministerium.nrw.');
+  }
+  if(btn){ btn.disabled = false; btn.textContent = 'Ferien aus dem Netz laden'; }
+};
+
+function speichereFerien(){
+  return setDoc(doc(db, 'einstellungen', 'schulferien'), { zeitraeume: schulferien }, { merge:true })
+    .then(() => { renderFerienVerwaltung(); renderKalender(); })
+    .catch(err => meldeSchreibfehler(err, 'Das Speichern der Ferientermine'));
+}
+
+window.ferienHinzufuegen = function(){
+  const name = document.getElementById('ferien-name').value.trim();
+  const von  = document.getElementById('ferien-von').value;
+  const bis  = document.getElementById('ferien-bis').value;
+  if(!name || !von || !bis){ melde('Bitte Bezeichnung, Von und Bis ausfüllen.', 'fehler'); return; }
+  if(bis < von){ melde('Das Ende liegt vor dem Beginn.', 'fehler'); return; }
+  schulferien = schulferien.concat([{ name, von, bis }]).sort((a,b) => a.von.localeCompare(b.von));
+  speichereFerien().then(() => melde('Ferienzeitraum gespeichert.'));
+};
+
+window.ferienEntfernen = function(index){
+  const f = schulferien[index];
+  if(!f) return;
+  if(!confirm('„' + f.name + '" (' + f.von + ' bis ' + f.bis + ') entfernen?')) return;
+  schulferien = schulferien.filter((_, i) => i !== index);
+  speichereFerien().then(() => melde('Ferienzeitraum entfernt.'));
+};
+
+function renderFerienVerwaltung(){
+  const el = document.getElementById('kal-ferien-verwaltung');
+  if(!el) return;
+  const jahr = kalenderStand.getFullYear();
+  const imJahr = schulferien.filter(f => String(f.von).startsWith(String(jahr)));
+
+  el.innerHTML = `
+    <p style="font-size:13px;line-height:1.65;color:rgba(255,255,255,0.65);margin-bottom:14px">
+      Ferientermine legt das Land fest – sie lassen sich nicht berechnen und werden hier deshalb
+      nicht geraten. Lade sie einmal je Jahr oder trag sie von Hand ein.
+      Amtliche Quelle: <a href="https://www.schulministerium.nrw/ferienordnung" target="_blank" rel="noopener" style="color:var(--green)">schulministerium.nrw</a>
+    </p>
+    <button class="btn btn-primary" style="width:auto;padding:11px 20px;margin-bottom:16px"
+            id="ferien-laden-btn" onclick="ferienAusNetzLaden()">Ferien aus dem Netz laden</button>
+
+    <div class="field-row">
+      <div class="field"><label for="ferien-name">Bezeichnung</label>
+        <input type="text" id="ferien-name" placeholder="z. B. Herbstferien"></div>
+      <div class="field"><label for="ferien-von">Von</label><input type="date" id="ferien-von"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="ferien-bis">Bis</label><input type="date" id="ferien-bis"></div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button class="karte-aktion" style="min-height:44px" onclick="ferienHinzufuegen()">+ Zeitraum hinzufügen</button>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      ${schulferien.length === 0
+        ? '<div class="ueb-leer">Noch keine Ferientermine hinterlegt. Der Kalender funktioniert trotzdem – es fehlt nur die farbige Markierung.</div>'
+        : schulferien.map((f, i) => `
+          <div class="auftrag-zeile">
+            <div class="auftrag-haupt">
+              <div class="auftrag-titel">${sicher(f.name)}</div>
+              <div class="auftrag-meta">${sicher(datumLesbar(f.von))} bis ${sicher(datumLesbar(f.bis))} · ${tageZwischen(f.von, f.bis)} Tage</div>
+            </div>
+            <button class="karte-aktion gefahr" onclick="ferienEntfernen(${i})">Entfernen</button>
+          </div>`).join('')}
+    </div>
+    ${imJahr.length === 0 && schulferien.length > 0
+      ? `<p style="margin-top:12px;font-size:12.5px;color:#FBBF24">Für ${jahr} ist noch nichts hinterlegt.</p>` : ''}`;
+}
+
+function datumLesbar(iso){
+  if(!iso) return '–';
+  return ausIso(iso).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function tageZwischen(von, bis){
+  if(!von || !bis) return 0;
+  return Math.round((ausIso(bis) - ausIso(von)) / 86400000) + 1;
+}
+
+/* ── Ereignisse eines Tages einsammeln ─────────────────────── */
+function kalenderEreignisse(iso){
+  const zeige = id => { const el = document.getElementById(id); return el ? el.checked : true; };
+  const ereignisse = [];
+
+  allAuftraege.filter(a => a.datum === iso).forEach(a => {
+    ereignisse.push({
+      art:'auftrag',
+      titel: a.titel || 'Auftrag',
+      sub: (a.kunde_name ? a.kunde_name + ' · ' : '') + euro(a.umsatz) + ' · ' + (AUFTRAG_STATUS_TEXT[a.status] || 'Geplant'),
+      ziel: () => { window.switchView('kunden'); if(a.kunde_key) window.openKundeDetail(a.kunde_key); }
+    });
+  });
+
+  if(zeige('kal-zeige-rechnungen')){
+    allRequests.filter(r => r.rechnung_datum === iso && !r.geloescht).forEach(r => {
+      ereignisse.push({
+        art:'rechnung',
+        titel: 'Rechnung ' + (r.rechnung_nummer || ''),
+        sub: ((r.vorname||'') + ' ' + (r.nachname||'')).trim() || 'Ohne Namen',
+        ziel: () => window.switchView('anfragen')
+      });
+    });
+  }
+
+  if(zeige('kal-zeige-anfragen')){
+    allRequests.filter(r => r.wunschtermin === iso && !r.geloescht && !r.archiviert).forEach(r => {
+      ereignisse.push({
+        art:'wunsch',
+        titel: 'Wunschtermin: ' + (r.leistungen || 'Anfrage'),
+        sub: ((r.vorname||'') + ' ' + (r.nachname||'')).trim() || 'Ohne Namen',
+        ziel: () => window.switchView('anfragen')
+      });
+    });
+  }
+
+  allAngebote.forEach(a => {
+    if(a.status !== 'versendet') return;
+    const start = (a.createdAt && a.createdAt.toDate) ? a.createdAt.toDate() : null;
+    if(!start) return;
+    const ende = new Date(start.getTime() + (Number(a.gueltigkeit) || 14) * 86400000);
+    if(isoDatum(ende) !== iso) return;
+    ereignisse.push({
+      art:'angebot',
+      titel: 'Angebot läuft ab: ' + (a.nummer || ''),
+      sub: ((a.vorname||'') + ' ' + (a.nachname||'')).trim() + ' · ' + euro(a.bruttoGesamt),
+      ziel: () => window.switchView('angebote')
+    });
+  });
+
+  if(zeige('kal-zeige-abwesend')){
+    allAbwesenheiten.filter(x => x.von && x.bis && iso >= x.von && iso <= x.bis).forEach(x => {
+      const m = allMitarbeiter.find(m => m.id === x.mitarbeiter_id);
+      ereignisse.push({
+        art:'abwesend',
+        titel: (ABWESENHEIT_TEXT[x.art] || 'Abwesend') + ': ' + (m ? m.name : (x.mitarbeiter_name || 'Mitarbeiter')),
+        sub: datumLesbar(x.von) + ' bis ' + datumLesbar(x.bis) + (x.notiz ? ' · ' + x.notiz : ''),
+        ziel: () => window.switchView('mitarbeiter')
+      });
+    });
+  }
+
+  return ereignisse;
+}
+
+/* ── Monatsansicht ─────────────────────────────────────────── */
+let kalenderStand = new Date();
+let kalenderGewaehlt = null;
+
+window.kalenderMonat = function(delta){
+  kalenderStand = new Date(kalenderStand.getFullYear(), kalenderStand.getMonth() + delta, 1);
+  kalenderGewaehlt = null;
+  renderKalender();
+  renderFerienVerwaltung();
+};
+window.kalenderHeute = function(){
+  kalenderStand = new Date();
+  kalenderGewaehlt = isoDatum(new Date());
+  renderKalender();
+  renderFerienVerwaltung();
+  kalenderTagOeffnen(kalenderGewaehlt);
+};
+
+function renderKalender(){
+  const gitter = document.getElementById('kal-gitter');
+  if(!gitter) return;
+
+  const jahr  = kalenderStand.getFullYear();
+  const monat = kalenderStand.getMonth();
+  document.getElementById('kal-monat').textContent =
+    kalenderStand.toLocaleDateString('de-DE', { month:'long', year:'numeric' });
+
+  // Montag als erster Wochentag
+  const erster = new Date(jahr, monat, 1);
+  const versatz = (erster.getDay() + 6) % 7;
+  const start = new Date(jahr, monat, 1 - versatz);
+
+  const heute = isoDatum(new Date());
+  const zeigeFerien = (document.getElementById('kal-zeige-ferien') || {}).checked !== false;
+
+  let html = '';
+  let anzahlAuftraege = 0, umsatzMonat = 0, anzahlAbwesend = 0, anzahlTermine = 0;
+
+  for(let i = 0; i < 42; i++){
+    const tag = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const iso = isoDatum(tag);
+    const imMonat = tag.getMonth() === monat;
+    const wochenende = tag.getDay() === 0 || tag.getDay() === 6;
+    const feiertag = feiertagAm(iso);
+    const ferien = zeigeFerien ? ferienAm(iso) : null;
+    const ereignisse = kalenderEreignisse(iso);
+
+    if(imMonat){
+      ereignisse.forEach(e => {
+        if(e.art === 'auftrag') anzahlAuftraege++;
+        if(e.art === 'abwesend') anzahlAbwesend++;
+        if(e.art === 'wunsch') anzahlTermine++;
+      });
+      allAuftraege.filter(a => a.datum === iso).forEach(a => { umsatzMonat += Number(a.umsatz) || 0; });
+    }
+
+    const klassen = ['kal-tag'];
+    if(!imMonat) klassen.push('fremder-monat');
+    if(wochenende) klassen.push('wochenende');
+    if(feiertag) klassen.push('feiertag');
+    if(ferien) klassen.push('ferien');
+    if(iso === heute) klassen.push('heute');
+    if(ereignisse.length === 0 && !feiertag && !ferien) klassen.push('leer-mobil');
+
+    const sichtbare = ereignisse.slice(0, 3);
+    const rest = ereignisse.length - sichtbare.length;
+
+    html += `<button type="button" class="${klassen.join(' ')}" onclick="kalenderTagOeffnen('${iso}')"
+        aria-label="${sicher(tag.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'}))}${feiertag ? ', ' + sicher(feiertag) : ''}, ${ereignisse.length} Einträge">
+      <div class="kal-tag-kopf">
+        <span class="kal-tag-zahl">${tag.getDate()}</span>
+        ${feiertag ? `<span class="kal-tag-marke">${sicher(feiertag)}</span>`
+          : ferien ? `<span class="kal-tag-marke">${sicher(ferien.name)}</span>` : ''}
+      </div>
+      <div class="kal-tag-inhalt">
+        ${sichtbare.map(e => `<span class="kal-eintrag"><i class="kal-punkt ${e.art}"></i>${sicher(e.titel)}</span>`).join('')}
+        ${rest > 0 ? `<span class="kal-mehr">+ ${rest} weitere</span>` : ''}
+      </div>
+    </button>`;
+  }
+  gitter.innerHTML = html;
+
+  const statsEl = document.getElementById('kal-stats');
+  if(statsEl){
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-val">${anzahlAuftraege}</div><div class="stat-lbl">Aufträge im Monat</div></div>
+      <div class="stat-card"><div class="stat-val">${sicher(euro(umsatzMonat))}</div><div class="stat-lbl">Auftragswert im Monat</div></div>
+      <div class="stat-card"><div class="stat-val">${anzahlTermine}</div><div class="stat-lbl">Wunschtermine</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:${anzahlAbwesend ? '#F87171' : 'inherit'}">${anzahlAbwesend}</div><div class="stat-lbl">Abwesenheitstage</div></div>`;
+  }
+
+  if(kalenderGewaehlt) kalenderTagOeffnen(kalenderGewaehlt, true);
+}
+
+window.kalenderTagOeffnen = function(iso, nurAuffrischen){
+  const el = document.getElementById('kal-tag-detail');
+  if(!el) return;
+  kalenderGewaehlt = iso;
+  const tag = ausIso(iso);
+  const feiertag = feiertagAm(iso);
+  const ferien = ferienAm(iso);
+  const ereignisse = kalenderEreignisse(iso);
+  kalenderEreignisSpeicher = ereignisse;
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="karte-block-titel">${sicher(tag.toLocaleDateString('de-DE',{ weekday:'long', day:'numeric', month:'long', year:'numeric' }))}</div>
+    ${feiertag ? `<div class="kal-detail-zeile" style="border-color:rgba(248,113,113,0.35)"><i class="kal-flaeche feiertag" style="margin-top:5px"></i>
+      <div class="kal-detail-text"><div class="kal-detail-titel">${sicher(feiertag)}</div>
+      <div class="kal-detail-sub">Gesetzlicher Feiertag in Nordrhein-Westfalen</div></div></div>` : ''}
+    ${ferien ? `<div class="kal-detail-zeile" style="border-color:rgba(251,191,36,0.3)"><i class="kal-flaeche ferien" style="margin-top:5px"></i>
+      <div class="kal-detail-text"><div class="kal-detail-titel">${sicher(ferien.name)}</div>
+      <div class="kal-detail-sub">${sicher(datumLesbar(ferien.von))} bis ${sicher(datumLesbar(ferien.bis))}</div></div></div>` : ''}
+    ${ereignisse.length === 0
+      ? '<div class="ueb-leer">An diesem Tag ist nichts eingetragen.</div>'
+      : ereignisse.map((e, i) => `
+        <div class="kal-detail-zeile">
+          <i class="kal-punkt ${e.art}"></i>
+          <div class="kal-detail-text">
+            <div class="kal-detail-titel">${sicher(e.titel)}</div>
+            <div class="kal-detail-sub">${sicher(e.sub)}</div>
+          </div>
+          <button class="karte-aktion" onclick="kalenderSpringe(${i})">Öffnen</button>
+        </div>`).join('')}
+    <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+      <button class="karte-aktion" onclick="kalenderDetailSchliessen()">Schließen</button>
+    </div>`;
+  if(!nurAuffrischen) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+};
+
+let kalenderEreignisSpeicher = [];
+window.kalenderSpringe = function(index){
+  const e = kalenderEreignisSpeicher[index];
+  if(e && typeof e.ziel === 'function') e.ziel();
+};
+window.kalenderDetailSchliessen = function(){
+  kalenderGewaehlt = null;
+  const el = document.getElementById('kal-tag-detail');
+  if(el){ el.style.display = 'none'; el.innerHTML = ''; }
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -5348,6 +6125,98 @@ window.auftragAusAnfrage = function(kundeKey, anfrageId){
   });
   melde('Aus der Anfrage übernommen – bitte Umsatz und Kosten prüfen.');
 };
+
+// ── ABWESENHEITEN ─────────────────────
+const ABWESENHEIT_TEXT = {
+  urlaub:'Urlaub', krank:'Krank', fortbildung:'Fortbildung', sonstiges:'Sonstiges'
+};
+
+function renderAbwesenheitAuswahl(){
+  const sel = document.getElementById('abw-mitarbeiter');
+  if(!sel) return;
+  const aktuell = sel.value;
+  const aktive = allMitarbeiter.filter(m => m.status !== 'inaktiv');
+  sel.innerHTML = aktive.length
+    ? aktive.map(m => `<option value="${sicher(m.id)}">${sicher(m.name || 'Ohne Namen')}</option>`).join('')
+    : '<option value="">– noch kein Mitarbeiter angelegt –</option>';
+  sel.value = aktuell || (aktive[0] ? aktive[0].id : '');
+}
+
+window.saveAbwesenheit = function(){
+  const btn = document.getElementById('abw-save-btn');
+  const fehler = document.getElementById('abw-fehler');
+  fehler.classList.remove('sichtbar');
+
+  const mitarbeiterId = document.getElementById('abw-mitarbeiter').value;
+  const art = document.getElementById('abw-art').value;
+  const von = document.getElementById('abw-von').value;
+  const bis = document.getElementById('abw-bis').value;
+
+  const zeige = (text) => { fehler.textContent = text; fehler.classList.add('sichtbar'); };
+  if(!mitarbeiterId){ zeige('Bitte zuerst einen Mitarbeiter anlegen.'); return; }
+  if(!von || !bis){ zeige('Bitte Beginn und Ende angeben.'); return; }
+  if(bis < von){ zeige('Das Ende liegt vor dem Beginn.'); return; }
+
+  const m = allMitarbeiter.find(x => x.id === mitarbeiterId);
+  btn.disabled = true; btn.textContent = 'Speichere ...';
+
+  addDoc(collection(db, 'abwesenheiten'), {
+    mitarbeiter_id: mitarbeiterId,
+    mitarbeiter_name: m ? m.name : '',
+    art, von, bis,
+    notiz: document.getElementById('abw-notiz').value.trim(),
+    createdAt: serverTimestamp()
+  }).then(() => {
+    document.getElementById('abw-notiz').value = '';
+    melde((ABWESENHEIT_TEXT[art] || 'Abwesenheit') + ' eingetragen: ' + tageZwischen(von,bis) + ' Tage.');
+  }).catch(err => meldeSchreibfehler(err, 'Das Eintragen der Abwesenheit'))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Abwesenheit eintragen'; });
+};
+
+window.deleteAbwesenheit = function(id){
+  const a = allAbwesenheiten.find(x => x.id === id);
+  if(!a) return;
+  if(!confirm((ABWESENHEIT_TEXT[a.art]||'Abwesenheit') + ' von ' + (a.mitarbeiter_name||'Mitarbeiter') +
+              ' (' + datumLesbar(a.von) + ' bis ' + datumLesbar(a.bis) + ') löschen?')) return;
+  deleteDoc(doc(db, 'abwesenheiten', id))
+    .then(() => melde('Abwesenheit gelöscht.'))
+    .catch(err => meldeSchreibfehler(err, 'Das Löschen der Abwesenheit'));
+};
+
+function renderAbwesenheitenListe(){
+  renderAbwesenheitAuswahl();
+  const el = document.getElementById('abwesenheiten-liste');
+  if(!el) return;
+
+  const heute = isoDatum(new Date());
+  const sortiert = [...allAbwesenheiten].sort((a,b) => String(b.von||'').localeCompare(String(a.von||'')));
+  const kommend = sortiert.filter(a => (a.bis || '') >= heute);
+  const vergangen = sortiert.filter(a => (a.bis || '') < heute);
+
+  if(sortiert.length === 0){
+    el.innerHTML = '<div class="ueb-leer">Noch keine Abwesenheiten eingetragen.</div>';
+    return;
+  }
+
+  const zeile = (a) => {
+    const laeuft = (a.von || '') <= heute && (a.bis || '') >= heute;
+    return `
+    <div class="auftrag-zeile" ${laeuft ? 'style="border-color:rgba(248,113,113,0.4)"' : ''}>
+      <div class="auftrag-haupt">
+        <div class="auftrag-titel">${sicher(a.mitarbeiter_name || 'Mitarbeiter')}
+          <span class="herkunft-marke ${a.art === 'krank' ? '' : 'manuell'}">${sicher(ABWESENHEIT_TEXT[a.art] || 'Sonstiges')}</span>
+          ${laeuft ? '<span class="herkunft-marke" style="background:rgba(248,113,113,0.2);color:#FCA5A5">läuft gerade</span>' : ''}
+        </div>
+        <div class="auftrag-meta">${sicher(datumLesbar(a.von))} bis ${sicher(datumLesbar(a.bis))} · ${tageZwischen(a.von, a.bis)} Tage${a.notiz ? ' · ' + sicher(a.notiz) : ''}</div>
+      </div>
+      <button class="karte-aktion gefahr" onclick="deleteAbwesenheit('${sicherJs(a.id)}')">Löschen</button>
+    </div>`;
+  };
+
+  el.innerHTML =
+    (kommend.length ? `<div class="karte-block-titel" style="margin-top:0">Aktuell und geplant (${kommend.length})</div>` + kommend.map(zeile).join('') : '') +
+    (vergangen.length ? `<div class="karte-block-titel" style="margin-top:18px">Vergangen (${vergangen.length})</div>` + vergangen.slice(0,10).map(zeile).join('') : '');
+}
 
 // ── MITARBEITER ─────────────────────
 function renderMitarbeiterList(){
