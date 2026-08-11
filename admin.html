@@ -1462,6 +1462,199 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   .stat-val { font-size:22px; }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   ANGEBOTSSYSTEM (11.08.2026)
+   ══════════════════════════════════════════════════════════════
+   Alle Raster mit minmax(0,1fr): Bei reinem `1fr` entspricht die
+   Untergrenze der Mindestbreite des Inhalts, und ein Betrag wie
+   „1.485,75 €" zieht die Spalte über die Fensterbreite hinaus. */
+
+.vk-card, .reaktion-card {
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px; padding:20px; margin-bottom:14px;
+}
+.reaktion-card.erledigt { opacity:.55; }
+.vk-betrag { font-size:20px; font-weight:700; white-space:nowrap; }
+.vk-version {
+  display:inline-block; margin-left:5px; padding:1px 7px; border-radius:100px;
+  background:rgba(255,255,255,0.1); font-size:11px; font-weight:600;
+  color:rgba(255,255,255,0.7); vertical-align:middle;
+}
+
+/* Statuspillen. Die Farbe kommt aus VK_STATUS/EINSTUFUNG – so
+   stehen Text und Farbe an genau einer Stelle beieinander. */
+.vk-pille {
+  display:inline-block; padding:3px 11px; border-radius:100px;
+  font-size:11.5px; font-weight:600; vertical-align:middle; white-space:nowrap;
+}
+.vk-grau  { background:rgba(255,255,255,0.1);  color:rgba(255,255,255,0.75); }
+.vk-blau  { background:rgba(59,130,246,0.16);  color:#93C5FD; }
+.vk-gruen { background:rgba(34,197,94,0.16);   color:#86EFAC; }
+.vk-gelb  { background:rgba(250,204,21,0.16);  color:#FDE047; }
+.vk-rot   { background:rgba(248,113,113,0.16); color:#FCA5A5; }
+
+/* Einstufungsblock: die Begründung ist gleichwertig zur Einstufung.
+   Eine Einstufung ohne Begründung wäre eine Behauptung, die man
+   weder prüfen noch guten Gewissens übersteuern kann. */
+.vk-einstufung {
+  border-radius:14px; padding:13px 15px; margin:14px 0;
+  border:1px solid rgba(255,255,255,0.09); background:rgba(255,255,255,0.03);
+}
+.vk-einstufung.vk-gruen { border-color:rgba(34,197,94,0.28);   background:rgba(34,197,94,0.06); }
+.vk-einstufung.vk-gelb  { border-color:rgba(250,204,21,0.28);  background:rgba(250,204,21,0.06); }
+.vk-einstufung.vk-rot   { border-color:rgba(248,113,113,0.28); background:rgba(248,113,113,0.06); }
+.vk-einstufung.vk-blau  { border-color:rgba(59,130,246,0.28);  background:rgba(59,130,246,0.06); }
+.vk-einstufung-kopf { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.vk-einstufung-name { font-size:15px; font-weight:700; }
+.vk-vonhand {
+  font-size:11px; padding:2px 8px; border-radius:100px;
+  background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7);
+}
+/* ⚠️ Kein `min-height` unter 44 px, auch nicht mit !important.
+   Nachgemessen bei 320 px: Mit 38 px kam das Feld auf 43 px und
+   unterlief damit die Touch-Regel des Dashboards. Die Schriftgröße
+   darf kleiner werden, die Trefferfläche nicht. */
+.vk-einstufung-wahl { margin-left:auto; max-width:190px; font-size:13px !important; }
+.vk-einstufung-hinweis { font-size:13px; color:rgba(255,255,255,0.6); margin-top:5px; }
+.vk-gruende { margin:9px 0 0; padding-left:17px; font-size:13px; line-height:1.65; }
+.vk-grund { color:rgba(255,255,255,0.72); }
+.vk-grund-risiko  { color:#FCA5A5; }
+.vk-grund-warnung { color:#FDE047; }
+.vk-grund-gut     { color:#86EFAC; }
+
+.vk-spanne {
+  margin:10px 0; padding:9px 13px; border-radius:11px;
+  background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.24);
+  font-size:13.5px; color:#93C5FD;
+}
+.vk-details { margin:12px 0; }
+.vk-details summary {
+  cursor:pointer; font-size:13px; color:rgba(255,255,255,0.62);
+  padding:9px 0; min-height:44px; display:flex; align-items:center;
+}
+.vk-positionen { width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+.vk-positionen td { padding:7px 6px; border-bottom:1px solid rgba(255,255,255,0.06); vertical-align:top; }
+.vk-positionen td:first-child { min-width:0; overflow-wrap:anywhere; }
+.vk-menge { text-align:right; color:rgba(255,255,255,0.55); white-space:nowrap; }
+.vk-summe { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.vk-zuschlag td { color:rgba(255,255,255,0.6); }
+.vk-pos-hinweis { font-size:11.5px; color:rgba(255,255,255,0.45); margin-top:2px; }
+.vk-annahmen { margin-top:11px; font-size:12.5px; color:rgba(255,255,255,0.6); }
+.vk-annahmen ul { margin:5px 0 0; padding-left:17px; line-height:1.6; }
+.vk-regelversion { margin-top:9px; font-size:11.5px; color:rgba(255,255,255,0.38); }
+
+.vk-freigabe {
+  margin:10px 0; font-size:12.5px; color:#86EFAC;
+  padding:7px 12px; border-radius:10px; background:rgba(34,197,94,0.08);
+}
+.vk-maengel {
+  margin:10px 0; padding:11px 14px; border-radius:12px;
+  background:rgba(250,204,21,0.08); border:1px solid rgba(250,204,21,0.24);
+  font-size:13px; color:#FDE047;
+}
+.vk-maengel ul { margin:6px 0 0; padding-left:17px; line-height:1.6; }
+.vk-knopf-haupt {
+  background:rgba(34,197,94,0.16) !important;
+  border:1px solid rgba(34,197,94,0.34) !important; color:#86EFAC !important;
+}
+.reaktion-nachricht {
+  margin:10px 0; padding:11px 14px; border-radius:12px;
+  background:rgba(255,255,255,0.04); font-size:13.5px; line-height:1.6;
+  overflow-wrap:anywhere;
+}
+
+/* Benachrichtigungszentrale */
+.ben-zeile {
+  display:flex; align-items:center; gap:13px; width:100%;
+  padding:12px 15px; margin-bottom:8px; min-height:52px;
+  border-radius:13px; border:1px solid rgba(255,255,255,0.09);
+  background:rgba(255,255,255,0.03); color:var(--white);
+  font-family:inherit; font-size:14px; text-align:left; cursor:pointer;
+  transition:background .15s;
+}
+.ben-zeile:hover { background:rgba(255,255,255,0.07); }
+.ben-zahl {
+  flex-shrink:0; min-width:32px; height:32px; padding:0 9px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:100px; font-weight:700; font-size:14px;
+  background:rgba(255,255,255,0.1);
+}
+.ben-text { flex:1; min-width:0; }
+.ben-pfeil { flex-shrink:0; color:rgba(255,255,255,0.35); font-size:19px; }
+.ben-dringend .ben-zahl { background:rgba(248,113,113,0.22); color:#FCA5A5; }
+.ben-achtung .ben-zahl  { background:rgba(250,204,21,0.22);  color:#FDE047; }
+.ben-gut .ben-zahl      { background:rgba(34,197,94,0.22);   color:#86EFAC; }
+
+.nav-zaehler {
+  margin-left:auto; min-width:20px; height:20px; padding:0 6px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:100px; background:var(--green); color:var(--white);
+  font-size:11px; font-weight:700;
+}
+
+/* Umsatzplanung – die drei Welten sind auch farblich getrennt.
+   Wer hier zwei Zahlen verwechselt, bucht eine Schätzung als
+   Einnahme; die Trennung muss deshalb sichtbar sein, nicht nur
+   im Text stehen. */
+.planung-block {
+  border-radius:20px; padding:18px; margin-bottom:16px;
+  border:1px solid rgba(255,255,255,0.09); background:rgba(255,255,255,0.02);
+}
+.planung-block-plan { border-color:rgba(250,204,21,0.24); background:rgba(250,204,21,0.04); }
+.planung-block-fest { border-color:rgba(59,130,246,0.24); background:rgba(59,130,246,0.04); }
+.planung-block-echt { border-color:rgba(34,197,94,0.3);   background:rgba(34,197,94,0.05); }
+.planung-kopf { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:13px; }
+.planung-titel { font-size:17px; font-weight:700; }
+.planung-warnung {
+  font-size:12px; padding:3px 10px; border-radius:100px;
+  background:rgba(250,204,21,0.16); color:#FDE047;
+}
+.planung-warnung-fest { background:rgba(59,130,246,0.16); color:#93C5FD; }
+.planung-warnung-echt { background:rgba(34,197,94,0.16);  color:#86EFAC; }
+.planung-erklaerung {
+  font-size:13px; line-height:1.7; color:rgba(255,255,255,0.6);
+  padding:15px 17px; border-radius:14px; background:rgba(255,255,255,0.03);
+}
+.stat-hinweis { font-size:11.5px; color:rgba(255,255,255,0.45); margin-top:3px; }
+.stat-card-gruen { border-color:rgba(34,197,94,0.3); }
+
+.rechts-warnung {
+  padding:13px 16px; margin-bottom:16px; border-radius:14px;
+  background:rgba(250,204,21,0.09); border:1px solid rgba(250,204,21,0.28);
+  font-size:13.5px; line-height:1.6; color:#FDE047;
+}
+.karte-block-text { font-size:13px; color:rgba(255,255,255,0.6); margin-bottom:13px; line-height:1.6; }
+.vorgabe-zeile-lang { display:block; }
+.vorgabe-zeile-lang textarea { margin-top:7px; font-size:14px; line-height:1.6; }
+
+/* ⚠️ Dieser Handy-Block steht bewusst NACH den Grunddefinitionen
+   darüber. Bei gleicher Spezifität gewinnt die spätere Regel –
+   stünde er weiter oben (etwa im großen 900-px-Block bei Zeile
+   1318), wären diese Anpassungen wirkungslos. Genau daran ist
+   `.bericht-grid` schon einmal gescheitert. */
+@media(max-width:900px){
+  .vk-card, .reaktion-card, .planung-block { padding:15px; border-radius:16px; }
+  .vk-betrag { font-size:17px; }
+  /* Das Auswahlfeld darf nicht neben den Namen gequetscht werden –
+     bei 375 px blieben dafür rund 90 px, und die Beschriftung
+     „Für Partner prüfen" ist dort nicht mehr lesbar. */
+  .vk-einstufung-wahl { margin-left:0; max-width:100%; width:100%; }
+  .vk-einstufung-kopf { gap:7px; }
+  .vk-positionen { font-size:12.5px; }
+  .vk-positionen td { padding:6px 3px; }
+  .planung-kopf { gap:7px; }
+  .planung-titel { font-size:15px; }
+  .ben-zeile { font-size:13.5px; padding:11px 13px; }
+  .req-filter-bar select, .req-filter-bar input { width:100%; }
+}
+@media(max-width:400px){
+  /* Menge und Betrag nebeneinander sprengen die Zeile, sobald ein
+     Tausenderpunkt darin steht. Die Menge steht ohnehin schon im
+     Positionstext. */
+  .vk-positionen .vk-menge { display:none; }
+  .vk-einstufung { padding:11px 12px; }
+}
+
 @media print {
   body * { visibility:hidden; }
   #bericht-print-area, #bericht-print-area * { visibility:visible; }
@@ -1520,11 +1713,14 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     <div class="nav-item" data-view="kalender" onclick="switchView('kalender')"><span class="ni-icon">📅</span><span class="ni-label">Kalender</span></div>
     <div class="nav-item" data-view="anfragen" onclick="switchView('anfragen')"><span class="ni-icon">📋</span><span class="ni-label">Anfragen</span></div>
     <div class="nav-item" data-view="kunden" onclick="switchView('kunden')"><span class="ni-icon">👥</span><span class="ni-label">Kunden</span></div>
+    <div class="nav-item" data-view="vorkalkulationen" onclick="switchView('vorkalkulationen')"><span class="ni-icon">🧾</span><span class="ni-label">Vorabkalkulationen</span></div>
     <div class="nav-item" data-view="angebote" onclick="switchView('angebote')"><span class="ni-icon">📝</span><span class="ni-label">Angebote</span></div>
+    <div class="nav-item" data-view="reaktionen" onclick="switchView('reaktionen')"><span class="ni-icon">💬</span><span class="ni-label">Kundenreaktionen</span><span class="nav-zaehler" id="nav-zaehler-reaktionen" hidden></span></div>
     <div class="nav-item" data-view="bewerbungen" onclick="switchView('bewerbungen')"><span class="ni-icon">🙋</span><span class="ni-label">Bewerbungen</span></div>
     <div class="nav-item" data-view="partneranfragen" onclick="switchView('partneranfragen')"><span class="ni-icon">🤝</span><span class="ni-label">Partneranfragen</span></div>
 
     <div class="nav-group">Finanzen</div>
+    <div class="nav-item" data-view="planung" onclick="switchView('planung')"><span class="ni-icon">📈</span><span class="ni-label">Umsatzplanung</span></div>
     <div class="nav-item" data-view="finanzen" onclick="switchView('finanzen')"><span class="ni-icon">💰</span><span class="ni-label">Einnahmen</span></div>
     <div class="nav-item" data-view="ausgaben" onclick="switchView('ausgaben')"><span class="ni-icon">🧾</span><span class="ni-label">Ausgaben</span></div>
     <div class="nav-item" data-view="steuern" onclick="switchView('steuern')"><span class="ni-icon">🧮</span><span class="ni-label">Steuern</span></div>
@@ -1540,6 +1736,8 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 
     <div class="nav-group">Einstellungen</div>
     <div class="nav-item" data-view="vorgaben" onclick="switchView('vorgaben')"><span class="ni-icon">⚙️</span><span class="ni-label">Vorgaben</span></div>
+    <div class="nav-item" data-view="vorsortierung" onclick="switchView('vorsortierung')"><span class="ni-icon">🔀</span><span class="ni-label">Vorsortierung</span></div>
+    <div class="nav-item" data-view="rechtstexte" onclick="switchView('rechtstexte')"><span class="ni-icon">⚖️</span><span class="ni-label">Rechtstexte</span></div>
     <div class="nav-item" data-view="kalkulation" onclick="switchView('kalkulation')"><span class="ni-icon">📐</span><span class="ni-label">Kalkulation</span></div>
     <div class="nav-item" data-view="mitarbeiter" onclick="switchView('mitarbeiter')"><span class="ni-icon">🧑‍🔧</span><span class="ni-label">Mitarbeiter</span></div>
     <div class="nav-item" data-view="textbausteine" onclick="switchView('textbausteine')"><span class="ni-icon">✉️</span><span class="ni-label">Antworten</span></div>
@@ -1753,6 +1951,48 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     </div>
 
     <!-- ANGEBOTE (Angebotsrechner) -->
+    <!-- VORABKALKULATIONEN (Stufe 1) -->
+    <div class="view" id="view-vorkalkulationen">
+      <div class="view-head">
+        <div class="view-title">Vorabkalkulationen</div>
+        <div class="view-sub">Unverbindliche Schätzung auf Grundlage der Anfrage – kein Angebot, kein Vertrag. Geht erst nach deiner Freigabe hinaus.</div>
+      </div>
+      <div class="stat-row" id="vk-stats"></div>
+      <div class="req-filter-bar">
+        <select id="vk-filter-status" onchange="renderVorkalkulationen()">
+          <option value="">Alle Stände</option>
+          <option value="DRAFT">Entwurf</option>
+          <option value="ADMIN_REVIEW">Wartet auf Prüfung</option>
+          <option value="ADMIN_APPROVED">Freigegeben</option>
+          <option value="SENT">Versendet</option>
+          <option value="VIEWED">Vom Kunden geöffnet</option>
+          <option value="RESERVED">Vorgemerkt</option>
+          <option value="MEETING_BOOKED">Termin vereinbart</option>
+          <option value="CHANGE_REQUESTED">Änderung gewünscht</option>
+          <option value="DECLINED">Kein Interesse</option>
+          <option value="EXPIRED">Abgelaufen</option>
+        </select>
+        <input type="text" id="vk-suche" aria-label="Vorabkalkulationen durchsuchen"
+               placeholder="Suche Nummer, Name, Leistung ..." oninput="renderVorkalkulationenVerzoegert()"
+               style="flex:1;min-width:180px">
+      </div>
+      <div id="vk-liste"><div class="empty-state">Lade Vorabkalkulationen ...</div></div>
+    </div>
+
+    <!-- KUNDENREAKTIONEN -->
+    <div class="view" id="view-reaktionen">
+      <div class="view-head">
+        <div class="view-title">Kundenreaktionen</div>
+        <div class="view-sub">Was Kunden auf versendete Kalkulationen und Angebote geantwortet haben</div>
+      </div>
+      <div class="karte-block" style="margin-bottom:20px">
+        <div class="karte-block-titel">Was ansteht</div>
+        <div id="benachrichtigungen-inhalt"><div class="empty-state">Wird geladen ...</div></div>
+      </div>
+      <div class="kalk-section-title">Verlauf</div>
+      <div id="reaktionen-liste"><div class="empty-state">Lade Reaktionen ...</div></div>
+    </div>
+
     <div class="view" id="view-angebote">
       <div class="view-head">
         <div class="view-title">Angebotsrechner</div>
@@ -2322,6 +2562,35 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
       <div id="vorgaben-formular"></div>
     </div>
 
+    <!-- VORSORTIERUNG -->
+    <div class="view" id="view-vorsortierung">
+      <div class="view-head">
+        <div class="view-title">Vorsortierung</div>
+        <div class="view-sub">Nach diesen Regeln stuft das System eine Anfrage als Klein-, Standard-, Groß- oder Risikoprojekt ein</div>
+      </div>
+      <div id="vorsortierung-formular"></div>
+      <div class="kalk-section-title">Abschlusswahrscheinlichkeiten</div>
+      <div id="planung-formular"></div>
+    </div>
+
+    <!-- RECHTSTEXTE -->
+    <div class="view" id="view-rechtstexte">
+      <div class="view-head">
+        <div class="view-title">Rechtstexte</div>
+        <div class="view-sub">Pflichttexte für Vorabkalkulation, Angebot und Verbraucherverträge – versioniert</div>
+      </div>
+      <div id="rechtstexte-formular"></div>
+    </div>
+
+    <!-- UMSATZPLANUNG -->
+    <div class="view" id="view-planung">
+      <div class="view-head">
+        <div class="view-title">Umsatzplanung</div>
+        <div class="view-sub">Was geplant, was zugesagt und was tatsächlich eingegangen ist – streng getrennt</div>
+      </div>
+      <div id="planung-zahlen"></div>
+    </div>
+
     <!-- KALKULATION -->
     <div class="view" id="view-kalkulation">
       <div class="view-head">
@@ -2818,6 +3087,22 @@ let unsubKunden = null;
 let unsubAngebote = null;
 let currentKundeEmail = null;
 
+/* ── Angebotssystem (11.08.2026) ──────────────────────────────
+   Eigene Datenlauscher, damit die Vertriebsansichten genauso live
+   sind wie Anfragen und Aufträge. Alle ohne orderBy geladen und
+   clientseitig sortiert – dieselbe Begründung wie bei `anfragen`:
+   Ein Dokument ohne das Sortierfeld verschwände sonst kommentarlos. */
+let allVorkalkulationen = [];
+let unsubVorkalkulationen = null;
+let allKundenreaktionen = [];
+let unsubKundenreaktionen = null;
+let allBenachrichtigungen = [];
+let unsubBenachrichtigungen = null;
+let allDokumentVersionen = [];
+let unsubDokumentVersionen = null;
+let allAktionsTokens = [];
+let unsubAktionsTokens = null;
+
 let anfragenRange = null;
 let finanzenRange = null;
 let ausgabenRange = null;
@@ -2858,6 +3143,2057 @@ const KALK_SERVICES_BASE = [
 // Vorgabewerte der Kostenseite – ebenfalls Schätzungen, überschreibbar
 const KOSTEN_VORGABE = { stundenkosten: 22, km_kosten: 0.35 };
 let kalkulationData = {};
+
+
+/* ══════════════════════════════════════════════════════════════
+   ANGEBOTSSYSTEM – GRUNDLAGEN (11.08.2026)
+   ══════════════════════════════════════════════════════════════
+   Zweistufiger Vertriebsweg:
+
+     Anfrage → Einstufung → unverbindliche Vorabkalkulation
+     → Adminfreigabe → Versand → Kundenreaktion → Besprechung
+     → verbindliches Angebot → Annahme → Auftrag
+
+   Zwei Grundsätze, die den ganzen Abschnitt tragen:
+
+   1. Eine Vorabkalkulation ist KEIN Angebot und kein Vertrag.
+      Sie zählt nie als Einnahme und nie als steuerlicher Umsatz –
+      siehe `einnahmenGesamt()`, das unverändert nur bezahlte
+      Aufträge kennt.
+
+   2. Nichts geht ohne ausdrückliche Freigabe hinaus. Ein
+      Automatismus darf aufräumen und erinnern, aber niemals eine
+      Nummer vergeben, Geld bewegen oder etwas versenden.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Beträge in ganzen Cent ───────────────────────────────────
+   Der Rest des Dashboards rechnet historisch in Euro-Fließkomma.
+   Das ist für Anzeige und Auftragswerte bislang gutgegangen, weil
+   überall auf zwei Stellen gerundet wird – für eine Kalkulation mit
+   Positionen, Zwischensummen, Zuschlägen und Rabatten reicht es
+   nicht: 0.1 + 0.2 ergibt in Fließkomma 0.30000000000000004, und
+   über zwanzig Positionen summiert sich das zu sichtbaren Cent.
+
+   Deshalb rechnet der Kalkulationsmotor durchgehend in ganzen
+   Cent. Neue Felder tragen das Suffix `_cent`; die alten
+   Euro-Felder bleiben unangetastet, damit Rechnungen und
+   Auftragswerte weiter stimmen. */
+function zuCent(euroBetrag){
+  const z = Number(euroBetrag);
+  return isFinite(z) ? Math.round(z * 100) : 0;
+}
+function ausCent(cent){
+  const z = Number(cent);
+  return isFinite(z) ? z / 100 : 0;
+}
+function euroCent(cent){
+  return euro(ausCent(cent));
+}
+/* Prozentrechnung auf Cent, kaufmännisch gerundet. Bewusst eine
+   eigene Funktion: `cent * pct / 100` mit anschließendem Math.round
+   stand sonst an neun Stellen leicht unterschiedlich im Code. */
+function prozentVonCent(cent, prozent){
+  const c = Number(cent) || 0, p = Number(prozent) || 0;
+  return Math.round(c * p / 100);
+}
+
+/* ── Statusmodelle ────────────────────────────────────────────
+   Die technischen Werte sind bewusst englische Großschreibung,
+   wie im Auftrag festgelegt – sie stehen in der Datenbank und
+   dürfen sich nie ändern. Angezeigt wird ausschließlich der
+   deutsche Text daneben. */
+const VK_STATUS = {
+  DRAFT:            { text:'Entwurf',              farbe:'grau',   offen:true  },
+  ADMIN_REVIEW:     { text:'Wartet auf Prüfung',   farbe:'gelb',   offen:true  },
+  ADMIN_APPROVED:   { text:'Freigegeben',          farbe:'blau',   offen:true  },
+  SENT:             { text:'Versendet',            farbe:'blau',   offen:true  },
+  VIEWED:           { text:'Vom Kunden geöffnet',  farbe:'blau',   offen:true  },
+  RESERVED:         { text:'Vorgemerkt',           farbe:'gruen',  offen:true  },
+  MEETING_BOOKED:   { text:'Termin vereinbart',    farbe:'gruen',  offen:true  },
+  CHANGE_REQUESTED: { text:'Änderung gewünscht',   farbe:'gelb',   offen:true  },
+  DECLINED:         { text:'Kein Interesse',       farbe:'rot',    offen:false },
+  EXPIRED:          { text:'Abgelaufen',           farbe:'grau',   offen:false },
+};
+const ANG_STATUS = {
+  DRAFT:            { text:'Entwurf',              farbe:'grau',   offen:true  },
+  ADMIN_REVIEW:     { text:'Wartet auf Prüfung',   farbe:'gelb',   offen:true  },
+  ADMIN_APPROVED:   { text:'Freigegeben',          farbe:'blau',   offen:true  },
+  SENT:             { text:'Versendet',            farbe:'blau',   offen:true  },
+  VIEWED:           { text:'Vom Kunden geöffnet',  farbe:'blau',   offen:true  },
+  CHANGE_REQUESTED: { text:'Änderung gewünscht',   farbe:'gelb',   offen:true  },
+  ACCEPTED:         { text:'Angenommen',           farbe:'gruen',  offen:false },
+  DECLINED:         { text:'Abgelehnt',            farbe:'rot',    offen:false },
+  EXPIRED:          { text:'Abgelaufen',           farbe:'grau',   offen:false },
+};
+
+/* Bestandsschutz: Die Sammlung `angebote` enthält Dokumente mit den
+   fünf alten deutschen Statuswerten. Die dürfen nicht umgeschrieben
+   werden – ein Wanderungslauf über Produktivdaten ist genau die Art
+   Eingriff, die still etwas kaputt macht. Stattdessen übersetzt
+   diese Tabelle beim Lesen. Neue Angebote schreiben ausschließlich
+   die neuen Werte. */
+const ANG_STATUS_ALT = {
+  'entwurf':'DRAFT', 'versendet':'SENT', 'angenommen':'ACCEPTED',
+  'abgelehnt':'DECLINED', 'abgelaufen':'EXPIRED'
+};
+function angStatus(a){
+  const roh = (a && a.status) || 'DRAFT';
+  return ANG_STATUS[roh] ? roh : (ANG_STATUS_ALT[roh] || 'DRAFT');
+}
+function statusText(tabelle, wert){
+  const e = tabelle[wert];
+  return e ? e.text : (wert || '–');
+}
+
+/* Einstufung der Anfrage. `PARTNER_REFERRAL` und `REJECTED` sind
+   Vorschläge des Systems – abgesagt oder weitergegeben wird immer
+   nur von Hand. */
+const EINSTUFUNG = {
+  MICRO_JOB:        { text:'Kleinauftrag',   farbe:'gelb',  hinweis:'Unter dem Mindestauftragswert – bitte aufwerten oder bündeln' },
+  STANDARD_JOB:     { text:'Standard',       farbe:'gruen', hinweis:'Kann normal kalkuliert werden' },
+  LARGE_JOB:        { text:'Großprojekt',    farbe:'blau',  hinweis:'Kein automatischer Endpreis – Besichtigung und Preisspanne' },
+  HIGH_RISK_JOB:    { text:'Risikoprojekt',  farbe:'rot',   hinweis:'Besichtigung zwingend, Sicherheitsaufschlag vorgesehen' },
+  PARTNER_REFERRAL: { text:'Für Partner',    farbe:'grau',  hinweis:'Außerhalb des Einsatzgebiets – Weitergabe prüfen' },
+  REJECTED:         { text:'Absage prüfen',  farbe:'rot',   hinweis:'Nicht wirtschaftlich darstellbar – Absage von Hand entscheiden' },
+};
+
+/* ── Vorsortierungsregeln ─────────────────────────────────────
+   Alles, was der Auftrag als „in den Einstellungen veränderbar"
+   verlangt. Gelesen wird ausschließlich über `vs()`, das bei
+   fehlendem oder leerem Wert auf die Vorgabe zurückfällt –
+   dasselbe Muster wie `v()` bei den Vorgaben. */
+const VORSORTIERUNG_STANDARD = {
+  // Wirtschaftlichkeit (Euro, netto)
+  mindestauftragswert: 45,
+  anfahrtspauschale: 12,
+  micro_grenze: 45,
+  gross_grenze: 1500,
+  pruefgrenze: 600,
+  // Entfernung (km, einfache Strecke ab Eitorf)
+  max_entfernung_km: 40,
+  entfernung_warnung_km: 25,
+  partner_ab_entfernung_km: 40,
+  // Aufwand
+  max_arbeitsstunden_auto: 16,
+  mitarbeiter_ab_stunden: 8,
+  max_standorte_auto: 1,
+  max_etagen_auto: 5,
+  risiko_ab_etagen: 4,
+  // Zuschläge und Puffer
+  geraetepauschale: 0,
+  sicherheitsaufschlag_prozent: 12,
+  spanne_prozent: 20,
+  // Risikoerkennung: Stichwörter im Freitext der Anfrage
+  risiko_stichworte: 'Asbest, Schimmel, Brandschaden, Wasserschaden, Öl, Fett, Taubenkot, Marderkot, Kanal, Fassade, Dach, Gerüst, Hebebühne, Messie, Verwesung, Bauschutt, Gefahrstoff',
+  // Leistungen, die grundsätzlich als Sonderleistung gelten
+  sonderleistungen: 'grund, winter',
+  // Fristen
+  vormerkung_tage: 14,
+  erinnerung_tage_vorher: 3,
+  angebot_gueltigkeit_tage: 14,
+  // Schalter
+  auto_einstufung: true,
+  auto_kalkulation: true,
+  auto_entwurf_bei_standard: true,
+};
+let vorsortierungData = {};
+function vs(schluessel){
+  const wert = vorsortierungData[schluessel];
+  return (wert === undefined || wert === null || wert === '') ? VORSORTIERUNG_STANDARD[schluessel] : wert;
+}
+/* Komma-Liste aus den Einstellungen zu einem sauberen Array. */
+function vsListe(schluessel){
+  return String(vs(schluessel) || '')
+    .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+}
+
+/* ── Abschlusswahrscheinlichkeiten ────────────────────────────
+   Nur für die Umsatzplanung. Diese Zahlen dürfen NIRGENDS in eine
+   Einnahme, einen Gewinn oder eine Steuerzahl einfließen – siehe
+   den Warnhinweis über `planungsZahlen()`. */
+const PLANUNG_STANDARD = {
+  w_erstellt: 15,
+  w_angesehen: 25,
+  w_vorgemerkt: 40,
+  w_termin: 50,
+  w_besprechung: 65,
+  w_angebot_versendet: 80,
+  w_angenommen: 100,
+  w_verloren: 0,
+};
+let planungData = {};
+function pw(schluessel){
+  const wert = planungData[schluessel];
+  const z = Number((wert === undefined || wert === null || wert === '') ? PLANUNG_STANDARD[schluessel] : wert);
+  return isFinite(z) ? Math.min(100, Math.max(0, z)) : 0;
+}
+
+/* ── Rechtstexte ──────────────────────────────────────────────
+   Versioniert, weil auf einem Dokument nachweisbar sein muss,
+   WELCHE Fassung der Kunde gesehen hat. Die Fassung wird beim
+   Versand in den Schnappschuss geschrieben und ändert sich dort
+   nie wieder.
+
+   ⚠️ Sämtliche Texte hier sind eine sorgfältige Vorlage, KEINE
+   anwaltlich geprüfte Fassung. Der Adminbereich weist bei jedem
+   Feld darauf hin. */
+const RECHTSTEXTE_STANDARD = {
+  version: 1,
+  unverbindlich_hinweis:
+    'Diese Vorabkalkulation basiert ausschließlich auf den bisher übermittelten Angaben und stellt kein ' +
+    'verbindliches Angebot dar. Änderungen des Leistungsumfangs, der örtlichen Gegebenheiten oder des ' +
+    'tatsächlichen Aufwands können zu Preisänderungen führen. Ein Vertrag kommt hierdurch nicht zustande. ' +
+    'Ein verbindliches Angebot erhalten Sie erst nach Prüfung beziehungsweise Besprechung und ausdrücklicher ' +
+    'Freigabe durch Waschlurch.',
+  abgleich_hinweis:
+    'Ihre angegebenen Kontaktdaten wurden mit Ihrer ursprünglichen Anfrage abgeglichen.',
+  vormerkung_hinweis:
+    'Ihre unverbindliche Vorabkalkulation wird bis zum angezeigten Datum vorgemerkt. Hierdurch entsteht noch ' +
+    'kein Vertrag und es wird kein Ausführungstermin verbindlich reserviert.',
+  ablauf_text:
+    'Ihre unverbindliche Vorabkalkulation ist am {{DATUM}} abgelaufen. Die enthaltenen Preise und Kapazitäten ' +
+    'sind nicht mehr vorgemerkt. Sie können jederzeit eine aktualisierte Kalkulation oder einen ' +
+    'Besprechungstermin anfragen.',
+  spanne_hinweis:
+    'Wegen des Umfangs beziehungsweise der örtlichen Gegebenheiten nennen wir zunächst eine Preisspanne. ' +
+    'Den genauen Preis stimmen wir nach der Besichtigung mit Ihnen ab.',
+  widerruf_belehrung:
+    'Widerrufsrecht: Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu ' +
+    'widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses. Um Ihr ' +
+    'Widerrufsrecht auszuüben, müssen Sie uns mittels einer eindeutigen Erklärung (z. B. ein mit der Post ' +
+    'versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. ' +
+    'Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des ' +
+    'Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.',
+  widerruf_formular:
+    'Muster-Widerrufsformular – Wenn Sie den Vertrag widerrufen wollen, füllen Sie bitte dieses Formular aus ' +
+    'und senden Sie es zurück. An: {{ANBIETER}}, {{ANSCHRIFT}}, {{EMAIL}}. Hiermit widerrufe ich den von mir ' +
+    'abgeschlossenen Vertrag über die Erbringung der folgenden Dienstleistung: {{LEISTUNG}}. Bestellt am: ' +
+    '{{DATUM}}. Name des Verbrauchers. Anschrift des Verbrauchers. Unterschrift (nur bei Mitteilung auf ' +
+    'Papier). Datum.',
+  vorzeitiger_beginn:
+    'Ich verlange ausdrücklich, dass Waschlurch vor Ablauf der Widerrufsfrist mit der vereinbarten ' +
+    'Dienstleistung beginnt. Mir ist bekannt, dass ich bei vollständiger Vertragserfüllung mein ' +
+    'Widerrufsrecht verlieren kann und bei einem vorherigen Widerruf gegebenenfalls Wertersatz für bereits ' +
+    'erbrachte Leistungen schulde.',
+  agb_version: 'AGB Fassung 1 · Stand 06.08.2026',
+};
+let rechtstexteData = {};
+function rt(schluessel){
+  const wert = rechtstexteData[schluessel];
+  return (wert === undefined || wert === null || wert === '') ? RECHTSTEXTE_STANDARD[schluessel] : wert;
+}
+function rechtstextVersion(){
+  const z = Number(rechtstexteData.version);
+  return isFinite(z) && z > 0 ? z : RECHTSTEXTE_STANDARD.version;
+}
+
+/* ── Kundenarten ──────────────────────────────────────────────
+   `verbraucher: true` schaltet den B2C-Weg frei: Widerrufsbelehrung,
+   Muster-Widerrufsformular und die Erklärung zum vorzeitigen
+   Leistungsbeginn. Bei Unternehmen entfällt das – dort gilt
+   stattdessen die Abfrage der Vertretungsbefugnis. */
+const KUNDENARTEN = {
+  privat:      { text:'Privatkunde',            verbraucher:true,  firmenfelder:false },
+  unternehmen: { text:'Unternehmen',            verbraucher:false, firmenfelder:true  },
+  verwaltung:  { text:'Hausverwaltung/Verein',  verbraucher:false, firmenfelder:true  },
+  oeffentlich: { text:'Öffentliche Einrichtung',verbraucher:false, firmenfelder:true  },
+};
+/* Bestandsschutz: `kunden.art` kennt heute nur 'privat' und
+   'gewerblich'. 'gewerblich' wird auf 'unternehmen' abgebildet,
+   damit alte Karteikarten den B2B-Weg bekommen. */
+function kundenart(wert){
+  if(wert === 'gewerblich') return 'unternehmen';
+  return KUNDENARTEN[wert] ? wert : 'privat';
+}
+function istVerbraucher(wert){
+  return KUNDENARTEN[kundenart(wert)].verbraucher === true;
+}
+
+/* ── Prüfsumme eines PDFs ─────────────────────────────────────
+   Der Nachweis, dass die archivierte Fassung genau die ist, die der
+   Kunde bekommen hat. WebCrypto ist überall verfügbar, wo das
+   Dashboard läuft; scheitert es doch, wird das Dokument trotzdem
+   archiviert – nur ohne Prüfsumme, und das steht dann auch dran. */
+async function pdfPruefsumme(blob){
+  try {
+    if(!(crypto && crypto.subtle)) return null;
+    const puffer = await blob.arrayBuffer();
+    const hash = await crypto.subtle.digest('SHA-256', puffer);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  } catch(err){
+    console.warn('Prüfsumme konnte nicht berechnet werden:', err);
+    return null;
+  }
+}
+
+/* ── Revisionssicheres Protokoll ──────────────────────────────
+   Anhängen, nie ändern – die Firestore-Regel erzwingt das. Ein
+   fehlgeschlagener Protokolleintrag darf die eigentliche Aktion
+   NICHT abbrechen: Wer eine Freigabe erteilt hat, dessen Freigabe
+   soll gelten, auch wenn die Protokollzeile nicht durchkam. Der
+   Fehler landet dafür sichtbar in der Konsole. */
+function protokolliere(vorgang, daten){
+  const eintrag = Object.assign({
+    vorgang,
+    zeitpunkt: serverTimestamp(),
+    benutzer: (auth.currentUser && auth.currentUser.email) || 'unbekannt',
+  }, daten || {});
+  return addDoc(collection(db, 'protokoll'), eintrag)
+    .catch(err => { console.error('Protokolleintrag fehlgeschlagen (' + vorgang + '):', err); });
+}
+
+/* Benachrichtigung für die Zentrale im Dashboard. Gleiche Regel:
+   darf nie die auslösende Aktion mitreißen. */
+function benachrichtige(art, titel, text, ziel){
+  return addDoc(collection(db, 'benachrichtigungen'), {
+    art, titel: titel || '', text: text || '',
+    ziel_bereich: (ziel && ziel.bereich) || null,
+    ziel_id: (ziel && ziel.id) || null,
+    gelesen: false,
+    createdAt: serverTimestamp(),
+  }).catch(err => console.error('Benachrichtigung fehlgeschlagen:', err));
+}
+
+function ladeVorsortierung(){
+  return getDoc(doc(db, 'einstellungen', 'vorsortierung')).then(snap => {
+    vorsortierungData = snap.exists() ? snap.data() : {};
+    renderVorsortierungFormular();
+  }).catch(err => {
+    console.warn('Vorsortierungsregeln nicht geladen, es gelten die Standardwerte:', err);
+    renderVorsortierungFormular();
+  });
+}
+function ladePlanung(){
+  return getDoc(doc(db, 'einstellungen', 'planung')).then(snap => {
+    planungData = snap.exists() ? snap.data() : {};
+    renderPlanungFormular();
+    renderUmsatzplanung();
+  }).catch(err => { console.warn('Planungswerte nicht geladen:', err); renderPlanungFormular(); });
+}
+function ladeRechtstexte(){
+  return getDoc(doc(db, 'einstellungen', 'rechtstexte')).then(snap => {
+    rechtstexteData = snap.exists() ? snap.data() : {};
+    renderRechtstexteFormular();
+  }).catch(err => { console.warn('Rechtstexte nicht geladen:', err); renderRechtstexteFormular(); });
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ENTFERNUNG
+   ══════════════════════════════════════════════════════════════
+   ⚠️ Die Entfernung wird NICHT aus der Postleitzahl gerechnet.
+   Postleitzahlen sind Zustellbezirke, keine Koordinaten: 53773 und
+   53783 liegen 9 km auseinander, 53773 und 53757 dagegen 4 km –
+   die Ziffernfolge sagt darüber nichts aus. Eine „Schätzung" aus
+   der PLZ-Differenz wäre eine erfundene Zahl, und an dieser Zahl
+   hängen Anfahrtskosten und die Einstufung.
+
+   Stattdessen eine gepflegte Tabelle der tatsächlichen
+   Einsatzgebiete, im Bereich „Vorsortierung" erweiterbar. Steht die
+   PLZ nicht drin, liefert die Funktion `null` – „unbekannt“, nicht
+   „0 km“. Das Dashboard fragt dann nach, statt stillschweigend ohne
+   Anfahrtskosten zu kalkulieren. */
+const PLZ_ENTFERNUNG_STANDARD = {
+  '53783': 0,   // Eitorf – Sitz
+  '53773': 9,   // Hennef
+  '53797': 14,  // Lohmar
+  '53757': 13,  // Sankt Augustin
+  '53721': 18,  // Siegburg
+  '53819': 17,  // Neunkirchen-Seelscheid
+  '53804': 12,  // Much
+  '53809': 16,  // Ruppichteroth
+  '51570': 12,  // Windeck
+  '53840': 22,  // Troisdorf
+  '53859': 24,  // Niederkassel
+  '53844': 21,  // Troisdorf-Sieglar
+  '53639': 20,  // Königswinter
+  '53604': 25,  // Bad Honnef
+  '53175': 34,  // Bonn
+  '53111': 38,  // Bonn-Zentrum
+};
+function entfernungTabelle(){
+  // `plz_km` aus den Einstellungen: Zeilen der Form „53773=9“
+  const eigene = {};
+  String(vs('plz_km') || '').split(/[\n,;]+/).forEach(zeile => {
+    const m = zeile.match(/(\d{5})\s*[=:]\s*(\d+(?:[.,]\d+)?)/);
+    if(m) eigene[m[1]] = parseFloat(m[2].replace(',', '.'));
+  });
+  return Object.assign({}, PLZ_ENTFERNUNG_STANDARD, eigene);
+}
+function entfernungFuer(plz){
+  const p = String(plz || '').trim().match(/\d{5}/);
+  if(!p) return null;
+  const tabelle = entfernungTabelle();
+  const km = tabelle[p[0]];
+  return (km === undefined || km === null) ? null : Number(km);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   MENGEN AUS EINER ANFRAGE
+   ══════════════════════════════════════════════════════════════
+   Eine einzige Quelle für beide Wege: den Angebotsrechner
+   (`loadAnfrageIntoAngebot`, füllt damit die Formularfelder) und die
+   automatische Vorabkalkulation (rechnet direkt damit). Vorher stand
+   diese Zuordnung nur im Rechner und wäre beim Ergänzen einer
+   Leistung an einer der beiden Stellen vergessen worden.
+
+   Rückgabe je erkannter Leistung: { qty, qty2, quelle }. `quelle`
+   benennt das Feld der Anfrage – es landet als „angenommene
+   Voraussetzung" im Kalkulationsprotokoll, damit später
+   nachvollziehbar ist, WORAUF die Menge beruhte. */
+function mengenAusAnfrage(r){
+  const zahlAus = w => {
+    const n = parseFloat(String(w == null ? '' : w).replace(',', '.'));
+    return isNaN(n) || n <= 0 ? null : n;
+  };
+  const sd = (r && r.service_details) || {};
+  const regeln = {
+    haushalt:    () => ({ qty: zahlAus(r.flaeche_m2), quelle:'Wohnfläche laut Anfrage' }),
+    buero:       () => ({ qty: zahlAus(r.flaeche_m2), quelle:'Fläche laut Anfrage' }),
+    grund:       () => ({ qty: zahlAus(r.flaeche_m2), quelle:'Fläche laut Anfrage' }),
+    fenster:     () => ({ qty: zahlAus(sd.fenster && sd.fenster.anzahl_fenster),
+                          qty2: zahlAus(sd.fenster && sd.fenster.anzahl_tueren),
+                          quelle:'Anzahl Fenster laut Anfrage' }),
+    treppe:      () => ({ qty: zahlAus(r.etagen), quelle:'Etagen laut Anfrage' }),
+    muell:       () => ({ qty: zahlAus(sd.muell && sd.muell.anzahl_tonnen), quelle:'Anzahl Tonnen laut Anfrage' }),
+    winter:      () => ({ qty: 1, quelle:'ein Einsatz angenommen' }),
+    hausmeister: () => ({ qty: null, quelle:null }),
+    garten:      () => ({ qty: null, quelle:null }),
+  };
+
+  // Welche Leistungen sind überhaupt gewünscht? IDs bevorzugt,
+  // Namensabgleich als Rückfall für Anfragen ohne IDs.
+  const ids = Array.isArray(r && r.leistungen_ids) ? r.leistungen_ids : null;
+  const text = String((r && r.leistungen) || '').toLowerCase();
+
+  const ergebnis = {};
+  KALK_SERVICES_BASE.forEach(svc => {
+    const dabei = ids ? ids.includes(svc.id) : text.includes(svc.name.toLowerCase());
+    if(!dabei) return;
+    const roh = regeln[svc.id] ? regeln[svc.id]() : {};
+    ergebnis[svc.id] = {
+      qty:  roh.qty  || null,
+      qty2: roh.qty2 || null,
+      quelle: roh.quelle || null,
+    };
+  });
+  return ergebnis;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   KALKULATIONSMOTOR
+   ══════════════════════════════════════════════════════════════
+   Deterministisch, nachvollziehbar, in ganzen Cent. Gleiche Eingabe
+   ergibt immer dieselbe Ausgabe – es gibt hier keine Zufallswerte,
+   keine Uhrzeit und keine geschätzten Zwischenschritte.
+
+   Die REIHENFOLGE der Rechenschritte ist Teil des Ergebnisses und
+   steht deshalb hier fest verdrahtet:
+
+      1. Leistungspositionen        (Menge × Satz, Mindestmenge, Mindestpreis)
+      2. manuelle Positionen
+      3. Anfahrt                    (km × 2 × km-Satz, sonst Pauschale)
+      4. Gerätepauschale, Material
+         ────────────────────────── Zwischensumme
+      5. Zuschläge in Prozent       (Nacht, Wochenende, Express, erschwert, Höhe, Schmutz)
+      6. Sicherheitsaufschlag       (nur bei Risikoprojekten)
+         ────────────────────────── Netto je Einsatz
+      7. Mindestauftragswert        (hebt an, senkt nie)
+      8. Rabatt                     (Prozent, dann fester Betrag)
+      9. × Multiplikator            (Häufigkeit × Abrechnungsart)
+         ────────────────────────── Netto gesamt
+     10. Umsatzsteuer
+         ────────────────────────── Brutto gesamt
+
+   Gerundet wird auf JEDER Stufe auf ganze Cent. Dadurch ist die
+   Summe der angezeigten Positionen immer exakt die angezeigte
+   Zwischensumme – bei Rundung erst am Ende wichen beide um bis zu
+   einem Cent je Position voneinander ab, und genau das fällt einem
+   Kunden auf einem PDF auf. */
+const KALK_REGELVERSION = 1;
+
+function berechneKalkulation(e){
+  const eingabe = e || {};
+  const positionen = [];
+  const annahmen = [];
+  const schritte = [];
+
+  // ── 1. Leistungspositionen ──────────────────────────────────
+  let arbeitsminuten = 0;
+  (eingabe.leistungen || []).forEach(l => {
+    const svc = KALK_SERVICES_BASE.find(s => s.id === l.id);
+    const cfg = getKalkServiceRate(l.id);
+    if(!svc || !cfg) return;
+
+    const qty  = Math.max(0, Number(l.qty)  || 0);
+    const qty2 = Math.max(0, Number(l.qty2) || 0);
+    if(qty <= 0 && qty2 <= 0) return;
+
+    let betragCent, mengeText, hinweis = null;
+
+    if(cfg.unit2){
+      const teil1 = Math.round(qty  * zuCent(cfg.rate));
+      const teil2 = Math.round(qty2 * zuCent(cfg.rate2 || 0));
+      betragCent = teil1 + teil2;
+      mengeText = [qty  ? zahl(qty,0)  + ' ' + svc.unit  : null,
+                   qty2 ? zahl(qty2,0) + ' ' + svc.unit2 : null].filter(Boolean).join(' + ');
+    } else {
+      let effQty = qty;
+      if(cfg.min_qty != null && effQty > 0 && effQty < cfg.min_qty){
+        effQty = cfg.min_qty;
+        hinweis = 'Mindestabnahme ' + zahl(cfg.min_qty,0) + ' ' + svc.unit;
+      }
+      betragCent = Math.round(effQty * zuCent(cfg.rate));
+      mengeText = zahl(effQty, effQty % 1 === 0 ? 0 : 2) + ' ' + svc.unit;
+    }
+
+    if(cfg.min_price != null && betragCent > 0){
+      const minCent = zuCent(cfg.min_price);
+      if(betragCent < minCent){
+        betragCent = minCent;
+        hinweis = 'Mindestpreis für diese Leistung ' + euroCent(minCent);
+      }
+    }
+
+    arbeitsminuten += qty * (cfg.zeit || 0) + qty2 * (cfg.zeit2 || 0);
+    positionen.push({
+      art:'leistung', leistung_id: l.id, text: svc.name,
+      menge: mengeText, einzel_cent: zuCent(cfg.rate), betrag_cent: betragCent,
+      hinweis,
+    });
+    if(l.quelle) annahmen.push(svc.name + ': ' + l.quelle);
+  });
+
+  // ── 2. Manuelle Positionen ──────────────────────────────────
+  (eingabe.manuellePositionen || []).forEach(p => {
+    const menge = Number(p.menge) || 1;
+    const betrag = Math.round(menge * (Number(p.einzel_cent) || 0));
+    if(!p.text || betrag === 0) return;
+    positionen.push({
+      art:'manuell', text: String(p.text),
+      menge: menge === 1 ? null : zahl(menge, menge % 1 === 0 ? 0 : 2),
+      einzel_cent: Number(p.einzel_cent) || 0, betrag_cent: betrag, hinweis: null,
+    });
+  });
+
+  const leistungenCent = positionen.reduce((s,p) => s + p.betrag_cent, 0);
+  schritte.push(['Leistungen', leistungenCent]);
+
+  // ── 3. Anfahrt ──────────────────────────────────────────────
+  /* ⚠️ 0 km ist ein BEKANNTER Wert, kein fehlender: Eitorf selbst
+     liegt bei 0. Eine Prüfung auf `km > 0` hätte dort eine
+     Anfahrtspauschale aufgeschlagen, obwohl gar keine Anfahrt
+     anfällt. Dieselbe Falle wie `parseFloat(feld) || 19`. */
+  const kmRoh = eingabe.km;
+  const kmBekannt = kmRoh !== null && kmRoh !== undefined && kmRoh !== ''
+                    && isFinite(Number(kmRoh)) && Number(kmRoh) >= 0;
+  const km = kmBekannt ? Number(kmRoh) : null;
+  const kmSatzCent = zuCent((kalkulationData.general && kalkulationData.general.km_preis != null)
+                            ? kalkulationData.general.km_preis : 0.50);
+  let anfahrtCent = 0;
+  /* Ohne Leistung keine Anfahrt. Sonst entstünde aus einer Anfrage,
+     bei der keine Leistung erkannt wurde, eine Kalkulation über die
+     blanke Anfahrtspauschale – ein Preis für nichts. */
+  if(leistungenCent > 0){
+    if(kmBekannt){
+      anfahrtCent = Math.round(km * 2 * kmSatzCent);
+      if(anfahrtCent > 0){
+        positionen.push({ art:'anfahrt', text:'Anfahrt', menge: zahl(km*2,1) + ' km',
+                          einzel_cent: kmSatzCent, betrag_cent: anfahrtCent,
+                          hinweis:'Hin- und Rückweg' });
+      } else {
+        annahmen.push('Keine Anfahrtskosten – der Einsatzort liegt am Firmensitz');
+      }
+    } else if(eingabe.anfahrtspauschale !== false){
+      anfahrtCent = zuCent(vs('anfahrtspauschale'));
+      if(anfahrtCent > 0){
+        positionen.push({ art:'anfahrt', text:'Anfahrtspauschale', menge:null,
+                          einzel_cent: anfahrtCent, betrag_cent: anfahrtCent,
+                          hinweis:'Entfernung noch nicht bekannt' });
+        annahmen.push('Anfahrt als Pauschale angesetzt, weil die Entfernung nicht bekannt ist');
+      }
+    }
+  }
+
+  // ── 4. Geräte und Material ──────────────────────────────────
+  const geraeteCent  = Math.max(0, Number(eingabe.geraete_cent)  || 0);
+  const materialCent = Math.max(0, Number(eingabe.material_cent) || 0);
+  if(geraeteCent > 0) positionen.push({ art:'geraete', text:'Gerätepauschale', menge:null,
+                                        einzel_cent:geraeteCent, betrag_cent:geraeteCent, hinweis:null });
+  if(materialCent > 0) positionen.push({ art:'material', text:'Reinigungsmittel und Material', menge:null,
+                                         einzel_cent:materialCent, betrag_cent:materialCent, hinweis:null });
+
+  const zwischensummeCent = leistungenCent + anfahrtCent + geraeteCent + materialCent;
+  schritte.push(['Zwischensumme', zwischensummeCent]);
+
+  // ── 5. Zuschläge ────────────────────────────────────────────
+  const g = kalkulationData.general || {};
+  const zuschlagDefs = [
+    ['nacht',      'Nachtarbeit',              g.zu_nacht      ?? 15],
+    ['wochenende', 'Wochenendarbeit',          g.zu_wochenende ?? 20],
+    ['express',    'Express (unter 48 Std.)',  g.zu_express    ?? 25],
+    ['erschwert',  'Erschwerte Bedingungen',   g.zu_erschwert  ?? 10],
+    ['hoehe',      'Höhenzuschlag',            g.zu_hoehe      ?? 15],
+    ['schmutz',    'Starke Verschmutzung',     g.zu_schmutz    ?? 20],
+  ];
+  const zuschlaege = [];
+  let zuschlagProzent = 0;
+  zuschlagDefs.forEach(([schluessel, bez, satz]) => {
+    if(!(eingabe.zuschlaege && eingabe.zuschlaege[schluessel])) return;
+    const p = Number(satz) || 0;
+    zuschlagProzent += p;
+    zuschlaege.push({ schluessel, text: bez, prozent: p,
+                      betrag_cent: prozentVonCent(zwischensummeCent, p) });
+  });
+  const zuschlagCent = zuschlaege.reduce((s,z) => s + z.betrag_cent, 0);
+  if(zuschlagCent) schritte.push(['Zuschläge (' + zahl(zuschlagProzent,0) + ' %)', zuschlagCent]);
+
+  // ── 6. Sicherheitsaufschlag ─────────────────────────────────
+  const sicherheitProzent = Math.max(0, Number(eingabe.sicherheitsaufschlag_prozent) || 0);
+  const sicherheitCent = prozentVonCent(zwischensummeCent + zuschlagCent, sicherheitProzent);
+  if(sicherheitCent) schritte.push(['Sicherheitsaufschlag (' + zahl(sicherheitProzent,0) + ' %)', sicherheitCent]);
+
+  let nettoEinsatzCent = zwischensummeCent + zuschlagCent + sicherheitCent;
+
+  // ── 7. Mindestauftragswert ──────────────────────────────────
+  /* Der Wert VOR der Anhebung wird festgehalten und mit
+     zurückgegeben. Die Einstufung muss darauf urteilen, nicht auf
+     dem angehobenen Betrag – sonst läge nach der Anhebung jeder
+     Kleinauftrag exakt auf dem Mindestwert und wäre damit nie mehr
+     „unter dem Mindestwert". MICRO_JOB könnte rechnerisch nicht
+     mehr entstehen, und die ganze Kleinauftragsbehandlung liefe
+     ins Leere. */
+  const nettoVorMindestCent = nettoEinsatzCent;
+
+  const mindestCent = zuCent(eingabe.mindestauftragswert != null
+                             ? eingabe.mindestauftragswert : vs('mindestauftragswert'));
+  let mindestAngehoben = 0;
+  /* Ohne Leistung wird nichts angehoben – aus einer leeren Anfrage
+     darf keine Kalkulation über den Mindestauftragswert entstehen. */
+  if(mindestCent > 0 && leistungenCent > 0 && nettoEinsatzCent < mindestCent){
+    mindestAngehoben = mindestCent - nettoEinsatzCent;
+    nettoEinsatzCent = mindestCent;
+    schritte.push(['Anhebung auf Mindestauftragswert', mindestAngehoben]);
+    annahmen.push('Auf den Mindestauftragswert von ' + euroCent(mindestCent) + ' angehoben');
+  }
+
+  // ── 8. Rabatt ───────────────────────────────────────────────
+  const rabattProzent = Math.max(0, Number(eingabe.rabatt_prozent) || 0);
+  const rabattProzentCent = prozentVonCent(nettoEinsatzCent, rabattProzent);
+  const rabattFestCent = Math.max(0, Number(eingabe.rabatt_cent) || 0);
+  const rabattCent = Math.min(nettoEinsatzCent, rabattProzentCent + rabattFestCent);
+  if(rabattCent) schritte.push(['Rabatt', -rabattCent]);
+  nettoEinsatzCent -= rabattCent;
+
+  // ── 9. Multiplikator ────────────────────────────────────────
+  /* Genau dieselbe Tabelle wie im bestehenden Angebotsrechner –
+     ein zweiter Satz Werte hier hätte bedeutet, dass Rechner und
+     Vorabkalkulation bei gleicher Eingabe verschiedene Summen
+     ausweisen. */
+  const EINSAETZE_PRO_MONAT = { 'Einmalig':1, 'Wöchentlich':4.33, '14-tägig':2.17, 'Monatlich':1, 'Quartalsweise':(1/3) };
+  const haeufigkeit = eingabe.haeufigkeit || 'Einmalig';
+  const abrechnung  = eingabe.abrechnung  || 'einzel';
+  const proMonat = EINSAETZE_PRO_MONAT[haeufigkeit] ?? 1;
+  let multiplikator = 1;
+  if(abrechnung === 'monat')        multiplikator = haeufigkeit === 'Einmalig' ? 1 : proMonat;
+  else if(abrechnung === 'quartal') multiplikator = haeufigkeit === 'Einmalig' ? 1 : proMonat * 3;
+
+  const nettoGesamtCent = Math.round(nettoEinsatzCent * multiplikator);
+
+  // ── 10. Umsatzsteuer ────────────────────────────────────────
+  const mwstSatz = eingabe.mwst_satz != null ? Number(eingabe.mwst_satz) : steuerSatzFuerBelege();
+  const mwstCent = prozentVonCent(nettoGesamtCent, mwstSatz);
+  const bruttoGesamtCent = nettoGesamtCent + mwstCent;
+
+  // ── Preisspanne ─────────────────────────────────────────────
+  const spanneProzent = Math.max(0, Number(eingabe.spanne_prozent) || 0);
+  const spanne = spanneProzent > 0 ? {
+    prozent: spanneProzent,
+    von_cent: bruttoGesamtCent - prozentVonCent(bruttoGesamtCent, spanneProzent),
+    bis_cent: bruttoGesamtCent + prozentVonCent(bruttoGesamtCent, spanneProzent),
+  } : null;
+
+  // ── Kostenseite (intern, nie im Kunden-PDF) ─────────────────
+  const kosten = getKostenSaetze();
+  const arbeitsstunden = arbeitsminuten / 60;
+  const arbeitskostenCent = Math.round(arbeitsstunden * zuCent(kosten.stundenkosten));
+  const fahrtkostenCent = kmBekannt ? Math.round(km * 2 * zuCent(kosten.km_kosten)) : 0;
+  /* Material steckt in beiden Seiten: als Position beim Kunden und
+     als echte Ausgabe. Es hebt sich damit auf und bleibt hier
+     bewusst außen vor – sonst wäre es doppelt abgezogen. */
+  const kostenEinsatzCent = arbeitskostenCent + fahrtkostenCent;
+  const gewinnEinsatzCent = nettoEinsatzCent - materialCent - kostenEinsatzCent;
+  const gewinnGesamtCent  = Math.round(gewinnEinsatzCent * multiplikator);
+
+  return {
+    regelversion: KALK_REGELVERSION,
+    positionen, schritte, annahmen,
+    leistungen_cent: leistungenCent,
+    anfahrt_cent: anfahrtCent,
+    km: kmBekannt ? km : null,
+    km_satz_cent: kmSatzCent,
+    geraete_cent: geraeteCent,
+    material_cent: materialCent,
+    zwischensumme_cent: zwischensummeCent,
+    zuschlaege, zuschlag_prozent: zuschlagProzent, zuschlag_cent: zuschlagCent,
+    sicherheitsaufschlag_prozent: sicherheitProzent, sicherheitsaufschlag_cent: sicherheitCent,
+    mindestauftragswert_cent: mindestCent, mindest_angehoben_cent: mindestAngehoben,
+    netto_vor_mindest_cent: nettoVorMindestCent,
+    rabatt_prozent: rabattProzent, rabatt_cent: rabattCent,
+    haeufigkeit, abrechnung, multiplikator,
+    netto_einsatz_cent: nettoEinsatzCent,
+    netto_gesamt_cent: nettoGesamtCent,
+    mwst_satz: mwstSatz, mwst_cent: mwstCent,
+    brutto_gesamt_cent: bruttoGesamtCent,
+    spanne,
+    // Intern – gehört NIE ins Kundendokument
+    arbeitsminuten, arbeitsstunden,
+    kosten_einsatz_cent: kostenEinsatzCent,
+    gewinn_einsatz_cent: gewinnEinsatzCent,
+    gewinn_gesamt_cent: gewinnGesamtCent,
+    kosten_bestaetigt: kosten.bestaetigt === true,
+  };
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   AUTOMATISCHE VORSORTIERUNG
+   ══════════════════════════════════════════════════════════════
+   Stuft eine Anfrage ein und begründet jede Einstufung mit den
+   Werten, auf denen sie beruht. Die Begründung ist kein Beiwerk:
+   Ohne sie ist eine Einstufung eine Behauptung, die man weder
+   prüfen noch übersteuern kann.
+
+   ⚠️ REJECTED wird NIEMALS automatisch vergeben. Eine Absage ist
+   eine Geschäftsentscheidung mit Außenwirkung; sie gehört Daniel.
+   Das System darf sie vorschlagen – im Feld `absage_erwaegen` –
+   und begründen, mehr nicht. */
+function einstufeAnfrage(r, kalk){
+  const begruendung = [];
+  const optionen = [];
+  const anfrage = r || {};
+
+  /* Für die Einstufung zählt der Wert VOR der Anhebung auf den
+     Mindestauftragswert – siehe Begründung in `berechneKalkulation`.
+     Für alles Übrige (Groß-, Prüfgrenze) der tatsächliche Wert. */
+  const nettoCent    = kalk ? kalk.netto_gesamt_cent : 0;
+  const nettoRohCent = kalk ? (kalk.netto_vor_mindest_cent != null
+                               ? Math.round(kalk.netto_vor_mindest_cent * (kalk.multiplikator || 1))
+                               : kalk.netto_gesamt_cent) : 0;
+  const stunden   = kalk ? kalk.arbeitsstunden : 0;
+  const km        = entfernungFuer(anfrage.plz);
+
+  // ── Freitext für die Risikoerkennung zusammentragen ─────────
+  const freitext = [
+    anfrage.nachricht, anfrage.anmerkung_objekt, anfrage.besondere_verschmutzung,
+    anfrage.zugang_objekt, anfrage.objektart, anfrage.leistungen,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  const treffer = vsListe('risiko_stichworte').filter(w => w && freitext.includes(w));
+
+  const sonder = vsListe('sonderleistungen');
+  const leistungenIds = Array.isArray(anfrage.leistungen_ids) ? anfrage.leistungen_ids : [];
+  const sonderTreffer = leistungenIds.filter(id => sonder.includes(String(id).toLowerCase()));
+
+  const etagen = parseFloat(String(anfrage.etagen || '').replace(',', '.'));
+  const etagenZahl = isNaN(etagen) ? null : etagen;
+
+  // ── Kennzahlen, auf die sich alles Weitere stützt ────────────
+  const kennzahlen = {
+    netto_cent: nettoCent,
+    netto_roh_cent: nettoRohCent,
+    arbeitsstunden: Math.round(stunden * 10) / 10,
+    entfernung_km: km,
+    etagen: etagenZahl,
+    mitarbeiter: stunden > Number(vs('mitarbeiter_ab_stunden')) ? 2 : 1,
+    standorte: 1,
+    risiko_treffer: treffer,
+    sonderleistungen: sonderTreffer,
+    leistungen_erkannt: leistungenIds.length || (kalk ? kalk.positionen.filter(p => p.art==='leistung').length : 0),
+  };
+
+  let einstufung = 'STANDARD_JOB';
+  let besichtigung = false;
+  let spanneNoetig = false;
+  let absageErwaegen = false;
+  let manuellePruefung = false;
+
+  // ── Keine Leistung erkannt ──────────────────────────────────
+  if(kennzahlen.leistungen_erkannt === 0){
+    manuellePruefung = true;
+    begruendung.push({ art:'warnung', text:'Aus der Anfrage ließ sich keine Leistung ableiten. Ohne Leistung ist keine Kalkulation möglich – bitte von Hand ergänzen.' });
+    optionen.push('manuelle_pruefung');
+  }
+
+  // ── Entfernung ──────────────────────────────────────────────
+  if(km === null){
+    manuellePruefung = true;
+    begruendung.push({ art:'warnung', text:'Die Entfernung ist unbekannt – die Postleitzahl ' + (anfrage.plz || '(fehlt)') + ' steht nicht in der Entfernungstabelle. Anfahrt wurde als Pauschale angesetzt.' });
+    optionen.push('entfernung_ergaenzen');
+  } else {
+    begruendung.push({ art:'info', text:'Entfernung ' + zahl(km,0) + ' km (einfache Strecke).' });
+    if(km > Number(vs('max_entfernung_km'))){
+      begruendung.push({ art:'warnung', text:'Über der maximalen Entfernung von ' + zahl(vs('max_entfernung_km'),0) + ' km.' });
+      absageErwaegen = true;
+    }
+  }
+
+  // ── Risiko ──────────────────────────────────────────────────
+  if(treffer.length){
+    einstufung = 'HIGH_RISK_JOB';
+    besichtigung = true; spanneNoetig = true;
+    begruendung.push({ art:'risiko', text:'Risikohinweis im Text der Anfrage: „' + treffer.join('“, „') + '“.' });
+  }
+  if(sonderTreffer.length){
+    if(einstufung !== 'HIGH_RISK_JOB') einstufung = 'HIGH_RISK_JOB';
+    besichtigung = true; spanneNoetig = true;
+    const namen = sonderTreffer.map(id => {
+      const s = KALK_SERVICES_BASE.find(x => x.id === id); return s ? s.name : id;
+    });
+    begruendung.push({ art:'risiko', text:'Sonderleistung enthalten: ' + namen.join(', ') + '.' });
+  }
+  if(etagenZahl !== null && etagenZahl >= Number(vs('risiko_ab_etagen'))){
+    einstufung = 'HIGH_RISK_JOB';
+    besichtigung = true; spanneNoetig = true;
+    begruendung.push({ art:'risiko', text:'Arbeitshöhe: ' + zahl(etagenZahl,0) + ' Etagen (ab ' + zahl(vs('risiko_ab_etagen'),0) + ' gilt Höhensicherung).' });
+  }
+
+  // ── Großprojekt ─────────────────────────────────────────────
+  const grossCent = zuCent(vs('gross_grenze'));
+  const istGross = nettoCent >= grossCent
+                || stunden > Number(vs('max_arbeitsstunden_auto'))
+                || kennzahlen.standorte > Number(vs('max_standorte_auto'));
+  if(istGross && einstufung !== 'HIGH_RISK_JOB'){
+    einstufung = 'LARGE_JOB';
+    besichtigung = true; spanneNoetig = true;
+  }
+  if(istGross){
+    if(nettoCent >= grossCent)
+      begruendung.push({ art:'info', text:'Auftragswert ' + euroCent(nettoCent) + ' netto liegt über der Großprojektgrenze von ' + euro(vs('gross_grenze')) + '.' });
+    if(stunden > Number(vs('max_arbeitsstunden_auto')))
+      begruendung.push({ art:'info', text:'Geschätzter Aufwand ' + zahl(stunden,1) + ' Stunden – über der Grenze von ' + zahl(vs('max_arbeitsstunden_auto'),0) + ' Stunden für eine automatische Kalkulation.' });
+  }
+
+  // ── Partnerweitergabe ───────────────────────────────────────
+  if(km !== null && km > Number(vs('partner_ab_entfernung_km'))
+     && einstufung !== 'HIGH_RISK_JOB' && einstufung !== 'LARGE_JOB'){
+    einstufung = 'PARTNER_REFERRAL';
+    begruendung.push({ art:'warnung', text:'Außerhalb des Einsatzgebiets (über ' + zahl(vs('partner_ab_entfernung_km'),0) + ' km) und kein Großprojekt – Weitergabe an einen Partner prüfen.' });
+  }
+
+  // ── Kleinauftrag ────────────────────────────────────────────
+  const microCent = zuCent(vs('micro_grenze'));
+  if(einstufung === 'STANDARD_JOB' && nettoRohCent > 0 && nettoRohCent < microCent){
+    einstufung = 'MICRO_JOB';
+    begruendung.push({ art:'warnung', text:'Auftragswert ' + euroCent(nettoRohCent) + ' netto liegt unter dem Mindestauftragswert von ' + euro(vs('micro_grenze')) + '.' });
+    /* Bei einem zu kleinen Auftrag wird NICHT abgesagt. Es gibt
+       fünf Wege, ihn tragfähig zu machen – die zeigt das Dashboard
+       als Knöpfe an, statt den Vorgang stillschweigend zu beerdigen. */
+    optionen.push('mindestwert_anwenden', 'anfahrt_ergaenzen',
+                  'zusatzleistungen_vorschlagen', 'sammeltermin_anbieten', 'manuelle_pruefung');
+  }
+
+  // ── Manuelle Prüfgrenze ─────────────────────────────────────
+  const pruefCent = zuCent(vs('pruefgrenze'));
+  if(nettoCent >= pruefCent){
+    manuellePruefung = true;
+    begruendung.push({ art:'info', text:'Über der Prüfgrenze von ' + euro(vs('pruefgrenze')) + ' – wird auf jeden Fall von Hand geprüft.' });
+  }
+
+  if(einstufung === 'STANDARD_JOB' && begruendung.filter(b => b.art !== 'info').length === 0){
+    begruendung.push({ art:'gut', text:'Umfang, Entfernung und Aufwand liegen im Normalbereich. Kann direkt kalkuliert werden.' });
+  }
+
+  if(besichtigung) begruendung.push({ art:'info', text:'Besichtigung beziehungsweise Besprechung vor einem verbindlichen Angebot vorgesehen.' });
+
+  return {
+    einstufung, begruendung, kennzahlen, optionen,
+    besichtigung_noetig: besichtigung,
+    spanne_noetig: spanneNoetig,
+    manuelle_pruefung: manuellePruefung,
+    absage_erwaegen: absageErwaegen,
+    /* Ein Entwurf entsteht nur bei einem sauberen Standardfall und
+       nur, wenn der Schalter das erlaubt. Alles andere wartet auf
+       eine Entscheidung. */
+    entwurf_automatisch: vs('auto_entwurf_bei_standard') === true
+                      && einstufung === 'STANDARD_JOB'
+                      && !manuellePruefung,
+    berechnet_am: new Date().toISOString(),
+  };
+}
+
+/* Kalkulation und Einstufung in einem Schritt – der Weg, den alle
+   Aufrufer nehmen sollen. Getrennt aufgerufen liefen die beiden
+   sonst mit unterschiedlichen Eingaben. */
+function vorsortiereAnfrage(r){
+  const mengen = mengenAusAnfrage(r);
+  const km = entfernungFuer(r && r.plz);
+
+  const leistungen = Object.keys(mengen).map(id => ({
+    id, qty: mengen[id].qty, qty2: mengen[id].qty2, quelle: mengen[id].quelle,
+  }));
+
+  // Erste Runde ohne Sicherheitsaufschlag – erst die Einstufung
+  // entscheidet, ob einer nötig ist.
+  const roh = berechneKalkulation({
+    leistungen, km,
+    haeufigkeit: (r && r.haeufigkeit) || 'Einmalig',
+    abrechnung: 'einzel',
+    geraete_cent: zuCent(vs('geraetepauschale')),
+  });
+  const einstufung = einstufeAnfrage(r, roh);
+
+  // Zweite Runde mit Aufschlag und Spanne, sofern die Einstufung
+  // das verlangt. Zwei Durchläufe sind hier richtig: Der Aufschlag
+  // hängt vom Risiko ab, und das Risiko hängt am Umfang.
+  const kalk = (einstufung.einstufung === 'HIGH_RISK_JOB' || einstufung.spanne_noetig)
+    ? berechneKalkulation({
+        leistungen, km,
+        haeufigkeit: (r && r.haeufigkeit) || 'Einmalig',
+        abrechnung: 'einzel',
+        geraete_cent: zuCent(vs('geraetepauschale')),
+        sicherheitsaufschlag_prozent: einstufung.einstufung === 'HIGH_RISK_JOB' ? Number(vs('sicherheitsaufschlag_prozent')) : 0,
+        spanne_prozent: einstufung.spanne_noetig ? Number(vs('spanne_prozent')) : 0,
+      })
+    : roh;
+
+  return { kalkulation: kalk, einstufung, leistungen };
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   EINSTELLUNGSFORMULARE
+   ══════════════════════════════════════════════════════════════
+   Drei neue Einstellungsbereiche folgen demselben Aufbau wie die
+   Vorgaben. Statt das Muster dreimal abzuschreiben, steht es hier
+   einmal – sonst hätten sich die drei Fassungen nach der ersten
+   Änderung unterschieden, wie es bei den Firestore-Regeln schon
+   einmal passiert ist. */
+function baueEinstellungsFormular(o){
+  const el = document.getElementById(o.zielId);
+  if(!el) return;
+
+  const feldHtml = (f) => {
+    const wert = o.lesen(f.id);
+    const id = o.praefix + '-' + f.id;
+
+    if(f.typ === 'schalter'){
+      return `<div class="vorgabe-zeile">
+        <label class="bool-label" style="flex:1">
+          <input type="checkbox" id="${sicher(id)}" ${wert === true ? 'checked' : ''}>
+          <span>${sicher(f.label)}</span>
+        </label>
+        ${f.hilfe ? `<div class="vorgabe-hilfe">${sicher(f.hilfe)}</div>` : ''}
+      </div>`;
+    }
+    if(f.typ === 'text_lang'){
+      return `<div class="vorgabe-zeile vorgabe-zeile-lang">
+        <label for="${sicher(id)}">${sicher(f.label)}</label>
+        <textarea id="${sicher(id)}" rows="${f.zeilen || 4}"
+                  style="width:100%;min-height:${(f.zeilen||4)*26}px">${sicher(wert)}</textarea>
+        ${f.hilfe ? `<div class="vorgabe-hilfe">${sicher(f.hilfe)}</div>` : ''}
+      </div>`;
+    }
+    const typAttr = f.typ === 'zahl' ? 'type="text" inputmode="decimal"' : 'type="text"';
+    return `<div class="vorgabe-zeile">
+      <label for="${sicher(id)}">${sicher(f.label)}</label>
+      <div class="vorgabe-eingabe">
+        <input ${typAttr} id="${sicher(id)}" value="${sicher(wert)}">
+        ${f.einheit ? `<span class="vorgabe-einheit">${sicher(f.einheit)}</span>` : ''}
+      </div>
+      ${f.hilfe ? `<div class="vorgabe-hilfe">${sicher(f.hilfe)}</div>` : ''}
+    </div>`;
+  };
+
+  el.innerHTML = (o.hinweis ? `<div class="rechts-warnung">${sicher(o.hinweis)}</div>` : '')
+    + o.felder.map(g => `
+    <div class="karte-block">
+      <div class="karte-block-titel">${sicher(g.gruppe)}</div>
+      ${g.erklaerung ? `<div class="karte-block-text">${sicher(g.erklaerung)}</div>` : ''}
+      ${g.felder.map(feldHtml).join('')}
+    </div>`).join('') + `
+    <div class="preis-save-bar">
+      <button class="btn btn-primary" style="width:auto;padding:14px 28px"
+              id="${sicher(o.praefix)}-save-btn" onclick="${sicher(o.speichern)}()">${sicher(o.knopfText || 'Speichern')}</button>
+      <button class="btn btn-sekundaer" onclick="${sicher(o.zuruecksetzen)}()">Auf Standard zurücksetzen</button>
+    </div>`;
+}
+
+/* Liest ein Einstellungsformular aus. Zahlen laufen durch
+   `zahlAusFeld`, damit eine eingegebene 0 erhalten bleibt – bei
+   einer Wahrscheinlichkeit von 0 % oder einem Mindestwert von 0 €
+   ist das der Unterschied zwischen „aus" und „Vorgabewert". */
+function leseEinstellungsFormular(praefix, felder){
+  const neu = {};
+  let fehler = null;
+  felder.forEach(g => g.felder.forEach(f => {
+    const el = document.getElementById(praefix + '-' + f.id);
+    if(!el) return;
+    if(f.typ === 'schalter'){ neu[f.id] = el.checked; return; }
+    if(f.typ === 'zahl'){
+      const z = zahlAusFeld(el, NaN);
+      if(!isFinite(z) || z < 0){ fehler = fehler || f.label; return; }
+      neu[f.id] = z;
+      return;
+    }
+    neu[f.id] = el.value.trim();
+  }));
+  return { werte: neu, fehler };
+}
+
+function speichereEinstellung(dokument, werte, knopfId, erfolgstext, danach){
+  const btn = document.getElementById(knopfId);
+  const alterText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Speichere ...'; }
+  return setDoc(doc(db, 'einstellungen', dokument), werte, { merge:true })
+    .then(() => { melde(erfolgstext); if(danach) danach(); })
+    .catch(err => meldeSchreibfehler(err, 'Das Speichern der Einstellungen'))
+    .finally(() => { if(btn){ btn.disabled = false; btn.textContent = alterText; } });
+}
+
+/* ── Vorsortierung ────────────────────────────────────────── */
+const VORSORTIERUNG_FELDER = [
+  { gruppe:'Wirtschaftlichkeit',
+    erklaerung:'Diese Beträge entscheiden, ob eine Anfrage als Klein-, Standard- oder Großauftrag gilt. Alle Werte netto.',
+    felder:[
+    { id:'mindestauftragswert', typ:'zahl', label:'Mindestauftragswert', einheit:'€',
+      hilfe:'Liegt eine Kalkulation darunter, wird sie auf diesen Betrag angehoben – nie gesenkt.' },
+    { id:'micro_grenze', typ:'zahl', label:'Grenze Kleinauftrag', einheit:'€',
+      hilfe:'Darunter gilt eine Anfrage als Kleinauftrag. Es wird nicht abgesagt, sondern es werden Wege angeboten, sie tragfähig zu machen.' },
+    { id:'pruefgrenze', typ:'zahl', label:'Grenze für Prüfung von Hand', einheit:'€',
+      hilfe:'Ab diesem Wert entsteht nie ein automatischer Entwurf – du siehst die Kalkulation vorher immer selbst an.' },
+    { id:'gross_grenze', typ:'zahl', label:'Grenze Großprojekt', einheit:'€',
+      hilfe:'Darüber: kein fester Endpreis, sondern Preisspanne und Besichtigung.' },
+    { id:'anfahrtspauschale', typ:'zahl', label:'Anfahrtspauschale', einheit:'€',
+      hilfe:'Wird nur angesetzt, wenn die Entfernung nicht bekannt ist.' },
+    { id:'geraetepauschale', typ:'zahl', label:'Gerätepauschale', einheit:'€',
+      hilfe:'0 lassen, wenn keine berechnet wird.' },
+  ]},
+  { gruppe:'Entfernung',
+    erklaerung:'Entfernungen werden NICHT aus der Postleitzahl gerechnet – Postleitzahlen sind Zustellbezirke, keine Koordinaten. Nur was hier steht, ist bekannt.',
+    felder:[
+    { id:'max_entfernung_km', typ:'zahl', label:'Maximale Entfernung', einheit:'km',
+      hilfe:'Darüber wird eine Absage zur Erwägung vorgeschlagen – abgesagt wird nie von selbst.' },
+    { id:'partner_ab_entfernung_km', typ:'zahl', label:'Weitergabe an Partner ab', einheit:'km' },
+    { id:'entfernung_warnung_km', typ:'zahl', label:'Hinweis ab', einheit:'km' },
+    { id:'plz_km', typ:'text_lang', zeilen:6, label:'Eigene Entfernungen',
+      hilfe:'Eine Zeile je Postleitzahl, zum Beispiel „53773=9". Ergänzt und überschreibt die eingebaute Tabelle der Einsatzgebiete.' },
+  ]},
+  { gruppe:'Aufwand und Risiko', felder:[
+    { id:'max_arbeitsstunden_auto', typ:'zahl', label:'Höchste Arbeitszeit für eine automatische Kalkulation', einheit:'Std.' },
+    { id:'mitarbeiter_ab_stunden', typ:'zahl', label:'Zweiter Mitarbeiter ab', einheit:'Std.' },
+    { id:'max_standorte_auto', typ:'zahl', label:'Höchste Zahl Standorte', einheit:'Objekte' },
+    { id:'max_etagen_auto', typ:'zahl', label:'Höchste Zahl Etagen', einheit:'Etagen' },
+    { id:'risiko_ab_etagen', typ:'zahl', label:'Höhensicherung nötig ab', einheit:'Etagen' },
+    { id:'sicherheitsaufschlag_prozent', typ:'zahl', label:'Sicherheitsaufschlag bei Risikoprojekten', einheit:'%' },
+    { id:'spanne_prozent', typ:'zahl', label:'Breite der Preisspanne', einheit:'± %',
+      hilfe:'Bei Groß- und Risikoprojekten wird statt eines festen Preises eine Spanne genannt.' },
+    { id:'risiko_stichworte', typ:'text_lang', zeilen:3, label:'Stichwörter, die ein Risiko anzeigen',
+      hilfe:'Durch Komma getrennt. Kommt eines davon im Text der Anfrage vor, wird sie als Risikoprojekt eingestuft.' },
+    { id:'sonderleistungen', typ:'text', label:'Leistungen, die immer als Sonderleistung gelten',
+      hilfe:'Kürzel der Leistungen, durch Komma getrennt – zum Beispiel „grund, winter".' },
+  ]},
+  { gruppe:'Fristen', felder:[
+    { id:'vormerkung_tage', typ:'zahl', label:'Vormerkung einer Vorabkalkulation', einheit:'Tage' },
+    { id:'erinnerung_tage_vorher', typ:'zahl', label:'Erinnerung vor Ablauf', einheit:'Tage' },
+    { id:'angebot_gueltigkeit_tage', typ:'zahl', label:'Gültigkeit eines verbindlichen Angebots', einheit:'Tage' },
+  ]},
+  { gruppe:'Automatismen',
+    erklaerung:'Ein Automatismus darf aufräumen und erinnern. Er vergibt nie eine Nummer, bewegt nie Geld und versendet nie etwas ohne deine Freigabe.',
+    felder:[
+    { id:'auto_einstufung', typ:'schalter', label:'Anfragen automatisch einstufen' },
+    { id:'auto_kalkulation', typ:'schalter', label:'Vorabkalkulation automatisch berechnen' },
+    { id:'auto_entwurf_bei_standard', typ:'schalter', label:'Bei sauberen Standardfällen automatisch einen Entwurf anlegen',
+      hilfe:'Nur ein Entwurf. Versendet wird er erst nach deiner Freigabe.' },
+  ]},
+];
+
+function renderVorsortierungFormular(){
+  baueEinstellungsFormular({
+    zielId:'vorsortierung-formular', praefix:'vso', felder:VORSORTIERUNG_FELDER,
+    lesen: vs, speichern:'saveVorsortierung', zuruecksetzen:'vorsortierungZuruecksetzen',
+    knopfText:'Regeln speichern',
+  });
+}
+window.saveVorsortierung = function(){
+  const { werte, fehler } = leseEinstellungsFormular('vso', VORSORTIERUNG_FELDER);
+  if(fehler){ melde('Bitte „' + fehler + '" prüfen – dort steht keine gültige Zahl.', 'fehler'); return; }
+  if(Number(werte.micro_grenze) > Number(werte.gross_grenze)){
+    melde('Die Grenze für Kleinaufträge kann nicht über der Großprojektgrenze liegen.', 'fehler'); return;
+  }
+  speichereEinstellung('vorsortierung', werte, 'vso-save-btn',
+    'Vorsortierungsregeln gespeichert – gelten ab sofort für neue Einstufungen.', () => {
+      vorsortierungData = Object.assign({}, vorsortierungData, werte);
+      renderVorkalkulationen(); renderRequests();
+      protokolliere('vorsortierung_geaendert', { felder: Object.keys(werte) });
+    });
+};
+window.vorsortierungZuruecksetzen = function(){
+  if(!confirm('Alle Vorsortierungsregeln auf die Standardwerte zurücksetzen?')) return;
+  vorsortierungData = {};
+  renderVorsortierungFormular();
+  melde('Zurückgesetzt – zum Übernehmen noch auf „Regeln speichern" klicken.');
+};
+
+/* ── Abschlusswahrscheinlichkeiten ────────────────────────── */
+const PLANUNG_FELDER = [
+  { gruppe:'Abschlusswahrscheinlichkeit je Stand',
+    erklaerung:'Nur für die Umsatzplanung. Diese Prozentwerte fließen niemals in Einnahmen, Gewinn oder Steuer ein.',
+    felder:[
+    { id:'w_erstellt',          typ:'zahl', label:'Vorabkalkulation erstellt',   einheit:'%' },
+    { id:'w_angesehen',         typ:'zahl', label:'Vom Kunden geöffnet',         einheit:'%' },
+    { id:'w_vorgemerkt',        typ:'zahl', label:'Vorgemerkt',                  einheit:'%' },
+    { id:'w_termin',            typ:'zahl', label:'Termin gebucht',              einheit:'%' },
+    { id:'w_besprechung',       typ:'zahl', label:'Besprechung durchgeführt',    einheit:'%' },
+    { id:'w_angebot_versendet', typ:'zahl', label:'Verbindliches Angebot versendet', einheit:'%' },
+    { id:'w_angenommen',        typ:'zahl', label:'Angenommen',                  einheit:'%' },
+    { id:'w_verloren',          typ:'zahl', label:'Abgelehnt oder abgelaufen',   einheit:'%' },
+  ]},
+];
+function renderPlanungFormular(){
+  baueEinstellungsFormular({
+    zielId:'planung-formular', praefix:'plw', felder:PLANUNG_FELDER,
+    lesen: pw, speichern:'savePlanung', zuruecksetzen:'planungZuruecksetzen',
+    knopfText:'Wahrscheinlichkeiten speichern',
+  });
+}
+window.savePlanung = function(){
+  const { werte, fehler } = leseEinstellungsFormular('plw', PLANUNG_FELDER);
+  if(fehler){ melde('Bitte „' + fehler + '" prüfen – dort steht keine gültige Zahl.', 'fehler'); return; }
+  const zuHoch = Object.keys(werte).find(k => Number(werte[k]) > 100);
+  if(zuHoch){ melde('Eine Wahrscheinlichkeit über 100 % gibt es nicht.', 'fehler'); return; }
+  speichereEinstellung('planung', werte, 'plw-save-btn', 'Wahrscheinlichkeiten gespeichert.', () => {
+    planungData = Object.assign({}, planungData, werte);
+    renderUmsatzplanung();
+  });
+};
+window.planungZuruecksetzen = function(){
+  if(!confirm('Alle Wahrscheinlichkeiten auf die Standardwerte zurücksetzen?')) return;
+  planungData = {};
+  renderPlanungFormular();
+  melde('Zurückgesetzt – zum Übernehmen noch speichern.');
+};
+
+/* ── Rechtstexte ──────────────────────────────────────────── */
+const RECHTSTEXTE_FELDER = [
+  { gruppe:'Unverbindliche Vorabkalkulation', felder:[
+    { id:'unverbindlich_hinweis', typ:'text_lang', zeilen:5, label:'Unverbindlichkeitshinweis',
+      hilfe:'Steht auf jeder Vorabkalkulation und in jeder zugehörigen E-Mail.' },
+    { id:'abgleich_hinweis', typ:'text_lang', zeilen:2, label:'Hinweis zum Datenabgleich',
+      hilfe:'Erscheint nur, wenn die Kontaktdaten mit der ursprünglichen Anfrage übereinstimmen. Behauptet bewusst nicht, die Identität sei geprüft.' },
+    { id:'vormerkung_hinweis', typ:'text_lang', zeilen:3, label:'Hinweis zur Vormerkung' },
+    { id:'spanne_hinweis', typ:'text_lang', zeilen:3, label:'Hinweis zur Preisspanne' },
+    { id:'ablauf_text', typ:'text_lang', zeilen:3, label:'Text nach Ablauf',
+      hilfe:'{{DATUM}} wird durch das Ablaufdatum ersetzt.' },
+  ]},
+  { gruppe:'Verbraucher (nur Privatkunden)', felder:[
+    { id:'widerruf_belehrung', typ:'text_lang', zeilen:7, label:'Widerrufsbelehrung' },
+    { id:'widerruf_formular', typ:'text_lang', zeilen:6, label:'Muster-Widerrufsformular' },
+    { id:'vorzeitiger_beginn', typ:'text_lang', zeilen:4, label:'Erklärung zum vorzeitigen Leistungsbeginn',
+      hilfe:'Wird dem Kunden als Ankreuzfeld angeboten – niemals vorangekreuzt.' },
+  ]},
+  { gruppe:'Fassung', felder:[
+    { id:'agb_version', typ:'text', label:'Bezeichnung der AGB-Fassung' },
+    { id:'version', typ:'zahl', label:'Fassungsnummer der Rechtstexte',
+      hilfe:'Bei jeder inhaltlichen Änderung um eins erhöhen. Die Nummer wird auf jedem versendeten Dokument festgehalten, damit später nachweisbar ist, welche Fassung der Kunde gesehen hat.' },
+  ]},
+];
+function renderRechtstexteFormular(){
+  baueEinstellungsFormular({
+    zielId:'rechtstexte-formular', praefix:'rtx', felder:RECHTSTEXTE_FELDER,
+    lesen: rt, speichern:'saveRechtstexte', zuruecksetzen:'rechtstexteZuruecksetzen',
+    knopfText:'Rechtstexte speichern',
+    hinweis:'⚖️ Rechtlich vor Veröffentlichung prüfen lassen. Diese Texte sind eine sorgfältig erstellte Vorlage, aber keine anwaltlich geprüfte Fassung und keine Rechtsberatung.',
+  });
+}
+window.saveRechtstexte = function(){
+  const { werte, fehler } = leseEinstellungsFormular('rtx', RECHTSTEXTE_FELDER);
+  if(fehler){ melde('Bitte „' + fehler + '" prüfen.', 'fehler'); return; }
+  if(!String(werte.unverbindlich_hinweis || '').trim()){
+    melde('Der Unverbindlichkeitshinweis darf nicht leer sein – ohne ihn darf keine Vorabkalkulation hinausgehen.', 'fehler');
+    return;
+  }
+  const alteVersion = rechtstextVersion();
+  speichereEinstellung('rechtstexte', werte, 'rtx-save-btn', 'Rechtstexte gespeichert.', () => {
+    rechtstexteData = Object.assign({}, rechtstexteData, werte);
+    protokolliere('rechtstexte_geaendert', { von_version: alteVersion, auf_version: rechtstextVersion() });
+  });
+};
+window.rechtstexteZuruecksetzen = function(){
+  if(!confirm('Alle Rechtstexte auf die eingebaute Vorlage zurücksetzen?')) return;
+  rechtstexteData = {};
+  renderRechtstexteFormular();
+  melde('Zurückgesetzt – zum Übernehmen noch speichern.');
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   VORABKALKULATION – NUMMER, ANLAGE, FREIGABE
+   ══════════════════════════════════════════════════════════════ */
+
+/* Nummernkreis in einer Transaktion – wie bei Rechnung und Angebot.
+   Die Folge getDoc → +1 → setDoc vergäbe bei zwei offenen Tabs oder
+   zwei schnellen Klicks dieselbe Nummer. */
+async function getOrCreateKalkulationsnummer(){
+  const zaehlerRef = doc(db, 'einstellungen', 'kalkulationszaehler');
+  const jahr = new Date().getFullYear();
+  const nummer = await runTransaction(db, async (tx) => {
+    const snap = await tx.get(zaehlerRef);
+    const daten = snap.exists() ? snap.data() : {};
+    const naechste = (daten.jahr === jahr ? (Number(daten.naechste_nummer) || 0) : 0) + 1;
+    tx.set(zaehlerRef, { jahr, naechste_nummer: naechste }, { merge:true });
+    return naechste;
+  });
+  return (vs('kalkulation_praefix') || 'VK') + '-' + jahr + '-' + String(nummer).padStart(4, '0');
+}
+
+/* Legt aus einer Anfrage einen Entwurf an. Vergibt bewusst SOFORT
+   eine Nummer: Eine Vorabkalkulation ohne Nummer lässt sich in
+   einem Gespräch nicht benennen, und der Zähler ist billig.
+   Versendet wird davon nichts. */
+window.vorkalkulationAusAnfrage = async function(anfrageId){
+  const r = allRequests.find(x => x.id === anfrageId);
+  if(!r){ melde('Diese Anfrage wurde nicht gefunden.', 'fehler'); return; }
+
+  const vorhanden = allVorkalkulationen.find(v => v.anfrage_id === anfrageId
+    && !['DECLINED','EXPIRED'].includes(v.status));
+  if(vorhanden && !confirm('Zu dieser Anfrage gibt es bereits die Vorabkalkulation ' +
+      (vorhanden.nummer || '') + '.\n\nTrotzdem eine weitere anlegen?')) return;
+
+  const { kalkulation, einstufung } = vorsortiereAnfrage(r);
+  const key = r.email ? emailToKey(r.email) : null;
+  const kunde = key ? deriveKundenList().find(k => k.key === key) : null;
+
+  try {
+    const nummer = await getOrCreateKalkulationsnummer();
+    const daten = {
+      nummer, version: 1,
+      status: 'DRAFT',
+      anfrage_id: anfrageId,
+      kunde_key: key,
+      // Stammdaten zum Zeitpunkt der Anlage – der Nachweis, worauf
+      // die Kalkulation beruhte, auch wenn der Kunde später umzieht.
+      vorname: r.vorname || '', nachname: r.nachname || '',
+      firma: (kunde && kunde.firma) || '',
+      email: (r.email || '').toLowerCase(),
+      telefon: r.telefon || '',
+      strasse: r.strasse || '', plz: r.plz || '', ort: r.ort || '',
+      kundenart: kundenart((kunde && kunde.art) || (r.objektart ? 'unternehmen' : 'privat')),
+      leistungen_text: kalkulation.positionen.filter(p => p.art === 'leistung').map(p => p.text).join(', '),
+      haeufigkeit: r.haeufigkeit || 'Einmalig',
+      kalkulation, einstufung,
+      einstufung_wert: einstufung.einstufung,
+      einstufung_manuell: false,
+      brutto_gesamt_cent: kalkulation.brutto_gesamt_cent,
+      netto_gesamt_cent: kalkulation.netto_gesamt_cent,
+      rechtstext_version: rechtstextVersion(),
+      approved_by: null, approved_at: null,
+      sent_at: null, viewed_at: null, reserved_until: null,
+      createdAt: serverTimestamp(),
+      erstellt_von: (auth.currentUser && auth.currentUser.email) || 'unbekannt',
+    };
+    const ref = await addDoc(collection(db, 'vorkalkulationen'), daten);
+
+    await protokolliere('vk_angelegt', {
+      dokument:'vorkalkulation', dokument_id: ref.id, nummer,
+      anfrage_id: anfrageId, einstufung: einstufung.einstufung,
+      brutto_cent: kalkulation.brutto_gesamt_cent, regelversion: kalkulation.regelversion,
+    });
+    benachrichtige('vk_neu', 'Vorabkalkulation ' + nummer + ' angelegt',
+      ((r.vorname||'') + ' ' + (r.nachname||'')).trim() + ' · ' + euroCent(kalkulation.brutto_gesamt_cent),
+      { bereich:'vorkalkulationen', id: ref.id });
+
+    melde('Vorabkalkulation ' + nummer + ' als Entwurf angelegt.');
+    window.switchView('vorkalkulationen');
+  } catch(err){
+    meldeSchreibfehler(err, 'Das Anlegen der Vorabkalkulation');
+  }
+};
+
+/* ── Freigabeprüfung ──────────────────────────────────────────
+   Die Liste aus dem Auftrag, Punkt für Punkt. Gibt die GRÜNDE
+   zurück, nicht nur ja/nein – ein „geht nicht" ohne Grund wäre im
+   Alltag wertlos. */
+function pruefeFreigabe(vk){
+  const maengel = [];
+  if(!vk) return ['Dokument nicht gefunden.'];
+
+  if(!vk.nummer) maengel.push('Es fehlt eine Kalkulationsnummer.');
+  if(!vk.version) maengel.push('Es fehlt eine Versionsnummer.');
+
+  const name = ((vk.vorname||'') + ' ' + (vk.nachname||'')).trim();
+  if(!name && !vk.firma) maengel.push('Es fehlt ein Name oder eine Firma.');
+  if(!vk.email) maengel.push('Es fehlt die E-Mail-Adresse des Empfängers.');
+  else if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(vk.email))
+    maengel.push('Die E-Mail-Adresse „' + vk.email + '" sieht nicht gültig aus.');
+
+  const k = vk.kalkulation;
+  if(!k) maengel.push('Es fehlt die Berechnung.');
+  else {
+    if(!Array.isArray(k.positionen) || k.positionen.length === 0)
+      maengel.push('Die Kalkulation enthält keine einzige Position.');
+    if(!(k.brutto_gesamt_cent > 0))
+      maengel.push('Der Gesamtbetrag ist null – so darf nichts hinausgehen.');
+    const summe = (k.positionen || []).reduce((s,p) => s + (Number(p.betrag_cent)||0), 0);
+    if(summe !== k.zwischensumme_cent)
+      maengel.push('Die Positionen ergeben nicht die Zwischensumme – bitte neu berechnen.');
+    if(k.netto_gesamt_cent + k.mwst_cent !== k.brutto_gesamt_cent)
+      maengel.push('Netto und Umsatzsteuer ergeben nicht den Bruttobetrag – bitte neu berechnen.');
+    if(!Number.isInteger(k.brutto_gesamt_cent))
+      maengel.push('Der Gesamtbetrag ist kein glatter Cent-Wert.');
+  }
+
+  if(!String(rt('unverbindlich_hinweis')).trim())
+    maengel.push('Der Unverbindlichkeitshinweis ist leer – ohne ihn darf keine Vorabkalkulation hinausgehen.');
+
+  if(!pdfVerfuegbar())
+    maengel.push('Die PDF-Bibliothek ist nicht geladen. Meist ein Werbeblocker – Seite neu laden.');
+
+  return maengel;
+}
+
+window.vkFreigeben = async function(id, undVersenden){
+  const vk = allVorkalkulationen.find(x => x.id === id);
+  if(!vk) return;
+
+  if(vk.status === 'SENT' || vk.status === 'VIEWED' || vk.status === 'RESERVED'){
+    melde('Diese Fassung ist schon beim Kunden. Für Änderungen bitte eine neue Version anlegen.', 'fehler');
+    return;
+  }
+
+  const maengel = pruefeFreigabe(vk);
+  if(maengel.length){
+    melde('Freigabe nicht möglich:\n· ' + maengel.join('\n· '), 'fehler');
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, 'vorkalkulationen', id), {
+      status: 'ADMIN_APPROVED',
+      approved_by: (auth.currentUser && auth.currentUser.email) || 'unbekannt',
+      approved_at: serverTimestamp(),
+      rechtstext_version: rechtstextVersion(),
+    });
+    await protokolliere('vk_freigegeben', {
+      dokument:'vorkalkulation', dokument_id:id, nummer: vk.nummer, version: vk.version,
+      brutto_cent: vk.brutto_gesamt_cent,
+    });
+    melde('Vorabkalkulation ' + vk.nummer + ' freigegeben.');
+    if(undVersenden) window.vkVersenden(id);
+  } catch(err){
+    meldeSchreibfehler(err, 'Die Freigabe');
+  }
+};
+
+window.vkFreigabeZurueckziehen = async function(id){
+  const vk = allVorkalkulationen.find(x => x.id === id);
+  if(!vk) return;
+  if(vk.status !== 'ADMIN_APPROVED'){
+    melde('Zurückziehen geht nur, solange die Fassung freigegeben, aber noch nicht versendet ist.', 'fehler');
+    return;
+  }
+  if(!confirm('Freigabe für ' + vk.nummer + ' zurückziehen?')) return;
+  try {
+    await updateDoc(doc(db, 'vorkalkulationen', id), {
+      status:'ADMIN_REVIEW', approved_by:null, approved_at:null,
+    });
+    await protokolliere('vk_freigabe_zurueckgezogen', {
+      dokument:'vorkalkulation', dokument_id:id, nummer: vk.nummer,
+    });
+    melde('Freigabe zurückgezogen.');
+  } catch(err){ meldeSchreibfehler(err, 'Das Zurückziehen der Freigabe'); }
+};
+
+/* Neue Version: Das versendete Dokument bleibt unangetastet, die
+   Änderung entsteht als eigener Datensatz mit erhöhter Version.
+   Ohne das ließe sich nachträglich der Preis eines Dokuments
+   ändern, das der Kunde bereits in Händen hält. */
+window.vkNeueVersion = async function(id){
+  const alt = allVorkalkulationen.find(x => x.id === id);
+  if(!alt) return;
+  if(!confirm('Neue Version von ' + alt.nummer + ' anlegen?\n\n' +
+              'Die bisherige Fassung bleibt unverändert erhalten und wird archiviert.')) return;
+  try {
+    const neu = Object.assign({}, alt);
+    delete neu.id;
+    neu.version = (Number(alt.version) || 1) + 1;
+    neu.status = 'DRAFT';
+    neu.approved_by = null; neu.approved_at = null;
+    neu.sent_at = null; neu.viewed_at = null; neu.reserved_until = null;
+    neu.vorgaenger_id = id;
+    neu.createdAt = serverTimestamp();
+    const ref = await addDoc(collection(db, 'vorkalkulationen'), neu);
+    await updateDoc(doc(db, 'vorkalkulationen', id), { ersetzt_durch: ref.id });
+    await protokolliere('vk_neue_version', {
+      dokument:'vorkalkulation', dokument_id: ref.id, nummer: alt.nummer,
+      von_version: alt.version, auf_version: neu.version, vorgaenger_id: id,
+    });
+    melde('Version ' + neu.version + ' angelegt.');
+  } catch(err){ meldeSchreibfehler(err, 'Das Anlegen der neuen Version'); }
+};
+
+window.vkEinstufungSetzen = async function(id, wert){
+  const vk = allVorkalkulationen.find(x => x.id === id);
+  if(!vk || !EINSTUFUNG[wert]) return;
+  try {
+    await updateDoc(doc(db, 'vorkalkulationen', id), {
+      einstufung_wert: wert, einstufung_manuell: true,
+    });
+    await protokolliere('vk_einstufung_uebersteuert', {
+      dokument:'vorkalkulation', dokument_id:id, nummer: vk.nummer,
+      von: vk.einstufung_wert, auf: wert,
+    });
+    melde('Einstufung von Hand auf „' + EINSTUFUNG[wert].text + '" gesetzt.');
+  } catch(err){ meldeSchreibfehler(err, 'Das Ändern der Einstufung'); }
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   VORABKALKULATIONEN – ANSICHT
+   ══════════════════════════════════════════════════════════════ */
+function vkOffeneListe(){
+  return allVorkalkulationen.filter(v => VK_STATUS[v.status] && VK_STATUS[v.status].offen);
+}
+
+function renderVorkalkulationenStats(){
+  const el = document.getElementById('vk-stats');
+  if(!el) return;
+  const offen = vkOffeneListe();
+  const zuPruefen = allVorkalkulationen.filter(v => v.status === 'DRAFT' || v.status === 'ADMIN_REVIEW').length;
+  const vorgemerkt = allVorkalkulationen.filter(v => v.status === 'RESERVED').length;
+  const volumen = offen.reduce((s,v) => s + (Number(v.brutto_gesamt_cent)||0), 0);
+  el.innerHTML = `
+    <div class="stat-card"><div class="stat-val">${allVorkalkulationen.length}</div><div class="stat-lbl">Kalkulationen gesamt</div></div>
+    <div class="stat-card"><div class="stat-val">${zuPruefen}</div><div class="stat-lbl">Warten auf Prüfung</div></div>
+    <div class="stat-card"><div class="stat-val">${vorgemerkt}</div><div class="stat-lbl">Vorgemerkt</div></div>
+    <div class="stat-card"><div class="stat-val">${sicher(euroCent(volumen))}</div><div class="stat-lbl">Offenes Volumen</div></div>
+  `;
+}
+
+function renderVorkalkulationen(){
+  const listEl = document.getElementById('vk-liste');
+  if(!listEl) return;
+  renderVorkalkulationenStats();
+
+  if(allVorkalkulationen.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Noch keine Vorabkalkulation. ' +
+      'Lege eine aus einer Anfrage an – im Bereich <span class="stammdaten-link" onclick="switchView(\'anfragen\')">Anfragen</span>.</div>';
+    return;
+  }
+
+  const statusFilter = (document.getElementById('vk-filter-status') || {}).value || '';
+  const suche = ((document.getElementById('vk-suche') || {}).value || '').toLowerCase().trim();
+
+  let liste = [...allVorkalkulationen];
+  if(statusFilter) liste = liste.filter(v => v.status === statusFilter);
+  if(suche) liste = liste.filter(v =>
+    `${v.nummer||''} ${v.vorname||''} ${v.nachname||''} ${v.firma||''} ${v.leistungen_text||''}`
+      .toLowerCase().includes(suche));
+  liste.sort(nachDatumAbsteigend);
+
+  if(liste.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Keine Vorabkalkulation gefunden.</div>';
+    return;
+  }
+
+  listEl.innerHTML = liste.map(v => {
+    const j = sicherJs(v.id);
+    const st = VK_STATUS[v.status] || VK_STATUS.DRAFT;
+    const eingestuft = v.einstufung_wert || 'STANDARD_JOB';
+    const ein = EINSTUFUNG[eingestuft] || EINSTUFUNG.STANDARD_JOB;
+    const k = v.kalkulation || {};
+    const name = [((v.vorname||'') + ' ' + (v.nachname||'')).trim(), v.firma].filter(Boolean).join(' · ');
+
+    const gruende = ((v.einstufung && v.einstufung.begruendung) || []).map(b =>
+      `<li class="vk-grund vk-grund-${sicher(b.art)}">${sicher(b.text)}</li>`).join('');
+
+    const maengel = pruefeFreigabe(v);
+    const freigebbar = maengel.length === 0;
+    const schonBeimKunden = ['SENT','VIEWED','RESERVED','MEETING_BOOKED','CHANGE_REQUESTED'].includes(v.status);
+
+    return `
+    <div class="vk-card">
+      <div class="req-top">
+        <div>
+          <div class="req-name">
+            ${sicher(v.nummer)}<span class="vk-version">v${sicher(v.version||1)}</span> · ${sicher(name || '–')}
+            <span class="vk-pille vk-${sicher(st.farbe)}">${sicher(st.text)}</span>
+          </div>
+          <div class="req-meta">${sicher(formatDate(v.createdAt))} · ${sicher(v.leistungen_text || 'keine Leistung erkannt')}</div>
+        </div>
+        <div class="vk-betrag">${sicher(euroCent(v.brutto_gesamt_cent))}</div>
+      </div>
+
+      <div class="vk-einstufung vk-${sicher(ein.farbe)}">
+        <div class="vk-einstufung-kopf">
+          <span class="vk-einstufung-name">${sicher(ein.text)}</span>
+          ${v.einstufung_manuell ? '<span class="vk-vonhand">von Hand gesetzt</span>' : ''}
+          <select class="vk-einstufung-wahl" aria-label="Einstufung ändern"
+                  onchange="vkEinstufungSetzen('${j}', this.value)">
+            ${Object.keys(EINSTUFUNG).map(s =>
+              `<option value="${sicher(s)}" ${s===eingestuft?'selected':''}>${sicher(EINSTUFUNG[s].text)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="vk-einstufung-hinweis">${sicher(ein.hinweis)}</div>
+        ${gruende ? `<ul class="vk-gruende">${gruende}</ul>` : ''}
+      </div>
+
+      <div class="req-grid">
+        <div><span>Netto:</span>${sicher(euroCent(k.netto_gesamt_cent))}</div>
+        <div><span>USt. ${sicher(zahl(k.mwst_satz||0,1))} %:</span>${sicher(euroCent(k.mwst_cent))}</div>
+        <div><span>Aufwand:</span>${sicher(zahl(k.arbeitsstunden||0,1))} Std.</div>
+        <div><span>Entfernung:</span>${k.km === null || k.km === undefined ? 'unbekannt' : sicher(zahl(k.km,0)) + ' km'}</div>
+        <div><span>E-Mail:</span>${sicher(v.email||'–')}</div>
+        <div><span>Kundenart:</span>${sicher(KUNDENARTEN[kundenart(v.kundenart)].text)}</div>
+      </div>
+
+      ${k.spanne ? `<div class="vk-spanne">Preisspanne: ${sicher(euroCent(k.spanne.von_cent))} – ${sicher(euroCent(k.spanne.bis_cent))} (± ${sicher(zahl(k.spanne.prozent,0))} %)</div>` : ''}
+
+      <details class="vk-details">
+        <summary>Rechenweg anzeigen</summary>
+        <table class="vk-positionen">
+          <tbody>
+          ${(k.positionen||[]).map(p => `
+            <tr>
+              <td>${sicher(p.text)}${p.hinweis ? `<div class="vk-pos-hinweis">${sicher(p.hinweis)}</div>` : ''}</td>
+              <td class="vk-menge">${sicher(p.menge||'')}</td>
+              <td class="vk-summe">${sicher(euroCent(p.betrag_cent))}</td>
+            </tr>`).join('')}
+          ${(k.zuschlaege||[]).map(z => `
+            <tr class="vk-zuschlag">
+              <td>${sicher(z.text)}</td><td class="vk-menge">+${sicher(zahl(z.prozent,0))} %</td>
+              <td class="vk-summe">${sicher(euroCent(z.betrag_cent))}</td>
+            </tr>`).join('')}
+          ${k.sicherheitsaufschlag_cent ? `<tr class="vk-zuschlag"><td>Sicherheitsaufschlag</td><td class="vk-menge">+${sicher(zahl(k.sicherheitsaufschlag_prozent,0))} %</td><td class="vk-summe">${sicher(euroCent(k.sicherheitsaufschlag_cent))}</td></tr>` : ''}
+          ${k.mindest_angehoben_cent ? `<tr class="vk-zuschlag"><td>Anhebung auf Mindestauftragswert</td><td class="vk-menge"></td><td class="vk-summe">${sicher(euroCent(k.mindest_angehoben_cent))}</td></tr>` : ''}
+          ${k.rabatt_cent ? `<tr class="vk-zuschlag"><td>Rabatt</td><td class="vk-menge"></td><td class="vk-summe">− ${sicher(euroCent(k.rabatt_cent))}</td></tr>` : ''}
+          ${(k.multiplikator && k.multiplikator !== 1) ? `<tr class="vk-zuschlag"><td>${sicher(k.haeufigkeit)}, ${sicher(k.abrechnung)}</td><td class="vk-menge">× ${sicher(zahl(k.multiplikator,2))}</td><td class="vk-summe">${sicher(euroCent(k.netto_gesamt_cent))}</td></tr>` : ''}
+          </tbody>
+        </table>
+        ${(k.annahmen||[]).length ? `<div class="vk-annahmen"><strong>Angenommen wurde:</strong><ul>${k.annahmen.map(a => `<li>${sicher(a)}</li>`).join('')}</ul></div>` : ''}
+        <div class="vk-regelversion">Preisregeln Fassung ${sicher(k.regelversion||1)} · Rechtstexte Fassung ${sicher(v.rechtstext_version||1)}</div>
+      </details>
+
+      ${v.approved_at ? `<div class="vk-freigabe">Freigegeben von ${sicher(v.approved_by||'–')} am ${sicher(formatDate(v.approved_at))}</div>` : ''}
+      ${!freigebbar && !schonBeimKunden ? `<div class="vk-maengel"><strong>Vor der Freigabe zu klären:</strong><ul>${maengel.map(m => `<li>${sicher(m)}</li>`).join('')}</ul></div>` : ''}
+
+      <div class="req-actions">
+        <button onclick="vkVorschau('${j}')">Vorschau</button>
+        ${schonBeimKunden
+          ? `<button onclick="vkNeueVersion('${j}')">Neue Version anlegen</button>`
+          : v.status === 'ADMIN_APPROVED'
+            ? `<button class="vk-knopf-haupt" onclick="vkVersenden('${j}')">Freigegeben – jetzt versenden</button>
+               <button onclick="vkFreigabeZurueckziehen('${j}')">Freigabe zurückziehen</button>`
+            : `<button class="vk-knopf-haupt" ${freigebbar?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="vkFreigeben('${j}', false)">Freigeben</button>
+               <button ${freigebbar?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="vkFreigeben('${j}', true)">Freigeben und versenden</button>`}
+        <button onclick="vkNeuBerechnen('${j}')">Neu berechnen</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let vkSuchTimer = null;
+window.renderVorkalkulationenVerzoegert = function(){
+  if(vkSuchTimer) clearTimeout(vkSuchTimer);
+  vkSuchTimer = setTimeout(renderVorkalkulationen, 220);
+};
+
+/* Neu berechnen: nimmt die aktuellen Preisregeln und die aktuelle
+   Anfrage und rechnet noch einmal. Nur erlaubt, solange nichts
+   beim Kunden ist. */
+window.vkNeuBerechnen = async function(id){
+  const vk = allVorkalkulationen.find(x => x.id === id);
+  if(!vk) return;
+  if(['SENT','VIEWED','RESERVED','MEETING_BOOKED'].includes(vk.status)){
+    melde('Diese Fassung ist beim Kunden und darf nicht mehr geändert werden. Bitte eine neue Version anlegen.', 'fehler');
+    return;
+  }
+  const r = allRequests.find(x => x.id === vk.anfrage_id);
+  if(!r){ melde('Die zugehörige Anfrage wurde nicht gefunden.', 'fehler'); return; }
+
+  const { kalkulation, einstufung } = vorsortiereAnfrage(r);
+  const vorher = vk.brutto_gesamt_cent;
+  try {
+    await updateDoc(doc(db, 'vorkalkulationen', id), {
+      kalkulation, einstufung,
+      einstufung_wert: vk.einstufung_manuell ? vk.einstufung_wert : einstufung.einstufung,
+      brutto_gesamt_cent: kalkulation.brutto_gesamt_cent,
+      netto_gesamt_cent: kalkulation.netto_gesamt_cent,
+      leistungen_text: kalkulation.positionen.filter(p => p.art==='leistung').map(p => p.text).join(', '),
+      status: vk.status === 'ADMIN_APPROVED' ? 'ADMIN_REVIEW' : vk.status,
+      approved_by: null, approved_at: null,
+    });
+    await protokolliere('vk_neu_berechnet', {
+      dokument:'vorkalkulation', dokument_id:id, nummer: vk.nummer,
+      vorher_cent: vorher, nachher_cent: kalkulation.brutto_gesamt_cent,
+      regelversion: kalkulation.regelversion,
+    });
+    melde('Neu berechnet: ' + euroCent(vorher) + ' → ' + euroCent(kalkulation.brutto_gesamt_cent) +
+          (vk.status === 'ADMIN_APPROVED' ? '. Die Freigabe wurde dadurch zurückgesetzt.' : '.'));
+  } catch(err){ meldeSchreibfehler(err, 'Das Neuberechnen'); }
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   PDF DER VORABKALKULATION
+   ══════════════════════════════════════════════════════════════
+   Baut auf denselben Bausteinen auf wie Rechnung und Angebot.
+
+   ⚠️ Es wird gezielt Feld für Feld gelesen – NIE in einer Schleife
+   über alle Felder des Dokuments. `kalkulation` enthält die
+   Kostenseite (`gewinn_gesamt_cent`, `kosten_einsatz_cent`,
+   `arbeitsstunden`). Eine generische Schleife druckte Daniels Marge
+   auf das Kundendokument. */
+function buildVorkalkulationPDF(vk){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit:'mm', format:'a4' });
+  const k = vk.kalkulation || {};
+
+  pdfKopf(pdf);
+
+  const empfaenger = [
+    vk.firma || null,
+    ((vk.vorname||'') + ' ' + (vk.nachname||'')).trim() || null,
+    vk.strasse || null,
+    ((vk.plz||'') + ' ' + (vk.ort||'')).trim() || null,
+  ];
+  pdfEmpfaenger(pdf, empfaenger);
+
+  const vorgemerktBis = vk.reserved_until
+    ? pdfDatum(new Date(vk.reserved_until))
+    : pdfDatum(new Date(Date.now() + Number(vs('vormerkung_tage')) * 86400000));
+
+  pdfMeta(pdf, [
+    ['Kalkulation', vk.nummer || '–'],
+    ['Fassung', 'Version ' + (vk.version || 1)],
+    ['Datum', pdfDatum(new Date())],
+    ['Vorgemerkt bis', vorgemerktBis],
+  ]);
+
+  let y = pdfTitel(pdf, 'Unverbindliche Vorabkalkulation', 82);
+
+  /* Der Unverbindlichkeitshinweis steht GANZ OBEN, nicht im
+     Kleingedruckten. Ein Hinweis, den man erst nach dem Preis
+     findet, hat seinen Zweck verfehlt. */
+  y = pdfKasten(pdf, 'Bitte zuerst lesen', pdf.splitTextToSize(String(rt('unverbindlich_hinweis')), 160), y);
+
+  y = pdfTabellenKopf(pdf, y);
+  y = pdfPositionen(pdf, (k.positionen || []).map(p => ({
+    text: p.text, menge: p.menge || '', hinweis: p.hinweis || '', betrag: ausCent(p.betrag_cent),
+  })), y);
+
+  const summen = [];
+  (k.zuschlaege || []).forEach(z =>
+    summen.push([z.text + ' (' + zahl(z.prozent,0) + ' %)', pdfEuro(ausCent(z.betrag_cent))]));
+  if(k.sicherheitsaufschlag_cent)
+    summen.push(['Sicherheitsaufschlag (' + zahl(k.sicherheitsaufschlag_prozent,0) + ' %)', pdfEuro(ausCent(k.sicherheitsaufschlag_cent))]);
+  if(k.mindest_angehoben_cent)
+    summen.push(['Anpassung auf Mindestauftragswert', pdfEuro(ausCent(k.mindest_angehoben_cent))]);
+  if(k.rabatt_cent)
+    summen.push(['Rabatt', '-' + pdfEuro(ausCent(k.rabatt_cent))]);
+  if(k.multiplikator && k.multiplikator !== 1)
+    summen.push([String(k.haeufigkeit) + ' (Faktor ' + zahl(k.multiplikator,2) + ')', pdfEuro(ausCent(k.netto_gesamt_cent))]);
+  summen.push(['Nettobetrag', pdfEuro(ausCent(k.netto_gesamt_cent))]);
+  if(Number(k.mwst_satz) > 0)
+    summen.push(['zzgl. ' + zahl(k.mwst_satz,1) + ' % Umsatzsteuer', pdfEuro(ausCent(k.mwst_cent))]);
+  summen.push([k.spanne ? 'Voraussichtlich' : 'Gesamtbetrag', pdfEuro(ausCent(k.brutto_gesamt_cent)), true]);
+
+  y = pdfSummen(pdf, summen, y + 2);
+
+  if(k.spanne){
+    y = pdfKasten(pdf, 'Preisspanne', [
+      'Voraussichtlich zwischen ' + pdfEuro(ausCent(k.spanne.von_cent)) + ' und ' + pdfEuro(ausCent(k.spanne.bis_cent)) + '.',
+      ...pdf.splitTextToSize(String(rt('spanne_hinweis')), 160),
+    ], y + 4);
+  }
+
+  if((k.annahmen || []).length){
+    y = pdfKasten(pdf, 'Diese Kalkulation beruht auf folgenden Annahmen', k.annahmen.map(String), y);
+  }
+
+  const naechste = ['Wir stimmen die Einzelheiten mit Ihnen ab.'];
+  if(vk.einstufung && vk.einstufung.besichtigung_noetig)
+    naechste.unshift('Wegen des Umfangs sehen wir vorab eine Besichtigung vor.');
+  naechste.push('Ein verbindliches Angebot erhalten Sie danach gesondert.');
+  y = pdfKasten(pdf, 'Wie es weitergeht', naechste, y);
+
+  if(Number(k.mwst_satz) === 0){
+    y = pdfKleingedrucktes(pdf,
+      'Gemäß § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).', y);
+  }
+  y = pdfKleingedrucktes(pdf, String(rt('vormerkung_hinweis')), y);
+  if(vk.datenabgleich) y = pdfKleingedrucktes(pdf, String(rt('abgleich_hinweis')), y);
+
+  pdfFussAufAllenSeiten(pdf);
+  return pdf.output('blob');
+}
+
+window.vkVorschau = function(id){
+  const vk = allVorkalkulationen.find(x => x.id === id);
+  if(!vk) return;
+  if(!pdfVerfuegbar()){
+    alert('Die PDF-Bibliothek konnte nicht geladen werden.\n\nMeist liegt das an einem Werbeblocker. Bitte Seite neu laden.');
+    return;
+  }
+  try {
+    const blob = buildVorkalkulationPDF(vk);
+    const adresse = URL.createObjectURL(blob);
+    const fenster = window.open(adresse, '_blank');
+    if(!fenster) triggerFileDownload(blob, (vk.nummer || 'Vorabkalkulation') + '.pdf');
+    setTimeout(() => URL.revokeObjectURL(adresse), 60000);
+  } catch(err){
+    console.error(err);
+    melde('Die Vorschau konnte nicht erzeugt werden.', 'fehler');
+  }
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   KUNDENREAKTIONEN UND BENACHRICHTIGUNGEN
+   ══════════════════════════════════════════════════════════════ */
+const REAKTION_TEXT = {
+  termin:      { text:'Besprechungstermin gewünscht',  farbe:'gruen' },
+  vormerken:   { text:'14 Tage vorgemerkt',            farbe:'gruen' },
+  aenderung:   { text:'Änderung angefragt',            farbe:'gelb'  },
+  korrektur:   { text:'Angaben korrigiert',            farbe:'gelb'  },
+  kein_interesse:{ text:'Kein Interesse',              farbe:'rot'   },
+  angenommen:  { text:'Angebot angenommen',            farbe:'gruen' },
+  abgelehnt:   { text:'Angebot abgelehnt',             farbe:'rot'   },
+  frist:       { text:'Entscheidungsfrist angefragt',  farbe:'gelb'  },
+  widerruf:    { text:'Widerruf erklärt',              farbe:'rot'   },
+  stornierung: { text:'Stornierung angefragt',         farbe:'rot'   },
+  geoeffnet:   { text:'Dokument geöffnet',             farbe:'grau'  },
+};
+
+function renderKundenreaktionen(){
+  const el = document.getElementById('reaktionen-liste');
+  if(!el) return;
+
+  if(allKundenreaktionen.length === 0){
+    el.innerHTML = '<div class="empty-state">Noch keine Kundenreaktion. ' +
+      'Sobald ein Kunde auf einen Knopf in einer versendeten Kalkulation drückt, erscheint das hier.</div>';
+    return;
+  }
+
+  el.innerHTML = allKundenreaktionen.map(r => {
+    const art = REAKTION_TEXT[r.aktion] || { text: r.aktion || 'Unbekannt', farbe:'grau' };
+    const j = sicherJs(r.id);
+    return `
+    <div class="reaktion-card ${r.erledigt ? 'erledigt' : ''}">
+      <div class="req-top">
+        <div>
+          <div class="req-name">
+            <span class="vk-pille vk-${sicher(art.farbe)}">${sicher(art.text)}</span>
+            ${sicher(r.dokument_nummer || '')} ${r.dokument_version ? '<span class="vk-version">v' + sicher(r.dokument_version) + '</span>' : ''}
+          </div>
+          <div class="req-meta">${sicher(r.kunde_name || r.kunde_email || '–')} · ${sicher(formatDate(r.zeitpunkt))}</div>
+        </div>
+      </div>
+      ${r.nachricht ? `<div class="reaktion-nachricht">${sicher(r.nachricht)}</div>` : ''}
+      <div class="req-grid">
+        <div><span>Vorher:</span>${sicher(r.status_vorher || '–')}</div>
+        <div><span>Nachher:</span>${sicher(r.status_nachher || '–')}</div>
+        <div><span>Bestätigt:</span>${r.bestaetigt ? 'ja' : 'nein'}</div>
+      </div>
+      <div class="req-actions">
+        ${r.dokument_id ? `<button onclick="switchView('vorkalkulationen')">Zur Kalkulation</button>` : ''}
+        ${r.erledigt
+          ? '<button disabled style="opacity:.5;cursor:default">Erledigt</button>'
+          : `<button onclick="reaktionErledigt('${j}')">Als erledigt markieren</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.reaktionErledigt = function(id){
+  updateDoc(doc(db, 'kundenreaktionen', id), { erledigt:true })
+    .then(() => melde('Als erledigt markiert.'))
+    .catch(err => meldeSchreibfehler(err, 'Das Markieren'));
+};
+
+/* ── Benachrichtigungszentrale ────────────────────────────────
+   Die Zähler kommen aus den ohnehin geladenen Daten, nicht aus
+   einer eigenen Sammlung – so können sie gar nicht veralten. */
+function benachrichtigungsZaehler(){
+  const offeneAnfragen = allRequests.filter(r => !r.archiviert && !r.geloescht &&
+    (!r.status || r.status === 'neu')).length;
+  const zuPruefen = allVorkalkulationen.filter(v => v.status === 'DRAFT' || v.status === 'ADMIN_REVIEW').length;
+  const grossRisiko = allVorkalkulationen.filter(v =>
+    (v.einstufung_wert === 'LARGE_JOB' || v.einstufung_wert === 'HIGH_RISK_JOB')
+    && VK_STATUS[v.status] && VK_STATUS[v.status].offen).length;
+  const vorgemerkt = allVorkalkulationen.filter(v => v.status === 'RESERVED').length;
+  const aenderung = allVorkalkulationen.filter(v => v.status === 'CHANGE_REQUESTED').length
+                  + allAngebote.filter(a => angStatus(a) === 'CHANGE_REQUESTED').length;
+  const angenommen = allAngebote.filter(a => angStatus(a) === 'ACCEPTED'
+    && !allAuftraege.some(t => t.angebot_id === a.id)).length;
+  const abgelehnt = allVorkalkulationen.filter(v => v.status === 'DECLINED').length;
+
+  /* Läuft in den nächsten drei Tagen ab. Nur Vorgemerktes hat ein
+     Ablaufdatum, das dem Kunden zugesagt wurde. */
+  const grenze = Date.now() + 3 * 86400000;
+  const laeuftAb = allVorkalkulationen.filter(v =>
+    v.status === 'RESERVED' && v.reserved_until
+    && new Date(v.reserved_until).getTime() <= grenze).length;
+
+  const widerruf = allKundenreaktionen.filter(r =>
+    !r.erledigt && (r.aktion === 'widerruf' || r.aktion === 'stornierung')).length;
+  const reaktionen = allKundenreaktionen.filter(r => !r.erledigt).length;
+
+  return { offeneAnfragen, zuPruefen, grossRisiko, vorgemerkt, aenderung,
+           angenommen, abgelehnt, laeuftAb, widerruf, reaktionen };
+}
+
+function renderBenachrichtigungen(){
+  const el = document.getElementById('benachrichtigungen-inhalt');
+  const z = benachrichtigungsZaehler();
+
+  // Zähler an der Seitenleiste – auch wenn die Ansicht gar nicht offen ist
+  const punkt = document.getElementById('nav-zaehler-reaktionen');
+  if(punkt){
+    const n = z.reaktionen + z.zuPruefen;
+    if(n > 0){ punkt.textContent = n > 99 ? '99+' : n; punkt.hidden = false; }
+    else punkt.hidden = true;
+  }
+
+  if(!el) return;
+  const zeilen = [
+    ['Neue Anfragen',                    z.offeneAnfragen, 'anfragen',        'neutral'],
+    ['Kalkulationen warten auf Prüfung', z.zuPruefen,      'vorkalkulationen','achtung'],
+    ['Große oder riskante Vorgänge',     z.grossRisiko,    'vorkalkulationen','achtung'],
+    ['Vorgemerkte Kalkulationen',        z.vorgemerkt,     'vorkalkulationen','neutral'],
+    ['Läuft in 3 Tagen ab',              z.laeuftAb,       'vorkalkulationen','dringend'],
+    ['Änderungswünsche',                 z.aenderung,      'reaktionen',      'achtung'],
+    ['Angenommen, noch kein Auftrag',    z.angenommen,     'angebote',        'gut'],
+    ['Ablehnungen',                      z.abgelehnt,      'vorkalkulationen','neutral'],
+    ['Widerruf oder Stornierung',        z.widerruf,       'reaktionen',      'dringend'],
+    ['Unbearbeitete Kundenreaktionen',   z.reaktionen,     'reaktionen',      'achtung'],
+  ];
+
+  const mitInhalt = zeilen.filter(([,n]) => n > 0);
+  el.innerHTML = mitInhalt.length === 0
+    ? '<div class="empty-state">Nichts zu tun – alles bearbeitet.</div>'
+    : mitInhalt.map(([text, n, ziel, stufe]) => `
+        <button class="ben-zeile ben-${sicher(stufe)}" onclick="switchView('${sicherJs(ziel)}')">
+          <span class="ben-zahl">${sicher(n)}</span>
+          <span class="ben-text">${sicher(text)}</span>
+          <span class="ben-pfeil" aria-hidden="true">›</span>
+        </button>`).join('');
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   VERSAND
+   ══════════════════════════════════════════════════════════════
+   Der Versand läuft über die Serverfunktion `/api/versand`. Nur
+   dort liegen der Postausgangs-Schlüssel und das Dienstkonto, und
+   nur dort kann ein Einmal-Token erzeugt werden, dessen Klartext
+   nirgends gespeichert wird.
+
+   Der Browser schickt bewusst NUR die Dokumentkennung mit. Sende
+   er Betrag, Empfänger und Text, könnte man das im Entwicklerwerkzeug
+   ändern und eine beliebige Mail über den Server verschicken. Die
+   Funktion liest alle Werte selbst aus der Datenbank. */
+async function serverAufruf(pfad, nutzlast){
+  const antwort = await fetch(pfad, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(Object.assign({
+      // Beweist der Serverfunktion, dass ein angemeldeter Verwalter
+      // den Aufruf ausgelöst hat. Sie prüft das Token bei Google
+      // nach – ein selbst gebasteltes wird abgelehnt.
+      idToken: auth.currentUser ? await auth.currentUser.getIdToken() : null,
+    }, nutzlast)),
+  });
+  if(antwort.status === 404){
+    throw new Error('EINRICHTUNG_FEHLT');
+  }
+  const text = await antwort.text();
+  let daten;
+  try { daten = JSON.parse(text); }
+  catch(_){ throw new Error('Unerwartete Antwort des Servers: ' + text.slice(0, 200)); }
+  if(!antwort.ok) throw new Error(daten.fehler || ('Server meldete ' + antwort.status));
+  return daten;
+}
+
+window.vkVersenden = async function(id){
+  const vk = allVorkalkulationen.find(x => x.id === id);
+  if(!vk) return;
+
+  if(vk.status !== 'ADMIN_APPROVED'){
+    melde('Versand nur nach Freigabe. Bitte zuerst freigeben.', 'fehler');
+    return;
+  }
+  const maengel = pruefeFreigabe(vk);
+  if(maengel.length){
+    melde('Versand nicht möglich:\n· ' + maengel.join('\n· '), 'fehler');
+    return;
+  }
+  if(!confirm('Vorabkalkulation ' + vk.nummer + ' an ' + vk.email + ' senden?\n\n' +
+              'Betrag: ' + euroCent(vk.brutto_gesamt_cent) + '\n' +
+              'Der Kunde erhält Knöpfe für Termin, Vormerkung, Änderung und Absage.')) return;
+
+  /* Das PDF entsteht HIER im Browser – dieselbe Funktion wie in der
+     Vorschau, damit versendet wird, was man gesehen hat. Der Server
+     bekommt es fertig und legt die Prüfsumme im Schnappschuss ab. */
+  let pdfBase64 = null, pruefsumme = null;
+  try {
+    const blob = buildVorkalkulationPDF(vk);
+    pruefsumme = await pdfPruefsumme(blob);
+    pdfBase64 = await new Promise((fertig, schief) => {
+      const leser = new FileReader();
+      leser.onload = () => fertig(String(leser.result).split(',')[1]);
+      leser.onerror = schief;
+      leser.readAsDataURL(blob);
+    });
+  } catch(err){
+    console.error(err);
+    melde('Das PDF konnte nicht erzeugt werden – es wurde nichts versendet.', 'fehler');
+    return;
+  }
+
+  try {
+    const antwort = await serverAufruf('/api/versand', {
+      dokument_typ:'vorkalkulation', dokument_id:id,
+      pdf_base64: pdfBase64, pdf_hash: pruefsumme,
+    });
+    melde('Vorabkalkulation ' + vk.nummer + ' versendet an ' + vk.email + '.');
+    benachrichtige('vk_versendet', vk.nummer + ' versendet', vk.email,
+      { bereich:'vorkalkulationen', id });
+    if(antwort.hinweis) melde(antwort.hinweis);
+  } catch(err){
+    if(err.message === 'EINRICHTUNG_FEHLT'){
+      melde('Der automatische Versand ist noch nicht eingerichtet. ' +
+            'Die Anleitung steht in EINRICHTUNG.md im Repo. ' +
+            'Solange kannst du über „Vorschau" das PDF holen und von Hand senden.', 'fehler');
+    } else {
+      melde('Versand fehlgeschlagen: ' + err.message + '. Es wurde nichts verschickt.', 'fehler');
+    }
+    console.error(err);
+  }
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   UMSATZPLANUNG
+   ══════════════════════════════════════════════════════════════
+   ⚠️ Strikt getrennt von den Einnahmen. Kein Wert aus diesem
+   Bereich fließt in `einnahmenGesamt()`, in die Steuerrechnung
+   oder in den Bericht – dort zählt weiterhin ausschließlich, was
+   tatsächlich bezahlt wurde (Zuflussprinzip § 11 EStG).
+
+   Die Ansicht führt beide Welten nebeneinander auf und benennt
+   ausdrücklich, wo die Grenze verläuft. */
+function wahrscheinlichkeitFuer(status, typ){
+  if(typ === 'angebot'){
+    if(status === 'ACCEPTED') return pw('w_angenommen');
+    if(status === 'DECLINED' || status === 'EXPIRED') return pw('w_verloren');
+    if(status === 'SENT' || status === 'VIEWED' || status === 'CHANGE_REQUESTED') return pw('w_angebot_versendet');
+    return pw('w_besprechung');
+  }
+  switch(status){
+    case 'DECLINED': case 'EXPIRED':   return pw('w_verloren');
+    case 'MEETING_BOOKED':             return pw('w_termin');
+    case 'RESERVED':                   return pw('w_vorgemerkt');
+    case 'VIEWED':                     return pw('w_angesehen');
+    case 'SENT': case 'ADMIN_APPROVED':return pw('w_angesehen');
+    default:                           return pw('w_erstellt');
+  }
+}
+
+function planungsZahlen(){
+  const vkOffen = vkOffeneListe();
+  const vkVolumenCent = vkOffen.reduce((s,v) => s + (Number(v.brutto_gesamt_cent)||0), 0);
+  const vkGewichtetCent = vkOffen.reduce((s,v) =>
+    s + prozentVonCent(Number(v.brutto_gesamt_cent)||0, wahrscheinlichkeitFuer(v.status, 'vk')), 0);
+
+  const angOffen = allAngebote.filter(a => {
+    const st = angStatus(a);
+    return ANG_STATUS[st] && ANG_STATUS[st].offen && st !== 'DRAFT';
+  });
+  const angVolumenCent = angOffen.reduce((s,a) => s + zuCent(a.bruttoGesamt || 0), 0);
+  const angGewichtetCent = angOffen.reduce((s,a) =>
+    s + prozentVonCent(zuCent(a.bruttoGesamt||0), wahrscheinlichkeitFuer(angStatus(a), 'angebot')), 0);
+
+  const angenommen = allAngebote.filter(a => angStatus(a) === 'ACCEPTED');
+  const bestaetigtCent = angenommen.reduce((s,a) => s + zuCent(a.bruttoGesamt||0), 0);
+
+  /* Ab hier: echte Zahlen aus den bestehenden Funktionen. Bewusst
+     NICHT neu berechnet – die Einnahmen haben genau eine Quelle. */
+  const fakturiertCent = zuCent(allAuftraege
+    .filter(a => a.status === 'abgerechnet' || a.status === 'bezahlt')
+    .reduce((s,a) => s + (Number(a.umsatz)||0), 0));
+  const offeneForderungCent = zuCent(offeneForderungen());
+  const bezahltCent = zuCent(einnahmenGesamt()
+    .filter(e => e.status === 'bezahlt')
+    .reduce((s,e) => s + (Number(e.betrag)||0), 0));
+
+  return {
+    vkAnzahl: vkOffen.length, vkVolumenCent, vkGewichtetCent,
+    angAnzahl: angOffen.length, angVolumenCent, angGewichtetCent,
+    bestaetigtAnzahl: angenommen.length, bestaetigtCent,
+    fakturiertCent, offeneForderungCent, bezahltCent,
+    geplantGesamtCent: vkGewichtetCent + angGewichtetCent,
+  };
+}
+
+function renderUmsatzplanung(){
+  const el = document.getElementById('planung-zahlen');
+  if(!el) return;
+  const z = planungsZahlen();
+
+  const kachel = (wert, text, hinweis, klasse) => `
+    <div class="stat-card ${klasse||''}">
+      <div class="stat-val">${sicher(wert)}</div>
+      <div class="stat-lbl">${sicher(text)}</div>
+      ${hinweis ? `<div class="stat-hinweis">${sicher(hinweis)}</div>` : ''}
+    </div>`;
+
+  el.innerHTML = `
+    <div class="planung-block planung-block-plan">
+      <div class="planung-kopf">
+        <span class="planung-titel">Geplant</span>
+        <span class="planung-warnung">Kein Umsatz, keine Einnahme, nicht steuerbar</span>
+      </div>
+      <div class="stat-row">
+        ${kachel(euroCent(z.vkVolumenCent), 'Vorabkalkulationen offen', z.vkAnzahl + ' Stück')}
+        ${kachel(euroCent(z.vkGewichtetCent), 'davon gewichtet', 'nach Abschlusswahrscheinlichkeit')}
+        ${kachel(euroCent(z.angVolumenCent), 'Verbindliche Angebote offen', z.angAnzahl + ' Stück')}
+        ${kachel(euroCent(z.geplantGesamtCent), 'Gewichteter Planumsatz', 'Kalkulationen und Angebote zusammen')}
+      </div>
+    </div>
+
+    <div class="planung-block planung-block-fest">
+      <div class="planung-kopf">
+        <span class="planung-titel">Verbindlich</span>
+        <span class="planung-warnung planung-warnung-fest">Vertraglich zugesagt, aber noch nicht bezahlt</span>
+      </div>
+      <div class="stat-row">
+        ${kachel(euroCent(z.bestaetigtCent), 'Bestätigtes Auftragsvolumen', z.bestaetigtAnzahl + ' angenommene Angebote')}
+        ${kachel(euroCent(z.fakturiertCent), 'Fakturierter Umsatz', 'abgerechnet und bezahlt')}
+        ${kachel(euroCent(z.offeneForderungCent), 'Offene Forderungen', 'gestellt, noch nicht eingegangen')}
+      </div>
+    </div>
+
+    <div class="planung-block planung-block-echt">
+      <div class="planung-kopf">
+        <span class="planung-titel">Tatsächlich eingegangen</span>
+        <span class="planung-warnung planung-warnung-echt">Nur das zählt für Gewinn und Steuer</span>
+      </div>
+      <div class="stat-row">
+        ${kachel(euroCent(z.bezahltCent), 'Bezahlte Einnahmen', 'Zuflussprinzip § 11 EStG', 'stat-card-gruen')}
+      </div>
+    </div>
+
+    <div class="planung-erklaerung">
+      <strong>Warum die Zahlen auseinandergehen dürfen:</strong>
+      Eine Vorabkalkulation ist eine Schätzung, kein Vertrag – sie darf nie als Einnahme gebucht werden.
+      Ein angenommenes Angebot ist ein Vertrag, aber noch kein Geldeingang.
+      Erst eine bezahlte Rechnung ist eine Einnahme. Übersicht, Steuern und Bericht rechnen ausschließlich
+      mit der letzten Zahl; die Planzahlen erscheinen dort bewusst nirgends.
+    </div>`;
+}
 
 
 const TEMPLATES = [
@@ -3546,6 +5882,29 @@ function startListeners(){
     angeboteAblaufenLassen();
   }, err => console.error(err));
 
+  /* ── Angebotssystem ─────────────────────────────────────────
+     Ohne orderBy geladen und clientseitig sortiert – ein Dokument
+     ohne `createdAt` verschwände bei serverseitiger Sortierung
+     kommentarlos aus der Liste. */
+  unsubVorkalkulationen = onSnapshot(collection(db, 'vorkalkulationen'), (snap) => {
+    allVorkalkulationen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
+    renderVorkalkulationen();
+    renderUmsatzplanung();
+    renderUebersicht();
+    renderBenachrichtigungen();
+  }, err => meldeLadefehler(err, 'vorkalkulationen', 'vk-liste'));
+
+  unsubKundenreaktionen = onSnapshot(collection(db, 'kundenreaktionen'), (snap) => {
+    allKundenreaktionen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
+    renderKundenreaktionen();
+    renderUebersicht();
+  }, err => meldeLadefehler(err, 'kundenreaktionen', 'reaktionen-liste'));
+
+  unsubBenachrichtigungen = onSnapshot(collection(db, 'benachrichtigungen'), (snap) => {
+    allBenachrichtigungen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
+    renderBenachrichtigungen();
+  }, err => console.warn('Benachrichtigungen nicht geladen:', err));
+
   const refQuery = query(collection(db, 'referenzen'), orderBy('reihenfolge', 'asc'));
   unsubReferenzen = onSnapshot(refQuery, (snap) => {
     allReferenzen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -3579,6 +5938,9 @@ function startListeners(){
   }, err => console.error(err));
 
   loadPreise();
+  ladeVorsortierung();
+  ladePlanung();
+  ladeRechtstexte();
   ladeVorgaben().then(() => {
     // Erst wenn die Vorgaben da sind, stimmen Fristen und Warnschwellen
     renderRequests(); renderAngeboteList(); renderUebersicht(); renderKalender();
@@ -3722,6 +6084,7 @@ function renderRequests(nurListe){
       const mapsZiel = encodeURIComponent((r.strasse||'')+', '+(r.plz||'')+' '+(r.ort||''));
       tabActions = `
         <button onclick="prepareReply('${rj}')">Antwort vorbereiten</button>
+        <button class="vk-knopf-haupt" onclick="vorkalkulationAusAnfrage('${rj}')">Vorabkalkulation anlegen</button>
         <button onclick="angebotAusAnfrage('${rj}')">Angebot rechnen</button>
         ${r.telefon ? `<a href="tel:${sicher(r.telefon)}">Anrufen</a>` : ''}
         <a href="https://www.google.com/maps/search/?api=1&amp;query=${sicher(mapsZiel)}" target="_blank" rel="noopener">In Maps öffnen</a>

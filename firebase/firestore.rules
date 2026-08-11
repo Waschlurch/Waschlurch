@@ -1,0 +1,217 @@
+// ─────────────────────────────────────────────────────────────
+//  Waschlurch – Firestore-Sicherheitsregeln
+//
+//  Korrigiert am 03.08.2026. Die vorherige Fassung hatte drei
+//  schwere Fehler und hätte beim Einspielen Folgendes bewirkt:
+//
+//    1. `match /einstellungen/{docId}` mit `allow read: if true`
+//       machte IBAN, Steuernummer und Kalkulationssätze für jeden
+//       im Internet lesbar.
+//    2. Die Admin-Adresse war ein Platzhalter – niemand wäre
+//       Verwalter gewesen.
+//    3. `anfragen` erlaubte kein `create` für Nicht-Angemeldete –
+//       kein Kunde hätte mehr eine Anfrage absenden können.
+//       Bewerbungen, Partneranfragen, Einnahmen, Ausgaben und
+//       Mitarbeiter fehlten ganz und fielen in die Sperrregel.
+//
+//  Merksatz: Regeln sind permissiv-ODER. Gewährt irgendeine
+//  passende Regel Zugriff, ist er gewährt. Eine zu weit gefasste
+//  Wildcard hebt jede spezifische Einschränkung auf.
+// ─────────────────────────────────────────────────────────────
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "waschlurch@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // ── Öffentliche Formulare ────────────────────────────────
+    // Anlegen muss ohne Anmeldung möglich sein, sonst kann kein
+    // Kunde eine Anfrage stellen. Lesen bleibt dem Verwalter
+    // vorbehalten – die Einträge enthalten personenbezogene Daten.
+    match /anfragen/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /bewerbungen/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /partneranfragen/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Öffentlich sichtbare Website-Inhalte ─────────────────
+    match /preise/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /pakete/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /leistungen_anzeige/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /referenzen/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /faqs/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Einstellungen ────────────────────────────────────────
+    // NUR das Impressum-Dokument ist öffentlich. Es wird von
+    // impressum.html, datenschutz.html und agb.html gelesen.
+    //
+    // `firma` (IBAN, Bankverbindung, Steuernummer), `steuer` und
+    // `kalkulation` (Stundenkosten, Margen) bleiben privat.
+    // agb.html liest zwar `firma` für das Zahlungsziel, hat dafür
+    // aber einen stillen Rückfall auf das Impressum-Dokument –
+    // die Seite funktioniert ohne öffentlichen Zugriff.
+    match /einstellungen/impressum {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /einstellungen/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Interne Geschäftsdaten ───────────────────────────────
+    match /angebote/{docId}    { allow read, write: if isAdmin(); }
+    match /kunden/{docId}      { allow read, write: if isAdmin(); }
+    match /einnahmen/{docId}   { allow read, write: if isAdmin(); }
+    match /ausgaben/{docId}    { allow read, write: if isAdmin(); }
+    match /mitarbeiter/{docId} { allow read, write: if isAdmin(); }
+
+    // NEU (10.08.2026): Aufträge je Kunde mit Umsatz, Kosten und Gewinn.
+    // Enthält Margen – muss genauso privat bleiben wie `kalkulation`.
+    // Ohne diese Regel bleibt der Auftragsbereich in der Kundenkarte leer
+    // und meldet „Keine Leseberechtigung für auftraege".
+    match /auftraege/{docId}   { allow read, write: if isAdmin(); }
+
+    // NEU (10.08.2026): Urlaub, Krankheit und sonstige Abwesenheiten
+    // je Mitarbeiter. Gesundheitsdaten (Art. 9 DSGVO) – muss privat
+    // bleiben. Speist den Kalender.
+    match /abwesenheiten/{docId} { allow read, write: if isAdmin(); }
+
+    // NEU (10.08.2026): Eigene Kalendertermine, auch als Serie.
+    // Enthalten Kundenanschriften – müssen privat bleiben.
+    match /termine/{docId}       { allow read, write: if isAdmin(); }
+
+    // ═════════════════════════════════════════════════════════
+    //  ANGEBOTSSYSTEM (11.08.2026)
+    // ═════════════════════════════════════════════════════════
+    //
+    //  Grundsatz: Der KUNDE bekommt hier nirgends Zugriff – auch
+    //  nicht auf „seine eigenen" Dokumente. Die Kundenaktionsseite
+    //  spricht ausschließlich mit den Serverfunktionen unter /api/,
+    //  die den Token prüfen und nur die freigegebenen Felder
+    //  herausgeben. Diese Funktionen arbeiten mit dem Dienstkonto
+    //  und umgehen diese Regeln planmäßig.
+    //
+    //  Das ist bewusst strenger als „Kunde darf sein Dokument
+    //  lesen": Eine öffentlich lesbare Regel bräuchte den Token als
+    //  Dokument-ID im Klartext, und ein Vertippen in der Bedingung
+    //  legte sofort alle Kalkulationen samt Anschriften offen.
+
+    // Stufe 1 – unverbindliche Vorabkalkulation.
+    // Enthält Kundenanschriften und die interne Kostenseite.
+    match /vorkalkulationen/{docId} { allow read, write: if isAdmin(); }
+
+    // Unveränderbare Schnappschüsse jeder versendeten oder
+    // angenommenen Dokumentversion, inklusive PDF-Prüfsumme.
+    // ANLEGEN ja, ÄNDERN NIE – sonst wäre der Nachweis wertlos,
+    // was der Kunde tatsächlich bekommen hat.
+    match /dokument_versionen/{docId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Einmal-Tokens für Kundenaktionen. Dokument-ID ist der
+    // SHA-256-Hash des Tokens; der Klartext steht ausschließlich im
+    // versendeten Link und wird nirgends gespeichert.
+    //
+    // Anlegen kann nur die Serverfunktion beim Versand. Das
+    // Dashboard darf lesen (Übersicht: welcher Link ist noch gültig)
+    // und widerrufen, aber keine neuen Tokens erfinden.
+    match /aktions_tokens/{tokenHash} {
+      allow read, update: if isAdmin();
+      allow create, delete: if false;
+    }
+
+    // Protokoll bestätigter Kundenaktionen. Wird vom Server
+    // geschrieben; der Admin darf lesen und als erledigt markieren.
+    match /kundenreaktionen/{docId} {
+      allow read, update: if isAdmin();
+      allow create, delete: if false;
+    }
+
+    // Benachrichtigungszentrale im Dashboard.
+    match /benachrichtigungen/{docId} { allow read, write: if isAdmin(); }
+
+    // Versandprotokoll. Verhindert über den Idempotenzschlüssel,
+    // dass ein wiederholter Job dieselbe E-Mail zweimal schickt.
+    match /mail_ereignisse/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // Revisionssicheres Protokoll: Preisänderungen, Freigaben,
+    // Versand, Annahme, Ablehnung, Widerruf, Stornierung.
+    // Anhängen erlaubt, Ändern und Löschen nie.
+    match /protokoll/{docId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Laufmarken der zeitgesteuerten Abläufe. Nur der Server
+    // schreibt hier – daran hängt der Schutz vor Doppelausführung.
+    match /automatik_laeufe/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Sperrmarken: Von zwei gleichzeitigen Klicks auf denselben
+    // Aktionslink kommt genau einer durch. Rein serverseitig.
+    match /token_sperren/{tokenHash} {
+      allow read, write: if false;
+    }
+
+    // Ratenbegrenzung. Enthält nur gehashte Absenderkennungen und
+    // Zähler – trotzdem für den Browser komplett gesperrt, denn
+    // wer sie leeren könnte, hätte die Begrenzung ausgehebelt.
+    match /rate_limit/{kennung} {
+      allow read, write: if false;
+    }
+
+    match /admins/{userId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Alles Übrige sperren ─────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

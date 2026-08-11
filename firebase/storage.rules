@@ -1,0 +1,22 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "deine-admin-mail@deine-domain.de" ||
+        exists(/databases/(default)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Standard: alles sperren
+    match /{allPaths=**} {
+      allow read: if false;
+      allow write: if isAdmin();
+    }
+  }
+}

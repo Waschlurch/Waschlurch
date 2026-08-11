@@ -1,1 +1,5 @@
-{}
+{
+  "crons": [
+    { "path": "/api/taeglich", "schedule": "0 6 * * *" }
+  ]
+}

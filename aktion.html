@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<!-- Kein Verweis-Kopf beim Weiterklicken: Der Token steht im
+     Adress-Fragment, und ohne diese Zeile könnte er über den
+     Referer an eine fremde Seite gelangen. -->
+<meta name="referrer" content="no-referrer">
+<title>Ihre Auswahl bestätigen – Waschlurch</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<style>
+:root{
+  --green:#22C55E; --green-dark:#15803D; --green-light:#DCFCE7;
+  --black:#0A0A0A; --gray-900:#111827; --gray-500:#6B7280; --white:#FFFFFF;
+  --weich:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  background:var(--black); color:var(--white); min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:24px 16px 40px; line-height:1.6;
+}
+a{color:var(--green)}
+
+.kopf{width:100%;max-width:640px;margin-bottom:22px}
+.marke{display:flex;align-items:center;gap:11px}
+.marke img{height:34px;width:auto}
+.marke-text{font-size:19px;font-weight:700}
+.marke-sub{font-size:12.5px;color:rgba(255,255,255,.55);margin-top:2px}
+
+.karte{
+  width:100%;max-width:640px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.09);border-radius:24px;padding:28px;
+}
+.karte + .karte{margin-top:16px}
+
+.titel{font-size:24px;font-weight:700;line-height:1.25;margin-bottom:8px}
+.unter{font-size:15px;color:rgba(255,255,255,.62);margin-bottom:20px}
+
+/* Eingaben nie unter 16px – darunter zoomt iOS beim Antippen hinein. */
+textarea{
+  width:100%;min-height:120px;padding:13px 15px;font-family:inherit;font-size:16px;
+  line-height:1.6;color:var(--white);background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);border-radius:14px;outline:none;resize:vertical;
+}
+textarea:focus{border-color:var(--green)}
+
+.knopf{
+  display:block;width:100%;padding:16px 22px;margin-top:12px;border:none;
+  border-radius:100px;font-family:inherit;font-size:16px;font-weight:600;
+  cursor:pointer;text-align:center;min-height:52px;transition:all .18s var(--weich);
+}
+.knopf-haupt{background:var(--green);color:var(--white)}
+.knopf-haupt:hover{background:var(--green-dark)}
+.knopf-still{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.18)}
+.knopf-still:hover{background:rgba(255,255,255,.06)}
+.knopf:disabled{opacity:.5;cursor:not-allowed}
+
+.daten{width:100%;border-collapse:collapse;margin:18px 0;table-layout:fixed}
+.daten td{padding:11px 0;border-top:1px solid rgba(255,255,255,.07);font-size:14.5px;vertical-align:top}
+.daten tr:first-child td{border-top:none}
+.daten td:first-child{color:rgba(255,255,255,.55);padding-right:14px;width:38%}
+/* ⚠️ KEIN white-space:nowrap. Nachgemessen bei 320 px: Ein
+   Firmenname wie „Hausverwaltung Rheinland-Sieg Immobilien GmbH &
+   Co. KG" schob die Karte um 213 px über den Bildschirmrand
+   hinaus. Beträge sind kurz genug, um auch ohne nowrap in einer
+   Zeile zu bleiben. */
+.daten td:last-child{text-align:right;font-weight:600;overflow-wrap:anywhere}
+.daten td.lang{text-align:left;font-weight:400}
+
+/* Der Betrag darf umbrechen – bei einer Preisspanne stehen dort
+   zwei Beträge, und „11.588,60 € – 17.382,90 €" ist bei 29 px
+   Schrift rund 290 px breit. */
+.betrag{font-size:29px;font-weight:700;margin:6px 0 2px;overflow-wrap:anywhere;line-height:1.25}
+.betrag-hinweis{font-size:13px;color:rgba(255,255,255,.5)}
+
+.hinweis{
+  padding:15px 17px;border-radius:15px;margin:18px 0;font-size:13.5px;line-height:1.65;
+  background:rgba(250,204,21,.09);border:1px solid rgba(250,204,21,.28);color:#FDE047;
+}
+.hinweis-gruen{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.3);color:#86EFAC}
+.hinweis-rot{background:rgba(248,113,113,.09);border-color:rgba(248,113,113,.3);color:#FCA5A5}
+
+.pos{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.pos td{padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
+.pos td:first-child{overflow-wrap:anywhere}
+.pos .menge{text-align:right;color:rgba(255,255,255,.5);white-space:nowrap;padding-left:10px}
+.pos .summe{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;padding-left:10px}
+.pos-hinweis{font-size:12px;color:rgba(255,255,255,.42);margin-top:2px}
+
+details{margin:16px 0}
+summary{cursor:pointer;font-size:14px;color:rgba(255,255,255,.6);
+        padding:12px 0;min-height:44px;display:flex;align-items:center}
+
+.laden{text-align:center;padding:50px 20px;color:rgba(255,255,255,.55)}
+.punkt{display:inline-block;width:9px;height:9px;margin:0 3px;border-radius:50%;
+       background:var(--green);animation:huepf 1.3s infinite}
+.punkt:nth-child(2){animation-delay:.16s}
+.punkt:nth-child(3){animation-delay:.32s}
+@keyframes huepf{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-8px);opacity:1}}
+
+.fertig-zeichen{
+  width:66px;height:66px;margin:0 auto 20px;border-radius:50%;
+  background:rgba(34,197,94,.14);border:2px solid var(--green);
+  display:flex;align-items:center;justify-content:center;font-size:31px;
+}
+
+.fuss{
+  width:100%;max-width:640px;margin-top:26px;text-align:center;
+  font-size:12.5px;color:rgba(255,255,255,.42);line-height:1.8;
+}
+.fuss a{color:rgba(255,255,255,.6);text-decoration:none}
+.fuss a:hover{text-decoration:underline}
+
+@media(max-width:560px){
+  body{padding:18px 12px 32px}
+  .karte{padding:20px;border-radius:19px}
+  .titel{font-size:21px}
+  .betrag{font-size:23px}
+  /* Bei 320 px sprengt die Mengenspalte die Zeile, sobald ein
+     Tausenderpunkt darin steht. Die Menge steht im Text ohnehin. */
+  .pos .menge{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<div class="kopf">
+  <div class="marke">
+    <img src="/logo.png?v=5" alt="" width="34" height="21">
+    <div>
+      <div class="marke-text">Waschlurch</div>
+      <div class="marke-sub">Reinigung und Hausmeisterservice</div>
+    </div>
+  </div>
+</div>
+
+<div id="inhalt" class="karte">
+  <div class="laden">
+    <div><span class="punkt"></span><span class="punkt"></span><span class="punkt"></span></div>
+    <div style="margin-top:16px">Ihr Vorgang wird geladen ...</div>
+  </div>
+</div>
+
+<div class="fuss">
+  <a href="/impressum.html">Impressum</a> ·
+  <a href="/datenschutz.html">Datenschutz</a> ·
+  <a href="/agb.html">AGB</a><br>
+  Waschlurch · Daniel Lurch · 53783 Eitorf
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   KUNDENAKTIONSSEITE
+   ══════════════════════════════════════════════════════════════
+   Der Token steht im Adress-FRAGMENT (hinter #). Fragmente sendet
+   der Browser nie an den Server – das Token landet damit in keiner
+   Zugriffsliste, in keinem Verweis-Kopf und in keinem Protokoll
+   eines Zwischenservers.
+
+   Alles Verbindliche entscheidet der Server. Diese Seite zeigt nur
+   an und fragt nach; sie prüft nichts selbst und darf das auch
+   nicht – was hier stünde, könnte jeder im Entwicklerwerkzeug
+   ändern.
+   ══════════════════════════════════════════════════════════════ */
+
+const inhalt = document.getElementById('inhalt');
+
+/* Jeder Wert aus der Antwort läuft durch diese Funktion, bevor er
+   in eine Vorlage kommt. Die Daten stammen zwar aus der eigenen
+   Datenbank, aber dorthin gelangen sie über ein öffentlich
+   absendbares Formular. */
+function sicher(w){
+  return String(w == null ? '' : w)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function euro(cent){
+  return ((Number(cent)||0)/100).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+}
+function datum(iso){
+  if(!iso) return '';
+  return new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
+}
+
+function fragment(){
+  const roh = (location.hash || '').replace(/^#/,'');
+  const werte = new URLSearchParams(roh);
+  return { token: werte.get('t') || '', aktion: werte.get('a') || '' };
+}
+
+async function server(nutzlast){
+  const antwort = await fetch('/api/aktion', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(nutzlast),
+  });
+  if(antwort.status === 404) throw new Error('EINRICHTUNG_FEHLT');
+  return antwort.json();
+}
+
+function zeigeFehler(text, ueberschrift){
+  inhalt.innerHTML =
+    '<div class="titel">' + sicher(ueberschrift || 'Das hat nicht geklappt') + '</div>' +
+    '<div class="hinweis hinweis-rot">' + sicher(text) + '</div>' +
+    '<p style="font-size:14px;color:rgba(255,255,255,.6);margin-top:16px">' +
+    'Schreiben Sie uns gern kurz an <a href="mailto:waschlurch@gmail.com">waschlurch@gmail.com</a> – ' +
+    'wir kümmern uns darum.</p>';
+}
+
+/* ── Schritt 1: Übersicht mit Bestätigungsknopf ────────────── */
+function zeigeUebersicht(antwort, token, aktion){
+  const d = antwort.dokument || {};
+
+  const betragBlock = d.spanne
+    ? '<div class="betrag">' + sicher(euro(d.spanne.von_cent)) + ' – ' + sicher(euro(d.spanne.bis_cent)) + '</div>' +
+      '<div class="betrag-hinweis">voraussichtlich, inkl. Umsatzsteuer</div>'
+    : '<div class="betrag">' + sicher(euro(d.brutto_gesamt_cent)) + '</div>' +
+      '<div class="betrag-hinweis">' + (d.mwst_satz > 0 ? 'inkl. ' + sicher(String(d.mwst_satz).replace('.',',')) + ' % Umsatzsteuer' : 'ohne Umsatzsteuer (§ 19 UStG)') + '</div>';
+
+  const positionen = (d.positionen || []).map(function(p){
+    return '<tr><td>' + sicher(p.text) +
+      (p.hinweis ? '<div class="pos-hinweis">' + sicher(p.hinweis) + '</div>' : '') +
+      '</td><td class="menge">' + sicher(p.menge || '') +
+      '</td><td class="summe">' + sicher(euro(p.betrag_cent)) + '</td></tr>';
+  }).join('');
+
+  const annahmen = (d.annahmen || []).length
+    ? '<details><summary>Worauf diese Kalkulation beruht</summary><ul style="margin:8px 0 0 18px;font-size:13.5px;color:rgba(255,255,255,.6)">' +
+      d.annahmen.map(function(a){ return '<li style="margin-bottom:5px">' + sicher(a) + '</li>'; }).join('') +
+      '</ul></details>'
+    : '';
+
+  const textfeld = antwort.textfeld === 'nein' ? '' :
+    '<div style="margin-top:20px">' +
+    '<label for="nachricht" style="display:block;font-size:14px;margin-bottom:8px;color:rgba(255,255,255,.7)">' +
+    sicher(antwort.textfeld === 'pflicht' ? 'Ihre Nachricht' : 'Möchten Sie uns etwas mitteilen? (freiwillig)') +
+    '</label><textarea id="nachricht" placeholder="' +
+    sicher(antwort.textfeld === 'pflicht' ? 'Bitte kurz beschreiben ...' : 'Optional ...') + '"></textarea></div>';
+
+  inhalt.innerHTML =
+    '<div class="titel">' + sicher(antwort.titel) + '</div>' +
+    '<div class="unter">Bitte prüfen Sie kurz, worum es geht. Erst mit dem Knopf unten wird Ihre Auswahl wirksam.</div>' +
+
+    '<table class="daten">' +
+      '<tr><td>Vorgang</td><td>' + sicher(d.nummer) + ' · Fassung ' + sicher(d.version) + '</td></tr>' +
+      (d.name || d.firma ? '<tr><td>Für</td><td class="lang">' + sicher(d.firma || d.name) + '</td></tr>' : '') +
+      (d.leistungen ? '<tr><td>Leistungen</td><td class="lang">' + sicher(d.leistungen) + '</td></tr>' : '') +
+      (d.reserved_until ? '<tr><td>Vorgemerkt bis</td><td>' + sicher(datum(d.reserved_until)) + '</td></tr>' : '') +
+    '</table>' +
+
+    betragBlock +
+
+    (positionen ? '<details><summary>Einzelne Posten anzeigen</summary><table class="pos"><tbody>' + positionen + '</tbody></table></details>' : '') +
+    annahmen +
+
+    '<div class="hinweis">Diese Vorabkalkulation ist <strong>unverbindlich</strong> und stellt kein ' +
+    'verbindliches Angebot dar. Ein Vertrag kommt dadurch nicht zustande. Ein verbindliches Angebot ' +
+    'erhalten Sie erst nach Prüfung beziehungsweise Besprechung.</div>' +
+
+    (d.besichtigung_noetig
+      ? '<div class="hinweis">Wegen des Umfangs sehen wir vor einem verbindlichen Angebot eine kurze Besichtigung vor.</div>'
+      : '') +
+
+    '<div style="margin-top:20px;font-size:14.5px;color:rgba(255,255,255,.72)">' + sicher(antwort.frage) + '</div>' +
+    textfeld +
+
+    '<button class="knopf knopf-haupt" id="bestaetigen">' + sicher(antwort.titel) + ' – jetzt bestätigen</button>' +
+    '<button class="knopf knopf-still" id="abbrechen">Doch nicht – Fenster schließen</button>';
+
+  document.getElementById('abbrechen').onclick = function(){
+    inhalt.innerHTML = '<div class="titel">Alles unverändert</div>' +
+      '<div class="unter">Es wurde nichts geändert. Sie können dieses Fenster schließen ' +
+      'und den Link später erneut aufrufen.</div>';
+  };
+
+  document.getElementById('bestaetigen').onclick = async function(){
+    const knopf = this;
+    const feld = document.getElementById('nachricht');
+    const nachricht = feld ? feld.value.trim() : '';
+
+    if(antwort.textfeld === 'pflicht' && !nachricht){
+      if(feld){ feld.style.borderColor = '#F87171'; feld.focus(); }
+      return;
+    }
+
+    /* Gegen den Doppelklick: Der Server fängt ihn ohnehin ab, aber
+       eine Schaltfläche, die sich zweimal drücken lässt, sieht aus
+       wie ein Fehler. */
+    knopf.disabled = true;
+    knopf.textContent = 'Wird gesendet ...';
+    document.getElementById('abbrechen').disabled = true;
+
+    try {
+      const ergebnis = await server({ token: token, aktion: aktion, schritt:'bestaetigen', nachricht: nachricht });
+      if(ergebnis.ok) zeigeFertig(ergebnis);
+      else {
+        zeigeFehler(ergebnis.text || ergebnis.fehler || 'Das hat nicht geklappt.');
+      }
+    } catch(err){
+      if(err.message === 'EINRICHTUNG_FEHLT'){
+        zeigeFehler('Diese Funktion ist noch nicht freigeschaltet. Bitte antworten Sie einfach auf unsere E-Mail.');
+      } else {
+        knopf.disabled = false;
+        knopf.textContent = antwort.titel + ' – jetzt bestätigen';
+        document.getElementById('abbrechen').disabled = false;
+        zeigeFehler('Die Verbindung hat nicht geklappt. Bitte versuchen Sie es in einem Moment erneut.');
+      }
+    }
+  };
+}
+
+/* ── Schritt 2: Rückmeldung ─────────────────────────────────── */
+function zeigeFertig(ergebnis){
+  inhalt.innerHTML =
+    '<div class="fertig-zeichen">✓</div>' +
+    '<div class="titel" style="text-align:center">Vielen Dank</div>' +
+    '<div class="unter" style="text-align:center">' + sicher(ergebnis.text || 'Ihre Rückmeldung ist bei uns angekommen.') + '</div>' +
+    '<div class="hinweis hinweis-gruen">Sie erhalten gleich eine Bestätigung per E-Mail. ' +
+    (ergebnis.aktion === 'vormerken'
+      ? 'Durch die Vormerkung entsteht noch kein Vertrag, und es wird kein Ausführungstermin verbindlich reserviert.'
+      : 'Wir melden uns zeitnah bei Ihnen.') + '</div>';
+  history.replaceState(null, '', location.pathname);   // Token aus der Adresszeile nehmen
+}
+
+/* ── Start ──────────────────────────────────────────────────── */
+(async function(){
+  const { token, aktion } = fragment();
+
+  if(!token || !aktion){
+    zeigeFehler('Dieser Link ist unvollständig. Bitte öffnen Sie ihn noch einmal direkt aus unserer E-Mail heraus.',
+                'Link unvollständig');
+    return;
+  }
+
+  try {
+    const antwort = await server({ token: token, aktion: aktion, schritt:'ansehen' });
+    if(!antwort.ok){
+      const ueberschriften = {
+        abgelaufen:'Dieser Link ist abgelaufen',
+        verbraucht:'Bereits erledigt',
+        veraltet:'Es gibt eine neuere Fassung',
+        widerrufen:'Dieser Link wurde zurückgezogen',
+      };
+      zeigeFehler(antwort.text || antwort.fehler || 'Dieser Link ist nicht gültig.',
+                  ueberschriften[antwort.grund]);
+      return;
+    }
+    zeigeUebersicht(antwort, token, aktion);
+  } catch(err){
+    if(err.message === 'EINRICHTUNG_FEHLT'){
+      zeigeFehler('Diese Funktion ist noch nicht freigeschaltet. Bitte antworten Sie einfach auf unsere E-Mail.',
+                  'Noch nicht verfügbar');
+    } else {
+      zeigeFehler('Die Verbindung hat nicht geklappt. Bitte laden Sie die Seite neu.');
+    }
+  }
+})();
+</script>
+</body>
+</html>
