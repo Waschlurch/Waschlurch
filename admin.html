@@ -1034,37 +1034,82 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     display:flex; align-items:center; justify-content:center;
   }
 
+  /* ── Seitenmenü als Drawer (Vorbild Outlook) ──────────────────
+     Schiebt von links ein statt das ganze Bild zu übernehmen: Der
+     Zusammenhang zur Seite dahinter bleibt sichtbar, und der
+     Rückweg ist ein Tippen auf die abgedunkelte Fläche. */
+  .handy-menue-schatten {
+    position:fixed; inset:0; z-index:1590; background:rgba(0,0,0,0.55);
+    opacity:0; transition:opacity .22s ease;
+  }
+  .handy-menue-schatten[hidden] { display:none; }
+  .handy-menue-schatten.offen { opacity:1; }
+
   .handy-menue {
     display:flex; flex-direction:column;
-    position:fixed; inset:0; z-index:1600; background:var(--black);
-    padding:calc(14px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+    position:fixed; top:0; bottom:0; left:0; z-index:1600;
+    width:min(86vw, 330px);
+    background:#0E0E0E; border-right:1px solid rgba(255,255,255,0.1);
+    box-shadow:8px 0 32px rgba(0,0,0,0.5);
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
+    transform:translateX(-102%); transition:transform .22s ease;
   }
   .handy-menue[hidden] { display:none; }
+  .handy-menue.offen { transform:translateX(0); }
+  @media(prefers-reduced-motion:reduce){
+    .handy-menue, .handy-menue-schatten { transition:none; }
+  }
+
   .handy-menue-kopf {
-    display:flex; align-items:center; justify-content:space-between;
-    font-size:17px; font-weight:700; padding-bottom:14px;
-    border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:4px 4px 14px; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:8px;
+  }
+  .handy-menue-marke { display:flex; align-items:center; gap:10px; min-width:0; }
+  .handy-menue-marke img { height:28px; width:auto; flex-shrink:0; }
+  .handy-menue-name { font-size:15px; font-weight:700; }
+  .handy-menue-mail {
+    font-size:11.5px; color:rgba(255,255,255,0.55);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;
   }
   .handy-menue-schliessen {
-    width:44px; height:44px; border-radius:100px; border:1px solid rgba(255,255,255,0.18);
-    background:rgba(255,255,255,0.06); color:var(--white); font-size:17px; cursor:pointer; font-family:inherit;
+    width:40px; height:40px; flex-shrink:0; border-radius:100px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.06); color:var(--white); font-size:16px; cursor:pointer; font-family:inherit;
   }
-  .handy-menue-inhalt { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-  .handy-menue-gruppe {
-    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
-    color:rgba(255,255,255,0.5); padding:18px 4px 8px;
+  .handy-menue-inhalt { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-right:2px; }
+
+  /* Gruppen auf- und zuklappbar – wie die Ordner in Outlook */
+  .hm-gruppe-kopf {
+    display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;
+    min-height:44px; padding:10px 10px; margin-top:6px; border:none; border-radius:10px;
+    background:transparent; color:rgba(255,255,255,0.6);
+    font-family:inherit; font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:1px; text-align:left; cursor:pointer;
   }
-  .handy-menue-gruppe:first-child { padding-top:2px; }
+  .hm-gruppe-kopf:hover { background:rgba(255,255,255,0.05); color:var(--white); }
+  .hm-pfeil { font-size:11px; transition:transform .18s ease; flex-shrink:0; }
+  .hm-gruppe-kopf[aria-expanded="false"] .hm-pfeil { transform:rotate(-90deg); }
+  .hm-gruppe-inhalt { overflow:hidden; }
+  .hm-gruppe-inhalt[hidden] { display:none; }
+
   .handy-menue-punkt {
-    display:flex; align-items:center; gap:12px; width:100%;
-    min-height:52px; padding:12px 14px; margin-bottom:6px;
-    border:1px solid rgba(255,255,255,0.1); border-radius:13px;
-    background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.9);
-    font-family:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer;
+    display:flex; align-items:center; gap:11px; width:100%;
+    min-height:46px; padding:10px 12px 10px 14px; margin-bottom:3px;
+    border:none; border-left:3px solid transparent; border-radius:9px;
+    background:transparent; color:rgba(255,255,255,0.86);
+    font-family:inherit; font-size:14.5px; font-weight:600; text-align:left; cursor:pointer;
   }
-  .handy-menue-punkt.aktiv { background:rgba(34,197,94,0.13); border-color:rgba(34,197,94,0.4); color:var(--green); }
-  .handy-menue-punkt .hm-symbol { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
-  .handy-menue-fuss { padding-top:12px; border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; }
+  .handy-menue-punkt:hover { background:rgba(255,255,255,0.05); }
+  .handy-menue-punkt.aktiv {
+    background:rgba(34,197,94,0.13); border-left-color:var(--green); color:var(--green);
+  }
+  .handy-menue-punkt .hm-symbol { font-size:17px; width:22px; text-align:center; flex-shrink:0; }
+  .handy-menue-punkt .hm-zaehler {
+    margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:100px;
+    background:#F87171; color:#1A0A0A; font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .handy-menue-fuss { padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; }
 
   .main { margin-left:0; padding:20px 16px 104px; }
 
@@ -1322,6 +1367,93 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
    13–18 px breit. */
 .fin-delete { min-width:36px; min-height:36px; }
 
+/* ══════════════════════════════════════════════════════════════
+   KALENDER AUF DEM HANDY – kompaktes Monatsraster
+   ══════════════════════════════════════════════════════════════
+   Vorher wurde das 7-Spalten-Raster auf dem Handy zu einer Liste,
+   in der leere Tage verschwanden. Damit ging der Monatsüberblick
+   verloren – gerade der ist auf dem Handy am wichtigsten.
+
+   Jetzt bleibt das Raster erhalten, die Termine stehen als farbige
+   Balken direkt im Tag, und ein Tippen öffnet die Tagesansicht als
+   Bottom-Sheet. Der Desktop bleibt unberührt.
+   Dieser Block steht am Ende und überschreibt die Listendarstellung
+   aus dem oberen @media-Block. */
+@media(max-width:900px){
+  .kal-wochentage {
+    display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
+    gap:3px; padding:0 0 6px; font-size:10.5px;
+  }
+  .kal-gitter { grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; }
+
+  /* #kal-gitter davor, weil die Touch-Regel `#app-screen button`
+     mit min-height:44px spezifischer ist als `.kal-tag` – die Zelle
+     ist ein <button>. Nachgemessen: 44 px statt der gewünschten 74. */
+  #kal-gitter .kal-tag {
+    display:flex; flex-direction:column; align-items:stretch;
+    min-height:74px; padding:4px 3px; gap:2px; border-radius:8px;
+  }
+  /* Leere Tage bleiben sichtbar – sonst gibt es keinen Monatsraster */
+  .kal-tag.leer-mobil { display:flex; }
+  .kal-tag.fremder-monat { display:flex; opacity:.3; }
+  .kal-tag-kopf { flex-direction:row; align-items:center; justify-content:center; min-width:0; gap:3px; }
+  .kal-tag-zahl { font-size:12px; font-weight:700; }
+  .kal-tag-marke { display:none; }     /* Feiertagsname sprengt 45 px */
+  .kal-tag-inhalt { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+
+  /* Farbiger Balken je Termin, wie in TimeTree */
+  .kal-eintrag {
+    display:block; padding:2px 4px; border-radius:3px;
+    font-size:8.5px; font-weight:700; line-height:1.25;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    color:#0A0A0A;
+  }
+  .kal-eintrag .kal-punkt { display:none; }
+  .kal-eintrag-text { display:block; overflow:hidden; text-overflow:ellipsis; }
+  .kal-eintrag.art-termin   { background:#34D399; }
+  .kal-eintrag.art-auftrag  { background:#22C55E; }
+  .kal-eintrag.art-wunsch   { background:#FBBF24; }
+  .kal-eintrag.art-rechnung { background:#60A5FA; }
+  .kal-eintrag.art-angebot  { background:#A78BFA; }
+  .kal-eintrag.art-abwesend { background:#F87171; }
+  .kal-mehr { font-size:8.5px; text-align:center; color:rgba(255,255,255,0.5); margin-top:auto; }
+
+  /* Tagesansicht als Bottom-Sheet */
+  #kal-tag-detail {
+    position:fixed; left:0; right:0; bottom:0; z-index:1550;
+    max-height:72vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    margin:0; border-radius:20px 20px 0 0;
+    border:1px solid rgba(255,255,255,0.12); border-bottom:none;
+    background:#141414; box-shadow:0 -12px 36px rgba(0,0,0,0.6);
+    padding:8px 16px calc(96px + env(safe-area-inset-bottom));
+  }
+  #kal-tag-detail::before {
+    content:''; display:block; width:38px; height:4px; border-radius:100px;
+    background:rgba(255,255,255,0.25); margin:4px auto 12px;
+  }
+
+  /* Schwebender Plus-Knopf */
+  .kal-fab {
+    position:fixed; right:16px; bottom:calc(104px + env(safe-area-inset-bottom));
+    z-index:1500; width:56px; height:56px; border-radius:100px; border:none;
+    background:var(--green); color:#0A0A0A; font-size:30px; line-height:1;
+    font-family:inherit; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,0.45);
+  }
+  .kal-fab:active { transform:scale(0.94); }
+}
+.kal-fab { display:none; }
+@media(max-width:900px){ #view-kalender.active .kal-fab { display:block; } }
+
+/* Erst unterhalb von 350 px wird der Balken zum reinen Farbstreifen.
+   Bei 375 px – der häufigsten Handybreite – bleibt der Text lesbar;
+   je Spalte stehen dort rund 50 px zur Verfügung. */
+@media(max-width:349px){
+  #kal-gitter .kal-tag { min-height:62px; }
+  .kal-eintrag { font-size:0; padding:0; height:5px; border-radius:2px; }
+  .kal-eintrag-text { display:none; }
+  .kal-mehr { font-size:8px; }
+}
+
 @media(max-width:400px){
   /* Bei 320 px reicht auch für zwei Spalten der Platz nicht mehr,
      sobald ein Betrag mit Tausenderpunkt darin steht. */
@@ -1436,9 +1568,16 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
       <span class="handy-knopf-symbol" aria-hidden="true">≡</span><span>Mehr</span></button>
   </nav>
 
-  <div class="handy-menue" id="handy-menue" hidden>
+  <div class="handy-menue-schatten" id="handy-menue-schatten" hidden onclick="handyMenueSchliessen()"></div>
+  <div class="handy-menue" id="handy-menue" hidden role="navigation" aria-label="Alle Bereiche">
     <div class="handy-menue-kopf">
-      <span>Alle Bereiche</span>
+      <div class="handy-menue-marke">
+        <img src="/logo.png?v=5" alt="">
+        <div>
+          <div class="handy-menue-name">Waschlurch</div>
+          <div class="handy-menue-mail" id="handy-menue-mail">Dashboard</div>
+        </div>
+      </div>
       <button class="handy-menue-schliessen" onclick="handyMenueSchliessen()" aria-label="Menü schließen">✕</button>
     </div>
     <div class="handy-menue-inhalt" id="handy-menue-inhalt"></div>
@@ -1530,6 +1669,10 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
       <div id="kal-jahr" style="display:none"></div>
 
       <div class="karte-block" id="kal-tag-detail" style="display:none"></div>
+
+      <!-- Schwebender Knopf: nur auf dem Handy, schnellster Weg zu
+           einem neuen Termin ohne nach oben zu scrollen -->
+      <button class="kal-fab" onclick="terminFormOeffnen()" aria-label="Neuen Termin anlegen">+</button>
 
       <div class="karte-block">
         <div class="karte-block-titel">Schulferien in Nordrhein-Westfalen</div>
@@ -3010,47 +3153,106 @@ window.switchView = function(name){
   }
 };
 
-/* ── Handymenü ── */
+/* ── Seitenmenü (Drawer) ──────────────────────────────────────
+   Einzige Quelle bleibt die Seitenleiste – es gibt bewusst keinen
+   zweiten Menübaum, der auseinanderlaufen könnte. Die Gruppen der
+   Seitenleiste werden hier zu auf- und zuklappbaren Abschnitten. */
+let hmZugeklappt = {};   // merkt sich, welche Gruppe zu ist
+
 function handyMenueAufbauen(){
   const ziel = document.getElementById('handy-menue-inhalt');
   if(!ziel) return;
-  // Einzige Quelle bleibt die Seitenleiste – kein zweiter Menübaum, der auseinanderlaufen kann.
-  let html = '';
+
+  const gruppen = [];
+  let aktuell = null;
   document.querySelectorAll('.sidebar > .nav-group, .sidebar > .nav-item').forEach(el => {
     if(el.classList.contains('nav-group')){
-      html += `<div class="handy-menue-gruppe">${sicher(el.textContent)}</div>`;
-    } else {
-      const view = el.dataset.view;
-      const symbol = el.querySelector('.ni-icon');
-      const text = el.querySelector('.ni-label');
-      html += `<button class="handy-menue-punkt" data-ziel="${sicher(view)}" onclick="switchView('${sicherJs(view)}')">
-        <span class="hm-symbol" aria-hidden="true">${sicher(symbol ? symbol.textContent : '')}</span>
-        <span>${sicher(text ? text.textContent : view)}</span></button>`;
+      aktuell = { titel: el.textContent.trim(), punkte: [] };
+      gruppen.push(aktuell);
+    } else if(aktuell){
+      aktuell.punkte.push({
+        view: el.dataset.view,
+        symbol: (el.querySelector('.ni-icon') || {}).textContent || '',
+        text: (el.querySelector('.ni-label') || {}).textContent || el.dataset.view
+      });
     }
   });
-  ziel.innerHTML = html;
+
+  const offeneAnfragen = allRequests.filter(r => !r.archiviert && !r.geloescht &&
+    (!r.status || r.status === 'neu' || r.status === 'kontaktiert')).length;
+
+  ziel.innerHTML = gruppen.map((g, i) => {
+    const id = 'hm-gruppe-' + i;
+    // Die Gruppe mit dem aktiven Bereich bleibt immer offen
+    const hatAktiven = g.punkte.some(p => p.view === aktuellerBereich);
+    const zu = hmZugeklappt[g.titel] === true && !hatAktiven;
+    return `
+      <button class="hm-gruppe-kopf" aria-expanded="${zu ? 'false' : 'true'}" aria-controls="${id}"
+              onclick="hmGruppeUmschalten(this, '${sicherJs(g.titel)}', '${id}')">
+        <span>${sicher(g.titel)}</span><span class="hm-pfeil" aria-hidden="true">▾</span>
+      </button>
+      <div class="hm-gruppe-inhalt" id="${id}" ${zu ? 'hidden' : ''}>
+        ${g.punkte.map(p => `
+          <button class="handy-menue-punkt ${p.view === aktuellerBereich ? 'aktiv' : ''}"
+                  data-ziel="${sicher(p.view)}" onclick="switchView('${sicherJs(p.view)}')">
+            <span class="hm-symbol" aria-hidden="true">${sicher(p.symbol)}</span>
+            <span>${sicher(p.text)}</span>
+            ${p.view === 'anfragen' && offeneAnfragen ? `<span class="hm-zaehler">${offeneAnfragen > 99 ? '99+' : offeneAnfragen}</span>` : ''}
+          </button>`).join('')}
+      </div>`;
+  }).join('');
+
+  const mail = document.getElementById('handy-menue-mail');
+  if(mail && auth.currentUser && auth.currentUser.email) mail.textContent = auth.currentUser.email;
 }
+
+window.hmGruppeUmschalten = function(knopf, titel, inhaltId){
+  const inhalt = document.getElementById(inhaltId);
+  if(!inhalt) return;
+  const zu = !inhalt.hasAttribute('hidden');
+  if(zu) inhalt.setAttribute('hidden',''); else inhalt.removeAttribute('hidden');
+  knopf.setAttribute('aria-expanded', zu ? 'false' : 'true');
+  hmZugeklappt[titel] = zu;
+};
 
 window.handyMenueUmschalten = function(){
   const menue = document.getElementById('handy-menue');
   if(!menue) return;
-  if(menue.hasAttribute('hidden')){
-    handyMenueAufbauen();
-    menue.removeAttribute('hidden');
-    document.getElementById('handy-mehr-knopf').setAttribute('aria-expanded','true');
-    document.body.style.overflow = 'hidden';
-  } else {
-    handyMenueSchliessen();
-  }
+  if(menue.hasAttribute('hidden')) handyMenueOeffnen(); else handyMenueSchliessen();
 };
+
+function handyMenueOeffnen(){
+  const menue = document.getElementById('handy-menue');
+  const schatten = document.getElementById('handy-menue-schatten');
+  if(!menue) return;
+  handyMenueAufbauen();
+  menue.removeAttribute('hidden');
+  if(schatten) schatten.removeAttribute('hidden');
+  // Einschieben erst im nächsten Bild, sonst springt der Drawer ohne Bewegung auf
+  requestAnimationFrame(() => {
+    menue.classList.add('offen');
+    if(schatten) schatten.classList.add('offen');
+  });
+  const mehr = document.getElementById('handy-mehr-knopf');
+  if(mehr) mehr.setAttribute('aria-expanded','true');
+  document.body.style.overflow = 'hidden';
+  const ersterPunkt = menue.querySelector('.handy-menue-punkt');
+  if(ersterPunkt) setTimeout(() => ersterPunkt.focus(), 240);
+}
 
 window.handyMenueSchliessen = function(){
   const menue = document.getElementById('handy-menue');
+  const schatten = document.getElementById('handy-menue-schatten');
   if(!menue || menue.hasAttribute('hidden')) return;
-  menue.setAttribute('hidden','');
+  menue.classList.remove('offen');
+  if(schatten) schatten.classList.remove('offen');
   const mehr = document.getElementById('handy-mehr-knopf');
   if(mehr) mehr.setAttribute('aria-expanded','false');
   document.body.style.overflow = '';
+  setTimeout(() => {
+    menue.setAttribute('hidden','');
+    if(schatten) schatten.setAttribute('hidden','');
+  }, 200);
 };
 
 // Escape schließt das Handymenü
@@ -7218,7 +7420,7 @@ function renderKalender(){
           : ferien ? `<span class="kal-tag-marke">${sicher(ferien.name)}</span>` : ''}
       </div>
       <div class="kal-tag-inhalt">
-        ${sichtbare.map(e => `<span class="kal-eintrag"><i class="kal-punkt ${e.art}"></i>${sicher(e.titel)}</span>`).join('')}
+        ${sichtbare.map(e => `<span class="kal-eintrag art-${sicher(e.art)}"><i class="kal-punkt ${e.art}"></i><span class="kal-eintrag-text">${sicher(e.titel)}</span></span>`).join('')}
         ${rest > 0 ? `<span class="kal-mehr">+ ${rest} weitere</span>` : ''}
       </div>
     </button>`;
