@@ -1,5 +1,25 @@
 {
   "crons": [
     { "path": "/api/taeglich", "schedule": "0 6 * * *" }
+  ],
+  "headers": [
+    {
+      "source": "/(lib|tests|firebase|obsidian)/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    },
+    {
+      "source": "/(admin|aktion).html",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    }
   ]
 }

@@ -1,0 +1,50 @@
+# robots.txt für waschlurch.com
+
+User-agent: *
+
+# ── Ordner ohne Inhalt für Besucher ──────────────────────────
+# Serverfunktionen, deren Hilfsdateien, Prüfläufe, die
+# Firebase-Regeln und der Dokumentationsordner. Nichts davon
+# gehört in eine Suchergebnisliste.
+Disallow: /api/
+Disallow: /lib/
+Disallow: /tests/
+Disallow: /firebase/
+Disallow: /obsidian/
+
+# ── Die zwölf Paketseiten ────────────────────────────────────
+# Im sichtbaren Text zu 100 % identisch, nur der Titel weicht ab,
+# und von keiner Seite aus verlinkt. Ihre Aufgabe hat anfrage.html
+# mit ?paket=<id> übernommen.
+Disallow: /autowerkstatt.html
+Disallow: /bauendreinigung.html
+Disallow: /buero.html
+Disallow: /einfamilienhaus.html
+Disallow: /gastronomie.html
+Disallow: /handwerker-werkstatt.html
+Disallow: /hausmeister-komplett.html
+Disallow: /kanzlei-praxis.html
+Disallow: /laden-buchhandlung.html
+Disallow: /parkplatz.html
+Disallow: /treppenhaus.html
+Disallow: /wohnung.html
+
+# ── Hinweis zu admin.html und aktion.html ────────────────────
+# Beide stehen hier bewusst NICHT.
+#
+# Ein Disallow verbietet das Abrufen – nicht das Aufnehmen in den
+# Index. Ist eine gesperrte Adresse irgendwo verlinkt, erscheint
+# sie trotzdem in den Ergebnissen, nur ohne Beschreibung. Und das
+# noindex im Kopf der Seite wird nie gelesen, weil die Seite ja
+# nicht abgerufen werden darf.
+#
+# Beide Seiten tragen deshalb <meta name="robots"
+# content="noindex, nofollow"> und dürfen abgerufen werden. Nur so
+# erfährt die Suchmaschine, dass sie draußen bleiben sollen.
+#
+# aktion.html ist ohne den Einmal-Schlüssel aus der E-Mail ohnehin
+# leer – dort steht dann nur „Dieser Link ist unvollständig".
+
+Allow: /
+
+Sitemap: https://waschlurch.com/sitemap.xml
