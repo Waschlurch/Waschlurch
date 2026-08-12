@@ -3426,6 +3426,49 @@ async function pdfPruefsumme(blob){
   }
 }
 
+/* ── Firestore-Tauglichkeit prüfen ────────────────────────────
+   Firestore erlaubt kein Array unmittelbar innerhalb eines Arrays.
+   `[['Leistungen', 10400]]` wird abgelehnt, `[{bezeichnung:'…'}]`
+   und `{liste:['a','b']}` sind in Ordnung – die Einschränkung gilt
+   nur für Array in Array.
+
+   Der Haken daran: Firestore merkt es erst beim Speichern und
+   meldet dann „Nested arrays are not supported" ohne zu sagen, WO.
+   Bei einem Dokument mit Kalkulation, Einstufung, Positionen und
+   Begründungen ist das eine Suche über sechs Ebenen.
+
+   Diese Prüfung nennt den Pfad. Sie verformt bewusst NICHTS: Ein
+   stiller Umbau würde eine falsche Struktur speichern, die
+   niemandem auffällt, bis jemand sie auszuwerten versucht.
+
+   Anlass war eine Anfrage mit mehreren Leistungen: Der Rechenweg
+   lag als Paare `['Bezeichnung', Betrag]` vor. */
+function findeVerschachtelteArrays(wert, pfad, imArray, funde){
+  funde = funde || [];
+  pfad = pfad || '';
+  if(Array.isArray(wert)){
+    if(imArray) funde.push(pfad);
+    wert.forEach((w, i) => findeVerschachtelteArrays(w, pfad + '[' + i + ']', true, funde));
+  } else if(wert && typeof wert === 'object' && typeof wert.toDate !== 'function'){
+    Object.keys(wert).forEach(k =>
+      findeVerschachtelteArrays(wert[k], pfad ? pfad + '.' + k : k, false, funde));
+  }
+  return funde;
+}
+
+/* Wirft mit einem lesbaren Feldpfad, statt Firestore raten zu lassen. */
+function pruefeFirestoreTauglich(daten, was){
+  const funde = findeVerschachtelteArrays(daten);
+  if(funde.length){
+    const stellen = [...new Set(funde.map(f => f.replace(/\[\d+\]$/, '')))];
+    throw new Error(
+      (was || 'Das Dokument') + ' enthält an folgender Stelle ein Array in einem Array, ' +
+      'was Firestore nicht speichern kann: ' + stellen.join(', ') + '. ' +
+      'Diese Stelle muss auf Objekte mit benannten Feldern umgestellt werden.');
+  }
+  return daten;
+}
+
 /* ── Revisionssicheres Protokoll ──────────────────────────────
    Anhängen, nie ändern – die Firestore-Regel erzwingt das. Ein
    fehlgeschlagener Protokolleintrag darf die eigentliche Aktion
@@ -3618,7 +3661,22 @@ function berechneKalkulation(e){
   const eingabe = e || {};
   const positionen = [];
   const annahmen = [];
+
+  /* Der Rechenweg zum Mitlesen: je Stufe eine Bezeichnung und der
+     Betrag in Cent.
+
+     ⚠️ Bewusst Objekte mit benannten Feldern, KEINE Paare wie
+     ['Leistungen', 10400]. Firestore erlaubt kein Array unmittelbar
+     innerhalb eines Arrays – `addDoc` brach mit „Nested arrays are
+     not supported" ab, und zwar erst beim Speichern, nicht beim
+     Rechnen. Ein Array innerhalb eines OBJEKTS ist dagegen erlaubt;
+     daran liegt es nicht.
+
+     Die benannten Felder sind ohnehin die bessere Fassung: An der
+     Lesestelle steht `s.bezeichnung` statt `s[0]`. */
   const schritte = [];
+  const schritt = (bezeichnung, betragCent) =>
+    schritte.push({ bezeichnung, betrag_cent: betragCent });
 
   // ── 1. Leistungspositionen ──────────────────────────────────
   let arbeitsminuten = 0;
@@ -3679,7 +3737,7 @@ function berechneKalkulation(e){
   });
 
   const leistungenCent = positionen.reduce((s,p) => s + p.betrag_cent, 0);
-  schritte.push(['Leistungen', leistungenCent]);
+  schritt('Leistungen', leistungenCent);
 
   // ── 3. Anfahrt ──────────────────────────────────────────────
   /* ⚠️ 0 km ist ein BEKANNTER Wert, kein fehlender: Eitorf selbst
@@ -3726,7 +3784,7 @@ function berechneKalkulation(e){
                                          einzel_cent:materialCent, betrag_cent:materialCent, hinweis:null });
 
   const zwischensummeCent = leistungenCent + anfahrtCent + geraeteCent + materialCent;
-  schritte.push(['Zwischensumme', zwischensummeCent]);
+  schritt('Zwischensumme', zwischensummeCent);
 
   // ── 5. Zuschläge ────────────────────────────────────────────
   const g = kalkulationData.general || {};
@@ -3748,12 +3806,12 @@ function berechneKalkulation(e){
                       betrag_cent: prozentVonCent(zwischensummeCent, p) });
   });
   const zuschlagCent = zuschlaege.reduce((s,z) => s + z.betrag_cent, 0);
-  if(zuschlagCent) schritte.push(['Zuschläge (' + zahl(zuschlagProzent,0) + ' %)', zuschlagCent]);
+  if(zuschlagCent) schritt('Zuschläge (' + zahl(zuschlagProzent,0) + ' %)', zuschlagCent);
 
   // ── 6. Sicherheitsaufschlag ─────────────────────────────────
   const sicherheitProzent = Math.max(0, Number(eingabe.sicherheitsaufschlag_prozent) || 0);
   const sicherheitCent = prozentVonCent(zwischensummeCent + zuschlagCent, sicherheitProzent);
-  if(sicherheitCent) schritte.push(['Sicherheitsaufschlag (' + zahl(sicherheitProzent,0) + ' %)', sicherheitCent]);
+  if(sicherheitCent) schritt('Sicherheitsaufschlag (' + zahl(sicherheitProzent,0) + ' %)', sicherheitCent);
 
   let nettoEinsatzCent = zwischensummeCent + zuschlagCent + sicherheitCent;
 
@@ -3775,7 +3833,7 @@ function berechneKalkulation(e){
   if(mindestCent > 0 && leistungenCent > 0 && nettoEinsatzCent < mindestCent){
     mindestAngehoben = mindestCent - nettoEinsatzCent;
     nettoEinsatzCent = mindestCent;
-    schritte.push(['Anhebung auf Mindestauftragswert', mindestAngehoben]);
+    schritt('Anhebung auf Mindestauftragswert', mindestAngehoben);
     annahmen.push('Auf den Mindestauftragswert von ' + euroCent(mindestCent) + ' angehoben');
   }
 
@@ -3784,7 +3842,7 @@ function berechneKalkulation(e){
   const rabattProzentCent = prozentVonCent(nettoEinsatzCent, rabattProzent);
   const rabattFestCent = Math.max(0, Number(eingabe.rabatt_cent) || 0);
   const rabattCent = Math.min(nettoEinsatzCent, rabattProzentCent + rabattFestCent);
-  if(rabattCent) schritte.push(['Rabatt', -rabattCent]);
+  if(rabattCent) schritt('Rabatt', -rabattCent);
   nettoEinsatzCent -= rabattCent;
 
   // ── 9. Multiplikator ────────────────────────────────────────
@@ -4366,6 +4424,23 @@ window.vorkalkulationAusAnfrage = async function(anfrageId){
   const key = r.email ? emailToKey(r.email) : null;
   const kunde = key ? deriveKundenList().find(k => k.key === key) : null;
 
+  /* Struktur prüfen, BEVOR eine Nummer vergeben wird. Die
+     Nummernvergabe läuft in einer Transaktion und lässt sich nicht
+     zurückdrehen – scheiterte das Speichern danach, wäre die Nummer
+     verbrannt und der Nummernkreis hätte eine Lücke. § 14 Abs. 4
+     Nr. 4 UStG verlangt eine fortlaufende Nummer.
+
+     Kalkulation und Einstufung sind die einzigen verschachtelten
+     Strukturen im Dokument; alles andere sind Zeichenketten und
+     Zahlen aus der Anfrage. */
+  try {
+    pruefeFirestoreTauglich({ kalkulation, einstufung }, 'Die Berechnung');
+  } catch(err){
+    console.error(err);
+    melde(err.message, 'fehler');
+    return;
+  }
+
   try {
     const nummer = await getOrCreateKalkulationsnummer();
     const daten = {
@@ -4394,6 +4469,12 @@ window.vorkalkulationAusAnfrage = async function(anfrageId){
       createdAt: serverTimestamp(),
       erstellt_von: (auth.currentUser && auth.currentUser.email) || 'unbekannt',
     };
+    /* Zweite Prüfung über das vollständige Dokument – die erste lief
+       nur über Kalkulation und Einstufung. Hier kämen Felder dazu,
+       die aus der Anfrage stammen und theoretisch Arrays enthalten
+       könnten. */
+    pruefeFirestoreTauglich(daten, 'Die Vorabkalkulation');
+
     const ref = await addDoc(collection(db, 'vorkalkulationen'), daten);
 
     await protokolliere('vk_angelegt', {
@@ -4557,6 +4638,22 @@ function vkOffeneListe(){
   return allVorkalkulationen.filter(v => VK_STATUS[v.status] && VK_STATUS[v.status].offen);
 }
 
+/* ⚠️ Für die UMSATZPLANUNG zählen nur Kalkulationen, aus denen noch
+   KEIN Angebot entstanden ist.
+
+   Sonst wird derselbe Vorgang doppelt geplant: Die Kalkulation
+   behält nach der Überführung ihren Stand (etwa „Termin
+   vereinbart"), gilt damit weiter als offen – und das daraus
+   entstandene Angebot zählt zusätzlich. Bei einem Vorgang über
+   5.000 € stünden 10.000 € in der Planung.
+
+   In der Kalkulationsliste bleiben sie sichtbar; dort ist das
+   richtig, denn der Vorgang läuft ja noch. Nur gezählt werden darf
+   er einmal. */
+function vkFuerPlanung(){
+  return vkOffeneListe().filter(v => !v.angebot_id);
+}
+
 function renderVorkalkulationenStats(){
   const el = document.getElementById('vk-stats');
   if(!el) return;
@@ -4679,6 +4776,14 @@ function renderVorkalkulationen(){
       ${v.approved_at ? `<div class="vk-freigabe">Freigegeben von ${sicher(v.approved_by||'–')} am ${sicher(formatDate(v.approved_at))}</div>` : ''}
       ${!freigebbar && !schonBeimKunden ? `<div class="vk-maengel"><strong>Vor der Freigabe zu klären:</strong><ul>${maengel.map(m => `<li>${sicher(m)}</li>`).join('')}</ul></div>` : ''}
 
+      ${v.angebot_id
+        ? `<div class="vk-freigabe">Daraus entstand Angebot ${sicher(v.angebot_nummer||'')} ·
+             <span class="stammdaten-link" onclick="switchView('angebote')">ansehen →</span></div>`
+        : ''}
+      ${v.termin_datum
+        ? `<div class="vk-freigabe">Besprechung am ${sicher(datumLesbar(v.termin_datum))}${v.termin_von ? ' um ' + sicher(v.termin_von) + ' Uhr' : ''}${v.besprechung_erfolgt ? ' · hat stattgefunden' : ''}</div>`
+        : ''}
+
       <div class="req-actions">
         <button onclick="vkVorschau('${j}')">Vorschau</button>
         ${schonBeimKunden
@@ -4689,6 +4794,12 @@ function renderVorkalkulationen(){
             : `<button class="vk-knopf-haupt" ${freigebbar?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="vkFreigeben('${j}', false)">Freigeben</button>
                <button ${freigebbar?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="vkFreigeben('${j}', true)">Freigeben und versenden</button>`}
         <button onclick="vkNeuBerechnen('${j}')">Neu berechnen</button>
+        ${v.termin_datum
+          ? (v.besprechung_erfolgt ? '' : `<button onclick="besprechungVermerken('${j}')">Besprechung hat stattgefunden</button>`)
+          : `<button onclick="terminAusVorkalkulation('${j}')">Termin eintragen</button>`}
+        ${v.angebot_id
+          ? '<button disabled style="opacity:.5;cursor:default">Angebot bereits erstellt</button>'
+          : `<button class="vk-knopf-haupt" onclick="angebotAusVorkalkulation('${j}')">Verbindliches Angebot erstellen</button>`}
       </div>
     </div>`;
   }).join('');
@@ -4733,6 +4844,413 @@ window.vkNeuBerechnen = async function(id){
     melde('Neu berechnet: ' + euroCent(vorher) + ' → ' + euroCent(kalkulation.brutto_gesamt_cent) +
           (vk.status === 'ADMIN_APPROVED' ? '. Die Freigabe wurde dadurch zurückgesetzt.' : '.'));
   } catch(err){ meldeSchreibfehler(err, 'Das Neuberechnen'); }
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   STUFE 2 – VERBINDLICHES ANGEBOT (Phase 6)
+   ══════════════════════════════════════════════════════════════
+   Aus einer besprochenen Vorabkalkulation wird ein verbindliches
+   Angebot. Das ist der Übergang von „unverbindliche Schätzung" zu
+   „daran halten wir uns" – und deshalb bewusst ein eigener Schritt
+   mit eigener Freigabe, nicht ein Statuswechsel.
+
+   ⚠️ Die Vorabkalkulation bleibt unverändert erhalten. Sie ist der
+   Nachweis, worauf das Angebot beruht; würde sie überschrieben,
+   ließe sich später nicht mehr zeigen, was ursprünglich geschätzt
+   wurde und was die Besichtigung ergeben hat. */
+
+/* Ein Angebot bekommt BEIDE Feldsätze: die neuen `_cent`-Felder für
+   die Nachvollziehbarkeit und die alten Euro-Felder, mit denen
+   `buildAngebotPDF`, `auftragAusAngebot` und `renderAngeboteStats`
+   seit Monaten arbeiten. Ein Umbau dieser drei Stellen brächte
+   keinen Gewinn, aber das Risiko fehlerhafter Rechnungen. */
+function angebotsFelderAusKalkulation(k){
+  return {
+    // Neu, in ganzen Cent
+    positionen: k.positionen || [],
+    zuschlaege: k.zuschlaege || [],
+    annahmen: k.annahmen || [],
+    schritte: k.schritte || [],
+    netto_gesamt_cent: k.netto_gesamt_cent,
+    mwst_cent: k.mwst_cent,
+    brutto_gesamt_cent: k.brutto_gesamt_cent,
+    mwst_satz: k.mwst_satz,
+    regelversion: k.regelversion,
+
+    /* Bestandsfelder – von buildAngebotPDF und auftragAusAngebot
+       gelesen. Gleiche Werte, nur in Euro. */
+    zeilen: (k.positionen || []).filter(p => p.art === 'leistung').map(p => ({
+      id: p.leistung_id || null, name: p.text,
+      qty: null, qty2: null, unit: '', unit2: null,
+      price: ausCent(p.betrag_cent),
+    })),
+    nettoGesamt: ausCent(k.netto_gesamt_cent),
+    mwstBetrag: ausCent(k.mwst_cent),
+    bruttoGesamt: ausCent(k.brutto_gesamt_cent),
+    mwstSatz: k.mwst_satz,
+    nettoProEinsatz: ausCent(k.netto_einsatz_cent),
+    leistungenSumme: ausCent(k.leistungen_cent),
+    fahrtkosten: ausCent(k.anfahrt_cent),
+    zusatzkosten: ausCent(k.material_cent),
+    km: k.km, kmPreis: ausCent(k.km_satz_cent),
+    zuschlagPct: k.zuschlag_prozent, zuschlagBetrag: ausCent(k.zuschlag_cent),
+    haeufigkeit: k.haeufigkeit, abrechnung: k.abrechnung, multiplikator: k.multiplikator,
+    // Interne Kostenseite – nur fürs Dashboard, nie im Kunden-PDF
+    kostenProEinsatz: ausCent(k.kosten_einsatz_cent),
+    gewinnGesamt: ausCent(k.gewinn_gesamt_cent),
+    arbeitsstunden: k.arbeitsstunden,
+  };
+}
+
+window.angebotAusVorkalkulation = async function(vkId){
+  const vk = allVorkalkulationen.find(x => x.id === vkId);
+  if(!vk){ melde('Diese Vorabkalkulation wurde nicht gefunden.', 'fehler'); return; }
+
+  const schonDa = allAngebote.find(a => a.quelle_vk_id === vkId
+    && !['DECLINED','EXPIRED','abgelehnt','abgelaufen'].includes(a.status));
+  if(schonDa && !confirm('Aus dieser Vorabkalkulation gibt es bereits das Angebot ' +
+      (schonDa.nummer || '') + '.\n\nTrotzdem ein weiteres erstellen?')) return;
+
+  /* Ein verbindliches Angebot ohne vorherige Besprechung ist bei
+     Groß- und Risikoprojekten genau der Fall, vor dem die Einstufung
+     warnt. Verhindert wird es nicht – aber es wird gefragt. */
+  const brauchtTermin = vk.einstufung && vk.einstufung.besichtigung_noetig;
+  const hatteTermin = vk.status === 'MEETING_BOOKED' || vk.besprechung_erfolgt === true;
+  if(brauchtTermin && !hatteTermin){
+    if(!confirm('Diese Kalkulation ist als ' +
+        (EINSTUFUNG[vk.einstufung_wert] || EINSTUFUNG.STANDARD_JOB).text +
+        ' eingestuft – vorgesehen war eine Besichtigung, und es ist keine vermerkt.\n\n' +
+        'Trotzdem jetzt ein VERBINDLICHES Angebot erstellen?\n' +
+        'Daran bist du anschließend gebunden.')) return;
+  }
+
+  const k = vk.kalkulation || {};
+  if(!k.positionen || !k.positionen.length){
+    melde('Diese Kalkulation enthält keine Position – daraus lässt sich kein Angebot machen.', 'fehler');
+    return;
+  }
+
+  try {
+    const nummer = await getOrCreateAngebotsnummer();
+    const gueltigTage = Number(vs('angebot_gueltigkeit_tage')) || Number(v('angebot_gueltigkeit')) || 14;
+    const gueltigBis = new Date(Date.now() + gueltigTage * 86400000);
+
+    const daten = Object.assign({
+      nummer, version: 1,
+      status: 'DRAFT',
+      quelle_vk_id: vkId,
+      quelle_vk_nummer: vk.nummer,
+      anfrage_id: vk.anfrage_id || null,
+      kunde_key: vk.kunde_key || null,
+
+      vorname: vk.vorname || '', nachname: vk.nachname || '',
+      firma: vk.firma || '',
+      email: (vk.email || '').toLowerCase(),
+      telefon: vk.telefon || '',
+      adresse: [vk.strasse, [vk.plz, vk.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+      strasse: vk.strasse || '', plz: vk.plz || '', ort: vk.ort || '',
+      kundenart: kundenart(vk.kundenart),
+      /* Der Verbraucherweg entscheidet sich hier und wird
+         festgeschrieben: Ändert Daniel später die Kundenart, gilt
+         für dieses Angebot weiterhin, was beim Erstellen zutraf. */
+      verbraucher: istVerbraucher(vk.kundenart),
+
+      leistungen_text: vk.leistungen_text || '',
+      gueltigkeit: gueltigTage,
+      gueltig_bis: gueltigBis.toISOString(),
+      anmerkung: '',
+      ausgeschlossen: '',
+      ausfuehrung_zeitraum: '',
+      zahlungsbedingungen: 'Zahlung per Rechnung, ' + (Number(v('zahlungsziel')) || 14) + ' Tage nach Rechnungsdatum ohne Abzug.',
+
+      rechtstext_version: rechtstextVersion(),
+      agb_version: rt('agb_version'),
+      approved_by: null, approved_at: null,
+      sent_at: null, viewed_at: null, accepted_at: null,
+      createdAt: serverTimestamp(),
+      erstellt_von: (auth.currentUser && auth.currentUser.email) || 'unbekannt',
+    }, angebotsFelderAusKalkulation(k));
+
+    pruefeFirestoreTauglich(daten, 'Das Angebot');
+    const ref = await addDoc(collection(db, 'angebote'), daten);
+
+    await updateDoc(doc(db, 'vorkalkulationen', vkId), {
+      angebot_id: ref.id, angebot_nummer: nummer,
+      ueberfuehrt_am: serverTimestamp(),
+    });
+
+    await protokolliere('angebot_aus_vk', {
+      dokument:'angebot', dokument_id: ref.id, nummer,
+      quelle_vk_id: vkId, quelle_vk_nummer: vk.nummer,
+      brutto_cent: k.brutto_gesamt_cent, regelversion: k.regelversion,
+    });
+    benachrichtige('angebot_neu', 'Angebot ' + nummer + ' als Entwurf angelegt',
+      'aus ' + vk.nummer + ' · ' + euroCent(k.brutto_gesamt_cent),
+      { bereich:'angebote', id: ref.id });
+
+    melde('Angebot ' + nummer + ' aus ' + vk.nummer + ' erstellt. Bitte prüfen und freigeben.');
+    window.switchView('angebote');
+  } catch(err){
+    console.error(err);
+    meldeSchreibfehler(err, 'Das Erstellen des Angebots');
+  }
+};
+
+/* ── Besprechungstermin (Phase 6) ─────────────────────────────
+   Legt einen Kalendertermin an und verknüpft ihn mit der
+   Kalkulation. Doppelbuchungen werden erkannt – die Prüfung nutzt
+   `termineAmTag`, also dieselbe Quelle wie der Kalender. */
+window.terminAusVorkalkulation = function(vkId){
+  const vk = allVorkalkulationen.find(x => x.id === vkId);
+  if(!vk) return;
+
+  const vorgabe = isoDatum(new Date(Date.now() + 3 * 86400000));
+  const datum = prompt('Datum der Besprechung oder Besichtigung (JJJJ-MM-TT):', vorgabe);
+  if(!datum) return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)){ melde('Bitte im Format JJJJ-MM-TT eingeben.', 'fehler'); return; }
+
+  const von = prompt('Uhrzeit von (HH:MM):', v('arbeitsbeginn') || '09:00');
+  if(!von || !/^\d{2}:\d{2}$/.test(von)){ melde('Bitte eine Uhrzeit wie 09:00 eingeben.', 'fehler'); return; }
+
+  const dauer = Number(v('termin_standarddauer')) || 60;
+  const [std, min] = von.split(':').map(Number);
+  const endeMinuten = std * 60 + min + dauer;
+  const bis = String(Math.floor(endeMinuten / 60) % 24).padStart(2,'0') + ':' +
+              String(endeMinuten % 60).padStart(2,'0');
+
+  /* Doppelbuchung prüfen: überschneidet sich der Termin mit einem
+     bestehenden? Der Kalender ist die einzige Quelle – eine eigene
+     Liste liefe früher oder später auseinander. */
+  const kollision = termineAmTag(datum).find(t => {
+    if(t.ganztags) return true;
+    if(!t.von || !t.bis) return false;
+    return von < t.bis && bis > t.von;
+  });
+  if(kollision && !confirm('An diesem Tag liegt bereits „' + (kollision.titel || 'ein Termin') +
+      '" von ' + (kollision.von || '') + ' bis ' + (kollision.bis || '') +
+      '.\n\nTrotzdem anlegen?')) return;
+
+  const name = [vk.vorname, vk.nachname].filter(Boolean).join(' ').trim() || vk.firma || 'Kunde';
+
+  addDoc(collection(db, 'termine'), {
+    titel: 'Besprechung ' + vk.nummer + ' · ' + name,
+    datum, ganztags:false, von, bis,
+    ort: [vk.strasse, [vk.plz, vk.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+    notiz: 'Zur Vorabkalkulation ' + vk.nummer + ' über ' + euroCent(vk.brutto_gesamt_cent),
+    kategorie: 'besichtigung',
+    kunde_key: vk.kunde_key || null,
+    vorkalkulation_id: vkId,
+    createdAt: serverTimestamp(),
+  })
+    .then(() => updateDoc(doc(db, 'vorkalkulationen', vkId), {
+      status: vk.status === 'DECLINED' || vk.status === 'EXPIRED' ? vk.status : 'MEETING_BOOKED',
+      termin_datum: datum, termin_von: von,
+    }))
+    .then(() => {
+      protokolliere('termin_angelegt', {
+        dokument:'vorkalkulation', dokument_id: vkId, nummer: vk.nummer, datum, von,
+      });
+      melde('Termin am ' + datumLesbar(datum) + ' um ' + von + ' Uhr eingetragen.');
+    })
+    .catch(err => meldeSchreibfehler(err, 'Das Anlegen des Termins'));
+};
+
+/* Nach der Besprechung: vermerken, dass sie stattgefunden hat.
+   Das schaltet die Überführung ohne Rückfrage frei und ist die
+   Grundlage der Abschlusswahrscheinlichkeit „Besprechung erfolgt". */
+window.besprechungVermerken = function(vkId){
+  const vk = allVorkalkulationen.find(x => x.id === vkId);
+  if(!vk) return;
+  updateDoc(doc(db, 'vorkalkulationen', vkId), {
+    besprechung_erfolgt: true, besprechung_am: serverTimestamp(),
+  })
+    .then(() => {
+      protokolliere('besprechung_vermerkt', {
+        dokument:'vorkalkulation', dokument_id: vkId, nummer: vk.nummer,
+      });
+      melde('Besprechung vermerkt. Jetzt kann daraus ein verbindliches Angebot werden.');
+    })
+    .catch(err => meldeSchreibfehler(err, 'Das Vermerken der Besprechung'));
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   ANGEBOTSFREIGABE
+   ══════════════════════════════════════════════════════════════
+   Strenger als bei der Vorabkalkulation: Ein verbindliches Angebot
+   bindet. Was hier fehlt, fehlt später im Vertrag. */
+function pruefeAngebotFreigabe(a){
+  const maengel = [];
+  if(!a) return ['Angebot nicht gefunden.'];
+
+  if(!a.nummer)  maengel.push('Es fehlt eine Angebotsnummer.');
+  if(!a.version) maengel.push('Es fehlt eine Versionsnummer.');
+
+  const name = ((a.vorname||'') + ' ' + (a.nachname||'')).trim();
+  if(!name && !a.firma) maengel.push('Es fehlt ein Name oder eine Firma.');
+  if(!a.email) maengel.push('Es fehlt die E-Mail-Adresse des Empfängers.');
+  else if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(a.email))
+    maengel.push('Die E-Mail-Adresse „' + a.email + '" sieht nicht gültig aus.');
+  if(!a.adresse && !a.strasse) maengel.push('Es fehlt die Anschrift des Leistungsorts.');
+
+  const positionen = a.positionen || [];
+  if(!positionen.length) maengel.push('Das Angebot enthält keine Position.');
+  if(!(Number(a.brutto_gesamt_cent) > 0)) maengel.push('Der Gesamtbetrag ist null.');
+  if(Number(a.netto_gesamt_cent) + Number(a.mwst_cent) !== Number(a.brutto_gesamt_cent))
+    maengel.push('Netto und Umsatzsteuer ergeben nicht den Bruttobetrag.');
+
+  /* Eine Preisspanne ist bei einer unverbindlichen Kalkulation
+     richtig. In einem verbindlichen Angebot darf sie nicht stehen –
+     der Kunde muss wissen, was er beauftragt. */
+  if(a.spanne) maengel.push('Ein verbindliches Angebot darf keine Preisspanne enthalten. Bitte einen festen Preis eintragen.');
+
+  if(!a.gueltig_bis) maengel.push('Es fehlt die Angebotsgültigkeit.');
+  else if(new Date(a.gueltig_bis).getTime() < Date.now())
+    maengel.push('Die Gültigkeit liegt in der Vergangenheit.');
+
+  if(!a.zahlungsbedingungen) maengel.push('Es fehlen die Zahlungsbedingungen.');
+  if(!a.agb_version) maengel.push('Es fehlt die AGB-Fassung.');
+
+  /* Verbraucherpflichten. Ohne Widerrufsbelehrung beginnt die
+     Widerrufsfrist nicht zu laufen (§ 356 Abs. 3 BGB) – das Angebot
+     wäre für Daniel deutlich nachteiliger als gedacht. */
+  if(a.verbraucher){
+    if(!String(rt('widerruf_belehrung')).trim())
+      maengel.push('Für Privatkunden fehlt die Widerrufsbelehrung. Ohne sie beginnt die Widerrufsfrist nicht zu laufen.');
+    if(!String(rt('widerruf_formular')).trim())
+      maengel.push('Für Privatkunden fehlt das Muster-Widerrufsformular.');
+  }
+
+  if(!pdfVerfuegbar()) maengel.push('Die PDF-Bibliothek ist nicht geladen. Meist ein Werbeblocker – Seite neu laden.');
+
+  return maengel;
+}
+
+window.angFreigeben = async function(id, undVersenden){
+  const a = allAngebote.find(x => x.id === id);
+  if(!a) return;
+  const st = angStatus(a);
+
+  if(['SENT','VIEWED','ACCEPTED'].includes(st)){
+    melde('Diese Fassung ist schon beim Kunden. Für Änderungen bitte eine neue Version anlegen.', 'fehler');
+    return;
+  }
+  const maengel = pruefeAngebotFreigabe(a);
+  if(maengel.length){
+    melde('Freigabe nicht möglich:\n· ' + maengel.join('\n· '), 'fehler');
+    return;
+  }
+  if(!confirm('Angebot ' + a.nummer + ' über ' + euroCent(a.brutto_gesamt_cent) + ' freigeben?\n\n' +
+              'Danach kann der Kunde es zahlungspflichtig beauftragen.')) return;
+
+  try {
+    await updateDoc(doc(db, 'angebote', id), {
+      status:'ADMIN_APPROVED',
+      approved_by: (auth.currentUser && auth.currentUser.email) || 'unbekannt',
+      approved_at: serverTimestamp(),
+      rechtstext_version: rechtstextVersion(),
+      agb_version: rt('agb_version'),
+    });
+    await protokolliere('angebot_freigegeben', {
+      dokument:'angebot', dokument_id:id, nummer:a.nummer, version:a.version,
+      brutto_cent:a.brutto_gesamt_cent,
+    });
+    melde('Angebot ' + a.nummer + ' freigegeben.');
+    if(undVersenden) window.angVersenden(id);
+  } catch(err){ meldeSchreibfehler(err, 'Die Freigabe'); }
+};
+
+window.angFreigabeZurueckziehen = async function(id){
+  const a = allAngebote.find(x => x.id === id);
+  if(!a || angStatus(a) !== 'ADMIN_APPROVED'){
+    melde('Zurückziehen geht nur, solange freigegeben, aber noch nicht versendet.', 'fehler');
+    return;
+  }
+  if(!confirm('Freigabe für ' + a.nummer + ' zurückziehen?')) return;
+  try {
+    await updateDoc(doc(db, 'angebote', id), { status:'ADMIN_REVIEW', approved_by:null, approved_at:null });
+    await protokolliere('angebot_freigabe_zurueckgezogen', {
+      dokument:'angebot', dokument_id:id, nummer:a.nummer,
+    });
+    melde('Freigabe zurückgezogen.');
+  } catch(err){ meldeSchreibfehler(err, 'Das Zurückziehen der Freigabe'); }
+};
+
+window.angNeueVersion = async function(id){
+  const alt = allAngebote.find(x => x.id === id);
+  if(!alt) return;
+  if(angStatus(alt) === 'ACCEPTED'){
+    melde('Ein angenommenes Angebot ist ein Vertrag. Es lässt sich nicht mehr ändern – ' +
+          'für eine Änderung braucht es eine Vereinbarung mit dem Kunden.', 'fehler');
+    return;
+  }
+  if(!confirm('Neue Version von ' + alt.nummer + ' anlegen?\n\n' +
+              'Die bisherige Fassung bleibt unverändert erhalten.')) return;
+  try {
+    const neu = Object.assign({}, alt);
+    delete neu.id;
+    neu.version = (Number(alt.version) || 1) + 1;
+    neu.status = 'DRAFT';
+    neu.approved_by = null; neu.approved_at = null;
+    neu.sent_at = null; neu.viewed_at = null; neu.accepted_at = null;
+    neu.vorgaenger_id = id;
+    neu.createdAt = serverTimestamp();
+    const ref = await addDoc(collection(db, 'angebote'), neu);
+    await updateDoc(doc(db, 'angebote', id), { ersetzt_durch: ref.id });
+    await protokolliere('angebot_neue_version', {
+      dokument:'angebot', dokument_id: ref.id, nummer: alt.nummer,
+      von_version: alt.version, auf_version: neu.version, vorgaenger_id: id,
+    });
+    melde('Version ' + neu.version + ' angelegt.');
+  } catch(err){ meldeSchreibfehler(err, 'Das Anlegen der neuen Version'); }
+};
+
+window.angVersenden = async function(id){
+  const a = allAngebote.find(x => x.id === id);
+  if(!a) return;
+  if(angStatus(a) !== 'ADMIN_APPROVED'){
+    melde('Versand nur nach Freigabe.', 'fehler'); return;
+  }
+  const maengel = pruefeAngebotFreigabe(a);
+  if(maengel.length){ melde('Versand nicht möglich:\n· ' + maengel.join('\n· '), 'fehler'); return; }
+
+  if(!confirm('Verbindliches Angebot ' + a.nummer + ' an ' + a.email + ' senden?\n\n' +
+              'Betrag: ' + euroCent(a.brutto_gesamt_cent) + '\n' +
+              'Der Kunde kann es anschließend zahlungspflichtig beauftragen.')) return;
+
+  let pdfBase64 = null, pruefsumme = null;
+  try {
+    const blob = buildAngebotPDF(a, a.nummer);
+    pruefsumme = await pdfPruefsumme(blob);
+    pdfBase64 = await new Promise((fertig, schief) => {
+      const leser = new FileReader();
+      leser.onload = () => fertig(String(leser.result).split(',')[1]);
+      leser.onerror = schief;
+      leser.readAsDataURL(blob);
+    });
+  } catch(err){
+    console.error(err);
+    melde('Das PDF konnte nicht erzeugt werden – es wurde nichts versendet.', 'fehler');
+    return;
+  }
+
+  try {
+    const antwort = await serverAufruf('/api/versand', {
+      dokument_typ:'angebot', dokument_id:id,
+      pdf_base64: pdfBase64, pdf_hash: pruefsumme,
+    });
+    melde('Angebot ' + a.nummer + ' versendet an ' + a.email + '.');
+    if(antwort.hinweis) melde(antwort.hinweis);
+  } catch(err){
+    if(err.message === 'EINRICHTUNG_FEHLT'){
+      melde('Der automatische Versand ist noch nicht eingerichtet (siehe EINRICHTUNG.md). ' +
+            'Solange kannst du das PDF herunterladen und von Hand senden.', 'fehler');
+    } else {
+      melde('Versand fehlgeschlagen: ' + err.message + '. Es wurde nichts verschickt.', 'fehler');
+    }
+    console.error(err);
+  }
 };
 
 
@@ -5103,21 +5621,30 @@ function wahrscheinlichkeitFuer(status, typ){
 }
 
 function planungsZahlen(){
-  const vkOffen = vkOffeneListe();
+  /* Nur Kalkulationen ohne Folgeangebot – sonst zählt derselbe
+     Vorgang zweimal. */
+  const vkOffen = vkFuerPlanung();
   const vkVolumenCent = vkOffen.reduce((s,v) => s + (Number(v.brutto_gesamt_cent)||0), 0);
   const vkGewichtetCent = vkOffen.reduce((s,v) =>
     s + prozentVonCent(Number(v.brutto_gesamt_cent)||0, wahrscheinlichkeitFuer(v.status, 'vk')), 0);
+
+  /* Überführte Angebote führen den Betrag in Cent, alte aus dem
+     Rechner in Euro. `bruttoGesamt` allein läse bei überführten
+     Angeboten zwar auch einen Wert – aber gerundet aus der
+     Umwandlung, nicht den maßgeblichen. */
+  const betragCent = a => a.brutto_gesamt_cent != null
+    ? Number(a.brutto_gesamt_cent) : zuCent(a.bruttoGesamt || 0);
 
   const angOffen = allAngebote.filter(a => {
     const st = angStatus(a);
     return ANG_STATUS[st] && ANG_STATUS[st].offen && st !== 'DRAFT';
   });
-  const angVolumenCent = angOffen.reduce((s,a) => s + zuCent(a.bruttoGesamt || 0), 0);
+  const angVolumenCent = angOffen.reduce((s,a) => s + betragCent(a), 0);
   const angGewichtetCent = angOffen.reduce((s,a) =>
-    s + prozentVonCent(zuCent(a.bruttoGesamt||0), wahrscheinlichkeitFuer(angStatus(a), 'angebot')), 0);
+    s + prozentVonCent(betragCent(a), wahrscheinlichkeitFuer(angStatus(a), 'angebot')), 0);
 
   const angenommen = allAngebote.filter(a => angStatus(a) === 'ACCEPTED');
-  const bestaetigtCent = angenommen.reduce((s,a) => s + zuCent(a.bruttoGesamt||0), 0);
+  const bestaetigtCent = angenommen.reduce((s,a) => s + betragCent(a), 0);
 
   /* Ab hier: echte Zahlen aus den bestehenden Funktionen. Bewusst
      NICHT neu berechnet – die Einnahmen haben genau eine Quelle. */
@@ -5672,7 +6199,10 @@ function renderUebersichtIntern(){
 
   handyZaehlerAktualisieren(offen.length);
 
-  const wartendeAngebote = allAngebote.filter(a => a.status === 'versendet');
+  const wartendeAngebote = allAngebote.filter(a => {
+    const st = angStatus(a);
+    return st === 'SENT' || st === 'VIEWED';
+  });
   const neueBewerbungen  = allBewerbungen.filter(b => !b.status || b.status === 'eingegangen');
   const neuePartner      = allPartneranfragen.filter(p => !p.status || p.status === 'neu');
 
@@ -5807,6 +6337,9 @@ function startListeners(){
     renderUebersicht();
     renderSteuern();
     renderBericht();
+    /* „Bezahlte Einnahmen" ist die unterste Kachel der
+       Umsatzplanung – die einzige Zahl dort, die tatsächlich Geld ist. */
+    renderUmsatzplanung();
   }, err => console.error(err));
 
   const ausgQuery = query(collection(db, 'ausgaben'), orderBy('datum', 'desc'));
@@ -5855,6 +6388,9 @@ function startListeners(){
     renderBericht();
     renderUebersicht();
     renderKalender();
+    /* Aufträge speisen „fakturierter Umsatz", „offene Forderungen"
+       und „bezahlte Einnahmen" in der Umsatzplanung. */
+    renderUmsatzplanung();
   }, err => meldeLadefehler(err, 'auftraege', null));
 
   /* Abwesenheiten: Urlaub, Krankheit, Fortbildung je Mitarbeiter.
@@ -5879,6 +6415,15 @@ function startListeners(){
     renderAngeboteList();
     renderUebersicht();
     renderKalender();
+    /* Ein angenommenes Angebot verschiebt das bestätigte
+       Auftragsvolumen – ohne diesen Aufruf blieb die Umsatzplanung
+       auf dem Stand von vorhin stehen. Dieselbe Lücke wie damals
+       bei den Einnahmen aus Aufträgen. */
+    renderUmsatzplanung();
+    /* Die Kalkulationsliste zeigt je Vorgang „Daraus entstand
+       Angebot …" – das ändert sich hier mit. */
+    renderVorkalkulationen();
+    renderBenachrichtigungen();
     angeboteAblaufenLassen();
   }, err => console.error(err));
 
@@ -5898,6 +6443,12 @@ function startListeners(){
     allKundenreaktionen = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(nachDatumAbsteigend);
     renderKundenreaktionen();
     renderUebersicht();
+    /* Die Zähler „unbearbeitete Kundenreaktionen" und „Widerruf
+       oder Stornierung" rechnen aus genau dieser Liste. Ohne den
+       Aufruf blieb der Zähler an der Seitenleiste auf dem alten
+       Stand – und zwar auch dann, wenn eine Reaktion gerade
+       eingegangen war. */
+    renderBenachrichtigungen();
   }, err => meldeLadefehler(err, 'kundenreaktionen', 'reaktionen-liste'));
 
   unsubBenachrichtigungen = onSnapshot(collection(db, 'benachrichtigungen'), (snap) => {
@@ -9409,10 +9960,17 @@ function kalenderEreignisse(iso){
   }
 
   allAngebote.forEach(a => {
-    if(a.status !== 'versendet') return;
-    const start = (a.createdAt && a.createdAt.toDate) ? a.createdAt.toDate() : null;
-    if(!start) return;
-    const ende = new Date(start.getTime() + (Number(a.gueltigkeit) || 14) * 86400000);
+    const st = angStatus(a);
+    if(st !== 'SENT' && st !== 'VIEWED') return;
+    /* Überführte Angebote tragen ein ausdrückliches Ablaufdatum. */
+    let ende;
+    if(a.gueltig_bis){
+      ende = new Date(a.gueltig_bis);
+    } else {
+      const start = (a.createdAt && a.createdAt.toDate) ? a.createdAt.toDate() : null;
+      if(!start) return;
+      ende = new Date(start.getTime() + (Number(a.gueltigkeit) || 14) * 86400000);
+    }
     if(isoDatum(ende) !== iso) return;
     ereignisse.push({
       art:'angebot',
@@ -10388,8 +10946,20 @@ function angeboteAblaufenLassen(){
   const puffer = Number(v('angebot_ablauf_puffer')) || 0;
   const jetzt = Date.now();
 
+  /* ⚠️ Über angStatus() prüfen, nicht über a.status. Verbindliche
+     Angebote tragen 'SENT', die aus dem Rechner 'versendet' – ein
+     direkter Vergleich auf 'versendet' übersah alle überführten
+     Angebote, und die wären nie abgelaufen. */
   const abgelaufen = allAngebote.filter(a => {
-    if(a.status !== 'versendet') return false;
+    const st = angStatus(a);
+    if(st !== 'SENT' && st !== 'VIEWED') return false;
+
+    /* Überführte Angebote tragen ein ausdrückliches Ablaufdatum,
+       das dem Kunden auch so genannt wurde. Das hat Vorrang vor der
+       Berechnung aus dem Anlagedatum. */
+    if(a.gueltig_bis){
+      return jetzt > new Date(a.gueltig_bis).getTime() + puffer * 86400000;
+    }
     if(!a.createdAt || !a.createdAt.toMillis) return false;
     const gueltig = Number(a.gueltigkeit) || Number(v('angebot_gueltigkeit')) || 14;
     return jetzt > a.createdAt.toMillis() + (gueltig + puffer) * 86400000;
@@ -10398,7 +10968,12 @@ function angeboteAblaufenLassen(){
 
   ablaufLaeuft = true;
   Promise.all(abgelaufen.map(a =>
-    updateDoc(doc(db, 'angebote', a.id), { status:'abgelaufen' }).catch(err => {
+    /* Neue Angebote bekommen den neuen Statuswert, alte behalten
+       ihre Schreibweise – sonst liefe die Liste auseinander. */
+    updateDoc(doc(db, 'angebote', a.id), {
+      status: a.quelle_vk_id ? 'EXPIRED' : 'abgelaufen',
+      expired_at: serverTimestamp(),
+    }).catch(err => {
       console.warn('Angebot ' + a.nummer + ' konnte nicht als abgelaufen markiert werden:', err);
     })
   )).then(() => {
@@ -11568,10 +12143,117 @@ function buildAngebotPDF(a, nummer){
     y = pdfKleingedrucktes(pdf,
       'Gemäß § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).', y);
   }
+
+  /* ⚠️ „Freibleibend" und „verbindlich" schließen einander aus.
+     Der Rechner erzeugt weiterhin freibleibende Angebote; ein aus
+     einer Vorabkalkulation überführtes Angebot ist dagegen
+     verbindlich – erkennbar an `quelle_vk_id`. Stünde dort
+     „freibleibend", wäre die zahlungspflichtige Beauftragung durch
+     den Kunden auf der Aktionsseite in sich widersprüchlich. */
+  const istVerbindlich = !!a.quelle_vk_id;
+
+  if(istVerbindlich){
+    y = pdfKleingedrucktes(pdf,
+      'Dieses Angebot ist verbindlich und gültig bis ' + pdfDatum(gueltigBis) + '. ' +
+      'Es gelten unsere Allgemeinen Geschäftsbedingungen' +
+      (a.agb_version ? ' (' + a.agb_version + ')' : '') + '. ' +
+      (a.zahlungsbedingungen || '') + ' ' +
+      (a.ausfuehrung_zeitraum ? 'Ausführungszeitraum: ' + a.ausfuehrung_zeitraum + '. ' : '') +
+      (a.ausgeschlossen ? 'Nicht enthalten: ' + a.ausgeschlossen + '.' : ''), y);
+
+    /* Verbraucherinformationen. Ohne Widerrufsbelehrung beginnt die
+       Widerrufsfrist nicht zu laufen (§ 356 Abs. 3 BGB) – sie liefe
+       dann bis zu zwölf Monate länger. */
+    if(a.verbraucher){
+      y = pdfKasten(pdf, 'Widerrufsbelehrung',
+        pdf.splitTextToSize(String(rt('widerruf_belehrung')), 160), y);
+      y = pdfKleingedrucktes(pdf,
+        'Muster-Widerrufsformular: ' + String(rt('widerruf_formular')), y);
+    }
+  } else {
+    y = pdfKleingedrucktes(pdf,
+      'Dieses Angebot ist freibleibend und gültig bis ' + pdfDatum(gueltigBis) + '. ' +
+      'Grundlage sind die von Ihnen genannten Angaben; ergeben sich vor Ort abweichende Verhältnisse, ' +
+      'stimmen wir das vorher mit Ihnen ab. Es gelten unsere Allgemeinen Geschäftsbedingungen.', y);
+  }
+
+  pdfFussAufAllenSeiten(pdf);
+  return pdf.output('blob');
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   AUFTRAGSBESTÄTIGUNG (Phase 7)
+   ══════════════════════════════════════════════════════════════
+   Entsteht NACH der Annahme durch den Kunden und hält fest, was
+   vereinbart wurde. Bewusst ein eigenes Dokument: Das Angebot ist
+   ein Antrag, die Auftragsbestätigung die Bestätigung des
+   geschlossenen Vertrags. */
+function buildAuftragsbestaetigungPDF(a, angenommenAm){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit:'mm', format:'a4' });
+
+  pdfKopf(pdf);
+  pdfEmpfaenger(pdf, [
+    a.firma || null,
+    ((a.vorname||'') + ' ' + (a.nachname||'')).trim() || null,
+    a.strasse || a.adresse || null,
+    ((a.plz||'') + ' ' + (a.ort||'')).trim() || null,
+  ]);
+  pdfMeta(pdf, [
+    ['Auftrag zu', a.nummer || '–'],
+    ['Fassung', 'Version ' + (a.version || 1)],
+    ['Angenommen am', pdfDatum(angenommenAm ? new Date(angenommenAm) : new Date())],
+    ['Datum', pdfDatum(new Date())],
+  ]);
+
+  let y = pdfTitel(pdf, 'Auftragsbestätigung', 82);
   y = pdfKleingedrucktes(pdf,
-    'Dieses Angebot ist freibleibend und gültig bis ' + pdfDatum(gueltigBis) + '. ' +
-    'Grundlage sind die von Ihnen genannten Angaben; ergeben sich vor Ort abweichende Verhältnisse, ' +
-    'stimmen wir das vorher mit Ihnen ab. Es gelten unsere Allgemeinen Geschäftsbedingungen.', y);
+    'Vielen Dank für Ihren Auftrag. Hiermit bestätigen wir die Annahme Ihrer Beauftragung ' +
+    'auf Grundlage unseres Angebots ' + (a.nummer || '') + ' in der Fassung ' + (a.version || 1) + '.', y);
+
+  y = pdfTabellenKopf(pdf, y);
+  y = pdfPositionen(pdf, (a.positionen || []).map(p => ({
+    text: p.text, menge: p.menge || '', hinweis: p.hinweis || '', betrag: ausCent(p.betrag_cent),
+  })), y);
+
+  const summen = [];
+  (a.zuschlaege || []).forEach(z =>
+    summen.push([z.text + ' (' + zahl(z.prozent,0) + ' %)', pdfEuro(ausCent(z.betrag_cent))]));
+  summen.push(['Nettobetrag', pdfEuro(ausCent(a.netto_gesamt_cent))]);
+  if(Number(a.mwst_satz) > 0)
+    summen.push(['zzgl. ' + zahl(a.mwst_satz,1) + ' % Umsatzsteuer', pdfEuro(ausCent(a.mwst_cent))]);
+  summen.push(['Gesamtbetrag', pdfEuro(ausCent(a.brutto_gesamt_cent)), true]);
+  y = pdfSummen(pdf, summen, y + 2);
+
+  y = pdfKasten(pdf, 'Vereinbart', [
+    a.ausfuehrung_zeitraum ? 'Ausführung: ' + a.ausfuehrung_zeitraum : 'Ausführungstermin stimmen wir mit Ihnen ab.',
+    a.zahlungsbedingungen || '',
+    a.agb_version ? 'Es gelten unsere AGB (' + a.agb_version + ').' : '',
+  ].filter(Boolean), y + 4);
+
+  if(a.ausgeschlossen){
+    y = pdfKasten(pdf, 'Nicht enthalten', pdf.splitTextToSize(String(a.ausgeschlossen), 160), y);
+  }
+
+  if(Number(a.mwst_satz) === 0){
+    y = pdfKleingedrucktes(pdf,
+      'Gemäß § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).', y);
+  }
+
+  /* Bei Verbrauchern gehört die Widerrufsbelehrung auch auf die
+     Auftragsbestätigung – erst mit ihr ist die Information
+     „in Textform" erteilt (§ 312f BGB). */
+  if(a.verbraucher){
+    y = pdfKasten(pdf, 'Widerrufsbelehrung',
+      pdf.splitTextToSize(String(rt('widerruf_belehrung')), 160), y);
+    if(a.vorzeitiger_beginn){
+      y = pdfKleingedrucktes(pdf,
+        'Sie haben ausdrücklich verlangt, dass vor Ablauf der Widerrufsfrist mit der Leistung ' +
+        'begonnen wird: „' + String(rt('vorzeitiger_beginn')) + '"', y);
+    }
+    y = pdfKleingedrucktes(pdf, 'Muster-Widerrufsformular: ' + String(rt('widerruf_formular')), y);
+  }
 
   pdfFussAufAllenSeiten(pdf);
   return pdf.output('blob');
@@ -11641,11 +12323,17 @@ window.createAngebotPDF = async function(alsoEmail){
 function renderAngeboteStats(){
   const statsEl = document.getElementById('angebote-stats');
   if(!statsEl) return;
+  /* Über angStatus() gezählt, damit alte und überführte Angebote
+     gemeinsam in die Erfolgsquote eingehen. Ein direkter Vergleich
+     auf 'angenommen' übersah jedes verbindlich angenommene Angebot,
+     die Quote war dadurch systematisch zu niedrig. */
   const total = allAngebote.length;
-  const angenommen = allAngebote.filter(a => a.status === 'angenommen').length;
-  const versendetOderMehr = allAngebote.filter(a => a.status !== 'entwurf').length;
+  const angenommen = allAngebote.filter(a => angStatus(a) === 'ACCEPTED').length;
+  const versendetOderMehr = allAngebote.filter(a => angStatus(a) !== 'DRAFT').length;
   const erfolgsquote = versendetOderMehr > 0 ? Math.round((angenommen/versendetOderMehr)*100) : 0;
-  const avgWert = total > 0 ? allAngebote.reduce((s,a) => s + (a.bruttoGesamt||0), 0) / total : 0;
+  /* Überführte Angebote führen den Betrag in Cent, alte in Euro. */
+  const wertVon = a => a.brutto_gesamt_cent != null ? ausCent(a.brutto_gesamt_cent) : (Number(a.bruttoGesamt) || 0);
+  const avgWert = total > 0 ? allAngebote.reduce((s,a) => s + wertVon(a), 0) / total : 0;
   statsEl.innerHTML = `
     <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Angebote gesamt</div></div>
     <div class="stat-card"><div class="stat-val">${angenommen}</div><div class="stat-lbl">Angenommen</div></div>
@@ -11693,7 +12381,8 @@ function renderAngeboteList(){
   listEl.innerHTML = list.map(a => {
     const daysSince = a.createdAt && a.createdAt.toDate ? Math.floor((Date.now() - a.createdAt.toDate().getTime())/86400000) : null;
     let staleBadge = '';
-    if(a.status === 'versendet' && daysSince != null){
+    const stFuerBadge = angStatus(a);
+    if((stFuerBadge === 'SENT' || stFuerBadge === 'VIEWED') && daysSince != null){
       const nach = Number(v('angebot_nachfassen_tage'));
       if(daysSince >= nach * 4) staleBadge = '<span class="req-stale-badge critical">Seit '+daysSince+' Tagen keine Rückmeldung</span>';
       else if(daysSince >= nach * 2) staleBadge = '<span class="req-stale-badge warn">Zweite Erinnerung fällig ('+daysSince+' Tage)</span>';
@@ -11701,37 +12390,90 @@ function renderAngeboteList(){
     }
     const aj = sicherJs(a.id);
     const schonAuftrag = allAuftraege.some(t => t.angebot_id === a.id);
+
+    /* Bestandsschutz: Angebote aus dem Rechner tragen die alten
+       deutschen Status, überführte Angebote die neuen. `angStatus`
+       übersetzt beim Lesen; geschrieben wird nie zurück. */
+    const st = angStatus(a);
+    const stInfo = ANG_STATUS[st] || ANG_STATUS.DRAFT;
+    const verbindlich = !!a.quelle_vk_id;
+    const maengel = verbindlich ? pruefeAngebotFreigabe(a) : [];
+    const freigebbar = maengel.length === 0;
+    const beimKunden = ['SENT','VIEWED','ACCEPTED','CHANGE_REQUESTED'].includes(st);
+
     return `
     <div class="angebot-card">
       <div class="req-top">
         <div>
-          <div class="req-name">${sicher(a.nummer)} · ${sicher(((a.vorname||'') + ' ' + (a.nachname||'')).trim())} ${staleBadge}</div>
-          <div class="req-meta">${sicher(formatDate(a.createdAt))} · ${sicher(a.leistungen_text||'')}</div>
+          <div class="req-name">
+            ${sicher(a.nummer)}${verbindlich ? `<span class="vk-version">v${sicher(a.version||1)}</span>` : ''}
+            · ${sicher(((a.vorname||'') + ' ' + (a.nachname||'')).trim() || a.firma || '–')}
+            <span class="vk-pille vk-${sicher(stInfo.farbe)}">${sicher(stInfo.text)}</span>
+            ${verbindlich ? '<span class="vk-pille vk-blau">verbindlich</span>' : ''}
+            ${staleBadge}
+          </div>
+          <div class="req-meta">${sicher(formatDate(a.createdAt))} · ${sicher(a.leistungen_text||'')}${
+            a.quelle_vk_nummer ? ' · aus ' + sicher(a.quelle_vk_nummer) : ''}</div>
         </div>
-        <select class="req-status" aria-label="Status des Angebots" onchange="setAngebotStatus('${aj}', this.value)">
+        ${verbindlich ? `<div class="vk-betrag">${sicher(euroCent(a.brutto_gesamt_cent))}</div>`
+          : `<select class="req-status" aria-label="Status des Angebots" onchange="setAngebotStatus('${aj}', this.value)">
           <option value="entwurf" ${a.status==='entwurf'?'selected':''}>Entwurf</option>
           <option value="versendet" ${a.status==='versendet'?'selected':''}>Versendet</option>
           <option value="angenommen" ${a.status==='angenommen'?'selected':''}>Angenommen</option>
           <option value="abgelehnt" ${a.status==='abgelehnt'?'selected':''}>Abgelehnt</option>
           <option value="abgelaufen" ${a.status==='abgelaufen'?'selected':''}>Abgelaufen</option>
-        </select>
+        </select>`}
       </div>
       <div class="req-grid">
-        <div><span>Summe:</span>${sicher(euro(a.bruttoGesamt))}</div>
+        <div><span>Summe:</span>${sicher(verbindlich ? euroCent(a.brutto_gesamt_cent) : euro(a.bruttoGesamt))}</div>
         <div><span>E-Mail:</span>${sicher(a.email||'–')}</div>
         <div><span>Telefon:</span>${sicher(a.telefon||'–')}</div>
-        <div><span>Gültig:</span>${sicher(a.gueltigkeit||14)} Tage</div>
+        <div><span>Gültig:</span>${a.gueltig_bis ? 'bis ' + sicher(formatDate(a.gueltig_bis)) : sicher(a.gueltigkeit||14) + ' Tage'}</div>
+        ${verbindlich ? `<div><span>Kundenart:</span>${sicher(KUNDENARTEN[kundenart(a.kundenart)].text)}${a.verbraucher ? ' · Widerrufsrecht' : ''}</div>` : ''}
       </div>
+
+      ${a.approved_at ? `<div class="vk-freigabe">Freigegeben von ${sicher(a.approved_by||'–')} am ${sicher(formatDate(a.approved_at))}</div>` : ''}
+      ${a.accepted_at ? `<div class="vk-freigabe">Vom Kunden angenommen am ${sicher(formatDate(a.accepted_at))}</div>` : ''}
+      ${verbindlich && !freigebbar && !beimKunden
+        ? `<div class="vk-maengel"><strong>Vor der Freigabe zu klären:</strong><ul>${maengel.map(m => `<li>${sicher(m)}</li>`).join('')}</ul></div>` : ''}
+
       <div class="req-actions">
-        <button onclick="redownloadAngebot('${aj}')">PDF erneut herunterladen</button>
+        <button onclick="redownloadAngebot('${aj}')">PDF ansehen</button>
+        ${verbindlich ? (
+          st === 'ACCEPTED'
+            ? `<button onclick="auftragsbestaetigungPDF('${aj}')">Auftragsbestätigung</button>`
+            : beimKunden
+              ? `<button onclick="angNeueVersion('${aj}')">Neue Version anlegen</button>`
+              : st === 'ADMIN_APPROVED'
+                ? `<button class="vk-knopf-haupt" onclick="angVersenden('${aj}')">Freigegeben – jetzt versenden</button>
+                   <button onclick="angFreigabeZurueckziehen('${aj}')">Freigabe zurückziehen</button>`
+                : `<button class="vk-knopf-haupt" ${freigebbar?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="angFreigeben('${aj}', false)">Freigeben</button>
+                   <button ${freigebbar?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="angFreigeben('${aj}', true)">Freigeben und versenden</button>`
+        ) : ''}
         ${schonAuftrag
           ? '<button disabled style="opacity:.5;cursor:default">Auftrag bereits angelegt</button>'
           : `<button onclick="auftragAusAngebot('${aj}')">Auftrag daraus anlegen</button>`}
-        <button class="pk-delete-btn" style="border:1px solid rgba(248,113,113,0.3);color:#F87171;background:rgba(248,113,113,0.1)" onclick="deleteAngebot('${aj}')">Löschen</button>
+        ${st === 'ACCEPTED'
+          ? '<button disabled style="opacity:.5;cursor:default" title="Ein angenommenes Angebot ist ein Vertrag">Angenommen – nicht löschbar</button>'
+          : `<button class="pk-delete-btn" style="border:1px solid rgba(248,113,113,0.3);color:#F87171;background:rgba(248,113,113,0.1)" onclick="deleteAngebot('${aj}')">Löschen</button>`}
       </div>
     </div>`;
   }).join('');
 }
+
+/* Auftragsbestätigung nachträglich herunterladen. */
+window.auftragsbestaetigungPDF = function(id){
+  const a = allAngebote.find(x => x.id === id);
+  if(!a) return;
+  if(!pdfVerfuegbar()){ alert('Die PDF-Bibliothek konnte nicht geladen werden.'); return; }
+  try {
+    const blob = buildAuftragsbestaetigungPDF(a, a.accepted_at);
+    triggerFileDownload(blob, 'Auftragsbestaetigung_' + (a.nummer || 'Angebot') + '.pdf');
+  } catch(err){
+    console.error(err);
+    melde('Die Auftragsbestätigung konnte nicht erzeugt werden.', 'fehler');
+  }
+};
 
 /* Angebot → Auftrag: Umsatz und Kosten kommen aus der Berechnung, die
    beim Erstellen des Angebots ohnehin schon gelaufen ist. Nichts muss
@@ -11817,8 +12559,30 @@ window.redownloadAngebot = function(id){
 };
 
 window.deleteAngebot = function(id){
+  const a = allAngebote.find(x => x.id === id);
+
+  /* Ein angenommenes Angebot ist ein geschlossener Vertrag und
+     Grundlage der späteren Rechnung. Es darf nicht verschwinden –
+     auch nicht auf ausdrücklichen Wunsch. Für eine Rückabwicklung
+     gibt es Stornierung und Widerruf, die den Vorgang erhalten. */
+  if(a && angStatus(a) === 'ACCEPTED'){
+    melde('Dieses Angebot wurde vom Kunden angenommen und ist damit ein Vertrag. ' +
+          'Es lässt sich nicht löschen. Für eine Rückabwicklung bitte den Vorgang ' +
+          'stornieren – dabei bleibt alles nachvollziehbar.', 'fehler');
+    return;
+  }
+  if(a && allAuftraege.some(t => t.angebot_id === id)){
+    melde('An diesem Angebot hängt bereits ein Auftrag. Bitte zuerst den Auftrag ' +
+          'in der Kundenkarte prüfen.', 'fehler');
+    return;
+  }
+
   if(!confirm('Dieses Angebot wirklich löschen?')) return;
-  deleteDoc(doc(db, 'angebote', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen des Angebots'));
+  deleteDoc(doc(db, 'angebote', id))
+    .then(() => protokolliere('angebot_geloescht', {
+      dokument:'angebot', dokument_id:id, nummer: a ? a.nummer : null,
+    }))
+    .catch(err => meldeSchreibfehler(err, 'Das Löschen des Angebots'));
 };
 
 // ── REFERENZEN ─────────────────────
