@@ -97,6 +97,23 @@ details{margin:16px 0}
 summary{cursor:pointer;font-size:14px;color:rgba(255,255,255,.6);
         padding:12px 0;min-height:44px;display:flex;align-items:center}
 
+/* Kenntnisnahmen. Keine ist vorangekreuzt – eine vorausgefüllte
+   Zustimmung ist keine Zustimmung. Die Trefferfläche umfasst den
+   ganzen Text, nicht nur das Kästchen. */
+.zustimmungen{margin:20px 0 6px}
+.zustimmung{
+  display:flex;align-items:flex-start;gap:12px;padding:13px 0;
+  min-height:44px;cursor:pointer;font-size:14px;line-height:1.6;
+  color:rgba(255,255,255,.82);
+}
+.zustimmung + .zustimmung{border-top:1px solid rgba(255,255,255,.07)}
+.zustimmung input[type="checkbox"]{
+  width:24px;height:24px;flex-shrink:0;margin-top:1px;
+  accent-color:var(--green);cursor:pointer;
+}
+.zustimmung span{min-width:0;overflow-wrap:anywhere}
+.zustimmung a{color:var(--green)}
+
 .laden{text-align:center;padding:50px 20px;color:rgba(255,255,255,.55)}
 .punkt{display:inline-block;width:9px;height:9px;margin:0 3px;border-radius:50%;
        background:var(--green);animation:huepf 1.3s infinite}
@@ -302,6 +319,7 @@ function zeigeUebersicht(antwort, token, aktion){
     try {
       const ergebnis = await server({ token: token, aktion: aktion, schritt:'bestaetigen', nachricht: nachricht });
       if(ergebnis.ok) zeigeFertig(ergebnis);
+      else if(ergebnis.bereits_bestaetigt) zeigeBereitsBestaetigt(ergebnis);
       else {
         zeigeFehler(ergebnis.text || ergebnis.fehler || 'Das hat nicht geklappt.');
       }
@@ -318,17 +336,195 @@ function zeigeUebersicht(antwort, token, aktion){
   };
 }
 
-/* ── Schritt 2: Rückmeldung ─────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════
+   VERBINDLICHES ANGEBOT – Zusammenfassung vor der Bestellung
+   ══════════════════════════════════════════════════════════════
+   § 312j Abs. 3 BGB: Unmittelbar vor der Bestellung müssen die
+   wesentlichen Angaben noch einmal stehen, und die Schaltfläche
+   muss ausdrücklich auf die Zahlungspflicht hinweisen. Deshalb
+   „Zahlungspflichtig bestellen" und nicht „Absenden".
+
+   Keine Kenntnisnahme ist vorangekreuzt – eine vorausgefüllte
+   Zustimmung ist keine.
+   ══════════════════════════════════════════════════════════════ */
+function zeigeAngebotZusammenfassung(antwort, token, aktion){
+  const d = antwort.dokument || {};
+  const r = antwort.rechtstexte;
+
+  const positionen = (d.positionen || []).map(function(p){
+    return '<tr><td>' + sicher(p.text) +
+      (p.hinweis ? '<div class="pos-hinweis">' + sicher(p.hinweis) + '</div>' : '') +
+      '</td><td class="menge">' + sicher(p.menge || '') +
+      '</td><td class="summe">' + sicher(euro(p.betrag_cent)) + '</td></tr>';
+  }).join('');
+
+  const rechtsBlock = d.verbraucher && r ?
+    '<details><summary>Widerrufsbelehrung und Muster-Widerrufsformular</summary>' +
+    '<div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.72);margin-top:8px">' +
+    sicher(r.widerruf) + '<br><br><strong>Muster-Widerrufsformular</strong><br>' + sicher(r.formular) +
+    '</div></details>' : '';
+
+  const kenntnisnahmen =
+    '<label class="zustimmung"><input type="checkbox" id="agb"> ' +
+    '<span>Ich habe die <a href="/agb.html" target="_blank" rel="noopener">AGB</a>' +
+    (d.agb_version ? ' (' + sicher(d.agb_version) + ')' : '') +
+    ' und die <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> ' +
+    'zur Kenntnis genommen.</span></label>' +
+    (d.verbraucher ?
+      '<label class="zustimmung"><input type="checkbox" id="widerruf"> ' +
+      '<span>Ich habe die Widerrufsbelehrung und das Muster-Widerrufsformular erhalten ' +
+      'und zur Kenntnis genommen.</span></label>' +
+      '<label class="zustimmung"><input type="checkbox" id="vorzeitig"> ' +
+      '<span><strong>Freiwillig:</strong> ' + sicher(r ? r.vorzeitig : '') + '</span></label>'
+      : '');
+
+  inhalt.innerHTML =
+    '<div class="titel">Bestellung prüfen</div>' +
+    '<div class="unter">Bitte prüfen Sie alle Angaben. Mit dem Knopf am Ende geben Sie eine ' +
+    '<strong>verbindliche, zahlungspflichtige Bestellung</strong> ab.</div>' +
+
+    '<table class="daten">' +
+      '<tr><td>Anbieter</td><td class="lang">' + sicher(d.anbieter) + '</td></tr>' +
+      '<tr><td>Kunde</td><td class="lang">' + sicher(d.firma || d.name) + '</td></tr>' +
+      (d.anschrift ? '<tr><td>Anschrift</td><td class="lang">' + sicher(d.anschrift) + '</td></tr>' : '') +
+      '<tr><td>Angebot</td><td>' + sicher(d.nummer) + ' · Fassung ' + sicher(d.version) + '</td></tr>' +
+      '<tr><td>Leistung</td><td class="lang">' + sicher(d.leistungen || '–') + '</td></tr>' +
+      (d.ausfuehrung_zeitraum ? '<tr><td>Ausführung</td><td class="lang">' + sicher(d.ausfuehrung_zeitraum) + '</td></tr>' : '') +
+      (d.ausgeschlossen ? '<tr><td>Nicht enthalten</td><td class="lang">' + sicher(d.ausgeschlossen) + '</td></tr>' : '') +
+      '<tr><td>Zahlung</td><td class="lang">' + sicher(d.zahlungsbedingungen || '–') + '</td></tr>' +
+      '<tr><td>Gültig bis</td><td>' + sicher(datum(d.gueltig_bis)) + '</td></tr>' +
+    '</table>' +
+
+    (positionen ? '<table class="pos"><tbody>' + positionen + '</tbody></table>' : '') +
+
+    '<table class="daten" style="margin-top:14px">' +
+      '<tr><td>Nettobetrag</td><td>' + sicher(euro(d.netto_gesamt_cent)) + '</td></tr>' +
+      (d.mwst_satz > 0
+        ? '<tr><td>zzgl. ' + sicher(String(d.mwst_satz).replace('.',',')) + ' % USt.</td><td>' + sicher(euro(d.mwst_cent)) + '</td></tr>'
+        : '<tr><td colspan="2" style="text-align:left;font-weight:400;color:rgba(255,255,255,.55)">Ohne Umsatzsteuer nach § 19 UStG</td></tr>') +
+    '</table>' +
+    '<div class="betrag">' + sicher(euro(d.brutto_gesamt_cent)) + '</div>' +
+    '<div class="betrag-hinweis">Gesamtbetrag' + (d.mwst_satz > 0 ? ' inkl. Umsatzsteuer' : '') + '</div>' +
+
+    rechtsBlock +
+    '<div class="zustimmungen">' + kenntnisnahmen + '</div>' +
+    '<div id="zustimmung-fehler" class="hinweis hinweis-rot" style="display:none"></div>' +
+
+    '<button class="knopf knopf-haupt" id="bestellen">Zahlungspflichtig bestellen</button>' +
+    '<button class="knopf knopf-still" id="abbrechen">Doch nicht – Fenster schließen</button>' +
+    '<div style="margin-top:14px;font-size:12.5px;color:rgba(255,255,255,.45);text-align:center">' +
+    'Mit dem Klick auf „Zahlungspflichtig bestellen" schließen Sie einen kostenpflichtigen Vertrag.</div>';
+
+  document.getElementById('abbrechen').onclick = function(){
+    inhalt.innerHTML = '<div class="titel">Nichts bestellt</div>' +
+      '<div class="unter">Es wurde nichts beauftragt. Das Angebot bleibt bis zum ' +
+      sicher(datum(d.gueltig_bis)) + ' gültig – Sie können den Link jederzeit erneut öffnen.</div>';
+  };
+
+  document.getElementById('bestellen').onclick = async function(){
+    const knopf = this;
+    const fehlerBox = document.getElementById('zustimmung-fehler');
+    const agb = document.getElementById('agb');
+    const widerruf = document.getElementById('widerruf');
+    const vorzeitig = document.getElementById('vorzeitig');
+
+    const fehlend = [];
+    if(!agb.checked) fehlend.push('die Kenntnisnahme der AGB');
+    if(d.verbraucher && widerruf && !widerruf.checked) fehlend.push('die Kenntnisnahme der Widerrufsbelehrung');
+    if(fehlend.length){
+      fehlerBox.textContent = 'Bitte bestätigen Sie noch ' + fehlend.join(' und ') + '.';
+      fehlerBox.style.display = 'block';
+      fehlerBox.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+    fehlerBox.style.display = 'none';
+
+    knopf.disabled = true;
+    knopf.textContent = 'Bestellung wird übermittelt ...';
+    document.getElementById('abbrechen').disabled = true;
+
+    try {
+      const ergebnis = await server({
+        token: token, aktion: aktion, schritt:'bestaetigen',
+        agb_gelesen: true,
+        widerruf_gelesen: d.verbraucher ? true : undefined,
+        vorzeitiger_beginn: !!(vorzeitig && vorzeitig.checked),
+      });
+      if(ergebnis.ok) zeigeFertig(ergebnis);
+      else if(ergebnis.bereits_bestaetigt) zeigeBereitsBestaetigt(ergebnis);
+      else {
+        knopf.disabled = false;
+        knopf.textContent = 'Zahlungspflichtig bestellen';
+        document.getElementById('abbrechen').disabled = false;
+        fehlerBox.textContent = ergebnis.text || ergebnis.fehler || 'Das hat nicht geklappt.';
+        fehlerBox.style.display = 'block';
+      }
+    } catch(err){
+      knopf.disabled = false;
+      knopf.textContent = 'Zahlungspflichtig bestellen';
+      document.getElementById('abbrechen').disabled = false;
+      fehlerBox.textContent = 'Die Verbindung hat nicht geklappt. Es wurde nichts bestellt. ' +
+                              'Bitte versuchen Sie es in einem Moment erneut.';
+      fehlerBox.style.display = 'block';
+    }
+  };
+}
+
+/* ── Schritt 2: Rückmeldung ───────────────────────────────────
+   Zeigt ausdrücklich, WAS gebucht wurde: Aktion, Vorgangsnummer und
+   – bei einer Vormerkung – bis wann. Der Kunde soll einen Beleg vor
+   Augen haben, nicht nur ein „danke".
+
+   Bewusst KEINE Beträge, Positionen oder Kalkulationsdaten. Die
+   stehen im PDF, das er bereits hat. */
 function zeigeFertig(ergebnis){
+  const zeilen = [];
+  if(ergebnis.titel)  zeilen.push(['Ihre Auswahl', ergebnis.titel]);
+  if(ergebnis.nummer) zeilen.push(['Vorgang', ergebnis.nummer]);
+  if(ergebnis.vorgemerkt_bis) zeilen.push(['Vorgemerkt bis', datum(ergebnis.vorgemerkt_bis)]);
+
+  const tabelle = zeilen.length
+    ? '<table class="daten">' + zeilen.map(function(z){
+        return '<tr><td>' + sicher(z[0]) + '</td><td class="lang">' + sicher(z[1]) + '</td></tr>';
+      }).join('') + '</table>'
+    : '';
+
   inhalt.innerHTML =
     '<div class="fertig-zeichen">✓</div>' +
     '<div class="titel" style="text-align:center">Vielen Dank</div>' +
     '<div class="unter" style="text-align:center">' + sicher(ergebnis.text || 'Ihre Rückmeldung ist bei uns angekommen.') + '</div>' +
+    tabelle +
     '<div class="hinweis hinweis-gruen">Sie erhalten gleich eine Bestätigung per E-Mail. ' +
     (ergebnis.aktion === 'vormerken'
       ? 'Durch die Vormerkung entsteht noch kein Vertrag, und es wird kein Ausführungstermin verbindlich reserviert.'
-      : 'Wir melden uns zeitnah bei Ihnen.') + '</div>';
+      : ergebnis.aktion === 'beauftragen'
+        ? 'Den Ausführungstermin stimmen wir kurzfristig mit Ihnen ab.'
+        : 'Wir melden uns zeitnah bei Ihnen.') + '</div>';
   history.replaceState(null, '', location.pathname);   // Token aus der Adresszeile nehmen
+}
+
+/* ── Bereits bestätigt ────────────────────────────────────────
+   Kein Fehlerzustand: Der Kunde hat schon geklickt und ruft den
+   Link erneut auf. Ruhige Auskunft statt roter Meldung. */
+function zeigeBereitsBestaetigt(ergebnis){
+  const zeilen = [];
+  if(ergebnis.titel)  zeilen.push(['Ihre Auswahl', ergebnis.titel]);
+  if(ergebnis.nummer) zeilen.push(['Vorgang', ergebnis.nummer]);
+  if(ergebnis.vorgemerkt_bis) zeilen.push(['Vorgemerkt bis', datum(ergebnis.vorgemerkt_bis)]);
+  if(ergebnis.bestaetigt_am) zeilen.push(['Bestätigt am', datum(ergebnis.bestaetigt_am)]);
+
+  inhalt.innerHTML =
+    '<div class="fertig-zeichen">✓</div>' +
+    '<div class="titel" style="text-align:center">Diese Auswahl wurde bereits bestätigt</div>' +
+    '<div class="unter" style="text-align:center">Es ist alles erledigt – Sie müssen nichts weiter tun.</div>' +
+    (zeilen.length
+      ? '<table class="daten">' + zeilen.map(function(z){
+          return '<tr><td>' + sicher(z[0]) + '</td><td class="lang">' + sicher(z[1]) + '</td></tr>';
+        }).join('') + '</table>'
+      : '') +
+    '<div class="hinweis hinweis-gruen">Die Bestätigung haben wir Ihnen bereits per E-Mail geschickt. ' +
+    'Bei Fragen erreichen Sie uns unter <a href="mailto:waschlurch@gmail.com">waschlurch@gmail.com</a>.</div>';
+  history.replaceState(null, '', location.pathname);
 }
 
 /* ── Start ──────────────────────────────────────────────────── */
@@ -344,9 +540,12 @@ function zeigeFertig(ergebnis){
   try {
     const antwort = await server({ token: token, aktion: aktion, schritt:'ansehen' });
     if(!antwort.ok){
+      /* Bereits bestätigt ist kein Fehler – das ist der Normalfall,
+         wenn jemand den Link ein zweites Mal öffnet. */
+      if(antwort.bereits_bestaetigt){ zeigeBereitsBestaetigt(antwort); return; }
+
       const ueberschriften = {
         abgelaufen:'Dieser Link ist abgelaufen',
-        verbraucht:'Bereits erledigt',
         veraltet:'Es gibt eine neuere Fassung',
         widerrufen:'Dieser Link wurde zurückgezogen',
       };
@@ -354,7 +553,10 @@ function zeigeFertig(ergebnis){
                   ueberschriften[antwort.grund]);
       return;
     }
-    zeigeUebersicht(antwort, token, aktion);
+    /* Die zahlungspflichtige Beauftragung bekommt die
+       Zusammenfassungsseite, alles andere die einfache Übersicht. */
+    if(antwort.zweistufig) zeigeAngebotZusammenfassung(antwort, token, aktion);
+    else zeigeUebersicht(antwort, token, aktion);
   } catch(err){
     if(err.message === 'EINRICHTUNG_FEHLT'){
       zeigeFehler('Diese Funktion ist noch nicht freigeschaltet. Bitte antworten Sie einfach auf unsere E-Mail.',
