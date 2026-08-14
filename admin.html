@@ -1752,6 +1752,10 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
    dreizehn Felder, und der Speichernknopf wäre sonst dauernd außer
    Sicht. Siehe Handy-Block weiter unten. */
 .akq-speicherleiste { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
+.akq-speicherleiste .btn { width:auto; padding:14px 26px; }
+.akq-abbrechen {
+  background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);
+}
 
 /* ⚠️ Dieser Handy-Block steht bewusst NACH den Grunddefinitionen
    darüber. Bei gleicher Spezifität gewinnt die spätere Regel –
@@ -2105,11 +2109,14 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 
           <div class="feld-fehler" id="firma-fehler"></div>
 
+          <!-- ⚠️ Keine Breite im style-Attribut. Eine Angabe dort schlägt jede
+               Regel im Stilblock, und die Knöpfe blieben auf dem Handy bei
+               180 px statt über die volle Breite zu gehen. Die Breite steht
+               deshalb bei `.akq-speicherleiste .btn`. -->
           <div class="akq-speicherleiste">
-            <button class="btn btn-primary" style="width:auto;padding:14px 26px"
-                    id="firma-save-btn" onclick="akqFirmaSpeichern()">Speichern &amp; weiter</button>
-            <button class="btn" style="width:auto;padding:14px 26px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)"
-                    onclick="akqZurueckZurListe()">Abbrechen</button>
+            <button class="btn btn-primary" id="firma-save-btn"
+                    onclick="akqFirmaSpeichern()">Speichern &amp; weiter</button>
+            <button class="btn akq-abbrechen" onclick="akqZurueckZurListe()">Abbrechen</button>
           </div>
         </div>
       </div>
@@ -3532,6 +3539,14 @@ let unsubMitarbeiter = null;
    Wird nur für den Verwalter geladen. */
 let allBenutzer = [];
 let unsubBenutzer = null;
+
+/* Akquise: erfasste Firmen und ihr Verlauf. Diese beiden laufen für
+   BEIDE Rollen – der Verwalter sieht dieselben Daten wie die Akquise,
+   nur zusätzlich alles andere. */
+let allFirmen = [];
+let allAkqVerlauf = [];
+let unsubFirmen = null;
+let unsubAkqVerlauf = null;
 let unsubKunden = null;
 let unsubAngebote = null;
 let currentKundeEmail = null;
@@ -6557,11 +6572,12 @@ onAuthStateChanged(auth, async (user) => {
        je aufgerufen worden zu sein – ab dann liefe alles doppelt. */
     if(!listenerLaufen){
       listenerLaufen = true;
-      /* Die Datenlauscher hängen an Sammlungen, die nur der Verwalter lesen
-         darf. Für eine eingeschränkte Rolle liefen sie ausnahmslos in
-         „permission-denied" – deshalb starten sie gar nicht erst. Der
-         Akquise-Bereich bekommt in der nächsten Ausbaustufe eigene. */
+      /* Die Datenlauscher in `startListeners()` hängen an Sammlungen, die
+         nur der Verwalter lesen darf. Für eine eingeschränkte Rolle liefen
+         sie ausnahmslos in „permission-denied" – deshalb starten sie gar
+         nicht erst. Die Akquise hat seit dem 14.08.2026 eigene. */
       if(aktuelleRolle === ROLLE_ADMIN) startListeners();
+      startAkquiseListeners();
     }
     bereichAusAdresseOeffnen();
   } else {
@@ -6595,6 +6611,8 @@ onAuthStateChanged(auth, async (user) => {
     if(unsubPakete) unsubPakete();
     if(unsubMitarbeiter) unsubMitarbeiter();
     if(unsubBenutzer) unsubBenutzer();
+    if(unsubFirmen) unsubFirmen();
+    if(unsubAkqVerlauf) unsubAkqVerlauf();
     if(unsubKunden) unsubKunden();
     if(unsubAngebote) unsubAngebote();
     if(unsubReferenzen) unsubReferenzen();
@@ -6640,6 +6658,16 @@ window.switchView = function(name){
      sonst landet man beim Zurückkommen beim alten Kunden statt in der Liste. */
   if(aktuellerBereich === 'kunden' && name !== 'kunden' && currentKundeEmail){
     window.backToKundenList();
+  }
+  /* Dasselbe für die Firmen: Wer den Bereich verlässt, während eine
+     Detailkarte oder ein halb ausgefülltes Formular offen ist, landet
+     beim Zurückkommen sonst wieder dort statt in der Liste.
+
+     Geprüft wird die versteckte Liste, nicht die gemerkte Firma – ein
+     offenes Formular für eine NEUE Firma hat noch keine Kennung. */
+  if(aktuellerBereich === 'akquise_firmen' && name !== 'akquise_firmen'){
+    const listenBereich = document.getElementById('firmen-liste-bereich');
+    if(listenBereich && listenBereich.hasAttribute('hidden')) window.akqZurueckZurListe();
   }
   aktuellerBereich = name;
 
@@ -6949,6 +6977,29 @@ function nachDatumAbsteigend(a, b){
   const za = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
   const zb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
   return zb - za;
+}
+
+/* ── Datenlauscher der Akquise ────────────────────────────────
+   Getrennt von `startListeners()`, weil sie für BEIDE Rollen laufen
+   müssen. `startListeners()` abonniert Sammlungen, die nur der
+   Verwalter lesen darf – liefe es für die Akquise mit, gäbe es
+   fünfzehn `permission-denied` beim Anmelden.
+
+   ⚠️ Kein `orderBy('createdAt')`. Eine Abfrage mit `orderBy` liefert
+   in Firestore ausschließlich Dokumente, die das Feld auch besitzen –
+   ein Datensatz aus einem fehlgeschlagenen `serverTimestamp()`
+   verschwände kommentarlos aus der Liste. Sortiert wird hier. */
+function startAkquiseListeners(){
+  unsubFirmen = onSnapshot(collection(db, 'firmen'), (snap) => {
+    allFirmen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    window.akqRenderFirmen();
+    akqRenderFirmaDetail();
+  }, err => meldeLadefehler(err, 'firmen', 'firmen-liste'));
+
+  unsubAkqVerlauf = onSnapshot(collection(db, 'akquise_verlauf'), (snap) => {
+    allAkqVerlauf = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    akqRenderFirmaDetail();
+  }, err => console.error('Verlauf konnte nicht geladen werden:', err));
 }
 
 // ── ANFRAGEN ─────────────────────
@@ -12123,6 +12174,499 @@ window.zugangUmschalten = function(uid, aktivJetzt){
   setDoc(doc(db, 'benutzer', uid), { aktiv: !aktivJetzt }, { merge:true })
     .then(() => melde(aktivJetzt ? 'Zugang gesperrt.' : 'Zugang freigegeben.'))
     .catch(err => meldeSchreibfehler(err, 'Das Umschalten des Zugangs'));
+};
+
+/* ══════════════════════════════════════════════════════════════
+   AKQUISE – FIRMEN UND LEADS (14.08.2026)
+   ══════════════════════════════════════════════════════════════ */
+
+const FIRMEN_STATUS = ['neu','wird_geprueft','kontakt_moeglich','versandbereit','gesendet',
+                       'antwort','rueckfrage','interesse','kein_interesse','spaeter',
+                       'kunde','nicht_kontaktieren'];
+
+const FIRMEN_STATUS_TEXT = {
+  neu:'Neu', wird_geprueft:'Wird geprüft', kontakt_moeglich:'Kontakt möglich',
+  versandbereit:'Versandbereit', gesendet:'E-Mail gesendet', antwort:'Antwort eingegangen',
+  rueckfrage:'Rückfrage', interesse:'Interesse', kein_interesse:'Kein Interesse',
+  spaeter:'Später erneut', kunde:'Kunde', nicht_kontaktieren:'Nicht kontaktieren'
+};
+
+/* Zwölf Status, vier Farbfamilien. Mehr Farben unterscheiden nicht
+   besser – sie machen die Liste nur unruhig. */
+const FIRMEN_STATUS_FARBE = {
+  neu:'', wird_geprueft:'', spaeter:'',
+  kontakt_moeglich:'f-warten', versandbereit:'f-warten', rueckfrage:'f-warten',
+  gesendet:'f-laeuft', antwort:'f-laeuft',
+  interesse:'f-gut', kunde:'f-gut',
+  kein_interesse:'f-stop', nicht_kontaktieren:'f-stop'
+};
+
+/* Status, die eine dauerhafte Kontaktsperre nach sich ziehen.
+   Die Sperre wird zusätzlich zum Status gesetzt, nicht statt seiner:
+   Ein Status lässt sich weiterdrehen, `do_not_contact` bleibt. */
+const FIRMEN_STATUS_SPERRT = ['kein_interesse','nicht_kontaktieren'];
+
+/* Felder, deren Änderung im Verlauf festgehalten wird. */
+const FIRMA_FELDER = [
+  ['firmenname','Firmenname'], ['standort','Standort'], ['ansprechpartner','Ansprechpartner'],
+  ['email','E-Mail'], ['telefon','Telefonnummer'], ['website','Website'],
+  ['strasse','Straße'], ['hausnummer','Hausnummer'], ['plz','PLZ'], ['ort','Ort'],
+  ['branche','Branche'], ['quelle_url','Quelle'], ['notiz','Notiz']
+];
+
+/* ── Normalisierung ───────────────────────────────────────────
+   Dieselbe Firma, zweimal getippt, sieht selten zweimal gleich aus:
+   „Info@Beispiel.DE" und „info@beispiel.de", „02242 / 12 34 56" und
+   „+49 2242 123456", „https://www.beispiel.de/kontakt" und
+   „beispiel.de". Ohne eine einheitliche Schreibweise könnte die
+   Dublettenprüfung im nächsten Schritt nichts vergleichen.
+
+   Die normalisierten Werte werden zusätzlich gespeichert, nie
+   anstelle der Eingabe – was der Mitarbeiter getippt hat, bleibt
+   sichtbar. */
+function akqNormEmail(wert){
+  return String(wert || '').replace(/\s+/g, '').toLowerCase();
+}
+
+function akqNormTelefon(wert){
+  /* ⚠️ Die eingeklammerte Null zuerst entfernen, nicht bloß alle
+     Sonderzeichen wegwerfen. „+49 (0) 2242 123456" ist eine der
+     häufigsten Schreibweisen auf Firmenwebseiten; die Null in der
+     Klammer ist die Vorwahlkennziffer für Inlandsgespräche und wird
+     international NICHT mitgewählt.
+
+     Ohne diesen Schritt blieb sie als Ziffer stehen und ergab
+     „002242123456" statt „02242123456" – dieselbe Firma wäre in der
+     Dublettenprüfung an zwei Nummern zweimal aufgetaucht. */
+  const roh = String(wert || '').replace(/\(\s*0\s*\)/g, '').replace(/[^\d+]/g, '');
+  if(!roh) return '';
+  /* Ob international gewählt wurde, entscheidet sich VOR dem
+     Wegwerfen der Sonderzeichen – danach sind „+49…" und „0049…"
+     nicht mehr von einer normalen Ortsvorwahl zu unterscheiden. */
+  const international = roh.startsWith('+') || roh.startsWith('00');
+  let z = roh.replace(/\D/g, '');
+  if(!international) return z;
+  if(z.startsWith('00')) z = z.slice(2);
+  // Deutsche Nummern auf die im Alltag benutzte Form mit führender 0
+  if(z.startsWith('49')) return '0' + z.slice(2);
+  return '+' + z;
+}
+
+function akqNormDomain(wert){
+  let s = String(wert || '').trim().toLowerCase();
+  if(!s) return '';
+  s = s.replace(/^[a-z]+:\/\//, '');   // Protokoll
+  s = s.split(/[/?#]/)[0];             // Pfad, Abfrage, Anker
+  s = s.replace(/^www\./, '');         // erst NACH dem Protokoll, sonst greift es nicht
+  s = s.replace(/:\d+$/, '');          // Port
+  s = s.replace(/\.$/, '');            // abschließender Punkt
+  return s;
+}
+
+/* ── Wer ist am Werk? ─────────────────────────────────────── */
+function akqWerBinIch(){
+  const u = auth.currentUser;
+  return {
+    uid:  (u && u.uid) || 'unbekannt',
+    name: aktuellerName || (u && u.email) || 'unbekannt'
+  };
+}
+
+/* ── Verlauf ──────────────────────────────────────────────────
+   Anhängen, nie ändern – so steht es auch in den Firestore-Regeln.
+
+   ⚠️ Ein fehlgeschlagener Verlaufseintrag darf die eigentliche
+   Aktion NICHT zurückdrehen. Die Firma ist dann bereits gespeichert;
+   ein Abbruch hier hinterließe einen Datensatz, den der Mitarbeiter
+   für nicht gespeichert hält, und er legte ihn ein zweites Mal an. */
+function akqVerlaufEintragen(firmaId, ereignis, beschreibung){
+  const wer = akqWerBinIch();
+  return addDoc(collection(db, 'akquise_verlauf'), {
+    firma_id: firmaId,
+    benutzer_uid: wer.uid,
+    benutzer_name: wer.name,
+    ereignis, beschreibung,
+    createdAt: serverTimestamp()
+  }).catch(err => {
+    console.error('Verlaufseintrag fehlgeschlagen:', err);
+    melde('Gespeichert – der Eintrag im Verlauf hat aber nicht geklappt.');
+  });
+}
+
+function akqVerlaufFuer(firmaId){
+  return allAkqVerlauf
+    .filter(v => v.firma_id === firmaId)
+    .sort(nachDatumAbsteigend);
+}
+
+/* ── Liste ────────────────────────────────────────────────── */
+let akqSuchTimer = null;
+window.akqRenderFirmenVerzoegert = function(){
+  if(akqSuchTimer) clearTimeout(akqSuchTimer);
+  akqSuchTimer = setTimeout(window.akqRenderFirmen, 200);
+};
+
+function akqFirmaSuchtext(f){
+  /* Auch die normalisierten Felder durchsuchen: Wer „+49 2242" in
+     die Suche tippt, findet damit eine Firma, die als „02242 …"
+     erfasst wurde. */
+  return [f.firmenname, f.standort, f.ansprechpartner, f.email, f.email_normalisiert,
+          f.telefon, f.telefon_normalisiert, f.ort, f.plz, f.branche,
+          f.website, f.domain_normalisiert]
+    .filter(Boolean).join(' ').toLowerCase();
+}
+
+window.akqRenderFirmen = function(){
+  const listEl = document.getElementById('firmen-liste');
+  if(!listEl) return;
+  const zaehlerEl = document.getElementById('firmen-zaehler');
+
+  const suchfeld = document.getElementById('firmen-suche');
+  const rohSuche = suchfeld ? suchfeld.value.trim().toLowerCase() : '';
+  const filter = (document.getElementById('firmen-filter') || {}).value || '';
+
+  /* Die Sucheingabe wird genauso normalisiert wie die Daten – sonst
+     fände „+49 2242 123456" die Firma nicht, die als „02242 123456"
+     gespeichert ist. */
+  const sucheTelefon = /[\d+]/.test(rohSuche) ? akqNormTelefon(rohSuche) : '';
+
+  let liste = allFirmen.slice();
+  if(filter) liste = liste.filter(f => (f.status || 'neu') === filter);
+  if(rohSuche){
+    liste = liste.filter(f => {
+      const heuhaufen = akqFirmaSuchtext(f);
+      if(heuhaufen.includes(rohSuche)) return true;
+      return !!(sucheTelefon && sucheTelefon.length >= 3 &&
+                String(f.telefon_normalisiert || '').includes(sucheTelefon));
+    });
+  }
+  liste.sort(nachDatumAbsteigend);
+
+  if(zaehlerEl){
+    const gesamt = allFirmen.length;
+    zaehlerEl.textContent = (rohSuche || filter)
+      ? liste.length + ' von ' + gesamt + ' Firmen'
+      : gesamt + (gesamt === 1 ? ' Firma' : ' Firmen');
+  }
+
+  if(liste.length === 0){
+    listEl.innerHTML = allFirmen.length === 0
+      ? '<div class="empty-state">Noch keine Firma erfasst.<br>Mit „Neue Firma erfassen" geht es los.</div>'
+      : '<div class="empty-state">Keine Firma passt zu dieser Suche.</div>';
+    return;
+  }
+
+  listEl.innerHTML = liste.map(f => {
+    const status = f.status || 'neu';
+    const farbe = FIRMEN_STATUS_FARBE[status] || '';
+    const fj = sicherJs(f.id);
+    const name = [f.firmenname, f.standort].filter(Boolean).join(' · ');
+    return `
+    <div class="req-card firma-karte ${farbe ? 'rand-' + farbe.slice(2) : ''}"
+         role="button" tabindex="0"
+         onclick="akqFirmaDetail('${fj}')"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();akqFirmaDetail('${fj}')}">
+      <div class="req-top">
+        <div>
+          <div class="req-name">${sicher(name || 'Ohne Namen')}</div>
+          <div class="req-meta">${sicher(f.ansprechpartner || 'kein Ansprechpartner')}${f.branche ? ' · ' + sicher(f.branche) : ''}</div>
+        </div>
+        <span class="f-pill ${farbe}">${sicher(FIRMEN_STATUS_TEXT[status] || status)}</span>
+      </div>
+      <div class="req-grid">
+        <div><span>Ort:</span>${sicher([f.plz, f.ort].filter(Boolean).join(' ') || '–')}</div>
+        <div><span>Letzter Kontakt:</span>${sicher(f.letzter_kontakt ? formatDate(f.letzter_kontakt) : 'noch keiner')}</div>
+        <div><span>E-Mail:</span>${sicher(f.email || '–')}</div>
+        <div><span>Telefon:</span>${sicher(f.telefon || '–')}</div>
+      </div>
+      ${f.do_not_contact ? '<div class="req-meta" style="color:#F87171;font-weight:600">🔴 Nicht erneut kontaktieren</div>' : ''}
+    </div>`;
+  }).join('');
+};
+
+/* ── Umschalten zwischen Liste, Formular und Detailkarte ──── */
+let akqAktuelleFirma = null;
+
+function akqBereichZeigen(welcher){
+  ['liste','form','detail'].forEach(n => {
+    const el = document.getElementById('firmen-' + n + '-bereich');
+    if(!el) return;
+    if(n === welcher) el.removeAttribute('hidden'); else el.setAttribute('hidden','');
+  });
+  window.scrollTo({ top:0, behavior:'instant' in window ? 'instant' : 'auto' });
+}
+
+window.akqZurueckZurListe = function(){
+  akqAktuelleFirma = null;
+  akqBereichZeigen('liste');
+};
+
+/* ── Formular ─────────────────────────────────────────────── */
+function akqFirmaFehler(text, feldId){
+  const box = document.getElementById('firma-fehler');
+  if(box){ box.textContent = text; box.classList.add('sichtbar'); }
+  const feld = feldId && document.getElementById(feldId);
+  if(feld){ feld.classList.add('fehlerhaft'); feld.focus(); }
+}
+
+const FIRMA_FELD_ZU_EINGABE = {
+  firmenname:'firma-name', standort:'firma-standort', ansprechpartner:'firma-ansprechpartner',
+  email:'firma-email', telefon:'firma-telefon', website:'firma-website',
+  strasse:'firma-strasse', hausnummer:'firma-hausnummer', plz:'firma-plz',
+  ort:'firma-ort', branche:'firma-branche', quelle_url:'firma-quelle', notiz:'firma-notiz'
+};
+
+window.akqFirmaFormOeffnen = function(id){
+  const f = id ? allFirmen.find(x => x.id === id) : null;
+
+  document.getElementById('firma-edit-id').value = f ? f.id : '';
+  Object.entries(FIRMA_FELD_ZU_EINGABE).forEach(([feld, eingabe]) => {
+    const el = document.getElementById(eingabe);
+    if(el) el.value = f ? (f[feld] || '') : '';
+  });
+
+  const box = document.getElementById('firma-fehler');
+  if(box) box.classList.remove('sichtbar');
+  document.querySelectorAll('#view-akquise_firmen .fehlerhaft').forEach(el => el.classList.remove('fehlerhaft'));
+
+  document.getElementById('firma-form-titel').textContent =
+    f ? ('Firma bearbeiten: ' + (f.firmenname || '')) : 'Neue Firma erfassen';
+  document.getElementById('firma-save-btn').textContent =
+    f ? 'Änderungen speichern' : 'Speichern & weiter';
+
+  akqBereichZeigen('form');
+  const erstes = document.getElementById('firma-name');
+  if(erstes && !f) erstes.focus();
+};
+
+window.akqFirmaSpeichern = function(){
+  const btn = document.getElementById('firma-save-btn');
+  const hole = id => (document.getElementById(id).value || '').trim();
+
+  const box = document.getElementById('firma-fehler');
+  if(box) box.classList.remove('sichtbar');
+  document.querySelectorAll('#view-akquise_firmen .fehlerhaft').forEach(el => el.classList.remove('fehlerhaft'));
+
+  const editId = document.getElementById('firma-edit-id').value;
+  const firmenname = hole('firma-name');
+  if(!firmenname){ akqFirmaFehler('Bitte einen Firmennamen eintragen.', 'firma-name'); return; }
+
+  const email = hole('firma-email');
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
+    akqFirmaFehler('Diese E-Mail-Adresse sieht nicht richtig aus.', 'firma-email'); return;
+  }
+
+  const daten = {};
+  Object.keys(FIRMA_FELD_ZU_EINGABE).forEach(feld => { daten[feld] = hole(FIRMA_FELD_ZU_EINGABE[feld]); });
+  daten.email_normalisiert   = akqNormEmail(daten.email);
+  daten.telefon_normalisiert = akqNormTelefon(daten.telefon);
+  daten.domain_normalisiert  = akqNormDomain(daten.website);
+  daten.aktualisiert_am      = serverTimestamp();
+
+  btn.disabled = true;
+  const alterText = btn.textContent;
+  btn.textContent = 'Speichere ...';
+  const fertig = () => { btn.disabled = false; btn.textContent = alterText; };
+
+  if(editId){
+    const vorher = allFirmen.find(x => x.id === editId) || {};
+    const geaendert = FIRMA_FELDER
+      .filter(([feld]) => String(vorher[feld] || '') !== String(daten[feld] || ''))
+      .map(([, beschriftung]) => beschriftung);
+
+    updateDoc(doc(db, 'firmen', editId), daten)
+      .then(() => {
+        fertig();
+        /* Ein Eintrag je Speichervorgang, nicht je Feld: Wer beim
+           ersten Bearbeiten zehn leere Felder nachträgt, bekäme sonst
+           zehn Zeilen Verlauf und der eigentliche Ablauf ginge darin
+           unter. Bei genau einer Änderung liest es sich wie im
+           Beispiel: „Telefonnummer geändert". */
+        if(geaendert.length){
+          akqVerlaufEintragen(editId, 'bearbeitet',
+            geaendert.length === 1
+              ? geaendert[0] + ' geändert'
+              : geaendert.slice(0, -1).join(', ') + ' und ' + geaendert.slice(-1) + ' geändert');
+        }
+        melde(geaendert.length ? 'Änderungen gespeichert.' : 'Nichts zu ändern.');
+        window.akqFirmaDetail(editId);
+      })
+      .catch(err => { fertig(); meldeSchreibfehler(err, 'Das Speichern der Firma'); });
+    return;
+  }
+
+  const wer = akqWerBinIch();
+  daten.status            = 'neu';
+  daten.do_not_contact    = false;
+  daten.erstellt_von      = wer.uid;
+  daten.erstellt_von_name = wer.name;
+  daten.zugewiesen_an     = wer.uid;
+  daten.letzter_kontakt   = null;
+  daten.erstellt_am       = serverTimestamp();
+  daten.createdAt         = serverTimestamp();   // gleiche Schreibweise wie überall sonst, für nachDatumAbsteigend
+
+  addDoc(collection(db, 'firmen'), daten)
+    .then(ref => {
+      fertig();
+      akqVerlaufEintragen(ref.id, 'angelegt', 'Firma angelegt');
+      melde('Firma gespeichert.');
+      window.akqFirmaDetail(ref.id);
+    })
+    .catch(err => { fertig(); meldeSchreibfehler(err, 'Das Anlegen der Firma'); });
+};
+
+/* ── Detailkarte ──────────────────────────────────────────── */
+window.akqFirmaDetail = function(id){
+  akqAktuelleFirma = id;
+  akqBereichZeigen('detail');
+  akqRenderFirmaDetail();
+};
+
+function akqRenderFirmaDetail(){
+  const el = document.getElementById('firmen-detail-bereich');
+  if(!el || !akqAktuelleFirma) return;
+
+  const f = allFirmen.find(x => x.id === akqAktuelleFirma);
+  if(!f){
+    /* Kann passieren, wenn der Verwalter den Datensatz löscht,
+       während jemand ihn offen hat. */
+    el.innerHTML = '<div class="empty-state">Diese Firma gibt es nicht mehr.' +
+      '<br><br><button class="btn btn-primary" style="width:auto;padding:12px 22px" onclick="akqZurueckZurListe()">Zurück zur Liste</button></div>';
+    return;
+  }
+
+  const status = f.status || 'neu';
+  const farbe = FIRMEN_STATUS_FARBE[status] || '';
+  const fj = sicherJs(f.id);
+  const adresse = [[f.strasse, f.hausnummer].filter(Boolean).join(' '),
+                   [f.plz, f.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+
+  const verlauf = akqVerlaufFuer(f.id);
+
+  el.innerHTML = `
+    <button class="karte-aktion" style="margin-bottom:18px" onclick="akqZurueckZurListe()">← Zurück zur Liste</button>
+
+    ${f.do_not_contact ? `
+      <div class="firma-sperre">
+        <span aria-hidden="true">🔴</span>
+        <div><strong>Nicht erneut kontaktieren.</strong><br>
+        Diese Firma hat Werbung abgelehnt oder wurde gesperrt. Aus der Akquise darf keine
+        weitere Nachricht an sie hinausgehen.${aktuelleRolle === ROLLE_ADMIN
+          ? ' <button class="karte-aktion" style="margin-top:8px" onclick="akqSperreAufheben(\'' + fj + '\')">Sperre aufheben</button>' : ''}</div>
+      </div>` : ''}
+
+    <div class="firma-kopf">
+      <div class="firma-kopf-name">${sicher(f.firmenname || 'Ohne Namen')}</div>
+      <span class="f-pill ${farbe}">${sicher(FIRMEN_STATUS_TEXT[status] || status)}</span>
+    </div>
+    <div class="view-sub" style="margin-bottom:22px">
+      ${sicher(f.standort || '')}${f.standort && f.branche ? ' · ' : ''}${sicher(f.branche || '')}
+    </div>
+
+    <div class="karte-block">
+      <div class="karte-block-titel">Stammdaten</div>
+      <div class="karte-daten">
+        <div><span style="color:rgba(255,255,255,0.6)">Ansprechpartner:</span> ${sicher(f.ansprechpartner || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Branche:</span> ${sicher(f.branche || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">E-Mail:</span> ${sicher(f.email || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Telefon:</span> ${sicher(f.telefon || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Website:</span> ${sicher(f.website || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Adresse:</span> ${sicher(adresse || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Quelle:</span> ${sicher(f.quelle_url || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Letzter Kontakt:</span> ${sicher(f.letzter_kontakt ? formatDate(f.letzter_kontakt) : 'noch keiner')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Erfasst von:</span> ${sicher(f.erstellt_von_name || 'unbekannt')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Erfasst am:</span> ${sicher(formatDate(f.erstellt_am || f.createdAt))}</div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="karte-aktion" onclick="akqFirmaFormOeffnen('${fj}')">Stammdaten bearbeiten</button>
+        ${aktuelleRolle === ROLLE_ADMIN
+          ? `<button class="karte-aktion" style="border-color:rgba(248,113,113,0.3);color:#F87171;margin-left:8px" onclick="akqFirmaLoeschen('${fj}')">Löschen</button>` : ''}
+      </div>
+    </div>
+
+    <div class="karte-block">
+      <div class="karte-block-titel">Status</div>
+      <div class="field" style="margin-bottom:0">
+        <label for="firma-status-wahl">Aktueller Stand</label>
+        <select id="firma-status-wahl" onchange="akqStatusSetzen('${fj}', this.value)">
+          ${FIRMEN_STATUS.map(s => `<option value="${sicher(s)}" ${s === status ? 'selected' : ''}>${sicher(FIRMEN_STATUS_TEXT[s])}</option>`).join('')}
+        </select>
+      </div>
+      <p class="karte-block-text" style="margin:12px 0 0">
+        „Kein Interesse" und „Nicht kontaktieren" setzen zusätzlich eine dauerhafte
+        Kontaktsperre. Aufheben kann sie nur der Verwalter.
+      </p>
+    </div>
+
+    <div class="karte-block">
+      <div class="karte-block-titel">Notiz</div>
+      <div class="field" style="margin-bottom:0">
+        <label for="firma-notiz-feld">Was sollte man zu dieser Firma wissen?</label>
+        <textarea id="firma-notiz-feld" placeholder="Was sollte man zu dieser Firma wissen?">${sicher(f.notiz || '')}</textarea>
+      </div>
+      <button class="karte-aktion" style="margin-top:12px" onclick="akqNotizSpeichern('${fj}')">Notiz speichern</button>
+    </div>
+
+    <div class="karte-block">
+      <div class="karte-block-titel">Verlauf</div>
+      ${verlauf.length === 0
+        ? '<div class="ueb-leer">Noch keine Einträge.</div>'
+        : `<div class="verlauf-liste">${verlauf.map((v, i) => `
+            <div class="verlauf-zeile ${i > 0 ? 'alt' : ''}">
+              <div class="verlauf-text">${sicher(v.beschreibung || v.ereignis || '')}</div>
+              <div class="verlauf-meta">${sicher(formatDate(v.createdAt))} · ${sicher(v.benutzer_name || 'unbekannt')}</div>
+            </div>`).join('')}</div>`}
+    </div>`;
+}
+
+window.akqStatusSetzen = function(id, status){
+  const f = allFirmen.find(x => x.id === id);
+  if(!f || !FIRMEN_STATUS.includes(status)) return;
+  if((f.status || 'neu') === status) return;
+
+  const daten = { status, aktualisiert_am: serverTimestamp() };
+  const sperrt = FIRMEN_STATUS_SPERRT.includes(status);
+  if(sperrt) daten.do_not_contact = true;
+
+  updateDoc(doc(db, 'firmen', id), daten)
+    .then(() => {
+      akqVerlaufEintragen(id, 'status',
+        'Status geändert: ' + (FIRMEN_STATUS_TEXT[f.status || 'neu'] || '–') +
+        ' → ' + FIRMEN_STATUS_TEXT[status] + (sperrt ? ' (Kontaktsperre gesetzt)' : ''));
+      melde(sperrt ? 'Status gespeichert – die Firma ist jetzt gesperrt.' : 'Status gespeichert.');
+    })
+    .catch(err => meldeSchreibfehler(err, 'Das Ändern des Status'));
+};
+
+window.akqNotizSpeichern = function(id){
+  const feld = document.getElementById('firma-notiz-feld');
+  if(!feld) return;
+  const f = allFirmen.find(x => x.id === id) || {};
+  const notiz = feld.value.trim();
+  if(String(f.notiz || '') === notiz){ melde('Die Notiz ist unverändert.'); return; }
+
+  updateDoc(doc(db, 'firmen', id), { notiz, aktualisiert_am: serverTimestamp() })
+    .then(() => { akqVerlaufEintragen(id, 'bearbeitet', 'Notiz geändert'); melde('Notiz gespeichert.'); })
+    .catch(err => meldeSchreibfehler(err, 'Das Speichern der Notiz'));
+};
+
+/* Nur der Verwalter – so steht es auch in den Firestore-Regeln.
+   Eine Sperre, die derselbe Mensch wieder aufheben kann, der sie
+   gesetzt hat, ist keine. */
+window.akqSperreAufheben = function(id){
+  const f = allFirmen.find(x => x.id === id) || {};
+  if(!confirm(`Kontaktsperre für „${f.firmenname || 'diese Firma'}" aufheben?\n\nDanach darf sie aus der Akquise wieder angeschrieben werden. Das ist nur richtig, wenn die Ablehnung nachweislich zurückgenommen wurde.`)) return;
+  updateDoc(doc(db, 'firmen', id), { do_not_contact:false, aktualisiert_am: serverTimestamp() })
+    .then(() => { akqVerlaufEintragen(id, 'sperre', 'Kontaktsperre aufgehoben'); melde('Sperre aufgehoben.'); })
+    .catch(err => meldeSchreibfehler(err, 'Das Aufheben der Sperre'));
+};
+
+window.akqFirmaLoeschen = function(id){
+  const f = allFirmen.find(x => x.id === id) || {};
+  if(!confirm(`„${f.firmenname || 'Diese Firma'}" endgültig löschen?\n\nDer Verlauf bleibt als Protokoll bestehen. Bei einer Ablehnung ist „Nicht kontaktieren" der richtige Weg – gelöschte Firmen lassen sich versehentlich erneut anlegen und anschreiben.`)) return;
+  deleteDoc(doc(db, 'firmen', id))
+    .then(() => { melde('Firma gelöscht.'); window.akqZurueckZurListe(); })
+    .catch(err => meldeSchreibfehler(err, 'Das Löschen der Firma'));
 };
 
 window.deleteZugang = function(uid){
