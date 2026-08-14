@@ -1632,6 +1632,127 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .vorgabe-zeile-lang { display:block; }
 .vorgabe-zeile-lang textarea { margin-top:7px; font-size:14px; line-height:1.6; }
 
+/* ── AKQUISE (14.08.2026) ─────────────────────────────────────
+   Der Bereich für Lukas. Bewusst mit den vorhandenen Bausteinen
+   gebaut (.stat-row, .ueb-panel, .karte-block) – es soll aussehen,
+   als wäre er immer Teil des Dashboards gewesen. Neu ist nur die
+   Schrittleiste, für die es hier noch nichts Passendes gab. */
+.akq-schritte { list-style:none; counter-reset:akq; display:flex; flex-direction:column; gap:10px; }
+.akq-schritt {
+  counter-increment:akq;
+  display:flex; align-items:flex-start; gap:12px;
+  font-size:14px; line-height:1.5; color:rgba(255,255,255,0.82);
+}
+.akq-schritt::before {
+  content:counter(akq);
+  flex-shrink:0;                      /* sonst quetscht ein langer Text die Ziffer auf wenige Pixel */
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(34,197,94,0.14); color:var(--green);
+  font-size:12.5px; font-weight:700;
+}
+.akq-schritt-text { min-width:0; }    /* Flex-Kind muss schrumpfen dürfen */
+.akq-schritt-name { font-weight:600; color:var(--white); }
+.akq-schritt-sub { font-size:12.5px; color:rgba(255,255,255,0.58); margin-top:2px; }
+
+/* Platzhalterbereiche, solange die Lead-Verwaltung noch nicht steht.
+   Bewusst als eigener Baustein und nicht als .empty-state: Hier steht
+   nicht „nichts da", sondern „kommt noch". */
+.akq-bau {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px; padding:26px 22px; text-align:center;
+  font-size:14px; line-height:1.7; color:rgba(255,255,255,0.66);
+}
+.akq-bau-symbol { font-size:26px; display:block; margin-bottom:10px; }
+.akq-bau-titel { font-size:15px; font-weight:600; color:var(--white); margin-bottom:6px; }
+
+/* ── ZUGÄNGE (Anmeldekonten) ────────────────────────────────── */
+.zugang-zeile {
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px; padding:14px 16px; margin-bottom:10px;
+}
+.zugang-haupt { flex:1; min-width:0; }
+.zugang-name { font-size:14.5px; font-weight:600; color:var(--white); }
+.zugang-meta { font-size:12px; color:rgba(255,255,255,0.58); margin-top:3px; overflow-wrap:anywhere; }
+.zugang-rolle {
+  font-size:11.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+  padding:4px 10px; border-radius:100px; flex-shrink:0;
+  background:rgba(34,197,94,0.14); color:var(--green);
+}
+.zugang-rolle.gesperrt { background:rgba(248,113,113,0.14); color:#F87171; }
+
+/* ── FIRMEN / LEADS (14.08.2026) ──────────────────────────────
+   Bewusst auf `.req-card` und `.req-grid` aufgebaut: Diese
+   Bausteine tragen schon die Anfragenliste und sind bei 375 px
+   nachgemessen. Ein eigener Kartentyp hätte dieselben
+   Überlauffallen noch einmal neu zu lösen gehabt.
+
+   Eine Tabelle wurde bewusst NICHT genommen. Sieben Spalten –
+   Firma, Ort, Ansprechpartner, E-Mail, Telefon, Status, letzter
+   Kontakt – ergeben bei 375 px rund 53 px je Spalte. Die Karte
+   zeigt dieselben sieben Angaben, nur untereinander. */
+.firma-karte { cursor:pointer; transition:border-color .16s var(--weich, ease), background .16s ease; }
+.firma-karte:hover { background:rgba(255,255,255,0.06); }
+.firma-karte:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
+
+/* Zwölf Status, vier Bedeutungen. Mehr Farben unterscheiden nicht
+   besser – sie machen die Liste nur unruhig. */
+.f-pill {
+  padding:4px 11px; border-radius:100px; font-size:11.5px; font-weight:700;
+  white-space:nowrap; flex-shrink:0;
+  background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.72);
+}
+.f-pill.f-warten { background:rgba(251,191,36,0.15); color:#FBBF24; }
+.f-pill.f-laeuft { background:rgba(59,130,246,0.15); color:#60A5FA; }
+.f-pill.f-gut    { background:rgba(34,197,94,0.15);  color:var(--green); }
+.f-pill.f-stop   { background:rgba(248,113,113,0.15); color:#F87171; }
+
+.firma-karte.rand-warten { border-left-color:#FBBF24; }
+.firma-karte.rand-laeuft { border-left-color:#60A5FA; }
+.firma-karte.rand-gut    { border-left-color:#22C55E; }
+.firma-karte.rand-stop   { border-left-color:#F87171; }
+
+/* Kontaktsperre – muss auffallen, bevor jemand eine Nachricht tippt. */
+.firma-sperre {
+  display:flex; align-items:flex-start; gap:10px;
+  background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.32);
+  border-radius:14px; padding:14px 16px; margin-bottom:18px;
+  font-size:13.5px; line-height:1.55; color:#FCA5A5;
+}
+.firma-sperre strong { color:#F87171; }
+
+.firma-kopf { display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+.firma-kopf-name { font-size:20px; font-weight:700; min-width:0; overflow-wrap:anywhere; flex:1 1 200px; }
+
+/* Aktivitätsverlauf. Die senkrechte Linie macht aus Einzelzeilen
+   eine erkennbare Abfolge. */
+.verlauf-liste { display:flex; flex-direction:column; }
+.verlauf-zeile {
+  position:relative; padding:0 0 16px 22px;
+  border-left:2px solid rgba(255,255,255,0.1);
+  font-size:13.5px; line-height:1.5;
+}
+.verlauf-zeile:last-child { border-left-color:transparent; padding-bottom:0; }
+.verlauf-zeile::before {
+  content:''; position:absolute; left:-6px; top:4px;
+  width:10px; height:10px; border-radius:50%;
+  background:var(--green); border:2px solid var(--black);
+}
+.verlauf-zeile.alt::before { background:rgba(255,255,255,0.3); }
+.verlauf-text { color:rgba(255,255,255,0.86); overflow-wrap:anywhere; }
+.verlauf-meta { font-size:11.5px; color:rgba(255,255,255,0.5); margin-top:3px; }
+
+/* Zählerreihe über der Liste – zeigt, wie viele Firmen je Filter
+   überhaupt vorhanden sind. */
+.firma-zaehler { font-size:12.5px; color:rgba(255,255,255,0.55); margin:-8px 0 16px; }
+
+/* Knopfleiste am Formularende. Am Schreibtisch schlicht eine Reihe;
+   auf dem Handy bleibt sie beim Scrollen stehen – das Formular hat
+   dreizehn Felder, und der Speichernknopf wäre sonst dauernd außer
+   Sicht. Siehe Handy-Block weiter unten. */
+.akq-speicherleiste { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
+
 /* ⚠️ Dieser Handy-Block steht bewusst NACH den Grunddefinitionen
    darüber. Bei gleicher Spezifität gewinnt die spätere Regel –
    stünde er weiter oben (etwa im großen 900-px-Block bei Zeile
@@ -1651,6 +1772,35 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   .planung-titel { font-size:15px; }
   .ben-zeile { font-size:13.5px; padding:11px 13px; }
   .req-filter-bar select, .req-filter-bar input { width:100%; }
+  /* Akquise: Die vier Kennzahlen stehen bei 375 px nebeneinander nur
+     noch als abgeschnittene Zahlen da. `.stat-row` schaltet weiter
+     oben bereits auf zwei Spalten – hier bleibt der Feinschliff. */
+  .akq-bau { padding:22px 16px; }
+  .akq-schritt { font-size:13.5px; }
+  /* Ohne feste Reihenfolge bricht die Zeile bei 375 px in vier Ebenen
+     auf – nachgemessen 299 px hoch, mit einem einzelnen Knopf allein
+     in der letzten. `.zugang-haupt` hat `flex:1` und beansprucht sonst
+     die erste Zeile für sich, wodurch alles Übrige nach unten rutscht.
+     Jetzt: Etikett, darunter der Name, darunter die drei Knöpfe
+     nebeneinander. */
+  /* Speichern bleibt in Reichweite. `.main` hat auf dem Handy
+     104 px Fußabstand für die feste Bereichsleiste – 76 px setzt
+     die Knopfleiste knapp darüber, ohne sie zu verdecken. */
+  .akq-speicherleiste {
+    position:sticky; z-index:800;
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    margin:18px -16px 0; padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(10,10,10,0.94); backdrop-filter:blur(14px);
+    border-top:1px solid rgba(255,255,255,0.1);
+  }
+  .akq-speicherleiste .btn { width:100%; }
+  .firma-kopf-name { font-size:18px; }
+  .verlauf-zeile { padding-left:18px; }
+
+  .zugang-zeile { padding:13px 14px; gap:9px; }
+  .zugang-rolle { order:0; }
+  .zugang-haupt { order:1; flex-basis:100%; }
+  .zugang-zeile .karte-aktion { order:2; flex:1; min-width:0; padding-left:6px; padding-right:6px; }
 }
 @media(max-width:400px){
   /* Menge und Betrag nebeneinander sprengen die Zeile, sobald ein
@@ -1724,6 +1874,12 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     <div class="nav-item" data-view="bewerbungen" onclick="switchView('bewerbungen')"><span class="ni-icon">🙋</span><span class="ni-label">Bewerbungen</span></div>
     <div class="nav-item" data-view="partneranfragen" onclick="switchView('partneranfragen')"><span class="ni-icon">🤝</span><span class="ni-label">Partneranfragen</span></div>
 
+    <div class="nav-group">Akquise</div>
+    <div class="nav-item" data-view="akquise" onclick="switchView('akquise')"><span class="ni-icon">📣</span><span class="ni-label">Übersicht</span></div>
+    <div class="nav-item" data-view="akquise_firmen" onclick="switchView('akquise_firmen')"><span class="ni-icon">🏢</span><span class="ni-label">Firmen</span></div>
+    <div class="nav-item" data-view="akquise_mails" onclick="switchView('akquise_mails')"><span class="ni-icon">✉️</span><span class="ni-label">Nachrichten</span></div>
+    <div class="nav-item" data-view="akquise_antworten" onclick="switchView('akquise_antworten')"><span class="ni-icon">💬</span><span class="ni-label">Antworten</span></div>
+
     <div class="nav-group">Finanzen</div>
     <div class="nav-item" data-view="planung" onclick="switchView('planung')"><span class="ni-icon">📈</span><span class="ni-label">Umsatzplanung</span></div>
     <div class="nav-item" data-view="finanzen" onclick="switchView('finanzen')"><span class="ni-icon">💰</span><span class="ni-label">Einnahmen</span></div>
@@ -1745,6 +1901,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     <div class="nav-item" data-view="rechtstexte" onclick="switchView('rechtstexte')"><span class="ni-icon">⚖️</span><span class="ni-label">Rechtstexte</span></div>
     <div class="nav-item" data-view="kalkulation" onclick="switchView('kalkulation')"><span class="ni-icon">📐</span><span class="ni-label">Kalkulation</span></div>
     <div class="nav-item" data-view="mitarbeiter" onclick="switchView('mitarbeiter')"><span class="ni-icon">🧑‍🔧</span><span class="ni-label">Mitarbeiter</span></div>
+    <div class="nav-item" data-view="zugaenge" onclick="switchView('zugaenge')"><span class="ni-icon">🔑</span><span class="ni-label">Zugänge</span></div>
     <div class="nav-item" data-view="textbausteine" onclick="switchView('textbausteine')"><span class="ni-icon">✉️</span><span class="ni-label">Antworten</span></div>
     <div class="nav-item" data-view="firma" onclick="switchView('firma')"><span class="ni-icon">🏢</span><span class="ni-label">Firma</span></div>
     <div class="sidebar-bottom">
@@ -1790,6 +1947,204 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   </div>
 
   <main class="main">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         AKQUISE (14.08.2026)
+         Startbildschirm für die Rolle `acquisition`. Ein Konto mit
+         dieser Rolle landet hier und sieht sonst nichts – geprüft in
+         den Firestore-Regeln, in den Serverfunktionen und hier.
+
+         Die Kennzahlen stehen bewusst auf „–": Es gibt noch keine
+         Firmenverwaltung, aus der sie sich rechnen ließen. Eine
+         erfundene Null wäre schlimmer als ein sichtbarer Strich.
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="view" id="view-akquise">
+      <div class="view-head">
+        <div class="view-title" id="akq-gruss">Hallo 👋</div>
+        <div class="view-sub">Akquise &amp; Social Media</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-val" id="akq-z-firmen">–</div><div class="stat-lbl">Firmen heute erfasst</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-mails">–</div><div class="stat-lbl">E-Mails versendet</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-antworten">–</div><div class="stat-lbl">Offene Antworten</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-interessenten">–</div><div class="stat-lbl">Interessenten</div></div>
+      </div>
+
+      <div class="ueb-cols">
+        <div class="ueb-panel">
+          <div class="ueb-panel-title">Deine nächsten Schritte</div>
+          <ol class="akq-schritte">
+            <li class="akq-schritt"><div class="akq-schritt-text">
+              <div class="akq-schritt-name">Firma erfassen</div>
+              <div class="akq-schritt-sub">Name, Standort und Kontaktdaten eintragen</div></div></li>
+            <li class="akq-schritt"><div class="akq-schritt-text">
+              <div class="akq-schritt-name">Firma prüfen</div>
+              <div class="akq-schritt-sub">Wurde sie schon einmal angeschrieben?</div></div></li>
+            <li class="akq-schritt"><div class="akq-schritt-text">
+              <div class="akq-schritt-name">Kontakt vorbereiten</div>
+              <div class="akq-schritt-sub">Nachricht ansehen, anpassen, versenden</div></div></li>
+            <li class="akq-schritt"><div class="akq-schritt-text">
+              <div class="akq-schritt-name">Antwort bearbeiten</div>
+              <div class="akq-schritt-sub">Interesse, Rückfrage oder Absage festhalten</div></div></li>
+          </ol>
+        </div>
+        <div class="ueb-panel">
+          <div class="ueb-panel-title">Offene Aufgaben</div>
+          <div class="ueb-leer">
+            Hier stehen künftig deine offenen Punkte: neue Antworten, noch nicht
+            kontaktierte Firmen und interessierte Betriebe.<br><br>
+            Die Firmenverwaltung kommt im nächsten Schritt – bis dahin bleiben die
+            Zahlen oben leer.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         AKQUISE – FIRMEN (14.08.2026)
+         Drei Zustände in einem Bereich: Liste, Formular, Detailkarte.
+         Bewusst kein eigener `.view` je Zustand – die Rollenprüfung
+         hängt an der Bereichskennung, und drei Kennungen für eine
+         Sache hätten drei Einträge in jeder Rechteliste gebraucht.
+         Dasselbe Vorgehen wie bei den Kunden-Karteikarten.
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="view" id="view-akquise_firmen">
+
+      <!-- ── Liste ────────────────────────────────────────────── -->
+      <div id="firmen-liste-bereich">
+        <div class="view-head">
+          <div class="view-title">Firmen</div>
+          <div class="view-sub">Erfasste Betriebe mit Status und letztem Kontakt</div>
+        </div>
+
+        <button class="btn btn-primary" style="width:auto;padding:14px 26px;margin-bottom:20px"
+                onclick="akqFirmaFormOeffnen()">+ Neue Firma erfassen</button>
+
+        <div class="req-filter-bar">
+          <input type="search" id="firmen-suche" placeholder="Firma, E-Mail, Telefon oder Ort suchen ..."
+                 oninput="akqRenderFirmenVerzoegert()" aria-label="Firmen durchsuchen">
+          <select id="firmen-filter" onchange="akqRenderFirmen()" aria-label="Nach Status filtern">
+            <option value="">Alle</option>
+            <option value="neu">Neu</option>
+            <option value="gesendet">Gesendet</option>
+            <option value="antwort">Antwort</option>
+            <option value="interesse">Interesse</option>
+            <option value="kein_interesse">Kein Interesse</option>
+            <option value="kunde">Kunde</option>
+            <option value="nicht_kontaktieren">Nicht kontaktieren</option>
+          </select>
+        </div>
+
+        <div class="firma-zaehler" id="firmen-zaehler"></div>
+        <div id="firmen-liste"><div class="empty-state">Lade Firmen ...</div></div>
+      </div>
+
+      <!-- ── Formular (anlegen und bearbeiten) ────────────────── -->
+      <div id="firmen-form-bereich" hidden>
+        <div class="view-head">
+          <div class="view-title" id="firma-form-titel">Neue Firma erfassen</div>
+          <div class="view-sub">Nur der Firmenname ist Pflicht. Alles Weitere lässt sich später ergänzen.</div>
+        </div>
+
+        <div class="paket-form">
+          <input type="hidden" id="firma-edit-id" value="">
+
+          <div class="field">
+            <label for="firma-name">Firmenname *</label>
+            <input type="text" id="firma-name" placeholder="z. B. Pure Fitness" autocomplete="off">
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="firma-standort">Standort / Filiale</label>
+              <input type="text" id="firma-standort" placeholder="z. B. Hennef" autocomplete="off"></div>
+            <div class="field"><label for="firma-ansprechpartner">Ansprechpartner</label>
+              <input type="text" id="firma-ansprechpartner" placeholder="z. B. Frau Weber" autocomplete="off"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="firma-email">E-Mail</label>
+              <input type="email" id="firma-email" placeholder="info@beispiel.de" autocomplete="off"></div>
+            <div class="field"><label for="firma-telefon">Telefon</label>
+              <input type="tel" id="firma-telefon" placeholder="02242 123456" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="firma-website">Website</label>
+            <input type="text" id="firma-website" placeholder="www.beispiel.de" autocomplete="off">
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="firma-strasse">Straße</label>
+              <input type="text" id="firma-strasse" placeholder="Hauptstraße" autocomplete="off"></div>
+            <div class="field"><label for="firma-hausnummer">Hausnummer</label>
+              <input type="text" id="firma-hausnummer" placeholder="12a" autocomplete="off"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="firma-plz">PLZ</label>
+              <input type="text" inputmode="numeric" id="firma-plz" placeholder="53773" autocomplete="off"></div>
+            <div class="field"><label for="firma-ort">Ort</label>
+              <input type="text" id="firma-ort" placeholder="Hennef" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="firma-branche">Branche</label>
+            <input type="text" id="firma-branche" placeholder="z. B. Fitnessstudio" autocomplete="off" list="firma-branchen">
+            <datalist id="firma-branchen">
+              <option value="Fitnessstudio"></option><option value="Gastronomie"></option>
+              <option value="Arztpraxis"></option><option value="Kanzlei"></option>
+              <option value="Autohaus"></option><option value="Werkstatt"></option>
+              <option value="Einzelhandel"></option><option value="Büro"></option>
+              <option value="Hotel"></option><option value="Friseur"></option>
+              <option value="Hausverwaltung"></option><option value="Handwerk"></option>
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="firma-quelle">Quelle / URL</label>
+            <input type="text" id="firma-quelle" placeholder="Wo hast du die Daten gefunden?" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="firma-notiz">Notiz</label>
+            <textarea id="firma-notiz" placeholder="z. B. Ansprechpartner am besten vormittags erreichbar"></textarea>
+          </div>
+
+          <div class="feld-fehler" id="firma-fehler"></div>
+
+          <div class="akq-speicherleiste">
+            <button class="btn btn-primary" style="width:auto;padding:14px 26px"
+                    id="firma-save-btn" onclick="akqFirmaSpeichern()">Speichern &amp; weiter</button>
+            <button class="btn" style="width:auto;padding:14px 26px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)"
+                    onclick="akqZurueckZurListe()">Abbrechen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Detailkarte ──────────────────────────────────────── -->
+      <div id="firmen-detail-bereich" hidden></div>
+    </div>
+
+    <!-- AKQUISE – NACHRICHTEN -->
+    <div class="view" id="view-akquise_mails">
+      <div class="view-head">
+        <div class="view-title">Nachrichten</div>
+        <div class="view-sub">Vorbereitete und versendete Akquise-E-Mails</div>
+      </div>
+      <div class="akq-bau">
+        <span class="akq-bau-symbol" aria-hidden="true">✉️</span>
+        <div class="akq-bau-titel">Der Nachrichtenbereich wird gerade gebaut</div>
+        Jede Nachricht wird später einer Firma zugeordnet und vor dem Versand
+        vollständig angezeigt.
+      </div>
+    </div>
+
+    <!-- AKQUISE – ANTWORTEN -->
+    <div class="view" id="view-akquise_antworten">
+      <div class="view-head">
+        <div class="view-title">Antworten</div>
+        <div class="view-sub">Eingegangene Rückmeldungen auf deine Nachrichten</div>
+      </div>
+      <div class="akq-bau">
+        <span class="akq-bau-symbol" aria-hidden="true">💬</span>
+        <div class="akq-bau-titel">Der Antwortbereich wird gerade gebaut</div>
+        Antworten werden später der passenden Firma zugeordnet und lassen sich
+        hier direkt beantworten.
+      </div>
+    </div>
 
     <!-- ÜBERSICHT (Startbildschirm nach dem Anmelden) -->
     <div class="view active" id="view-uebersicht">
@@ -2269,6 +2624,91 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <button class="btn btn-primary" style="width:auto;padding:12px 22px" id="abw-save-btn" onclick="saveAbwesenheit()">Abwesenheit eintragen</button>
 
         <div id="abwesenheiten-liste" style="margin-top:20px"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ZUGÄNGE (14.08.2026)
+         Anmeldekonten fürs Dashboard – wer darf sich anmelden und was
+         sieht er dann.
+
+         ⚠️ Bewusst NICHT dieselbe Sammlung wie „Mitarbeiter". Dort
+         steht die Einsatzplanung: Wer putzt welchen Auftrag. Hier steht,
+         wer sich anmelden darf. Ein Reinigungsteam ohne Dashboardzugang
+         und ein Bürozugang ohne Einsätze sind beide völlig normal –
+         eine gemeinsame Liste müsste dauernd erklären, welche Hälfte
+         der Felder gerade gilt.
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="view" id="view-zugaenge">
+      <div class="view-head">
+        <div class="view-title">Zugänge</div>
+        <div class="view-sub">Anmeldekonten für das Dashboard – getrennt von der Einsatzplanung unter „Mitarbeiter“</div>
+      </div>
+
+      <div class="karte-block">
+        <div class="karte-block-titel">So legst du einen Zugang an</div>
+        <p class="karte-block-text">
+          Das Anmeldekonto selbst entsteht in der Firebase-Konsole – aus Sicherheitsgründen
+          kann das Dashboard keine Passwörter vergeben.
+        </p>
+        <ol class="akq-schritte">
+          <li class="akq-schritt"><div class="akq-schritt-text">
+            <div class="akq-schritt-name">Konto anlegen</div>
+            <div class="akq-schritt-sub">Firebase-Konsole → Authentication → Users → <em>Add user</em>. E-Mail und ein Passwort vergeben.</div></div></li>
+          <li class="akq-schritt"><div class="akq-schritt-text">
+            <div class="akq-schritt-name">UID kopieren</div>
+            <div class="akq-schritt-sub">Steht in derselben Liste ganz rechts. Eine lange Zeichenfolge, keine E-Mail-Adresse.</div></div></li>
+          <li class="akq-schritt"><div class="akq-schritt-text">
+            <div class="akq-schritt-name">Hier eintragen</div>
+            <div class="akq-schritt-sub">UID einfügen, Namen und Rolle wählen, speichern. Erst dann kommt der Zugang hinein.</div></div></li>
+        </ol>
+      </div>
+
+      <div class="paket-form">
+        <div class="paket-form-title" id="zug-form-title">Neuen Zugang eintragen</div>
+        <input type="hidden" id="zug-edit-uid" value="">
+        <div class="field">
+          <label for="zug-uid">Benutzerkennung (UID)</label>
+          <input type="text" id="zug-uid" placeholder="z. B. kQ7xR2nP4aVbT9..." autocomplete="off">
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="zug-name">Name</label>
+            <input type="text" id="zug-name" placeholder="z. B. Lukas"></div>
+          <div class="field"><label for="zug-email">E-Mail</label>
+            <input type="email" id="zug-email" placeholder="lukas@beispiel.de" autocomplete="off"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="zug-rolle">Rolle</label>
+            <select id="zug-rolle">
+              <option value="acquisition">Social Media &amp; Akquise</option>
+              <option value="admin">Verwalter (Vollzugriff)</option>
+            </select></div>
+          <div class="field"><label for="zug-aktiv">Status</label>
+            <select id="zug-aktiv">
+              <option value="ja">Aktiv – darf sich anmelden</option>
+              <option value="nein">Gesperrt – wird abgewiesen</option>
+            </select></div>
+        </div>
+        <div class="feld-fehler" id="zug-fehler"></div>
+        <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" style="width:auto;padding:13px 24px" id="zug-save-btn" onclick="saveZugang()">Zugang speichern</button>
+          <button class="btn" style="width:auto;padding:13px 24px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)" onclick="resetZugangForm()">Abbrechen / Neu</button>
+        </div>
+      </div>
+
+      <div id="zugaenge-list"><div class="empty-state">Lade Zugänge ...</div></div>
+
+      <div class="karte-block" style="margin-top:24px">
+        <div class="karte-block-titel">Zwei Dinge, die wichtig bleiben</div>
+        <p class="karte-block-text">
+          <strong>Sperren statt löschen.</strong> Ein gesperrter Zugang behält seinen Verlauf –
+          man sieht später noch, wer welche Firma angelegt hat.
+        </p>
+        <p class="karte-block-text" style="margin-bottom:0">
+          <strong>Dein eigener Zugang hängt nicht an dieser Liste.</strong> Du kommst über deine
+          Verwalter-Adresse hinein, auch wenn hier gar nichts steht. Ein Fehler in dieser
+          Liste kann dich nicht aussperren.
+        </p>
       </div>
     </div>
 
@@ -3088,6 +3528,10 @@ let unsubEinnahmen = null;
 let unsubAusgaben = null;
 let unsubPakete = null;
 let unsubMitarbeiter = null;
+/* Anmeldekonten – bewusst getrennt von `allMitarbeiter` (Einsatzplanung).
+   Wird nur für den Verwalter geladen. */
+let allBenutzer = [];
+let unsubBenutzer = null;
 let unsubKunden = null;
 let unsubAngebote = null;
 let currentKundeEmail = null;
@@ -5935,32 +6379,210 @@ window.doLogout = function(){
    das ist bei Firebase normal. Ist im Projekt aber die Selbstregistrierung
    aktiv, könnte sich jemand ein Konto anlegen und diese Seite öffnen. Die
    Firestore-Regeln lassen ihn dann zwar nicht an die Daten, er säße aber im
-   Dashboard. Deshalb hier zusätzlich prüfen, WER angemeldet ist. */
+   Dashboard. Deshalb hier zusätzlich prüfen, WER angemeldet ist.
+
+   Seit dem 14.08.2026 gibt es neben dem Verwalter die Rolle `acquisition`
+   (Social Media & Akquise). Sie steht in `benutzer/{uid}`; jeder darf laut
+   Firestore-Regel ausschließlich seinen EIGENEN Eintrag lesen.
+
+   ⚠️ Was hier geschieht, ist reine Anzeigesteuerung. Ein ausgeblendeter
+   Menüpunkt ist kein Schutz – die Daten schützen die Firestore-Regeln und
+   die Prüfungen in den Serverfunktionen. Wer hier einen Bereich freigibt,
+   der auf eine schutzwürdige Sammlung zugreift, braucht dort zwingend
+   zusätzlich eine Regel. */
 const ADMIN_EMAILS = ['waschlurch@gmail.com'];
-function istAdmin(user){
+
+const ROLLE_ADMIN   = 'admin';
+const ROLLE_AKQUISE = 'acquisition';
+
+/* Gleichlautend zu website/lib/rollen.mjs. Ohne Bauschritt lässt sich diese
+   Datei nicht in den Browser importieren – die Liste dort ist die
+   verbindliche, diese hier steuert nur die Sichtbarkeit. */
+const BEREICHE_JE_ROLLE = {
+  [ROLLE_ADMIN]: '*',
+  [ROLLE_AKQUISE]: ['akquise', 'akquise_firmen', 'akquise_mails', 'akquise_antworten'],
+};
+
+let aktuelleRolle = null;
+let aktuellerName = '';
+
+function darfBereich(name){
+  const erlaubt = BEREICHE_JE_ROLLE[aktuelleRolle];
+  if(!erlaubt) return false;
+  return erlaubt === '*' || erlaubt.includes(name);
+}
+window.darfBereich = darfBereich;
+
+function istAdminMail(user){
   return !!user && ADMIN_EMAILS.includes((user.email || '').trim().toLowerCase());
 }
 
-let listenerLaufen = false;
-
-onAuthStateChanged(auth, (user) => {
-  if(user && !istAdmin(user)){
-    // Kein Verwalter – sofort wieder hinaus, mit klarer Ansage.
-    signOut(auth);
-    const errBox = document.getElementById('login-error');
-    errBox.textContent = 'Dieses Konto ist kein Verwalterkonto. Bitte mit der Verwalter-Adresse anmelden.';
-    errBox.style.display = 'block';
-    return;
+/* Rolle bestimmen. Der Verwalter wird bewusst NICHT über `benutzer`
+   ermittelt: Ein fehlender, deaktivierter oder vertippter Eintrag dort darf
+   Daniel nicht aus seinem eigenen Dashboard aussperren. */
+async function rolleErmitteln(user){
+  if(istAdminMail(user)) return { rolle: ROLLE_ADMIN, name: '' };
+  try {
+    const eintrag = await getDoc(doc(db, 'benutzer', user.uid));
+    if(!eintrag.exists()) return null;
+    const d = eintrag.data() || {};
+    /* ⚠️ Ausdrücklich `!== true`, nicht `!d.aktiv`. Ein Eintrag, bei dem
+       das Feld vergessen wurde, ist damit gesperrt statt freigegeben –
+       ein fehlender Wert darf nie zu mehr Rechten führen. */
+    if(d.aktiv !== true) return null;
+    if(d.rolle === ROLLE_ADMIN || d.rolle === ROLLE_AKQUISE){
+      return { rolle: d.rolle, name: String(d.name || '').trim() };
+    }
+    return null;
+  } catch(err){
+    /* Fehlendes Leserecht und gestörte Verbindung sehen hier gleich aus. In
+       beiden Fällen ist „nicht hineinlassen" richtig: Ohne bekannte Rolle
+       wüsste das Dashboard nicht, welche Bereiche es zeigen darf – und im
+       Zweifel zeigte es zu viele. */
+    console.error('Rolle konnte nicht gelesen werden:', err && err.code);
+    return null;
   }
+}
+
+/* Menüpunkte entfernen, die diese Rolle nicht sehen darf. Das Handymenü baut
+   sich zur Laufzeit aus der Seitenleiste auf (`handyMenueAufbauen`) und erbt
+   die Einschränkung dadurch von selbst – deshalb gibt es hier bewusst keine
+   zweite Liste, die auseinanderlaufen könnte. */
+function rechteAnwenden(){
+  if(aktuelleRolle === ROLLE_ADMIN) return;   // Verwalter: alles bleibt, wie es war
+
+  document.querySelectorAll('.sidebar .nav-item').forEach(el => {
+    if(!darfBereich(el.dataset.view)) el.remove();
+  });
+  /* Gruppenüberschrift ohne verbleibende Punkte entfernen – sonst stünde
+     „Finanzen" über einer leeren Stelle. */
+  document.querySelectorAll('.sidebar .nav-group').forEach(kopf => {
+    let n = kopf.nextElementSibling, hatPunkte = false;
+    while(n && !n.classList.contains('nav-group')){
+      if(n.classList.contains('nav-item')){ hatPunkte = true; break; }
+      n = n.nextElementSibling;
+    }
+    if(!hatPunkte) kopf.remove();
+  });
+
+  handyLeisteNeuAufbauen();
+
+  /* Bereiche, die diese Rolle nicht sehen darf, ganz aus dem Dokument
+     nehmen. `switchView` weist sie zwar ohnehin ab – aber solange die
+     Abschnitte im Dokument stehen, stünden dort auch ihre Beschriftungen
+     und Felder, auffindbar über die Entwicklerwerkzeuge. Was nicht da
+     ist, kann nicht ausgelesen werden. Daten stehen darin ohnehin keine:
+     Die Datenlauscher laufen für diese Rolle gar nicht erst. */
+  document.querySelectorAll('#app-screen .view').forEach(v => {
+    const name = v.id.replace(/^view-/, '');
+    if(!darfBereich(name)) v.remove();
+  });
+}
+
+/* Die Leiste am unteren Handyrand trägt fest vier Bereiche des
+   Verwalters. Für eine andere Rolle wären das vier Knöpfe ins Leere –
+   entfernt man sie ersatzlos, bleibt nur „Mehr" übrig und die
+   Handybedienung fällt auf ein einziges Menü zurück.
+
+   Deshalb wird sie neu bestückt, und zwar aus der bereits gefilterten
+   Seitenleiste. Damit gibt es weiterhin nur eine Quelle für die
+   Menüstruktur – dieselbe Überlegung wie bei `handyMenueAufbauen()`. */
+function handyLeisteNeuAufbauen(){
+  const leiste = document.getElementById('handy-leiste');
+  const mehr   = document.getElementById('handy-mehr-knopf');
+  if(!leiste || !mehr) return;
+
+  leiste.querySelectorAll('.handy-knopf[data-ziel]').forEach(el => el.remove());
+
+  [...document.querySelectorAll('.sidebar .nav-item')].slice(0, 4).forEach(p => {
+    const knopf = document.createElement('button');
+    knopf.className = 'handy-knopf';
+    knopf.dataset.ziel = p.dataset.view;
+    knopf.innerHTML =
+      '<span class="handy-knopf-symbol" aria-hidden="true">' +
+        sicher((p.querySelector('.ni-icon') || {}).textContent || '') +
+      '</span><span>' +
+        sicher((p.querySelector('.ni-label') || {}).textContent || p.dataset.view) +
+      '</span>';
+    knopf.addEventListener('click', () => window.switchView(p.dataset.view));
+    leiste.insertBefore(knopf, mehr);
+  });
+}
+
+/* Begrüßung mit Namen. Fehlt der Name im Zugangseintrag, bleibt es beim
+   schlichten „Hallo" – ein erfundener Name wäre schlechter als keiner. */
+function akquiseBegruessung(){
+  const el = document.getElementById('akq-gruss');
+  if(!el) return;
+  el.textContent = aktuellerName ? ('Hallo ' + aktuellerName + ' 👋') : 'Hallo 👋';
+}
+
+function startBereich(){
+  if(aktuelleRolle === ROLLE_ADMIN) return 'uebersicht';
+  const erlaubt = BEREICHE_JE_ROLLE[aktuelleRolle] || [];
+  return erlaubt.find(b => document.getElementById('view-' + b)) || null;
+}
+
+let listenerLaufen = false;
+let warAngemeldet = false;
+
+onAuthStateChanged(auth, async (user) => {
   if(user){
+    const zugang = await rolleErmitteln(user);
+
+    if(!zugang){
+      /* Kein eingerichteter oder gesperrter Zugang – sofort wieder hinaus.
+         Bewusst mit einem Text, der beide Fälle abdeckt: Ob ein Konto gar
+         nicht eingetragen oder ausdrücklich gesperrt ist, geht niemanden
+         etwas an, der davorsteht. */
+      aktuelleRolle = null;
+      aktuellerName = '';
+      signOut(auth);
+      const errBox = document.getElementById('login-error');
+      errBox.textContent = 'Für dieses Konto ist kein Zugang eingerichtet. Bitte beim Verwalter melden.';
+      errBox.style.display = 'block';
+      return;
+    }
+
+    aktuelleRolle = zugang.rolle;
+    aktuellerName = zugang.name || '';
+    warAngemeldet = true;
+
+    rechteAnwenden();
+    akquiseBegruessung();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
     /* Schutz gegen doppelte Abonnements: Feuert onAuthStateChanged ein
        zweites Mal, würden die alten Abmeldefunktionen überschrieben, ohne
        je aufgerufen worden zu sein – ab dann liefe alles doppelt. */
-    if(!listenerLaufen){ listenerLaufen = true; startListeners(); }
+    if(!listenerLaufen){
+      listenerLaufen = true;
+      /* Die Datenlauscher hängen an Sammlungen, die nur der Verwalter lesen
+         darf. Für eine eingeschränkte Rolle liefen sie ausnahmslos in
+         „permission-denied" – deshalb starten sie gar nicht erst. Der
+         Akquise-Bereich bekommt in der nächsten Ausbaustufe eigene. */
+      if(aktuelleRolle === ROLLE_ADMIN) startListeners();
+    }
     bereichAusAdresseOeffnen();
   } else {
+    /* ⚠️ Nach einer beendeten Sitzung die Seite neu laden.
+       Zwei Gründe, beide beim Prüflauf am 14.08.2026 aufgefallen:
+
+       1. `rechteAnwenden()` entfernt Menüpunkte und Bereiche aus dem
+          Dokument. Meldete sich nach einem Akquise-Zugang der Verwalter
+          am selben Gerät an, blieb dessen Menü auf vier Punkte gekürzt –
+          bis jemand von selbst auf „neu laden" kam.
+       2. Die geladenen Daten stehen weiter in `allRequests`, `allKunden`
+          und den übrigen Feldern. Ohne Neuladen säße der nächste
+          Angemeldete vor den Daten des vorherigen.
+
+       Die Bedingung ist nötig: Beim ersten Aufruf der Seite meldet
+       Firebase ebenfalls „niemand angemeldet". Ohne sie lüde sich die
+       Anmeldeseite endlos selbst neu. */
+    if(warAngemeldet){ location.reload(); return; }
+
+    aktuelleRolle = null;
+    aktuellerName = '';
     listenerLaufen = false;
     document.getElementById('app-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
@@ -5972,6 +6594,7 @@ onAuthStateChanged(auth, (user) => {
     if(unsubAusgaben) unsubAusgaben();
     if(unsubPakete) unsubPakete();
     if(unsubMitarbeiter) unsubMitarbeiter();
+    if(unsubBenutzer) unsubBenutzer();
     if(unsubKunden) unsubKunden();
     if(unsubAngebote) unsubAngebote();
     if(unsubReferenzen) unsubReferenzen();
@@ -5988,6 +6611,15 @@ let aktuellerBereich = 'uebersicht';
 window.switchView = function(name){
   const ziel = document.getElementById('view-' + name);
   if(!ziel){ console.warn('Unbekannter Bereich:', name); return; }
+
+  /* Zweiter Riegel neben dem ausgeblendeten Menüpunkt: Ohne ihn genügte
+     `#finanzen` in der Adresszeile, um den Bereich zu öffnen. Die Zahlen
+     blieben zwar leer – die Firestore-Regeln geben sie nicht heraus –,
+     aber der Bereich wäre da, samt Eingabefeldern und Knöpfen. */
+  if(!darfBereich(name)){
+    console.warn('Bereich für diese Rolle nicht freigegeben:', name);
+    return;
+  }
 
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -6139,7 +6771,16 @@ function handyZaehlerAktualisieren(offen){
 /* Bereich aus der Adresszeile wiederherstellen (F5, Lesezeichen, Zurück) */
 function bereichAusAdresseOeffnen(){
   const name = (location.hash || '').replace(/^#/,'');
-  if(name && document.getElementById('view-' + name)) window.switchView(name);
+  if(name && document.getElementById('view-' + name) && darfBereich(name)){
+    window.switchView(name);
+    return;
+  }
+  /* Ohne diesen Rückfall bliebe für eine eingeschränkte Rolle der im HTML
+     fest voreingestellte Bereich stehen – die Übersicht des Verwalters. */
+  if(aktuelleRolle && aktuelleRolle !== ROLLE_ADMIN){
+    const start = startBereich();
+    if(start) window.switchView(start);
+  }
 }
 window.addEventListener('hashchange', bereichAusAdresseOeffnen);
 
@@ -6361,6 +7002,13 @@ function startListeners(){
     allPakete = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderPaketeList();
   }, err => console.error(err));
+
+  /* Anmeldekonten. Läuft ausschließlich hier, also nur für den Verwalter –
+     die Regel gibt die ganze Sammlung auch nur ihm heraus. */
+  unsubBenutzer = onSnapshot(collection(db, 'benutzer'), (snap) => {
+    allBenutzer = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    renderZugaenge();
+  }, err => meldeLadefehler(err, 'benutzer', 'zugaenge-list'));
 
   unsubMitarbeiter = onSnapshot(collection(db, 'mitarbeiter'), (snap) => {
     allMitarbeiter = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -11329,6 +11977,161 @@ window.toggleMitarbeiterStatus = function(id, current){
 window.deleteMitarbeiter = function(id){
   if(!confirm('Diesen Mitarbeiter wirklich löschen?')) return;
   deleteDoc(doc(db, 'mitarbeiter', id)).catch(err => meldeSchreibfehler(err, 'Das Löschen des Mitarbeiters'));
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ZUGÄNGE – Anmeldekonten fürs Dashboard (14.08.2026)
+   ══════════════════════════════════════════════════════════════
+   Die Dokument-ID ist die Firebase-Auth-Kennung (UID). Das Konto
+   selbst entsteht in der Firebase-Konsole – ein Passwort kann und
+   soll das Dashboard nicht vergeben.
+
+   ⚠️ Nicht mit `mitarbeiter` zusammenlegen. Dort steht, wer welchen
+   Auftrag putzt; hier steht, wer sich anmelden darf. Das ist selten
+   dieselbe Person, und eine gemeinsame Liste müsste bei jedem Feld
+   erklären, für welche Hälfte es gilt. */
+
+const ZUGANG_ROLLEN_TEXT = {
+  admin: 'Verwalter',
+  acquisition: 'Akquise',
+};
+
+function renderZugaenge(){
+  const listEl = document.getElementById('zugaenge-list');
+  if(!listEl) return;
+
+  if(allBenutzer.length === 0){
+    listEl.innerHTML = '<div class="empty-state">Noch kein Zugang eingetragen. ' +
+      'Dein eigener Verwalterzugang läuft über die Verwalter-Adresse und muss hier nicht stehen.</div>';
+    return;
+  }
+
+  const sortiert = [...allBenutzer].sort((a,b) =>
+    String(a.name||a.email||a.uid).localeCompare(String(b.name||b.email||b.uid), 'de'));
+
+  listEl.innerHTML = sortiert.map(b => {
+    const uj = sicherJs(b.uid);
+    const aktiv = b.aktiv === true;
+    const rolle = ZUGANG_ROLLEN_TEXT[b.rolle] || b.rolle || 'ohne Rolle';
+    return `
+    <div class="zugang-zeile">
+      <span class="zugang-rolle ${aktiv ? '' : 'gesperrt'}">${sicher(aktiv ? rolle : 'gesperrt')}</span>
+      <div class="zugang-haupt">
+        <div class="zugang-name">${sicher(b.name || b.email || 'Ohne Namen')}</div>
+        <div class="zugang-meta">${sicher(b.email || 'keine E-Mail hinterlegt')} · ${sicher(rolle)} · UID ${sicher(b.uid)}</div>
+      </div>
+      <button class="karte-aktion" onclick="editZugang('${uj}')">Bearbeiten</button>
+      <button class="karte-aktion" onclick="zugangUmschalten('${uj}', ${aktiv})">${aktiv ? 'Sperren' : 'Freigeben'}</button>
+      <button class="karte-aktion" style="border-color:rgba(248,113,113,0.3);color:#F87171" onclick="deleteZugang('${uj}')">Löschen</button>
+    </div>`;
+  }).join('');
+}
+
+function zugangFehler(text, feldId){
+  const box = document.getElementById('zug-fehler');
+  if(box){ box.textContent = text; box.classList.add('sichtbar'); }
+  const feld = feldId && document.getElementById(feldId);
+  if(feld){ feld.classList.add('fehlerhaft'); feld.focus(); }
+}
+
+window.resetZugangForm = function(){
+  ['zug-edit-uid','zug-uid','zug-name','zug-email'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const rolle = document.getElementById('zug-rolle'); if(rolle) rolle.value = 'acquisition';
+  const aktiv = document.getElementById('zug-aktiv'); if(aktiv) aktiv.value = 'ja';
+  const uid = document.getElementById('zug-uid'); if(uid) uid.disabled = false;
+  const box = document.getElementById('zug-fehler'); if(box) box.classList.remove('sichtbar');
+  document.querySelectorAll('#view-zugaenge .fehlerhaft').forEach(el => el.classList.remove('fehlerhaft'));
+  document.getElementById('zug-form-title').textContent = 'Neuen Zugang eintragen';
+  document.getElementById('zug-save-btn').textContent = 'Zugang speichern';
+};
+
+window.editZugang = function(uid){
+  const b = allBenutzer.find(x => x.uid === uid);
+  if(!b) return;
+  document.getElementById('zug-edit-uid').value = uid;
+  document.getElementById('zug-uid').value = uid;
+  /* Die Kennung ist die Dokument-ID. Ließe man sie ändern, entstünde
+     beim Speichern ein zweiter Eintrag statt einer Änderung. */
+  document.getElementById('zug-uid').disabled = true;
+  document.getElementById('zug-name').value = b.name || '';
+  document.getElementById('zug-email').value = b.email || '';
+  document.getElementById('zug-rolle').value = b.rolle || 'acquisition';
+  document.getElementById('zug-aktiv').value = b.aktiv === true ? 'ja' : 'nein';
+  document.getElementById('zug-form-title').textContent = 'Zugang bearbeiten: ' + (b.name || b.email || uid);
+  document.getElementById('zug-save-btn').textContent = 'Änderungen speichern';
+  window.scrollTo({ top:0, behavior:'smooth' });
+};
+
+window.saveZugang = function(){
+  const btn = document.getElementById('zug-save-btn');
+  const editUid = document.getElementById('zug-edit-uid').value;
+  const uid   = (document.getElementById('zug-uid').value || '').trim();
+  const name  = (document.getElementById('zug-name').value || '').trim();
+  const email = (document.getElementById('zug-email').value || '').trim().toLowerCase();
+  const rolle = document.getElementById('zug-rolle').value;
+  const aktiv = document.getElementById('zug-aktiv').value === 'ja';
+
+  document.getElementById('zug-fehler').classList.remove('sichtbar');
+  document.querySelectorAll('#view-zugaenge .fehlerhaft').forEach(el => el.classList.remove('fehlerhaft'));
+
+  if(!uid){ zugangFehler('Bitte die Benutzerkennung (UID) aus der Firebase-Konsole eintragen.', 'zug-uid'); return; }
+  /* Eine UID ist eine reine Buchstaben-Ziffern-Folge von rund 28 Zeichen.
+     Die häufigste Verwechslung ist die E-Mail-Adresse – mit der findet
+     das Dashboard den Eintrag später nie, und der Zugang bliebe ohne
+     erkennbaren Grund gesperrt. */
+  if(uid.includes('@') || uid.length < 10 || !/^[A-Za-z0-9_-]+$/.test(uid)){
+    zugangFehler('Das sieht nicht nach einer Benutzerkennung aus. Sie steht in der Firebase-Konsole unter Authentication → Users ganz rechts und ist keine E-Mail-Adresse.', 'zug-uid');
+    return;
+  }
+  if(!name){ zugangFehler('Bitte einen Namen eintragen – er erscheint in der Begrüßung.', 'zug-name'); return; }
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
+    zugangFehler('Diese E-Mail-Adresse sieht nicht richtig aus.', 'zug-email'); return;
+  }
+  if(!editUid && allBenutzer.some(b => b.uid === uid)){
+    zugangFehler('Für diese Benutzerkennung gibt es bereits einen Zugang. Über „Bearbeiten" lässt er sich ändern.', 'zug-uid');
+    return;
+  }
+
+  const daten = { name, email, rolle, aktiv };
+  if(!editUid) daten.createdAt = serverTimestamp();
+
+  btn.disabled = true;
+  const alterText = btn.textContent;
+  btn.textContent = 'Speichere ...';
+
+  setDoc(doc(db, 'benutzer', uid), daten, { merge:true })
+    .then(() => {
+      btn.disabled = false; btn.textContent = alterText;
+      window.resetZugangForm();
+      melde(editUid ? 'Zugang aktualisiert.' : 'Zugang eingetragen.');
+    })
+    .catch(err => {
+      btn.disabled = false; btn.textContent = alterText;
+      meldeSchreibfehler(err, 'Das Speichern des Zugangs');
+    });
+};
+
+window.zugangUmschalten = function(uid, aktivJetzt){
+  const b = allBenutzer.find(x => x.uid === uid) || {};
+  const wen = b.name || b.email || uid;
+  const frage = aktivJetzt
+    ? `Zugang von „${wen}" sperren?\n\nEr kann sich danach nicht mehr anmelden. Alles, was er angelegt hat, bleibt erhalten.`
+    : `Zugang von „${wen}" wieder freigeben?`;
+  if(!confirm(frage)) return;
+  setDoc(doc(db, 'benutzer', uid), { aktiv: !aktivJetzt }, { merge:true })
+    .then(() => melde(aktivJetzt ? 'Zugang gesperrt.' : 'Zugang freigegeben.'))
+    .catch(err => meldeSchreibfehler(err, 'Das Umschalten des Zugangs'));
+};
+
+window.deleteZugang = function(uid){
+  const b = allBenutzer.find(x => x.uid === uid) || {};
+  const wen = b.name || b.email || uid;
+  if(!confirm(`Zugang von „${wen}" endgültig löschen?\n\nBesser ist meist „Sperren": Der Eintrag bleibt dann erhalten, und man sieht später noch, wer was angelegt hat.\n\nDas Anmeldekonto selbst bleibt bestehen – das löschst du in der Firebase-Konsole unter Authentication.`)) return;
+  deleteDoc(doc(db, 'benutzer', uid))
+    .then(() => melde('Zugang gelöscht.'))
+    .catch(err => meldeSchreibfehler(err, 'Das Löschen des Zugangs'));
 };
 
 // ── KALKULATION (Sätze für den Angebotsrechner) ─────────────────────
