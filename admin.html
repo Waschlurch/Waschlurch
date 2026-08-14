@@ -1747,6 +1747,65 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
    überhaupt vorhanden sind. */
 .firma-zaehler { font-size:12.5px; color:rgba(255,255,255,0.55); margin:-8px 0 16px; }
 
+/* ── DUBLETTENPRÜFUNG (14.08.2026) ────────────────────────────
+   Der Prüfstatus steht über dem Formular und ist im Ruhezustand
+   bewusst unauffällig. Er soll das Erfassen begleiten, nicht
+   davorstehen – wer zehn Firmen hintereinander einträgt, darf
+   nicht bei jeder erst eine Meldung wegklicken müssen. */
+.dub-status {
+  display:flex; align-items:flex-start; gap:10px;
+  border-radius:14px; padding:12px 15px; margin-bottom:18px;
+  font-size:13.5px; line-height:1.5;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.7);
+}
+.dub-status.dub-frei  { background:rgba(34,197,94,0.08);  border-color:rgba(34,197,94,0.25);  color:#86EFAC; }
+.dub-status.dub-gelb  { background:rgba(251,191,36,0.09); border-color:rgba(251,191,36,0.34); color:#FCD34D; }
+.dub-status.dub-rot   { background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:#FCA5A5; }
+.dub-status.dub-sperre{ background:rgba(248,113,113,0.16);border-color:#F87171; color:#FCA5A5; }
+.dub-status-inhalt { min-width:0; flex:1; }
+.dub-status-titel { font-weight:700; margin-bottom:2px; }
+.dub-symbol { flex-shrink:0; font-size:15px; line-height:1.4; }
+
+/* Die große Sperrmeldung. Sie darf nicht übersehen werden – deshalb
+   Versalien, eigener Rahmen und deutlich mehr Fläche als der
+   normale Prüfstatus. */
+.dub-sperrtitel {
+  font-size:15px; font-weight:800; letter-spacing:.6px; color:#F87171;
+  margin-bottom:4px;
+}
+
+/* Karte des gefundenen Eintrags. Zeigt genau die Angaben, die man
+   braucht, um zu entscheiden: dieselbe Firma oder doch eine andere? */
+.dub-treffer {
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12);
+  border-radius:12px; padding:14px 15px; margin-top:12px;
+}
+.dub-treffer-kopf { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.dub-treffer-name { font-size:14.5px; font-weight:700; color:var(--white); min-width:0; flex:1 1 160px; overflow-wrap:anywhere; }
+.dub-treffer-daten {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 18px;
+  font-size:12.5px; color:rgba(255,255,255,0.78);
+}
+.dub-treffer-daten > div { min-width:0; overflow-wrap:anywhere; }
+.dub-treffer-daten span { color:rgba(255,255,255,0.55); margin-right:5px; }
+.dub-details > summary {
+  cursor:pointer; font-size:12.5px; color:rgba(255,255,255,0.6);
+  padding:5px 0; list-style:none;
+}
+.dub-details > summary::-webkit-details-marker { display:none; }
+.dub-details > summary::before { content:'▸ '; }
+.dub-details[open] > summary::before { content:'▾ '; }
+.dub-details > summary:hover { color:var(--white); }
+.dub-details[open] > summary { margin-bottom:6px; }
+
+.dub-grund {
+  display:inline-block; margin-top:10px; padding:3px 9px; border-radius:100px;
+  font-size:11px; font-weight:700; background:rgba(248,113,113,0.16); color:#FCA5A5;
+}
+.dub-grund.gelb { background:rgba(251,191,36,0.16); color:#FCD34D; }
+.dub-knoepfe { display:flex; gap:9px; flex-wrap:wrap; margin-top:13px; }
+
 /* Knopfleiste am Formularende. Am Schreibtisch schlicht eine Reihe;
    auf dem Handy bleibt sie beim Scrollen stehen – das Formular hat
    dreizehn Felder, und der Speichernknopf wäre sonst dauernd außer
@@ -1798,6 +1857,12 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     border-top:1px solid rgba(255,255,255,0.1);
   }
   .akq-speicherleiste .btn { width:100%; }
+  /* Zwei Spalten ergäben bei 375 px rund 150 px je Angabe – „Letzter
+     Kontakt: 14.08.2026, 09:12" bricht darin in drei Zeilen um. */
+  .dub-treffer-daten { grid-template-columns:minmax(0,1fr); gap:5px; }
+  .dub-knoepfe .karte-aktion { flex:1; min-width:0; }
+  .dub-status { padding:11px 13px; gap:8px; }
+  .dub-treffer { padding:12px 13px; margin-top:10px; }
   .firma-kopf-name { font-size:18px; }
   .verlauf-zeile { padding-left:18px; }
 
@@ -2051,28 +2116,37 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
           <div class="view-sub">Nur der Firmenname ist Pflicht. Alles Weitere lässt sich später ergänzen.</div>
         </div>
 
+        <!-- Prüfstatus. Im Ruhezustand ausgeblendet – er begleitet das
+             Erfassen, statt davorzustehen. -->
+        <div class="dub-status" id="firma-dub-status" hidden></div>
+
         <div class="paket-form">
           <input type="hidden" id="firma-edit-id" value="">
 
           <div class="field">
             <label for="firma-name">Firmenname *</label>
-            <input type="text" id="firma-name" placeholder="z. B. Pure Fitness" autocomplete="off">
+            <input type="text" id="firma-name" placeholder="z. B. Pure Fitness" autocomplete="off"
+                   oninput="akqDublettePruefenVerzoegert()">
           </div>
           <div class="field-row">
             <div class="field"><label for="firma-standort">Standort / Filiale</label>
-              <input type="text" id="firma-standort" placeholder="z. B. Hennef" autocomplete="off"></div>
+              <input type="text" id="firma-standort" placeholder="z. B. Hennef" autocomplete="off"
+                     oninput="akqDublettePruefenVerzoegert()"></div>
             <div class="field"><label for="firma-ansprechpartner">Ansprechpartner</label>
               <input type="text" id="firma-ansprechpartner" placeholder="z. B. Frau Weber" autocomplete="off"></div>
           </div>
           <div class="field-row">
             <div class="field"><label for="firma-email">E-Mail</label>
-              <input type="email" id="firma-email" placeholder="info@beispiel.de" autocomplete="off"></div>
+              <input type="email" id="firma-email" placeholder="info@beispiel.de" autocomplete="off"
+                     oninput="akqDublettePruefenVerzoegert()"></div>
             <div class="field"><label for="firma-telefon">Telefon</label>
-              <input type="tel" id="firma-telefon" placeholder="02242 123456" autocomplete="off"></div>
+              <input type="tel" id="firma-telefon" placeholder="02242 123456" autocomplete="off"
+                     oninput="akqDublettePruefenVerzoegert()"></div>
           </div>
           <div class="field">
             <label for="firma-website">Website</label>
-            <input type="text" id="firma-website" placeholder="www.beispiel.de" autocomplete="off">
+            <input type="text" id="firma-website" placeholder="www.beispiel.de" autocomplete="off"
+                   oninput="akqDublettePruefenVerzoegert()">
           </div>
           <div class="field-row">
             <div class="field"><label for="firma-strasse">Straße</label>
@@ -2084,7 +2158,8 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
             <div class="field"><label for="firma-plz">PLZ</label>
               <input type="text" inputmode="numeric" id="firma-plz" placeholder="53773" autocomplete="off"></div>
             <div class="field"><label for="firma-ort">Ort</label>
-              <input type="text" id="firma-ort" placeholder="Hennef" autocomplete="off"></div>
+              <input type="text" id="firma-ort" placeholder="Hennef" autocomplete="off"
+                     oninput="akqDublettePruefenVerzoegert()"></div>
           </div>
           <div class="field">
             <label for="firma-branche">Branche</label>
@@ -12263,6 +12338,134 @@ function akqNormDomain(wert){
   return s;
 }
 
+/* ── Firmenname und Ort vergleichbar machen ───────────────────
+   Für die weiche Erkennung („dieselbe Firma, anders geschrieben").
+   Rechtsformen fliegen raus: „Pure Fitness GmbH" und „Pure Fitness"
+   sind derselbe Betrieb, und wer beim zweiten Mal die Rechtsform
+   mittippt, soll trotzdem gewarnt werden. */
+/* „e\s+k" und „e\s+v" stehen mit drin, weil die Satzzeichen einen
+   Schritt vorher schon zu Leerzeichen geworden sind: Aus „Müller e.K."
+   ist da bereits „müller e k" geworden. Ohne die beiden Formen bliebe
+   ein „e k" am Namen hängen und verhinderte den Vergleich. */
+const AKQ_RECHTSFORMEN = /\b(gmbh|mbh|ag|kg|kgaa|ohg|ug|gbr|se|ltd|inc|ek|ev|e\s+k|e\s+v|co|haftungsbeschraenkt|haftungsbeschränkt)\b/g;
+
+function akqNormName(wert){
+  return String(wert || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9äöüß]+/g, ' ')
+    .replace(AKQ_RECHTSFORMEN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function akqNormOrt(wert){
+  return String(wert || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9äöüß]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* Standort UND Ort zusammen betrachten. „Pure Fitness" mit Standort
+   „Hennef" und „Pure Fitness" mit Ort „Hennef" sind derselbe Betrieb –
+   in welches der beiden Felder jemand den Ort tippt, ist Zufall. */
+function akqOrte(f){
+  return [akqNormOrt(f && f.ort), akqNormOrt(f && f.standort)].filter(Boolean);
+}
+
+/* Gleich oder eindeutig ineinander enthalten. Bewusst KEIN
+   Ähnlichkeitsmaß über Zeichenabstände: „Bäckerei Sonne" und
+   „Bäckerei Sonner" wären damit dieselbe Firma, obwohl es zwei sind.
+   Lieber eine Warnung zu wenig als eine, der niemand mehr glaubt.
+
+   Die Mindestlänge verhindert, dass ein Kürzel wie „ab" auf jede
+   zweite Firma passt. */
+function akqNamenPassen(a, b){
+  if(!a || !b) return false;
+  if(a === b) return true;
+  if(a.length < 5 || b.length < 5) return false;
+  return a.includes(b) || b.includes(a);
+}
+
+function akqOrtePassen(a, b){
+  /* Fehlt auf einer Seite jede Ortsangabe, entscheidet allein der
+     Name. Das ist der häufige Fall „erst nur den Namen erfasst,
+     Adresse kommt später" – und genau dann ist die Warnung nützlich. */
+  if(!a.length || !b.length) return true;
+  return a.some(x => b.includes(x));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DUBLETTEN- UND SPERRPRÜFUNG (14.08.2026)
+   ══════════════════════════════════════════════════════════════
+   Bewusst eine reine Funktion über eine übergebene Liste: Sie wird
+   an drei Stellen gebraucht – während der Eingabe, beim Speichern
+   und später noch einmal vor dem Versand. Läge sie im Formular,
+   müsste sie für den Versand ein zweites Mal geschrieben werden,
+   und beide Fassungen liefen auseinander.
+
+   Zwei Trefferstärken:
+
+   ROT   E-Mail, Telefonnummer oder Domain stimmen überein. Das ist
+         kein Zufall – es ist derselbe Kontakt. Eine neue
+         Filialbezeichnung ändert daran nichts.
+   GELB  Firmenname und Ort passen zusammen. Kann dieselbe Firma
+         sein, kann aber auch der zweite Standort einer Kette sein.
+
+   Verglichen wird gegen die gespeicherten normalisierten Felder,
+   mit Rückfall auf eine frische Normalisierung: Datensätze aus der
+   Zeit vor dem 14.08.2026 haben die Felder nicht, und ohne den
+   Rückfall wären sie unsichtbar für die Prüfung. */
+function akqFindeDubletten(eingabe, bestand, ausserId){
+  const e = {
+    email:   akqNormEmail(eingabe && eingabe.email),
+    telefon: akqNormTelefon(eingabe && eingabe.telefon),
+    domain:  akqNormDomain(eingabe && eingabe.website),
+    name:    akqNormName(eingabe && eingabe.firmenname),
+    orte:    akqOrte(eingabe || {})
+  };
+
+  const treffer = [];
+  (bestand || []).forEach(f => {
+    if(!f) return;
+    if(ausserId && f.id === ausserId) return;
+
+    const gruende = [];
+    const fEmail   = f.email_normalisiert   || akqNormEmail(f.email);
+    const fTelefon = f.telefon_normalisiert || akqNormTelefon(f.telefon);
+    const fDomain  = f.domain_normalisiert  || akqNormDomain(f.website);
+
+    if(e.email   && e.email   === fEmail)   gruende.push('E-Mail');
+    if(e.telefon && e.telefon === fTelefon) gruende.push('Telefonnummer');
+    if(e.domain  && e.domain  === fDomain)  gruende.push('Website');
+
+    const hart = gruende.length > 0;
+
+    if(e.name && akqNamenPassen(e.name, akqNormName(f.firmenname)) && akqOrtePassen(e.orte, akqOrte(f))){
+      gruende.push('Firmenname und Ort');
+    }
+    if(!gruende.length) return;
+
+    treffer.push({ firma:f, staerke: hart ? 'rot' : 'gelb', gruende });
+  });
+
+  // Harte Treffer zuerst – sie entscheiden über die Gesamtstufe
+  treffer.sort((a, b) => (a.staerke === b.staerke) ? 0 : (a.staerke === 'rot' ? -1 : 1));
+
+  const gesperrte = treffer.filter(t => t.firma.do_not_contact === true);
+  return {
+    stufe: treffer.length === 0 ? 'keine' : treffer[0].staerke,
+    treffer,
+    gesperrt: gesperrte.length > 0,
+    gesperrteFirma: gesperrte.length ? gesperrte[0].firma : null
+  };
+}
+
+/* Wird das Formular und später der Versand aufrufen. */
+window.akqPruefeKontakt = function(eingabe, ausserId){
+  return akqFindeDubletten(eingabe, allFirmen, ausserId || null);
+};
+
 /* ── Wer ist am Werk? ─────────────────────────────────────── */
 function akqWerBinIch(){
   const u = auth.currentUser;
@@ -12416,6 +12619,210 @@ const FIRMA_FELD_ZU_EINGABE = {
   ort:'firma-ort', branche:'firma-branche', quelle_url:'firma-quelle', notiz:'firma-notiz'
 };
 
+/* ══════════════════════════════════════════════════════════════
+   PRÜFSTATUS IM FORMULAR
+   ══════════════════════════════════════════════════════════════
+   Die Prüfung läuft während der Eingabe mit. Sie soll das Erfassen
+   begleiten, nicht davorstehen: Solange nichts Verwertbares getippt
+   ist, bleibt der Kasten unsichtbar. */
+let akqDubTimer = null;
+let akqDubUebergangen = false;        // „Trotzdem neue Firma" wurde gedrückt
+let akqSperrversuchGemeldet = false;  // ein Klickgewitter soll kein Protokollgewitter erzeugen
+
+function akqFormEingabe(){
+  const hole = id => (document.getElementById(id) || {}).value || '';
+  return {
+    firmenname: hole('firma-name'), standort: hole('firma-standort'), ort: hole('firma-ort'),
+    email: hole('firma-email'), telefon: hole('firma-telefon'), website: hole('firma-website')
+  };
+}
+
+function akqPruefstatusKasten(){ return document.getElementById('firma-dub-status'); }
+
+window.akqDublettePruefenVerzoegert = function(){
+  const box = akqPruefstatusKasten();
+  const eingabe = akqFormEingabe();
+  /* Erst ab drei Zeichen prüfen. Bei „Pu" träfe der Namensvergleich
+     ohnehin nichts, und ein Kasten, der nach jedem Buchstaben
+     aufblinkt, macht das Erfassen unruhig. */
+  const genugGetippt = [eingabe.firmenname, eingabe.email, eingabe.telefon, eingabe.website]
+    .some(v => v.trim().length >= 3);
+  if(!genugGetippt){
+    if(box) box.setAttribute('hidden','');
+    if(akqDubTimer) clearTimeout(akqDubTimer);
+    return;
+  }
+  if(box){
+    box.removeAttribute('hidden');
+    box.className = 'dub-status';
+    box.innerHTML = '<span class="dub-symbol" aria-hidden="true">⏳</span>' +
+                    '<div class="dub-status-inhalt">Firma wird geprüft ...</div>';
+  }
+  if(akqDubTimer) clearTimeout(akqDubTimer);
+  akqDubTimer = setTimeout(akqDublettePruefen, 400);
+};
+
+function akqDublettePruefen(){
+  const box = akqPruefstatusKasten();
+  if(!box) return;
+  const editId = (document.getElementById('firma-edit-id') || {}).value || '';
+  akqZeigePruefstatus(akqFindeDubletten(akqFormEingabe(), allFirmen, editId || null));
+}
+
+/* ⚠️ Auf dem Handy sind die Angaben des Treffers zugeklappt.
+   Nachgemessen bei 375 px: Der aufgeklappte Kasten war 506 px hoch
+   und schob das Eingabefeld, in dem gerade getippt wurde, unter den
+   Bildrand – man hätte nach jedem Treffer zurückscrollen müssen.
+
+   Zugeklappt bleiben Firmenname, Standort, Status und der Grund der
+   Übereinstimmung sichtbar; das genügt für die Entscheidung „dieselbe
+   Firma oder nicht". Am Schreibtisch ist alles offen. */
+function akqSchmalerBildschirm(){
+  return window.matchMedia && window.matchMedia('(max-width:900px)').matches;
+}
+
+function akqTrefferKarte(t){
+  const f = t.firma;
+  const fj = sicherJs(f.id);
+  const status = f.status || 'neu';
+  const zustaendig = f.zugewiesen_an_name || f.erstellt_von_name || 'unbekannt';
+  return `
+    <div class="dub-treffer">
+      <div class="dub-treffer-kopf">
+        <div class="dub-treffer-name">${sicher([f.firmenname, f.standort].filter(Boolean).join(' · ') || 'Ohne Namen')}</div>
+        <span class="f-pill ${FIRMEN_STATUS_FARBE[status] || ''}">${sicher(FIRMEN_STATUS_TEXT[status] || status)}</span>
+      </div>
+      <details class="dub-details" ${akqSchmalerBildschirm() ? '' : 'open'}>
+        <summary>Alle Angaben zum bestehenden Eintrag</summary>
+        <div class="dub-treffer-daten">
+          <div><span>Ort:</span>${sicher([f.plz, f.ort].filter(Boolean).join(' ') || '–')}</div>
+          <div><span>Ansprechpartner:</span>${sicher(f.ansprechpartner || '–')}</div>
+          <div><span>E-Mail:</span>${sicher(f.email || '–')}</div>
+          <div><span>Telefon:</span>${sicher(f.telefon || '–')}</div>
+          <div><span>Letzter Kontakt:</span>${sicher(f.letzter_kontakt ? formatDate(f.letzter_kontakt) : 'noch keiner')}</div>
+          <div><span>Zuständig:</span>${sicher(zustaendig)}</div>
+          <div><span>Kontaktsperre:</span>${f.do_not_contact ? '🔴 ja' : 'nein'}</div>
+        </div>
+      </details>
+      <span class="dub-grund ${t.staerke === 'gelb' ? 'gelb' : ''}">Übereinstimmung: ${sicher(t.gruende.join(', '))}</span>
+      <div class="dub-knoepfe">
+        <button type="button" class="karte-aktion" onclick="akqFirmaDetail('${fj}')">Bestehenden Eintrag öffnen</button>
+      </div>
+    </div>`;
+}
+
+/* Merkt sich die zuletzt angezeigte Stufe. Grund siehe unten. */
+let akqLetzteStufe = null;
+
+function akqZeigePruefstatus(p){
+  const box = akqPruefstatusKasten();
+  if(!box) return;
+  box.removeAttribute('hidden');
+
+  /* ⚠️ Der Kasten steht ÜBER dem Formular und wird bei einem Treffer
+     mit Trefferkarte nachgemessen 583 px hoch (375 px Bildschirm).
+     Er schiebt damit genau das Feld aus dem Bild, in das gerade
+     getippt wird.
+
+     Deshalb wird er einmalig ins Bild geholt, sobald die Stufe
+     wechselt – nicht bei jedem Tastendruck, das wäre ein Kampf mit
+     dem Nutzer. `block:'nearest'` rührt sich nicht, wenn der Kasten
+     ohnehin schon zu sehen ist. */
+  const stufeNeu = p.gesperrt ? 'sperre' : p.stufe;
+  const gewechselt = stufeNeu !== akqLetzteStufe;
+  akqLetzteStufe = stufeNeu;
+
+  if(p.stufe === 'keine'){
+    box.className = 'dub-status dub-frei';
+    box.innerHTML = '<span class="dub-symbol" aria-hidden="true">✅</span>' +
+                    '<div class="dub-status-inhalt">Kein bestehender Eintrag gefunden.</div>';
+    return;
+  }
+
+  const erster = p.treffer[0];
+  const weitere = p.treffer.length - 1;
+
+  /* Die Sperre steht vor allem anderen. Wer gerade eine Firma
+     einträgt, die sich Werbung verbeten hat, muss das sehen, bevor
+     er weitertippt – nicht erst beim Speichern. */
+  if(p.gesperrt){
+    const g = p.gesperrteFirma;
+    const wann = g.do_not_contact_am ? formatDate(g.do_not_contact_am) : 'Zeitpunkt nicht vermerkt';
+    const grund = g.do_not_contact_grund || 'Grund nicht vermerkt';
+    const von = g.do_not_contact_von ? ' · gesetzt von ' + sicher(g.do_not_contact_von) : '';
+    box.className = 'dub-status dub-sperre';
+    box.innerHTML =
+      '<span class="dub-symbol" aria-hidden="true">🔴</span>' +
+      '<div class="dub-status-inhalt">' +
+        '<div class="dub-sperrtitel">NICHT ERNEUT KONTAKTIEREN</div>' +
+        'Dieser Kontakt ist gesperrt: ' + sicher(grund) + '<br>' +
+        '<span style="opacity:.8">Seit ' + sicher(wann) + von + '</span>' +
+        akqTrefferKarte(p.treffer.find(t => t.firma.id === g.id) || erster) +
+        (aktuelleRolle === ROLLE_ADMIN
+          ? '<div class="dub-knoepfe"><button type="button" class="karte-aktion" onclick="akqTrotzdemNeu()">Trotzdem neue Firma anlegen</button></div>'
+          : '<div style="margin-top:11px;font-size:12.5px;opacity:.85">Ein neuer Eintrag für denselben Kontakt ist nicht möglich. Wende dich an den Verwalter, wenn die Ablehnung zurückgenommen wurde.</div>') +
+      '</div>';
+    if(gewechselt) akqStatusInsBild(box);
+    return;
+  }
+
+  const rot = p.stufe === 'rot';
+  box.className = 'dub-status ' + (rot ? 'dub-rot' : 'dub-gelb');
+  box.innerHTML =
+    '<span class="dub-symbol" aria-hidden="true">' + (rot ? '🔴' : '⚠️') + '</span>' +
+    '<div class="dub-status-inhalt">' +
+      '<div class="dub-status-titel">' +
+        (rot ? 'Diese Firma ist bereits im Akquise-System vorhanden.'
+             : 'Möglicher bestehender Kontakt gefunden.') +
+      '</div>' +
+      (rot ? 'E-Mail, Telefonnummer oder Website stimmen überein. Bitte den bestehenden Eintrag verwenden.'
+           : 'Firmenname und Ort passen zu einem vorhandenen Eintrag. Es kann auch ein zweiter Standort sein.') +
+      (weitere > 0 ? '<br><span style="opacity:.8">Und ' + weitere + ' weitere' + (weitere === 1 ? 'r Treffer' : ' Treffer') + '.</span>' : '') +
+      akqTrefferKarte(erster) +
+      (akqDubUebergangen
+        ? '<div style="margin-top:11px;font-size:12.5px;opacity:.85">Wird trotzdem als neue Firma angelegt.</div>'
+        : '<div class="dub-knoepfe"><button type="button" class="karte-aktion" onclick="akqTrotzdemNeu()">Trotzdem neue Firma</button></div>') +
+    '</div>';
+  if(gewechselt) akqStatusInsBild(box);
+}
+
+/* Der Kasten hat gerade Platz gebraucht und das Feld nach unten
+   geschoben – nachgemessen landete es bei 375 px genau drei Pixel
+   unter dem Bildrand. Beides soll zu sehen sein; da der Kasten
+   unmittelbar über dem Formular steht, genügt es, das gerade
+   bearbeitete Feld minimal ins Bild zu holen. `block:'nearest'`
+   scrollt nur so weit wie nötig und rührt sich nicht, wenn ohnehin
+   alles sichtbar ist. */
+function akqStatusInsBild(box){
+  const aktiv = document.activeElement;
+  const imFormular = aktiv && aktiv.closest && aktiv.closest('#firmen-form-bereich');
+  /* Bewusst ohne `behavior:'smooth'`. Eine Korrektur um wenige Pixel
+     soll sofort passieren – eine Animation währenddessen tippt sich
+     unangenehm. Beim Messen zeigte sich zudem, dass sanftes Scrollen
+     ausbleibt, solange die Seite nicht sichtbar gezeichnet wird. */
+  (imFormular ? aktiv : box).scrollIntoView({ block:'nearest' });
+}
+
+/* Die bewusste Entscheidung des Mitarbeiters. Bei einem harten
+   Treffer wird nachgefragt – dort ist der bestehende Eintrag die
+   Vorgabe, nicht bloß ein Vorschlag. */
+window.akqTrotzdemNeu = function(){
+  const editId = (document.getElementById('firma-edit-id') || {}).value || '';
+  const p = akqFindeDubletten(akqFormEingabe(), allFirmen, editId || null);
+
+  if(p.gesperrt && aktuelleRolle !== ROLLE_ADMIN){
+    alert('Dieser Kontakt ist gesperrt. Ein neuer Eintrag dafür ist nicht möglich.');
+    return;
+  }
+  if(p.stufe === 'rot' && !confirm(
+      'E-Mail, Telefonnummer oder Website stimmen mit einem vorhandenen Eintrag überein.\n\n' +
+      'Ein zweiter Datensatz führt dazu, dass dieselbe Firma zweimal angeschrieben werden kann.\n\n' +
+      'Wirklich als neue Firma anlegen?')) return;
+
+  akqDubUebergangen = true;
+  akqZeigePruefstatus(p);
+};
+
 window.akqFirmaFormOeffnen = function(id){
   const f = id ? allFirmen.find(x => x.id === id) : null;
 
@@ -12429,6 +12836,17 @@ window.akqFirmaFormOeffnen = function(id){
   if(box) box.classList.remove('sichtbar');
   document.querySelectorAll('#view-akquise_firmen .fehlerhaft').forEach(el => el.classList.remove('fehlerhaft'));
 
+  /* Jede Formularöffnung beginnt mit einer frischen Prüfung. Ohne das
+     Zurücksetzen bliebe ein einmal gedrücktes „Trotzdem neue Firma"
+     für alle weiteren Firmen bestehen – und die Prüfung wäre
+     ausgeschaltet, ohne dass es jemand merkt. */
+  akqDubUebergangen = false;
+  akqSperrversuchGemeldet = false;
+  akqLetzteStufe = null;
+  if(akqDubTimer) clearTimeout(akqDubTimer);
+  const pruefKasten = akqPruefstatusKasten();
+  if(pruefKasten) pruefKasten.setAttribute('hidden','');
+
   document.getElementById('firma-form-titel').textContent =
     f ? ('Firma bearbeiten: ' + (f.firmenname || '')) : 'Neue Firma erfassen';
   document.getElementById('firma-save-btn').textContent =
@@ -12437,6 +12855,8 @@ window.akqFirmaFormOeffnen = function(id){
   akqBereichZeigen('form');
   const erstes = document.getElementById('firma-name');
   if(erstes && !f) erstes.focus();
+  // Beim Bearbeiten sofort prüfen – der Datensatz selbst bleibt außen vor
+  if(f) akqDublettePruefen();
 };
 
 window.akqFirmaSpeichern = function(){
@@ -12454,6 +12874,45 @@ window.akqFirmaSpeichern = function(){
   const email = hole('firma-email');
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
     akqFirmaFehler('Diese E-Mail-Adresse sieht nicht richtig aus.', 'firma-email'); return;
+  }
+
+  /* ── Dublettenprüfung vor dem Anlegen ──────────────────────
+     Hier wird NEU gerechnet, nicht das Ergebnis der Eingabeprüfung
+     wiederverwendet: Zwischen dem letzten Tastendruck und dem Klick
+     auf Speichern liegen 400 ms Verzögerung, und wer schnell tippt
+     und sofort klickt, käme sonst an einer Prüfung vorbei, die noch
+     gar nicht gelaufen ist. */
+  if(!editId){
+    const pruefung = akqFindeDubletten({
+      firmenname, email,
+      standort: hole('firma-standort'), ort: hole('firma-ort'),
+      telefon:  hole('firma-telefon'),  website: hole('firma-website')
+    }, allFirmen, null);
+
+    if(pruefung.gesperrt && aktuelleRolle !== ROLLE_ADMIN){
+      /* Der Kern des Sperrschutzes: Ein neuer Datensatz ist der
+         einfachste Weg um eine Kontaktsperre herum. Genau deshalb
+         wird er hier verweigert – unabhängig davon, wie die
+         Telefonnummer geschrieben oder die Filiale benannt wurde. */
+      akqFirmaFehler('Dieser Kontakt ist gesperrt („nicht erneut kontaktieren"). Ein neuer Eintrag dafür ist nicht möglich.', 'firma-name');
+      akqZeigePruefstatus(pruefung);
+      if(!akqSperrversuchGemeldet && pruefung.gesperrteFirma){
+        akqSperrversuchGemeldet = true;
+        akqVerlaufEintragen(pruefung.gesperrteFirma.id, 'sperre',
+          'Kontaktversuch durch Sperre verhindert (Neuanlage mit denselben Kontaktdaten)');
+      }
+      return;
+    }
+
+    if(pruefung.stufe !== 'keine' && !akqDubUebergangen){
+      akqFirmaFehler(pruefung.stufe === 'rot'
+        ? 'Diese Firma ist bereits vorhanden. Bitte den bestehenden Eintrag öffnen – oder oben ausdrücklich „Trotzdem neue Firma" wählen.'
+        : 'Es gibt bereits einen ähnlichen Eintrag. Bitte oben prüfen und entscheiden.', null);
+      akqZeigePruefstatus(pruefung);
+      const kasten = akqPruefstatusKasten();
+      if(kasten) kasten.scrollIntoView({ block:'center', behavior:'smooth' });
+      return;
+    }
   }
 
   const daten = {};
@@ -12501,6 +12960,10 @@ window.akqFirmaSpeichern = function(){
   daten.erstellt_von      = wer.uid;
   daten.erstellt_von_name = wer.name;
   daten.zugewiesen_an     = wer.uid;
+  /* Der Name wird mitgeschrieben, weil die Akquise-Rolle die Sammlung
+     `benutzer` nicht lesen darf – ohne ihn stünde in der Trefferkarte
+     nur eine Kennung, mit der niemand etwas anfangen kann. */
+  daten.zugewiesen_an_name = wer.name;
   daten.letzter_kontakt   = null;
   daten.erstellt_am       = serverTimestamp();
   daten.createdAt         = serverTimestamp();   // gleiche Schreibweise wie überall sonst, für nachDatumAbsteigend
@@ -12549,10 +13012,17 @@ function akqRenderFirmaDetail(){
     ${f.do_not_contact ? `
       <div class="firma-sperre">
         <span aria-hidden="true">🔴</span>
-        <div><strong>Nicht erneut kontaktieren.</strong><br>
-        Diese Firma hat Werbung abgelehnt oder wurde gesperrt. Aus der Akquise darf keine
-        weitere Nachricht an sie hinausgehen.${aktuelleRolle === ROLLE_ADMIN
-          ? ' <button class="karte-aktion" style="margin-top:8px" onclick="akqSperreAufheben(\'' + fj + '\')">Sperre aufheben</button>' : ''}</div>
+        <div>
+          <div class="dub-sperrtitel">NICHT ERNEUT KONTAKTIEREN</div>
+          Grund: ${sicher(f.do_not_contact_grund || 'nicht vermerkt')}<br>
+          Seit: ${sicher(f.do_not_contact_am ? formatDate(f.do_not_contact_am) : 'Zeitpunkt nicht vermerkt')}${
+            f.do_not_contact_von ? ' · gesetzt von ' + sicher(f.do_not_contact_von) : ''}<br>
+          <span style="opacity:.85">Aus der Akquise darf keine weitere Nachricht an diese Firma hinausgehen.
+          Auch ein neuer Eintrag mit denselben Kontaktdaten ist gesperrt.</span>
+          ${aktuelleRolle === ROLLE_ADMIN
+            ? '<div style="margin-top:10px"><button class="karte-aktion" onclick="akqSperreAufheben(\'' + fj + '\')">Sperre aufheben</button></div>'
+            : '<div style="margin-top:10px;font-size:12.5px;opacity:.8">Nur der Verwalter kann die Sperre aufheben.</div>'}
+        </div>
       </div>` : ''}
 
     <div class="firma-kopf">
@@ -12626,7 +13096,15 @@ window.akqStatusSetzen = function(id, status){
 
   const daten = { status, aktualisiert_am: serverTimestamp() };
   const sperrt = FIRMEN_STATUS_SPERRT.includes(status);
-  if(sperrt) daten.do_not_contact = true;
+  if(sperrt){
+    daten.do_not_contact = true;
+    /* Wann und warum gesperrt wurde, gehört an den Datensatz. Ein
+       nackter Haken beantwortet später niemandem die Frage, ob die
+       Ablehnung von der Firma kam oder ein Fehlklick war. */
+    daten.do_not_contact_grund = FIRMEN_STATUS_TEXT[status];
+    daten.do_not_contact_am    = serverTimestamp();
+    daten.do_not_contact_von   = akqWerBinIch().name;
+  }
 
   updateDoc(doc(db, 'firmen', id), daten)
     .then(() => {
@@ -12656,7 +13134,11 @@ window.akqNotizSpeichern = function(id){
 window.akqSperreAufheben = function(id){
   const f = allFirmen.find(x => x.id === id) || {};
   if(!confirm(`Kontaktsperre für „${f.firmenname || 'diese Firma'}" aufheben?\n\nDanach darf sie aus der Akquise wieder angeschrieben werden. Das ist nur richtig, wenn die Ablehnung nachweislich zurückgenommen wurde.`)) return;
-  updateDoc(doc(db, 'firmen', id), { do_not_contact:false, aktualisiert_am: serverTimestamp() })
+  updateDoc(doc(db, 'firmen', id), {
+      do_not_contact: false,
+      do_not_contact_grund: '', do_not_contact_am: null, do_not_contact_von: '',
+      aktualisiert_am: serverTimestamp()
+    })
     .then(() => { akqVerlaufEintragen(id, 'sperre', 'Kontaktsperre aufgehoben'); melde('Sperre aufgehoben.'); })
     .catch(err => meldeSchreibfehler(err, 'Das Aufheben der Sperre'));
 };
