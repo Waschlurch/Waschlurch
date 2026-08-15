@@ -1812,6 +1812,103 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
    Sicht. Siehe Handy-Block weiter unten. */
 .akq-speicherleiste { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
 .akq-speicherleiste .btn { width:auto; padding:14px 26px; }
+
+/* ── GEFÜHRTER ABLAUF (14.08.2026) ────────────────────────────
+   Fünf Kennzahlen statt vier. `.stat-row` steht fest auf vier
+   Spalten; die Handy-Regeln dafür stehen weiter oben in der Datei
+   und würden eine hier gesetzte Spaltenzahl NICHT überschreiben –
+   deshalb gibt es zu dieser Regel einen Gegenpart im Handy-Block
+   ganz unten. */
+.stat-row.fuenf { grid-template-columns:repeat(5,minmax(0,1fr)); }
+
+/* Die vier großen Schrittkarten. Sie sind das Erste, was ein neuer
+   Mitarbeiter sieht – deshalb Nummer, Satz und genau ein Knopf. */
+.akq-schrittkarten { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:28px; }
+.akq-karte {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:18px; padding:22px; min-width:0;
+  display:flex; flex-direction:column; gap:9px;
+}
+.akq-karte-kopf { display:flex; align-items:center; gap:11px; }
+.akq-karte-nr {
+  flex-shrink:0; width:30px; height:30px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(34,197,94,0.14); color:var(--green); font-size:13.5px; font-weight:800;
+}
+.akq-karte-titel { font-size:16px; font-weight:700; min-width:0; overflow-wrap:anywhere; }
+.akq-karte-text { font-size:13.5px; line-height:1.55; color:rgba(255,255,255,0.66); flex:1; }
+.akq-karte .btn { width:auto; align-self:flex-start; padding:12px 22px; }
+.akq-karte-hinweis { font-size:12.5px; color:rgba(255,255,255,0.5); }
+
+/* Statuszeile in Schrittkarte 2 – dieselben drei Zustände wie die
+   Dublettenprüfung im Formular, nur als Legende. */
+.akq-legende { display:flex; flex-direction:column; gap:5px; font-size:12.5px; color:rgba(255,255,255,0.62); }
+
+/* ── Fortschritt innerhalb einer Firma ─────────────────────────
+   Sechs Stufen. Waagerecht, mit durchgehender Linie – der Blick
+   soll den Weg sehen, nicht sechs einzelne Kästchen. */
+.akq-fortschritt { display:flex; gap:0; margin-bottom:22px; }
+.akq-stufe { flex:1; min-width:0; text-align:center; position:relative; padding-top:22px; }
+.akq-stufe::before {   /* die Linie */
+  content:''; position:absolute; top:9px; left:0; right:0; height:2px;
+  background:rgba(255,255,255,0.12);
+}
+.akq-stufe:first-child::before { left:50%; }
+.akq-stufe:last-child::before  { right:50%; }
+.akq-stufe::after {    /* der Punkt */
+  content:''; position:absolute; top:4px; left:50%; transform:translateX(-50%);
+  width:12px; height:12px; border-radius:50%;
+  background:var(--black); border:2px solid rgba(255,255,255,0.22);
+}
+.akq-stufe.erledigt::before { background:rgba(34,197,94,0.5); }
+.akq-stufe.erledigt::after  { background:var(--green); border-color:var(--green); }
+.akq-stufe.jetzt::after {
+  background:var(--green); border-color:var(--green);
+  box-shadow:0 0 0 4px rgba(34,197,94,0.22);
+}
+.akq-stufe-text { font-size:11.5px; color:rgba(255,255,255,0.5); overflow-wrap:anywhere; padding:0 3px; }
+.akq-stufe.jetzt .akq-stufe-text { color:var(--green); font-weight:700; }
+.akq-stufe.erledigt .akq-stufe-text { color:rgba(255,255,255,0.72); }
+/* Ein abgeschlossener Vorgang mit Absage ist nicht „grün fertig". */
+.akq-fortschritt.beendet .akq-stufe.erledigt::before { background:rgba(255,255,255,0.28); }
+.akq-fortschritt.beendet .akq-stufe.erledigt::after,
+.akq-fortschritt.beendet .akq-stufe.jetzt::after { background:#F87171; border-color:#F87171; box-shadow:none; }
+.akq-fortschritt.beendet .akq-stufe.jetzt .akq-stufe-text { color:#F87171; }
+
+/* ── „Nächster Schritt" ────────────────────────────────────────
+   Muss ohne Suchen ins Auge fallen: Es ist die einzige Stelle, die
+   sagt, was jetzt zu tun ist. */
+.akq-naechster {
+  background:rgba(34,197,94,0.09); border:1px solid rgba(34,197,94,0.32);
+  border-radius:18px; padding:20px 22px; margin-bottom:20px;
+}
+.akq-naechster.ruht  { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.12); }
+.akq-naechster.beendet { background:rgba(248,113,113,0.09); border-color:rgba(248,113,113,0.3); }
+.akq-naechster-lbl {
+  font-size:11.5px; font-weight:800; letter-spacing:.9px; text-transform:uppercase;
+  color:rgba(255,255,255,0.55); margin-bottom:7px;
+}
+.akq-naechster-titel { font-size:18px; font-weight:700; margin-bottom:5px; overflow-wrap:anywhere; }
+.akq-naechster-text { font-size:13.5px; line-height:1.6; color:rgba(255,255,255,0.72); }
+.akq-naechster .btn, .akq-naechster .karte-aktion { margin-top:14px; }
+.akq-naechster .btn { width:auto; padding:13px 24px; }
+
+/* ── Offene Aufgaben auf der Startseite ────────────────────── */
+.akq-aufgabe {
+  display:flex; align-items:center; gap:12px; width:100%;
+  background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,0.07);
+  padding:12px 2px; text-align:left; cursor:pointer; font-family:inherit; color:inherit;
+}
+.akq-aufgabe:last-child { border-bottom:none; }
+.akq-aufgabe:hover { background:rgba(255,255,255,0.04); }
+.akq-aufgabe-punkt { width:9px; height:9px; border-radius:50%; flex-shrink:0; background:var(--green); }
+.akq-aufgabe-punkt.warten { background:#FBBF24; }
+.akq-aufgabe-punkt.laeuft { background:#60A5FA; }
+.akq-aufgabe-haupt { flex:1; min-width:0; }
+.akq-aufgabe-name { font-size:14px; font-weight:600; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.akq-aufgabe-was { font-size:12.5px; color:rgba(255,255,255,0.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.akq-aufgabe-pfeil { color:rgba(255,255,255,0.35); flex-shrink:0; }
+.akq-aufgaben-fuss { font-size:12.5px; color:rgba(255,255,255,0.55); padding-top:12px; }
 .akq-abbrechen {
   background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);
 }
@@ -1863,6 +1960,26 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   .dub-knoepfe .karte-aktion { flex:1; min-width:0; }
   .dub-status { padding:11px 13px; gap:8px; }
   .dub-treffer { padding:12px 13px; margin-top:10px; }
+
+  /* ⚠️ Gegenpart zu `.stat-row.fuenf` weiter oben. Die allgemeinen
+     Handy-Regeln für `.stat-row` stehen früher in der Datei und
+     verlieren gegen die spätere Fünf-Spalten-Regel – ohne diese
+     Zeile stünden bei 375 px fünf Kacheln à 61 px nebeneinander. */
+  .stat-row.fuenf { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+  /* Schrittkarten untereinander. Zwei Spalten ergäben bei 375 px
+     rund 165 px je Karte – für Nummer, Titel, Satz und Knopf zu wenig. */
+  .akq-schrittkarten { grid-template-columns:minmax(0,1fr); gap:13px; }
+  .akq-karte { padding:18px; }
+  .akq-karte .btn { width:100%; align-self:stretch; }
+
+  /* Sechs Stufen nebeneinander sind bei 375 px 62 px breit. Die
+     Beschriftungen brechen dann mitten im Wort um; kleiner setzen
+     und enger stellen hält sie lesbar. */
+  .akq-stufe-text { font-size:10px; padding:0 1px; }
+  .akq-naechster { padding:17px 18px; }
+  .akq-naechster-titel { font-size:16px; }
+  .akq-naechster .btn { width:100%; }
   .firma-kopf-name { font-size:18px; }
   .verlauf-zeile { padding-left:18px; }
 
@@ -1877,6 +1994,17 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
      Positionstext. */
   .vk-positionen .vk-menge { display:none; }
   .vk-einstufung { padding:11px 12px; }
+
+}
+
+/* ⚠️ Eigene Grenze bei 360 px, nicht bei den sonst üblichen 400 px.
+   Nachgemessen: Bei 375 px – der häufigsten Handybreite – tragen zwei
+   Spalten die fünf Kennzahlen problemlos. Erst darunter wird es eng.
+   Mit der 400er-Grenze standen sie schon auf dem gewöhnlichen Handy
+   einspaltig und schoben die Schrittkarten 400 px nach unten. */
+@media(max-width:360px){
+  .stat-row.fuenf { grid-template-columns:minmax(0,1fr); }
+  .akq-stufe { padding-top:16px; }
 }
 
 @media print {
@@ -2033,40 +2161,67 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <div class="view-sub">Akquise &amp; Social Media</div>
       </div>
 
-      <div class="stat-row">
-        <div class="stat-card"><div class="stat-val" id="akq-z-firmen">–</div><div class="stat-lbl">Firmen heute erfasst</div></div>
-        <div class="stat-card"><div class="stat-val" id="akq-z-mails">–</div><div class="stat-lbl">E-Mails versendet</div></div>
-        <div class="stat-card"><div class="stat-val" id="akq-z-antworten">–</div><div class="stat-lbl">Offene Antworten</div></div>
-        <div class="stat-card"><div class="stat-val" id="akq-z-interessenten">–</div><div class="stat-lbl">Interessenten</div></div>
+      <div class="stat-row fuenf">
+        <div class="stat-card"><div class="stat-val" id="akq-z-heute">0</div><div class="stat-lbl">Firmen heute erfasst</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-versandbereit">0</div><div class="stat-lbl">Versandbereit</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-gesendet">0</div><div class="stat-lbl">Gesendete Kontakte</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-antworten">0</div><div class="stat-lbl">Offene Antworten</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-interesse">0</div><div class="stat-lbl">Interessenten</div></div>
       </div>
 
-      <div class="ueb-cols">
-        <div class="ueb-panel">
-          <div class="ueb-panel-title">Deine nächsten Schritte</div>
-          <ol class="akq-schritte">
-            <li class="akq-schritt"><div class="akq-schritt-text">
-              <div class="akq-schritt-name">Firma erfassen</div>
-              <div class="akq-schritt-sub">Name, Standort und Kontaktdaten eintragen</div></div></li>
-            <li class="akq-schritt"><div class="akq-schritt-text">
-              <div class="akq-schritt-name">Firma prüfen</div>
-              <div class="akq-schritt-sub">Wurde sie schon einmal angeschrieben?</div></div></li>
-            <li class="akq-schritt"><div class="akq-schritt-text">
-              <div class="akq-schritt-name">Kontakt vorbereiten</div>
-              <div class="akq-schritt-sub">Nachricht ansehen, anpassen, versenden</div></div></li>
-            <li class="akq-schritt"><div class="akq-schritt-text">
-              <div class="akq-schritt-name">Antwort bearbeiten</div>
-              <div class="akq-schritt-sub">Interesse, Rückfrage oder Absage festhalten</div></div></li>
-          </ol>
-        </div>
-        <div class="ueb-panel">
-          <div class="ueb-panel-title">Offene Aufgaben</div>
-          <div class="ueb-leer">
-            Hier stehen künftig deine offenen Punkte: neue Antworten, noch nicht
-            kontaktierte Firmen und interessierte Betriebe.<br><br>
-            Die Firmenverwaltung kommt im nächsten Schritt – bis dahin bleiben die
-            Zahlen oben leer.
+      <!-- Der geführte Ablauf. Vier Karten, je genau ein Knopf –
+           wer zum ersten Mal hier sitzt, soll nicht überlegen müssen,
+           wo er anfängt. -->
+      <div class="akq-schrittkarten">
+        <div class="akq-karte">
+          <div class="akq-karte-kopf">
+            <span class="akq-karte-nr">1</span>
+            <span class="akq-karte-titel">Firma erfassen</span>
           </div>
+          <div class="akq-karte-text">Neue Firma und Kontaktdaten eintragen.</div>
+          <button class="btn btn-primary" onclick="akqFirmaErfassenStarten()">Firma erfassen</button>
         </div>
+
+        <div class="akq-karte">
+          <div class="akq-karte-kopf">
+            <span class="akq-karte-nr">2</span>
+            <span class="akq-karte-titel">Firma prüfen</span>
+          </div>
+          <div class="akq-karte-text">
+            Prüfe, ob die Firma bereits vorhanden oder gesperrt ist.
+            <div class="akq-legende" style="margin-top:9px">
+              <span>✅ Kein bestehender Kontakt</span>
+              <span>⚠️ Mögliche Dublette</span>
+              <span>🔴 Nicht kontaktieren</span>
+            </div>
+          </div>
+          <div class="akq-karte-hinweis">Die Prüfung läuft beim Erfassen automatisch mit.</div>
+          <button class="btn btn-sekundaer" onclick="switchView('akquise_firmen')">Firmen ansehen</button>
+        </div>
+
+        <div class="akq-karte">
+          <div class="akq-karte-kopf">
+            <span class="akq-karte-nr">3</span>
+            <span class="akq-karte-titel">Kontakt vorbereiten</span>
+          </div>
+          <div class="akq-karte-text">E-Mail und Kontaktgrundlage vorbereiten.</div>
+          <div class="akq-karte-hinweis">Gesperrte Firmen lassen sich nicht vorbereiten.</div>
+          <button class="btn btn-sekundaer" onclick="switchView('akquise_mails')">Kontakt vorbereiten</button>
+        </div>
+
+        <div class="akq-karte">
+          <div class="akq-karte-kopf">
+            <span class="akq-karte-nr">4</span>
+            <span class="akq-karte-titel">Antworten bearbeiten</span>
+          </div>
+          <div class="akq-karte-text">Eingegangene Antworten hier bearbeiten.</div>
+          <button class="btn btn-sekundaer" onclick="switchView('akquise_antworten')">Antworten ansehen</button>
+        </div>
+      </div>
+
+      <div class="ueb-panel">
+        <div class="ueb-panel-title">Deine offenen Aufgaben</div>
+        <div id="akq-aufgaben"><div class="ueb-leer">Wird geladen ...</div></div>
       </div>
     </div>
 
@@ -2200,32 +2355,22 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
       <div id="firmen-detail-bereich" hidden></div>
     </div>
 
-    <!-- AKQUISE – NACHRICHTEN -->
+    <!-- AKQUISE – KONTAKT VORBEREITEN (Schritt 3) -->
     <div class="view" id="view-akquise_mails">
       <div class="view-head">
-        <div class="view-title">Nachrichten</div>
-        <div class="view-sub">Vorbereitete und versendete Akquise-E-Mails</div>
+        <div class="view-title">Kontakt vorbereiten</div>
+        <div class="view-sub">E-Mail und Kontaktgrundlage vorbereiten – der Versand kommt später</div>
       </div>
-      <div class="akq-bau">
-        <span class="akq-bau-symbol" aria-hidden="true">✉️</span>
-        <div class="akq-bau-titel">Der Nachrichtenbereich wird gerade gebaut</div>
-        Jede Nachricht wird später einer Firma zugeordnet und vor dem Versand
-        vollständig angezeigt.
-      </div>
+      <div id="akq-kontakt-inhalt"></div>
     </div>
 
-    <!-- AKQUISE – ANTWORTEN -->
+    <!-- AKQUISE – ANTWORTEN (Schritt 4) -->
     <div class="view" id="view-akquise_antworten">
       <div class="view-head">
         <div class="view-title">Antworten</div>
         <div class="view-sub">Eingegangene Rückmeldungen auf deine Nachrichten</div>
       </div>
-      <div class="akq-bau">
-        <span class="akq-bau-symbol" aria-hidden="true">💬</span>
-        <div class="akq-bau-titel">Der Antwortbereich wird gerade gebaut</div>
-        Antworten werden später der passenden Firma zugeordnet und lassen sich
-        hier direkt beantworten.
-      </div>
+      <div id="akq-antworten-inhalt"></div>
     </div>
 
     <!-- ÜBERSICHT (Startbildschirm nach dem Anmelden) -->
@@ -6599,12 +6744,11 @@ function handyLeisteNeuAufbauen(){
   });
 }
 
-/* Begrüßung mit Namen. Fehlt der Name im Zugangseintrag, bleibt es beim
-   schlichten „Hallo" – ein erfundener Name wäre schlechter als keiner. */
+/* Begrüßung und Kennzahlen. Fehlt der Name im Zugangseintrag, bleibt
+   es beim schlichten „Hallo" – ein erfundener Name wäre schlechter als
+   keiner. Die Zahlen füllt der Datenlauscher gleich darauf nach. */
 function akquiseBegruessung(){
-  const el = document.getElementById('akq-gruss');
-  if(!el) return;
-  el.textContent = aktuellerName ? ('Hallo ' + aktuellerName + ' 👋') : 'Hallo 👋';
+  if(typeof window.akqRenderAkquiseStart === 'function') window.akqRenderAkquiseStart();
 }
 
 function startBereich(){
@@ -6744,6 +6888,12 @@ window.switchView = function(name){
     const listenBereich = document.getElementById('firmen-liste-bereich');
     if(listenBereich && listenBereich.hasAttribute('hidden')) window.akqZurueckZurListe();
   }
+
+  /* Die Akquise-Ansichten rechnen aus `allFirmen`. Wer sie über das
+     Menü statt über eine Firma öffnet, soll denselben Stand sehen. */
+  if(name === 'akquise')            akqSicherAufrufen(window.akqRenderAkquiseStart);
+  if(name === 'akquise_mails')      akqSicherAufrufen(akqRenderKontaktAnsicht);
+  if(name === 'akquise_antworten')  akqSicherAufrufen(akqRenderAntwortenAnsicht);
   aktuellerBereich = name;
 
   handyMenueSchliessen();
@@ -7069,6 +7219,11 @@ function startAkquiseListeners(){
     allFirmen = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     window.akqRenderFirmen();
     akqRenderFirmaDetail();
+    /* Startseite, Kontaktvorbereitung und Antworten rechnen alle aus
+       derselben Liste – ändert sich eine Firma, müssen alle drei mit. */
+    window.akqRenderAkquiseStart();
+    akqRenderKontaktAnsicht();
+    akqRenderAntwortenAnsicht();
   }, err => meldeLadefehler(err, 'firmen', 'firmen-liste'));
 
   unsubAkqVerlauf = onSnapshot(collection(db, 'akquise_verlauf'), (snap) => {
@@ -12281,6 +12436,116 @@ const FIRMEN_STATUS_FARBE = {
    Ein Status lässt sich weiterdrehen, `do_not_contact` bleibt. */
 const FIRMEN_STATUS_SPERRT = ['kein_interesse','nicht_kontaktieren'];
 
+/* ══════════════════════════════════════════════════════════════
+   DER GEFÜHRTE ABLAUF (14.08.2026)
+   ══════════════════════════════════════════════════════════════
+   Zwölf Status sind für die Verwaltung richtig, für die Frage „was
+   mache ich jetzt?" aber zu viele. Sechs Stufen fassen sie zusammen;
+   `AKQ_STATUS_STUFE` ist die einzige Stelle, an der die Zuordnung
+   steht – Fortschrittsbalken, Startseite und Aufgabenliste lesen
+   alle von hier. */
+const AKQ_STUFEN = ['Erfasst', 'Geprüft', 'Vorbereitet', 'Gesendet', 'Antwort', 'Abgeschlossen'];
+
+/* ⚠️ Kurzform fürs Handy. Sechs Stufen sind bei 375 px je 57 px
+   breit; „Abgeschlossen" braucht bei 10 px Schrift rund 65 px und
+   bricht mitten im Wort um. Die Beschriftung ganz auszublenden wäre
+   die einfachere, aber schlechtere Lösung – dann sagt der Balken nur
+   noch „irgendwo in der Mitte". */
+const AKQ_STUFEN_KURZ = ['Erfasst', 'Geprüft', 'Vorber.', 'Gesendet', 'Antwort', 'Fertig'];
+
+const AKQ_STATUS_STUFE = {
+  neu: 1,
+  wird_geprueft: 2,
+  kontakt_moeglich: 3,
+  versandbereit: 3,
+  /* „Später erneut" steht nicht in der vorgegebenen Zuordnung. Es ist
+     kein Fortschritt, sondern eine Pause – der Vorgang bleibt dort
+     stehen, wo entschieden wurde, ihn zurückzustellen. Stufe 3 ist
+     die ehrlichste Näherung: geprüft, aber noch nicht hinausgegangen. */
+  spaeter: 3,
+  gesendet: 4,
+  antwort: 5,
+  rueckfrage: 5,
+  interesse: 5,
+  kunde: 6,
+  kein_interesse: 6,
+  nicht_kontaktieren: 6,
+};
+
+/* Abgeschlossen ist nicht gleich abgeschlossen: „Kunde" ist das Ziel,
+   „kein Interesse" das Gegenteil. Der Balken färbt sich entsprechend. */
+const AKQ_NEGATIV_BEENDET = ['kein_interesse', 'nicht_kontaktieren'];
+
+function akqSchrittFuerStatus(status){
+  const s = status || 'neu';
+  return {
+    stufe: AKQ_STATUS_STUFE[s] || 1,
+    negativBeendet: AKQ_NEGATIV_BEENDET.includes(s),
+  };
+}
+
+/* Was ist als Nächstes zu tun? Eine Zeile Klartext je Status.
+
+   `art` steuert die Darstellung:
+     tun      – es liegt etwas an, Knopf vorhanden
+     warten   – gerade nichts zu tun, das ist in Ordnung
+     fertig   – Vorgang gut abgeschlossen
+     gesperrt – Vorgang abgeschlossen, keine Werbung mehr */
+const AKQ_NAECHSTER = {
+  neu: { art:'tun', titel:'Kontaktdaten prüfen',
+    text:'Sieh dir E-Mail, Telefon und Website an. Stimmen die Angaben und ist ein Ansprechpartner bekannt?',
+    knopf:{ text:'Prüfung beginnen', status:'wird_geprueft' } },
+
+  wird_geprueft: { art:'tun', titel:'Entscheiden, ob ein Kontakt möglich ist',
+    text:'Passt die Firma zu Waschlurch und liegt eine brauchbare Kontaktadresse vor?',
+    knopf:{ text:'Kontakt ist möglich', status:'kontakt_moeglich' } },
+
+  kontakt_moeglich: { art:'tun', titel:'Kontakt vorbereiten',
+    text:'Nachricht und Kontaktgrundlage vorbereiten.',
+    knopf:{ text:'Kontakt vorbereiten', ziel:'kontakt' } },
+
+  versandbereit: { art:'warten', titel:'Versand steht aus',
+    text:'Die Nachricht ist vorbereitet. Der Versand kommt in einer der nächsten Ausbaustufen.' },
+
+  spaeter: { art:'warten', titel:'Zurückgestellt',
+    text:'Diese Firma soll später erneut angesehen werden.' },
+
+  gesendet: { art:'warten', titel:'Auf Antwort warten',
+    text:'Die Nachricht ist hinaus. Sobald eine Antwort eingeht, wird sie hier vermerkt.' },
+
+  antwort: { art:'tun', titel:'Antwort bearbeiten',
+    text:'Es ist eine Rückmeldung eingegangen. Halte fest, wie es weitergeht.',
+    knopf:{ text:'Zu den Antworten', ziel:'antworten' } },
+
+  rueckfrage: { art:'tun', titel:'Rückfrage beantworten',
+    text:'Die Firma hat nachgefragt. Beantworte die Rückfrage und halte das Ergebnis fest.',
+    knopf:{ text:'Zu den Antworten', ziel:'antworten' } },
+
+  interesse: { art:'warten', titel:'Als Kunde übernehmen',
+    text:'Diese Firma hat Interesse. Die Übernahme in die Kundenkartei kommt in einer der nächsten Ausbaustufen.' },
+
+  kunde: { art:'fertig', titel:'Vorgang abgeschlossen',
+    text:'Aus dieser Firma ist ein Kunde geworden.' },
+
+  kein_interesse: { art:'gesperrt', titel:'Vorgang abgeschlossen – nicht erneut kontaktieren',
+    text:'Diese Firma hat abgelehnt. Aus der Akquise darf keine weitere Nachricht an sie hinausgehen.' },
+
+  nicht_kontaktieren: { art:'gesperrt', titel:'Vorgang abgeschlossen – nicht erneut kontaktieren',
+    text:'Diese Firma ist gesperrt. Aus der Akquise darf keine weitere Nachricht an sie hinausgehen.' },
+};
+
+/* ⚠️ Die Sperre schlägt jeden Status. Ein Datensatz kann `gesendet`
+   tragen und trotzdem gesperrt sein – etwa wenn die Absage nach dem
+   Versand kam. Stünde hier der Status vorn, böte die Karte in genau
+   diesem Fall „auf Antwort warten" an und lüde zum Nachfassen ein. */
+function akqNaechsterSchritt(firma){
+  const f = firma || {};
+  if(f.do_not_contact === true){
+    return AKQ_NAECHSTER.nicht_kontaktieren;
+  }
+  return AKQ_NAECHSTER[f.status || 'neu'] || AKQ_NAECHSTER.neu;
+}
+
 /* Felder, deren Änderung im Verlauf festgehalten wird. */
 const FIRMA_FELDER = [
   ['firmenname','Firmenname'], ['standort','Standort'], ['ansprechpartner','Ansprechpartner'],
@@ -12978,6 +13243,273 @@ window.akqFirmaSpeichern = function(){
     .catch(err => { fertig(); meldeSchreibfehler(err, 'Das Anlegen der Firma'); });
 };
 
+/* ══════════════════════════════════════════════════════════════
+   AKQUISE-STARTSEITE (geführter Ablauf)
+   ══════════════════════════════════════════════════════════════ */
+
+/* „Hallo Lukas" statt „Hallo Lukas Meyer" – und wenn nur eine
+   E-Mail-Adresse hinterlegt ist, wenigstens der Teil davor. */
+function akqVorname(){
+  const n = String(aktuellerName || '').trim();
+  if(n) return n.split(/\s+/)[0];
+  const mail = (auth.currentUser && auth.currentUser.email) || '';
+  return mail ? mail.split('@')[0] : '';
+}
+
+function akqIstHeute(ts){
+  if(!ts || !ts.toDate) return false;
+  const d = ts.toDate(), h = new Date();
+  return d.getFullYear() === h.getFullYear() && d.getMonth() === h.getMonth() && d.getDate() === h.getDate();
+}
+
+function akqZaehle(status){
+  return allFirmen.filter(f => (f.status || 'neu') === status).length;
+}
+
+window.akqRenderAkquiseStart = function(){
+  const gruss = document.getElementById('akq-gruss');
+  if(gruss){
+    const v = akqVorname();
+    gruss.textContent = v ? ('Hallo ' + v + ' 👋') : 'Hallo 👋';
+  }
+
+  const setz = (id, wert) => { const el = document.getElementById(id); if(el) el.textContent = wert; };
+  setz('akq-z-heute', allFirmen.filter(f => akqIstHeute(f.erstellt_am) || akqIstHeute(f.createdAt)).length);
+  setz('akq-z-versandbereit', akqZaehle('versandbereit'));
+  setz('akq-z-gesendet', akqZaehle('gesendet'));
+  /* „Offene Antworten" sind Rückmeldungen, die noch niemand bearbeitet
+     hat – also die Status `antwort` und `rueckfrage`. Sobald echte
+     Antworten eingelesen werden, zählt dieselbe Zahl weiter. */
+  setz('akq-z-antworten', akqZaehle('antwort') + akqZaehle('rueckfrage'));
+  setz('akq-z-interesse', akqZaehle('interesse'));
+
+  akqRenderOffeneAufgaben();
+};
+
+/* Eine Liste, keine Kachelsammlung: Es geht nicht darum, wie viele
+   Firmen in welchem Zustand sind, sondern welche als Nächstes dran
+   ist. Ein Tippen führt direkt dorthin. */
+const AKQ_AUFGABEN_STATUS = ['antwort','rueckfrage','neu','wird_geprueft','kontakt_moeglich','versandbereit','spaeter'];
+const AKQ_AUFGABEN_PUNKT = {
+  antwort:'laeuft', rueckfrage:'laeuft', versandbereit:'warten', spaeter:'warten'
+};
+const AKQ_AUFGABEN_GRENZE = 12;
+
+function akqRenderOffeneAufgaben(){
+  const el = document.getElementById('akq-aufgaben');
+  if(!el) return;
+
+  /* Gesperrte Firmen sind keine Aufgabe mehr – auch dann nicht, wenn
+     ihr Status noch auf einem früheren Schritt steht. */
+  const offen = allFirmen
+    .filter(f => !f.do_not_contact && AKQ_AUFGABEN_STATUS.includes(f.status || 'neu'))
+    .sort((a, b) => AKQ_AUFGABEN_STATUS.indexOf(a.status || 'neu') - AKQ_AUFGABEN_STATUS.indexOf(b.status || 'neu'));
+
+  if(offen.length === 0){
+    el.innerHTML = allFirmen.length === 0
+      ? '<div class="ueb-leer">Noch keine Firma erfasst. Fang mit Schritt 1 an.</div>'
+      : '<div class="ueb-leer">Nichts offen – alle erfassten Firmen sind bearbeitet.</div>';
+    return;
+  }
+
+  const zeigen = offen.slice(0, AKQ_AUFGABEN_GRENZE);
+  el.innerHTML = zeigen.map(f => {
+    const naechster = akqNaechsterSchritt(f);
+    const punkt = AKQ_AUFGABEN_PUNKT[f.status || 'neu'] || '';
+    return `
+      <button class="akq-aufgabe" onclick="akqAufgabeOeffnen('${sicherJs(f.id)}')">
+        <span class="akq-aufgabe-punkt ${punkt}" aria-hidden="true"></span>
+        <span class="akq-aufgabe-haupt">
+          <span class="akq-aufgabe-name">${sicher([f.firmenname, f.standort].filter(Boolean).join(' · ') || 'Ohne Namen')}</span>
+          <span class="akq-aufgabe-was">${sicher(naechster.titel)}</span>
+        </span>
+        <span class="akq-aufgabe-pfeil" aria-hidden="true">›</span>
+      </button>`;
+  }).join('') +
+  /* Kein stilles Abschneiden: Wenn etwas fehlt, steht da, wie viel. */
+  (offen.length > zeigen.length
+    ? `<div class="akq-aufgaben-fuss">Und ${offen.length - zeigen.length} weitere.
+       <button class="karte-aktion" style="margin-left:8px" onclick="switchView('akquise_firmen')">Alle Firmen ansehen</button></div>`
+    : '');
+}
+
+/* Ein Fehler beim Zeichnen einer Akquise-Ansicht darf den
+   Bereichswechsel nicht mitreißen – sonst bliebe man auf der alten
+   Ansicht stehen, ohne zu erfahren, warum. Dieselbe Überlegung wie
+   bei `renderUebersichtIntern`. */
+function akqSicherAufrufen(fn){
+  if(typeof fn !== 'function') return;
+  try { fn(); } catch(err){ console.error('Akquise-Ansicht konnte nicht gezeichnet werden:', err); }
+}
+
+window.akqAufgabeOeffnen = function(id){
+  window.switchView('akquise_firmen');
+  window.akqFirmaDetail(id);
+};
+
+window.akqFirmaErfassenStarten = function(){
+  window.switchView('akquise_firmen');
+  window.akqFirmaFormOeffnen();
+};
+
+/* ── Schritt 3: Kontakt vorbereiten ──────────────────────────
+   Noch ohne Versand. Die Ansicht hält fest, für welche Firma
+   vorbereitet wird, und prüft die Sperre – dieselbe Prüfung wie
+   überall sonst, kein zweites System. */
+let akqKontaktFirma = null;
+
+window.akqKontaktVorbereiten = function(id){
+  const f = allFirmen.find(x => x.id === id);
+  if(!f) return;
+  if(f.do_not_contact === true){
+    alert('Diese Firma ist gesperrt („nicht erneut kontaktieren"). Es kann kein Kontakt vorbereitet werden.');
+    return;
+  }
+  akqKontaktFirma = id;
+  window.switchView('akquise_mails');
+  akqRenderKontaktAnsicht();
+};
+
+function akqRenderKontaktAnsicht(){
+  const el = document.getElementById('akq-kontakt-inhalt');
+  if(!el) return;
+
+  const f = akqKontaktFirma ? allFirmen.find(x => x.id === akqKontaktFirma) : null;
+
+  /* Die Sperre kann sich geändert haben, während die Ansicht offen
+     war – deshalb hier noch einmal prüfen und nicht auf die Prüfung
+     beim Öffnen vertrauen. */
+  if(f && f.do_not_contact === true){
+    el.innerHTML = `
+      <div class="firma-sperre">
+        <span aria-hidden="true">🔴</span>
+        <div><div class="dub-sperrtitel">NICHT ERNEUT KONTAKTIEREN</div>
+        Für „${sicher(f.firmenname || '')}" darf kein Kontakt vorbereitet werden.</div>
+      </div>
+      <button class="karte-aktion" onclick="switchView('akquise_firmen')">Zurück zu den Firmen</button>`;
+    return;
+  }
+
+  if(!f){
+    el.innerHTML = `
+      <div class="akq-bau">
+        <span class="akq-bau-symbol" aria-hidden="true">✉️</span>
+        <div class="akq-bau-titel">Keine Firma ausgewählt</div>
+        Öffne eine Firma und wähle dort „Kontakt vorbereiten“.
+        <div style="margin-top:16px"><button class="btn btn-primary" style="width:auto;padding:12px 22px"
+             onclick="switchView('akquise_firmen')">Zu den Firmen</button></div>
+      </div>`;
+    return;
+  }
+
+  const anschrift = [[f.strasse, f.hausnummer].filter(Boolean).join(' '),
+                     [f.plz, f.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  el.innerHTML = `
+    <div class="akq-naechster">
+      <div class="akq-naechster-lbl">Kontakt vorbereiten für</div>
+      <div class="akq-naechster-titel">${sicher([f.firmenname, f.standort].filter(Boolean).join(' · '))}</div>
+      <div class="akq-naechster-text">
+        ${sicher(f.ansprechpartner || 'kein Ansprechpartner hinterlegt')}${f.branche ? ' · ' + sicher(f.branche) : ''}
+      </div>
+    </div>
+
+    <div class="karte-block">
+      <div class="karte-block-titel">Empfänger</div>
+      <div class="karte-daten">
+        <div><span style="color:rgba(255,255,255,0.6)">E-Mail:</span> ${sicher(f.email || '– keine hinterlegt')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Telefon:</span> ${sicher(f.telefon || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Anschrift:</span> ${sicher(anschrift || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Website:</span> ${sicher(f.website || '–')}</div>
+      </div>
+      ${f.email ? '' : '<div class="akq-karte-hinweis" style="margin-top:12px">Ohne E-Mail-Adresse lässt sich später keine Nachricht versenden.</div>'}
+    </div>
+
+    <div class="akq-bau">
+      <span class="akq-bau-symbol" aria-hidden="true">✉️</span>
+      <div class="akq-bau-titel">Nachricht und Kontaktgrundlage folgen</div>
+      Betreff, Text und die Prüfung der Kontaktgrundlage kommen in der nächsten
+      Ausbaustufe. Versendet wird von hier aus noch nichts.
+    </div>
+
+    <div class="akq-speicherleiste">
+      <button class="btn btn-sekundaer" onclick="akqAufgabeOeffnen('${sicherJs(f.id)}')">Zurück zur Firma</button>
+    </div>`;
+}
+
+/* ── Schritt 4: Antworten ────────────────────────────────────
+   Noch keine Gmail-Abfrage. Was hier steht, sind Firmen, bei denen
+   von Hand „Antwort eingegangen" oder „Rückfrage" gesetzt wurde. */
+function akqRenderAntwortenAnsicht(){
+  const el = document.getElementById('akq-antworten-inhalt');
+  if(!el) return;
+
+  const offen = allFirmen.filter(f => ['antwort','rueckfrage'].includes(f.status || ''));
+
+  if(offen.length === 0){
+    el.innerHTML = `
+      <div class="akq-bau">
+        <span class="akq-bau-symbol" aria-hidden="true">💬</span>
+        <div class="akq-bau-titel">Noch keine offenen Antworten.</div>
+        Sobald eine Firma auf „Antwort eingegangen“ oder „Rückfrage“ steht, erscheint sie hier.
+        Das automatische Einlesen aus dem Postfach kommt später.
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = offen.map(f => {
+    const naechster = akqNaechsterSchritt(f);
+    return `
+      <div class="req-card firma-karte rand-laeuft" role="button" tabindex="0"
+           onclick="akqAufgabeOeffnen('${sicherJs(f.id)}')"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();akqAufgabeOeffnen('${sicherJs(f.id)}')}">
+        <div class="req-top">
+          <div>
+            <div class="req-name">${sicher([f.firmenname, f.standort].filter(Boolean).join(' · '))}</div>
+            <div class="req-meta">${sicher(naechster.titel)}</div>
+          </div>
+          <span class="f-pill f-laeuft">${sicher(FIRMEN_STATUS_TEXT[f.status] || f.status)}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Bausteine für die Detailkarte ───────────────────────── */
+function akqFortschrittHtml(f){
+  const { stufe, negativBeendet } = akqSchrittFuerStatus(f.status || 'neu');
+  const namen = akqSchmalerBildschirm() ? AKQ_STUFEN_KURZ : AKQ_STUFEN;
+  return `<div class="akq-fortschritt ${negativBeendet ? 'beendet' : ''}">` +
+    namen.map((name, i) => {
+      const nr = i + 1;
+      const klasse = nr < stufe ? 'erledigt' : (nr === stufe ? 'erledigt jetzt' : '');
+      return `<div class="akq-stufe ${klasse}"><div class="akq-stufe-text">${sicher(name)}</div></div>`;
+    }).join('') + '</div>';
+}
+
+function akqNaechsterHtml(f){
+  const n = akqNaechsterSchritt(f);
+  const fj = sicherJs(f.id);
+  const klasse = n.art === 'gesperrt' ? 'beendet' : (n.art === 'tun' ? '' : 'ruht');
+
+  let knopf = '';
+  if(n.knopf){
+    if(n.knopf.status){
+      knopf = `<button class="btn btn-primary" onclick="akqStatusSetzen('${fj}','${sicherJs(n.knopf.status)}')">${sicher(n.knopf.text)}</button>`;
+    } else if(n.knopf.ziel === 'kontakt'){
+      knopf = `<button class="btn btn-primary" onclick="akqKontaktVorbereiten('${fj}')">${sicher(n.knopf.text)}</button>`;
+    } else if(n.knopf.ziel === 'antworten'){
+      knopf = `<button class="btn btn-primary" onclick="switchView('akquise_antworten')">${sicher(n.knopf.text)}</button>`;
+    }
+  }
+
+  return `
+    <div class="akq-naechster ${klasse}">
+      <div class="akq-naechster-lbl">Nächster Schritt</div>
+      <div class="akq-naechster-titel">${sicher(n.titel)}</div>
+      <div class="akq-naechster-text">${sicher(n.text)}</div>
+      ${knopf}
+    </div>`;
+}
+
 /* ── Detailkarte ──────────────────────────────────────────── */
 window.akqFirmaDetail = function(id){
   akqAktuelleFirma = id;
@@ -13009,6 +13541,8 @@ function akqRenderFirmaDetail(){
   el.innerHTML = `
     <button class="karte-aktion" style="margin-bottom:18px" onclick="akqZurueckZurListe()">← Zurück zur Liste</button>
 
+    ${akqFortschrittHtml(f)}
+
     ${f.do_not_contact ? `
       <div class="firma-sperre">
         <span aria-hidden="true">🔴</span>
@@ -13032,6 +13566,8 @@ function akqRenderFirmaDetail(){
     <div class="view-sub" style="margin-bottom:22px">
       ${sicher(f.standort || '')}${f.standort && f.branche ? ' · ' : ''}${sicher(f.branche || '')}
     </div>
+
+    ${akqNaechsterHtml(f)}
 
     <div class="karte-block">
       <div class="karte-block-titel">Stammdaten</div>
