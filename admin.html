@@ -3765,8 +3765,10 @@ let unsubBenutzer = null;
    nur zusätzlich alles andere. */
 let allFirmen = [];
 let allAkqVerlauf = [];
+let allAkqNachrichten = [];
 let unsubFirmen = null;
 let unsubAkqVerlauf = null;
+let unsubAkqNachrichten = null;
 let unsubKunden = null;
 let unsubAngebote = null;
 let currentKundeEmail = null;
@@ -6832,6 +6834,7 @@ onAuthStateChanged(auth, async (user) => {
     if(unsubBenutzer) unsubBenutzer();
     if(unsubFirmen) unsubFirmen();
     if(unsubAkqVerlauf) unsubAkqVerlauf();
+    if(unsubAkqNachrichten) unsubAkqNachrichten();
     if(unsubKunden) unsubKunden();
     if(unsubAngebote) unsubAngebote();
     if(unsubReferenzen) unsubReferenzen();
@@ -7230,6 +7233,13 @@ function startAkquiseListeners(){
     allAkqVerlauf = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     akqRenderFirmaDetail();
   }, err => console.error('Verlauf konnte nicht geladen werden:', err));
+
+  /* Entwürfe. Werden beim Öffnen einer Firma nicht neu erzeugt,
+     sondern von hier geladen – siehe `akqEntwurfFuer()`. */
+  unsubAkqNachrichten = onSnapshot(collection(db, 'akquise_nachrichten'), (snap) => {
+    allAkqNachrichten = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    akqRenderKontaktAnsicht();
+  }, err => console.error('Entwürfe konnten nicht geladen werden:', err));
 }
 
 // ── ANFRAGEN ─────────────────────
@@ -12504,8 +12514,10 @@ const AKQ_NAECHSTER = {
     text:'Nachricht und Kontaktgrundlage vorbereiten.',
     knopf:{ text:'Kontakt vorbereiten', ziel:'kontakt' } },
 
-  versandbereit: { art:'warten', titel:'Versand steht aus',
-    text:'Die Nachricht ist vorbereitet. Der Versand kommt in einer der nächsten Ausbaustufen.' },
+  versandbereit: { art:'warten', titel:'E-Mail versenden',
+    text:'Der Entwurf ist geprüft und versandbereit.',
+    knopf:{ text:'E-Mail versenden', deaktiviert:true,
+            hinweis:'Versand wird in der nächsten Phase eingerichtet.' } },
 
   spaeter: { art:'warten', titel:'Zurückgestellt',
     text:'Diese Firma soll später erneut angesehen werden.' },
@@ -12544,6 +12556,149 @@ function akqNaechsterSchritt(firma){
     return AKQ_NAECHSTER.nicht_kontaktieren;
   }
   return AKQ_NAECHSTER[f.status || 'neu'] || AKQ_NAECHSTER.neu;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   KONTAKTGRUNDLAGE UND E-MAIL-ENTWURF (14.08.2026)
+   ══════════════════════════════════════════════════════════════ */
+
+const KONTAKTGRUNDLAGE_UNGEPRUEFT = 'ungeprueft';
+
+/* „Noch nicht geprüft" steht bewusst an erster Stelle und ist die
+   Vorgabe. Eine Auswahl, die schon auf „Einwilligung vorhanden"
+   steht, wäre eine Behauptung, die niemand aufgestellt hat. */
+const KONTAKTGRUNDLAGEN = [
+  { wert:'ungeprueft',      text:'Noch nicht geprüft' },
+  { wert:'einwilligung',    text:'Einwilligung vorhanden' },
+  { wert:'bestandskontakt', text:'Bestehender Kontakt / Kunde' },
+  { wert:'angefordert',     text:'Kontakt wurde angefordert' },
+  { wert:'sonstige',        text:'Sonstige dokumentierte Grundlage' },
+];
+
+const KONTAKTGRUNDLAGE_TEXT = KONTAKTGRUNDLAGEN.reduce((o, k) => { o[k.wert] = k.text; return o; }, {});
+
+/* ⚠️ Hier stehen ausschließlich Leistungen, die Waschlurch
+   tatsächlich anbietet.
+
+   Die Vorlage im Auftrag nannte für Fitnessstudios auch
+   „Fassadenreinigung" – die steht nicht im Leistungsangebot
+   (Haushalts-, Büro-, Fenster-, Grund-, Treppenhausreinigung,
+   Hausmeisterservice, Winterdienst, Gartenpflege, Mülltonnenservice).
+   Eine Werbemail, die etwas anbietet, was der Betrieb nicht leisten
+   kann, erzeugt Anfragen, die abgesagt werden müssen. Das ist
+   schlimmer als eine Leistung zu wenig.
+
+   Kommt Fassadenreinigung ins Angebot, gehört sie in diese eine
+   Liste – sonst nirgendwo. */
+const AKQ_LEISTUNGEN_STANDARD = ['Unterhaltsreinigung', 'Fensterreinigung', 'Grundreinigung'];
+
+const AKQ_BRANCHEN_LEISTUNGEN = [
+  { muster:/fitness|gym|sport|studio/i,
+    wort:'Fitnessstudios',
+    leistungen:['Unterhaltsreinigung', 'Fensterreinigung', 'Grundreinigung'] },
+  { muster:/b[üu]ro|kanzlei|praxis|versicherung|steuerber|agentur|it\b/i,
+    wort:'Büros und Praxen',
+    leistungen:['Büroreinigung', 'Fensterreinigung', 'Unterhaltsreinigung'] },
+  { muster:/werkstatt|autohaus|kfz|handwerk|schlosser|tischler|halle/i,
+    wort:'Werkstätten',
+    leistungen:['Grundreinigung', 'Unterhaltsreinigung', 'Fensterreinigung'] },
+  { muster:/gastro|restaurant|caf[eé]|hotel|b[äa]cker|metzger|imbiss|kneipe/i,
+    wort:'Gastronomiebetriebe',
+    leistungen:['Unterhaltsreinigung', 'Fensterreinigung', 'Grundreinigung'] },
+  { muster:/handel|laden|gesch[äa]ft|markt|shop|boutique|apotheke/i,
+    wort:'Ladengeschäfte',
+    leistungen:['Fensterreinigung', 'Unterhaltsreinigung', 'Grundreinigung'] },
+  { muster:/hausverwaltung|immobilien|wohnungs|verwaltung/i,
+    wort:'Hausverwaltungen',
+    leistungen:['Treppenhausreinigung', 'Hausmeisterservice', 'Winterdienst'] },
+  { muster:/arzt|zahnarzt|klinik|therapie|pflege|physio/i,
+    wort:'Praxen',
+    leistungen:['Unterhaltsreinigung', 'Fensterreinigung', 'Grundreinigung'] },
+  { muster:/friseur|kosmetik|salon|nagel/i,
+    wort:'Salons',
+    leistungen:['Unterhaltsreinigung', 'Fensterreinigung', 'Grundreinigung'] },
+];
+
+function akqBrancheTreffer(branche){
+  const b = String(branche || '').trim();
+  if(!b) return null;
+  return AKQ_BRANCHEN_LEISTUNGEN.find(e => e.muster.test(b)) || null;
+}
+
+function akqLeistungenFuer(branche){
+  const t = akqBrancheTreffer(branche);
+  return t ? t.leistungen : AKQ_LEISTUNGEN_STANDARD;
+}
+
+/* Der Entwurf. Bewusst eine reine Funktion und bewusst ohne fremde
+   Schnittstelle: Ein Text, der jedes Mal anders ausfällt, lässt sich
+   weder prüfen noch verantworten – und eine Werbemail, die niemand
+   vorher gelesen hat, geht hier ohnehin nicht hinaus.
+
+   Kurz gehalten. Wer eine Werbemail bekommt, liest die ersten drei
+   Zeilen; alles darunter entscheidet nur noch darüber, ob sie
+   unseriös wirkt. Keine erfundenen Zahlen, keine Sterne, keine
+   Kundenstimmen. */
+function akqEntwurfVorlage(firma){
+  const f = firma || {};
+  const name  = String(f.firmenname || '').trim();
+  const ap    = String(f.ansprechpartner || '').trim();
+  const ort   = String(f.ort || f.standort || '').trim();
+  const treffer = akqBrancheTreffer(f.branche);
+  const leistungen = treffer ? treffer.leistungen : AKQ_LEISTUNGEN_STANDARD;
+
+  const betreff = 'Reinigung für ' + (name || 'Ihren Betrieb') + (ort ? ' in ' + ort : '');
+
+  const wen = treffer
+    ? ('Für ' + treffer.wort + ' wie ' + (name || 'Ihren Betrieb') + (ort ? ' in ' + ort : ''))
+    : ('Für Betriebe wie ' + (name || 'Ihren') + (ort ? ' in ' + ort : ''));
+
+  const nachricht = [
+    ap ? ('Guten Tag ' + ap + ',') : 'Guten Tag,',
+    '',
+    'mein Name ist Daniel Lurch. Ich führe Waschlurch, einen Reinigungs- und',
+    'Hausmeisterservice aus Eitorf im Rhein-Sieg-Kreis.',
+    '',
+    wen + ' übernehmen wir regelmäßig:',
+    ...leistungen.map(l => '• ' + l),
+    '',
+    'Wenn das für Sie infrage kommt, sehe ich mir Ihre Räume gern unverbindlich an',
+    'und melde mich mit einem Vorschlag. Eine kurze Antwort auf diese E-Mail genügt.',
+    '',
+    'Freundliche Grüße',
+    'Daniel Lurch',
+    'Waschlurch · Eitorf',
+    'waschlurch@gmail.com',
+  ].join('\n');
+
+  return { betreff, nachricht };
+}
+
+/* Alles, was einem „versandbereit" im Weg steht – als Liste, nicht
+   als erstes Hindernis. Wer drei Dinge nachtragen muss, will sie
+   gleichzeitig sehen und nicht dreimal hintereinander abgewiesen
+   werden.
+
+   Reine Funktion, damit sie geprüft werden kann. Die Sperrprüfung
+   über die Dublettensuche kommt an der Aufrufstelle dazu – sie
+   braucht den gesamten Firmenbestand. */
+function akqEntwurfPruefen(firma, entwurf){
+  const gruende = [];
+  if(!firma){
+    return { ok:false, gruende:['Die Firma ist nicht mehr vorhanden.'], gesperrt:false };
+  }
+  const e = entwurf || {};
+  const gesperrt = firma.do_not_contact === true;
+
+  if(gesperrt) gruende.push('Dieser Kontakt darf nicht vorbereitet oder versendet werden.');
+  if(!String(firma.email || '').trim())
+    gruende.push('Für diese Firma ist keine E-Mail-Adresse hinterlegt.');
+  if(!e.kontaktgrundlage || e.kontaktgrundlage === KONTAKTGRUNDLAGE_UNGEPRUEFT)
+    gruende.push('Die Kontaktgrundlage ist noch nicht geprüft.');
+  if(!String(e.betreff || '').trim())   gruende.push('Der Betreff fehlt.');
+  if(!String(e.nachricht || '').trim()) gruende.push('Die Nachricht fehlt.');
+
+  return { ok: gruende.length === 0, gruende, gesperrt };
 }
 
 /* Felder, deren Änderung im Verlauf festgehalten wird. */
@@ -13367,10 +13522,27 @@ window.akqKontaktVorbereiten = function(id){
   }
   akqKontaktFirma = id;
   window.switchView('akquise_mails');
-  akqRenderKontaktAnsicht();
+  akqRenderKontaktAnsicht(true);   // Firmenwechsel: Formular neu aufbauen
 };
 
-function akqRenderKontaktAnsicht(){
+/* Der vorhandene Entwurf einer Firma. Gibt es aus Versehen mehrere,
+   gewinnt der jüngste – gearbeitet wird immer mit einem. */
+function akqEntwurfFuer(firmaId){
+  const treffer = allAkqNachrichten.filter(n => n.firma_id === firmaId);
+  if(treffer.length === 0) return null;
+  return treffer.slice().sort(nachDatumAbsteigend)[0];
+}
+
+/* ⚠️ Merkt sich, für welche Firma das Formular gerade steht.
+
+   Die Datenlauscher zeichnen bei jeder Änderung neu – auch bei der,
+   die das eigene Speichern auslöst. Würde dabei das Formular neu
+   aufgebaut, verlöre Lukas mitten im Schreiben seinen Text. Beim
+   erneuten Zeichnen derselben Firma wird deshalb nur der Prüfteil
+   aktualisiert, nicht das Formular. */
+let akqKontaktGezeichnetFuer = null;
+
+function akqRenderKontaktAnsicht(neuAufbauen){
   const el = document.getElementById('akq-kontakt-inhalt');
   if(!el) return;
 
@@ -13380,17 +13552,19 @@ function akqRenderKontaktAnsicht(){
      war – deshalb hier noch einmal prüfen und nicht auf die Prüfung
      beim Öffnen vertrauen. */
   if(f && f.do_not_contact === true){
+    akqKontaktGezeichnetFuer = null;
     el.innerHTML = `
       <div class="firma-sperre">
         <span aria-hidden="true">🔴</span>
         <div><div class="dub-sperrtitel">NICHT ERNEUT KONTAKTIEREN</div>
-        Für „${sicher(f.firmenname || '')}" darf kein Kontakt vorbereitet werden.</div>
+        Für „${sicher(f.firmenname || '')}" darf kein Kontakt vorbereitet oder versendet werden.</div>
       </div>
       <button class="karte-aktion" onclick="switchView('akquise_firmen')">Zurück zu den Firmen</button>`;
     return;
   }
 
   if(!f){
+    akqKontaktGezeichnetFuer = null;
     el.innerHTML = `
       <div class="akq-bau">
         <span class="akq-bau-symbol" aria-hidden="true">✉️</span>
@@ -13402,10 +13576,20 @@ function akqRenderKontaktAnsicht(){
     return;
   }
 
+  // Formular steht schon – nur den Prüfteil auffrischen
+  if(!neuAufbauen && akqKontaktGezeichnetFuer === f.id && document.getElementById('ent-betreff')){
+    akqKontaktPruefungZeichnen(f);
+    return;
+  }
+
+  const e = akqEntwurfFuer(f.id) || {};
+  const grundlage = e.kontaktgrundlage || KONTAKTGRUNDLAGE_UNGEPRUEFT;
+  const fj = sicherJs(f.id);
   const anschrift = [[f.strasse, f.hausnummer].filter(Boolean).join(' '),
                      [f.plz, f.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+
   el.innerHTML = `
-    <div class="akq-naechster">
+    <div class="akq-naechster ${e.status === 'versandbereit' ? '' : 'ruht'}">
       <div class="akq-naechster-lbl">Kontakt vorbereiten für</div>
       <div class="akq-naechster-titel">${sicher([f.firmenname, f.standort].filter(Boolean).join(' · '))}</div>
       <div class="akq-naechster-text">
@@ -13416,25 +13600,274 @@ function akqRenderKontaktAnsicht(){
     <div class="karte-block">
       <div class="karte-block-titel">Empfänger</div>
       <div class="karte-daten">
+        <div><span style="color:rgba(255,255,255,0.6)">Firma:</span> ${sicher(f.firmenname || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Ansprechpartner:</span> ${sicher(f.ansprechpartner || '–')}</div>
         <div><span style="color:rgba(255,255,255,0.6)">E-Mail:</span> ${sicher(f.email || '– keine hinterlegt')}</div>
-        <div><span style="color:rgba(255,255,255,0.6)">Telefon:</span> ${sicher(f.telefon || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Ort:</span> ${sicher([f.plz, f.ort].filter(Boolean).join(' ') || f.standort || '–')}</div>
         <div><span style="color:rgba(255,255,255,0.6)">Anschrift:</span> ${sicher(anschrift || '–')}</div>
-        <div><span style="color:rgba(255,255,255,0.6)">Website:</span> ${sicher(f.website || '–')}</div>
+        <div><span style="color:rgba(255,255,255,0.6)">Telefon:</span> ${sicher(f.telefon || '–')}</div>
       </div>
-      ${f.email ? '' : '<div class="akq-karte-hinweis" style="margin-top:12px">Ohne E-Mail-Adresse lässt sich später keine Nachricht versenden.</div>'}
+      ${f.email ? '' : `
+        <div class="firma-sperre" style="margin:14px 0 0">
+          <span aria-hidden="true">⚠️</span>
+          <div>Für diese Firma ist noch keine E-Mail-Adresse hinterlegt.<br>
+          <span style="opacity:.85">Ohne Adresse kann der Entwurf nicht versandbereit werden.</span>
+          <div style="margin-top:9px"><button class="karte-aktion" onclick="akqAufgabeOeffnen('${fj}')">Firma bearbeiten</button></div></div>
+        </div>`}
     </div>
 
-    <div class="akq-bau">
-      <span class="akq-bau-symbol" aria-hidden="true">✉️</span>
-      <div class="akq-bau-titel">Nachricht und Kontaktgrundlage folgen</div>
-      Betreff, Text und die Prüfung der Kontaktgrundlage kommen in der nächsten
-      Ausbaustufe. Versendet wird von hier aus noch nichts.
+    <div class="karte-block">
+      <div class="karte-block-titel">Kontaktgrundlage</div>
+      <p class="karte-block-text">
+        Auf welcher Grundlage darf diese Firma angeschrieben werden? Solange hier
+        „noch nicht geprüft“ steht, lässt sich der Entwurf nicht versandbereit machen.
+      </p>
+      <div class="field">
+        <label for="kg-wahl">Grundlage</label>
+        <select id="kg-wahl" onchange="akqKontaktPruefungAuffrischen()">
+          ${KONTAKTGRUNDLAGEN.map(k => `<option value="${sicher(k.wert)}" ${k.wert === grundlage ? 'selected' : ''}>${sicher(k.text)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="kg-quelle">Quelle / Nachweis (optional)</label>
+          <input type="text" id="kg-quelle" placeholder="z. B. Anfrage über das Kontaktformular"
+                 value="${sicher(e.kontaktgrundlage_quelle || '')}" autocomplete="off"></div>
+        <div class="field"><label for="kg-notiz">Notiz (optional)</label>
+          <input type="text" id="kg-notiz" placeholder="z. B. telefonisch zugestimmt am 12.08."
+                 value="${sicher(e.kontaktgrundlage_notiz || '')}" autocomplete="off"></div>
+      </div>
+      ${e.kontaktgrundlage_geprueft_am ? `
+        <div class="akq-karte-hinweis">Zuletzt geprüft am ${sicher(formatDate(e.kontaktgrundlage_geprueft_am))}${
+          e.kontaktgrundlage_geprueft_von ? ' von ' + sicher(e.kontaktgrundlage_geprueft_von) : ''}</div>` : ''}
     </div>
+
+    <div class="karte-block">
+      <div class="karte-block-titel">E-Mail-Entwurf</div>
+      <p class="karte-block-text">
+        „Entwurf erstellen“ setzt einen Vorschlag anhand von Branche, Ort und
+        Ansprechpartner ein. Ändere ihn, so viel du möchtest – versendet wird nichts,
+        was du nicht gelesen hast.
+      </p>
+      <button class="karte-aktion" style="margin-bottom:14px" onclick="akqEntwurfErstellen('${fj}')">Entwurf erstellen</button>
+      <div class="field">
+        <label for="ent-betreff">Betreff</label>
+        <input type="text" id="ent-betreff" value="${sicher(e.betreff || '')}"
+               placeholder="Betreff der E-Mail" autocomplete="off" oninput="akqKontaktPruefungAuffrischen()">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label for="ent-nachricht">Nachricht</label>
+        <textarea id="ent-nachricht" rows="14" placeholder="Text der E-Mail"
+                  oninput="akqKontaktPruefungAuffrischen()">${sicher(e.nachricht || '')}</textarea>
+      </div>
+    </div>
+
+    <div id="ent-pruefung"></div>
 
     <div class="akq-speicherleiste">
-      <button class="btn btn-sekundaer" onclick="akqAufgabeOeffnen('${sicherJs(f.id)}')">Zurück zur Firma</button>
+      <button class="btn btn-primary" id="ent-save-btn" onclick="akqEntwurfSpeichern('${fj}')">Entwurf speichern</button>
+      <button class="btn btn-sekundaer" id="ent-bereit-btn" onclick="akqAlsVersandbereit('${fj}')">Als versandbereit markieren</button>
+      <button class="btn akq-abbrechen" onclick="akqAufgabeOeffnen('${fj}')">Zurück zur Firma</button>
     </div>`;
+
+  akqKontaktGezeichnetFuer = f.id;
+  akqKontaktPruefungZeichnen(f);
 }
+
+/* Was noch fehlt, steht unter dem Formular und aktualisiert sich beim
+   Tippen. Der Nutzer soll nicht erst beim Klicken erfahren, dass
+   etwas fehlt. */
+function akqKontaktPruefungZeichnen(f){
+  const ziel = document.getElementById('ent-pruefung');
+  if(!ziel) return;
+
+  const e = akqEntwurfFuer(f.id) || {};
+  const entwurfJetzt = akqEntwurfAusFormular();
+  const p = akqEntwurfPruefen(f, entwurfJetzt);
+  const bereitKnopf = document.getElementById('ent-bereit-btn');
+
+  if(p.ok){
+    ziel.innerHTML = e.status === 'versandbereit'
+      ? '<div class="dub-status dub-frei"><span class="dub-symbol" aria-hidden="true">✅</span>' +
+        '<div class="dub-status-inhalt"><div class="dub-status-titel">Als versandbereit markiert.</div>' +
+        'Der Versand wird in der nächsten Phase eingerichtet.</div></div>'
+      : '<div class="dub-status dub-frei"><span class="dub-symbol" aria-hidden="true">✅</span>' +
+        '<div class="dub-status-inhalt">Alles beisammen. Der Entwurf kann als versandbereit markiert werden.</div></div>';
+  } else {
+    ziel.innerHTML =
+      '<div class="dub-status ' + (p.gesperrt ? 'dub-sperre' : 'dub-gelb') + '">' +
+      '<span class="dub-symbol" aria-hidden="true">' + (p.gesperrt ? '🔴' : '⚠️') + '</span>' +
+      '<div class="dub-status-inhalt"><div class="dub-status-titel">Noch nicht versandbereit</div>' +
+      '<ul style="margin:6px 0 0;padding-left:18px">' +
+        p.gruende.map(g => '<li>' + sicher(g) + '</li>').join('') +
+      '</ul></div></div>';
+  }
+
+  if(bereitKnopf){
+    bereitKnopf.disabled = !p.ok || e.status === 'versandbereit';
+    bereitKnopf.style.opacity = bereitKnopf.disabled ? '.45' : '';
+    bereitKnopf.style.cursor  = bereitKnopf.disabled ? 'not-allowed' : '';
+  }
+}
+
+window.akqKontaktPruefungAuffrischen = function(){
+  const f = akqKontaktFirma ? allFirmen.find(x => x.id === akqKontaktFirma) : null;
+  if(f) akqKontaktPruefungZeichnen(f);
+};
+
+function akqEntwurfAusFormular(){
+  const hole = id => (document.getElementById(id) || {}).value || '';
+  return {
+    kontaktgrundlage: hole('kg-wahl') || KONTAKTGRUNDLAGE_UNGEPRUEFT,
+    kontaktgrundlage_quelle: hole('kg-quelle').trim(),
+    kontaktgrundlage_notiz: hole('kg-notiz').trim(),
+    betreff: hole('ent-betreff').trim(),
+    nachricht: hole('ent-nachricht').trim(),
+  };
+}
+
+window.akqEntwurfErstellen = function(id){
+  const f = allFirmen.find(x => x.id === id);
+  if(!f) return;
+  const betreffEl = document.getElementById('ent-betreff');
+  const textEl = document.getElementById('ent-nachricht');
+  if(!betreffEl || !textEl) return;
+
+  /* Vorhandenen Text nicht wortlos überschreiben – er kann von Hand
+     geschrieben oder mühsam angepasst worden sein. */
+  if((betreffEl.value.trim() || textEl.value.trim()) &&
+     !confirm('Betreff und Nachricht durch einen neuen Vorschlag ersetzen?\n\nDer bisherige Text geht dabei verloren.')) return;
+
+  const vorlage = akqEntwurfVorlage(f);
+  betreffEl.value = vorlage.betreff;
+  textEl.value = vorlage.nachricht;
+  akqKontaktPruefungAuffrischen();
+  melde('Vorschlag eingesetzt. Bitte durchlesen und anpassen.');
+};
+
+/* Speichern legt an oder ändert – nie beides. Ohne die Suche nach dem
+   vorhandenen Entwurf entstünde bei jedem Klick ein weiterer, und
+   welcher davon gilt, wüsste niemand. */
+function akqEntwurfSchreiben(f, zusatz, knopfId, fertigText){
+  const knopf = document.getElementById(knopfId);
+  const vorhanden = akqEntwurfFuer(f.id);
+  const wer = akqWerBinIch();
+  const formular = akqEntwurfAusFormular();
+
+  const daten = Object.assign({
+    firma_id: f.id,
+    empfaenger: String(f.email || '').trim(),
+    betreff: formular.betreff,
+    nachricht: formular.nachricht,
+    kontaktgrundlage: formular.kontaktgrundlage,
+    kontaktgrundlage_quelle: formular.kontaktgrundlage_quelle,
+    kontaktgrundlage_notiz: formular.kontaktgrundlage_notiz,
+    aktualisiert_am: serverTimestamp(),
+  }, zusatz || {});
+
+  /* Wer wann geprüft hat, wird beim Setzen der Grundlage festgehalten –
+     nicht behauptet. Bei „noch nicht geprüft" bleibt das Feld leer. */
+  if(formular.kontaktgrundlage !== KONTAKTGRUNDLAGE_UNGEPRUEFT){
+    daten.kontaktgrundlage_geprueft_am = serverTimestamp();
+    daten.kontaktgrundlage_geprueft_von = wer.name;
+  } else {
+    daten.kontaktgrundlage_geprueft_am = null;
+    daten.kontaktgrundlage_geprueft_von = '';
+  }
+
+  if(knopf){ knopf.disabled = true; knopf.dataset.alterText = knopf.textContent; knopf.textContent = 'Speichere ...'; }
+  const fertig = () => {
+    if(!knopf) return;
+    knopf.disabled = false;
+    if(knopf.dataset.alterText) knopf.textContent = knopf.dataset.alterText;
+  };
+
+  if(vorhanden){
+    return updateDoc(doc(db, 'akquise_nachrichten', vorhanden.id), daten)
+      .then(() => { fertig(); melde(fertigText); return vorhanden.id; })
+      .catch(err => { fertig(); meldeSchreibfehler(err, 'Das Speichern des Entwurfs'); throw err; });
+  }
+
+  daten.status = daten.status || 'entwurf';
+  daten.erstellt_von = wer.uid;
+  daten.erstellt_von_name = wer.name;
+  daten.erstellt_am = serverTimestamp();
+  daten.createdAt = serverTimestamp();
+
+  return addDoc(collection(db, 'akquise_nachrichten'), daten)
+    .then(ref => {
+      fertig();
+      akqVerlaufEintragen(f.id, 'kontakt', 'Kontakt vorbereitet');
+      melde(fertigText);
+      return ref.id;
+    })
+    .catch(err => { fertig(); meldeSchreibfehler(err, 'Das Anlegen des Entwurfs'); throw err; });
+}
+
+window.akqEntwurfSpeichern = function(id){
+  const f = allFirmen.find(x => x.id === id);
+  if(!f) return;
+  if(f.do_not_contact === true){
+    alert('Dieser Kontakt darf nicht vorbereitet oder versendet werden.');
+    return;
+  }
+
+  const vorhanden = akqEntwurfFuer(f.id);
+  const warBereit = vorhanden && vorhanden.status === 'versandbereit';
+
+  /* ⚠️ Ein geänderter Entwurf ist nicht mehr der geprüfte. Bliebe die
+     Markierung stehen, ginge später ein Text hinaus, den in dieser
+     Fassung niemand freigegeben hat. Die Firma fällt deshalb auf
+     „Kontakt möglich" zurück. */
+  akqEntwurfSchreiben(f, warBereit ? { status:'entwurf' } : null, 'ent-save-btn',
+    warBereit ? 'Entwurf gespeichert – die Markierung „versandbereit" wurde zurückgenommen.'
+              : 'Entwurf gespeichert.')
+    .then(() => {
+      if(warBereit && (f.status === 'versandbereit')){
+        return updateDoc(doc(db, 'firmen', f.id), { status:'kontakt_moeglich', aktualisiert_am: serverTimestamp() })
+          .then(() => akqVerlaufEintragen(f.id, 'kontakt', 'Entwurf geändert – nicht mehr versandbereit'));
+      }
+    })
+    .catch(() => {});
+};
+
+window.akqAlsVersandbereit = function(id){
+  const f = allFirmen.find(x => x.id === id);
+
+  // 1–3, 5, 6: Firma, E-Mail, Sperre, Kontaktgrundlage, Betreff, Nachricht
+  const pruefung = akqEntwurfPruefen(f, akqEntwurfAusFormular());
+  if(!pruefung.ok){
+    alert(pruefung.gesperrt
+      ? 'Dieser Kontakt darf nicht vorbereitet oder versendet werden.'
+      : 'Noch nicht versandbereit:\n\n• ' + pruefung.gruende.join('\n• '));
+    if(f) akqKontaktPruefungZeichnen(f);
+    return;
+  }
+
+  /* 4. Dieselbe Prüfung wie beim Erfassen – und hier ist sie wichtiger
+     als dort: Ein zweiter Datensatz derselben, gesperrten Firma wäre
+     sonst der Weg, die Sperre doch noch zu umgehen. Geprüft wird der
+     Kontakt, nicht der Datensatz. */
+  const dub = window.akqPruefeKontakt({
+    firmenname: f.firmenname, standort: f.standort, ort: f.ort,
+    email: f.email, telefon: f.telefon, website: f.website
+  }, f.id);
+  if(dub.gesperrt){
+    alert('Dieser Kontakt darf nicht vorbereitet oder versendet werden.\n\n' +
+          'Zu denselben Kontaktdaten gibt es einen gesperrten Eintrag: „' +
+          ((dub.gesperrteFirma && dub.gesperrteFirma.firmenname) || 'unbekannt') + '".');
+    akqVerlaufEintragen(f.id, 'sperre', 'Kontaktversuch durch Sperre verhindert (versandbereit)');
+    return;
+  }
+
+  akqEntwurfSchreiben(f, { status:'versandbereit' }, 'ent-bereit-btn', 'Als versandbereit markiert.')
+    .then(() => {
+      akqVerlaufEintragen(f.id, 'kontakt', 'E-Mail-Entwurf als versandbereit markiert');
+      if(f.status !== 'versandbereit'){
+        return updateDoc(doc(db, 'firmen', f.id), { status:'versandbereit', aktualisiert_am: serverTimestamp() });
+      }
+    })
+    .catch(() => {});
+};
 
 /* ── Schritt 4: Antworten ────────────────────────────────────
    Noch keine Gmail-Abfrage. Was hier steht, sind Firmen, bei denen
@@ -13492,7 +13925,13 @@ function akqNaechsterHtml(f){
 
   let knopf = '';
   if(n.knopf){
-    if(n.knopf.status){
+    if(n.knopf.deaktiviert){
+      /* Sichtbar, aber nicht bedienbar – mit Begründung daneben. Ein
+         Knopf, der wortlos nichts tut, lässt den Nutzer glauben, er
+         habe etwas falsch gemacht. */
+      knopf = `<button class="btn btn-primary" disabled style="opacity:.45;cursor:not-allowed">${sicher(n.knopf.text)}</button>` +
+              (n.knopf.hinweis ? `<div class="akq-karte-hinweis" style="margin-top:8px">${sicher(n.knopf.hinweis)}</div>` : '');
+    } else if(n.knopf.status){
       knopf = `<button class="btn btn-primary" onclick="akqStatusSetzen('${fj}','${sicherJs(n.knopf.status)}')">${sicher(n.knopf.text)}</button>`;
     } else if(n.knopf.ziel === 'kontakt'){
       knopf = `<button class="btn btn-primary" onclick="akqKontaktVorbereiten('${fj}')">${sicher(n.knopf.text)}</button>`;
