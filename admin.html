@@ -1813,6 +1813,51 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .akq-speicherleiste { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
 .akq-speicherleiste .btn { width:auto; padding:14px 26px; }
 
+/* Vorschau des Mailtexts. `pre-wrap` erhält die Absätze des
+   Entwurfs – mit normalem Umbruch stünde alles in einem Block und
+   niemand könnte beurteilen, wie die Mail beim Empfänger aussieht. */
+.akq-sendeknopf { width:auto; padding:14px 26px; }
+
+/* ── KUNDENANTWORTEN (14.08.2026) ─────────────────────────────
+   Eine ungelesene Antwort ist die dringendste Sache im ganzen
+   Bereich – sie bekommt deshalb einen farbigen Rand und steht oben. */
+.antw-karte {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-left:4px solid rgba(255,255,255,0.14);
+  border-radius:16px; padding:20px; margin-bottom:14px;
+}
+.antw-karte.neu { border-left-color:#60A5FA; background:rgba(96,165,250,0.06); }
+.antw-kopf { display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+.antw-firma { font-size:16px; font-weight:700; min-width:0; flex:1 1 180px; overflow-wrap:anywhere; }
+.antw-marke {
+  flex-shrink:0; padding:4px 11px; border-radius:100px;
+  font-size:11.5px; font-weight:700; background:rgba(96,165,250,0.16); color:#60A5FA;
+}
+.antw-meta { font-size:12.5px; color:rgba(255,255,255,0.6); margin-bottom:12px; overflow-wrap:anywhere; }
+.antw-betreff { font-size:14px; font-weight:600; margin-bottom:8px; overflow-wrap:anywhere; }
+/* ⚠️ Der Text kommt aus einer fremden E-Mail. Er wird als TEXT
+   gesetzt (`sicher()` + pre-wrap), nie als HTML – sonst liefe der
+   Inhalt eines Werbe-Newsletters im angemeldeten Dashboard. */
+.antw-text {
+  white-space:pre-wrap; overflow-wrap:anywhere;
+  font-size:13.5px; line-height:1.65; color:rgba(255,255,255,0.85);
+  background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px; padding:14px 15px; max-height:320px; overflow-y:auto;
+}
+.antw-aktionen { display:flex; gap:9px; flex-wrap:wrap; margin-top:14px; }
+.antw-aktionen .karte-aktion.stop { border-color:rgba(248,113,113,0.3); color:#F87171; }
+.antw-leiste { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
+.antw-abschnitt { font-size:13px; font-weight:700; color:rgba(255,255,255,0.7);
+  text-transform:uppercase; letter-spacing:.8px; margin:26px 0 14px; }
+.antw-abschnitt:first-child { margin-top:0; }
+
+.akq-vorschau-text {
+  white-space:pre-wrap; overflow-wrap:anywhere;
+  font-size:13.5px; line-height:1.65; color:rgba(255,255,255,0.82);
+  background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px; padding:15px 16px; max-height:340px; overflow-y:auto;
+}
+
 /* ── GEFÜHRTER ABLAUF (14.08.2026) ────────────────────────────
    Fünf Kennzahlen statt vier. `.stat-row` steht fest auf vier
    Spalten; die Handy-Regeln dafür stehen weiter oben in der Datei
@@ -1954,6 +1999,10 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     border-top:1px solid rgba(255,255,255,0.1);
   }
   .akq-speicherleiste .btn { width:100%; }
+  /* Der Sendeknopf ist die wichtigste Schaltfläche der Ansicht –
+     er bekommt auf dem Handy die volle Breite. */
+  .akq-sendeknopf { width:100%; }
+  .akq-vorschau-text { max-height:260px; font-size:13px; }
   /* Zwei Spalten ergäben bei 375 px rund 150 px je Angabe – „Letzter
      Kontakt: 14.08.2026, 09:12" bricht darin in drei Zeilen um. */
   .dub-treffer-daten { grid-template-columns:minmax(0,1fr); gap:5px; }
@@ -3766,9 +3815,11 @@ let unsubBenutzer = null;
 let allFirmen = [];
 let allAkqVerlauf = [];
 let allAkqNachrichten = [];
+let allAkqAntworten = [];
 let unsubFirmen = null;
 let unsubAkqVerlauf = null;
 let unsubAkqNachrichten = null;
+let unsubAkqAntworten = null;
 let unsubKunden = null;
 let unsubAngebote = null;
 let currentKundeEmail = null;
@@ -6835,6 +6886,7 @@ onAuthStateChanged(auth, async (user) => {
     if(unsubFirmen) unsubFirmen();
     if(unsubAkqVerlauf) unsubAkqVerlauf();
     if(unsubAkqNachrichten) unsubAkqNachrichten();
+    if(unsubAkqAntworten) unsubAkqAntworten();
     if(unsubKunden) unsubKunden();
     if(unsubAngebote) unsubAngebote();
     if(unsubReferenzen) unsubReferenzen();
@@ -7240,6 +7292,14 @@ function startAkquiseListeners(){
     allAkqNachrichten = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     akqRenderKontaktAnsicht();
   }, err => console.error('Entwürfe konnten nicht geladen werden:', err));
+
+  /* Eingegangene Kundenantworten. Nur lesen – geschrieben wird
+     ausschließlich über die Serverfunktion. */
+  unsubAkqAntworten = onSnapshot(collection(db, 'akquise_antworten'), (snap) => {
+    allAkqAntworten = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    akqRenderAntwortenAnsicht();
+    window.akqRenderAkquiseStart();
+  }, err => console.error('Antworten konnten nicht geladen werden:', err));
 }
 
 // ── ANFRAGEN ─────────────────────
@@ -12523,7 +12583,7 @@ const AKQ_NAECHSTER = {
     text:'Diese Firma soll später erneut angesehen werden.' },
 
   gesendet: { art:'warten', titel:'Auf Antwort warten',
-    text:'Die Nachricht ist hinaus. Sobald eine Antwort eingeht, wird sie hier vermerkt.' },
+    text:'Die E-Mail ist hinaus. Kundenantworten werden später automatisch hier im Dashboard angezeigt – das Gmail-Postfach muss niemand öffnen.' },
 
   antwort: { art:'tun', titel:'Antwort bearbeiten',
     text:'Es ist eine Rückmeldung eingegangen. Halte fest, wie es weitergeht.',
@@ -12563,6 +12623,12 @@ function akqNaechsterSchritt(firma){
    ══════════════════════════════════════════════════════════════ */
 
 const KONTAKTGRUNDLAGE_UNGEPRUEFT = 'ungeprueft';
+
+/* Nur zur Anzeige. Verschickt wird ausschließlich über die
+   Serverfunktion, und die kennt ihre Absenderadresse selbst –
+   hier steht sie, damit in der Vorschau sichtbar ist, aus welchem
+   Postfach die Mail hinausgeht. */
+const AKQ_ABSENDER = 'waschlurch.kunden@gmail.com';
 
 /* „Noch nicht geprüft" steht bewusst an erster Stelle und ist die
    Vorgabe. Eine Auswahl, die schon auf „Einwilligung vorhanden"
@@ -13432,10 +13498,18 @@ window.akqRenderAkquiseStart = function(){
   setz('akq-z-heute', allFirmen.filter(f => akqIstHeute(f.erstellt_am) || akqIstHeute(f.createdAt)).length);
   setz('akq-z-versandbereit', akqZaehle('versandbereit'));
   setz('akq-z-gesendet', akqZaehle('gesendet'));
-  /* „Offene Antworten" sind Rückmeldungen, die noch niemand bearbeitet
-     hat – also die Status `antwort` und `rueckfrage`. Sobald echte
-     Antworten eingelesen werden, zählt dieselbe Zahl weiter. */
-  setz('akq-z-antworten', akqZaehle('antwort') + akqZaehle('rueckfrage'));
+  /* „Offene Antworten" zählt seit Phase 6B die tatsächlich
+     eingegangenen, noch ungelesenen Rückmeldungen – nicht mehr den
+     Firmenstatus. Der Status sagt nur, dass irgendwann etwas kam;
+     die Zahl hier sagt, was noch niemand gelesen hat.
+
+     Solange noch keine Antwort eingelesen wurde, fällt sie auf den
+     Status zurück – sonst stünde bei einer von Hand auf „Antwort"
+     gesetzten Firma eine 0. */
+  const ungelesen = allAkqAntworten.filter(a => a.gelesen !== true).length;
+  setz('akq-z-antworten', allAkqAntworten.length
+    ? ungelesen
+    : (akqZaehle('antwort') + akqZaehle('rueckfrage')));
   setz('akq-z-interesse', akqZaehle('interesse'));
 
   akqRenderOffeneAufgaben();
@@ -13542,6 +13616,17 @@ function akqEntwurfFuer(firmaId){
    aktualisiert, nicht das Formular. */
 let akqKontaktGezeichnetFuer = null;
 
+/* ⚠️ Zusätzlich der zuletzt gezeichnete Zustand des Entwurfs.
+
+   Nur die Firma zu merken genügte nicht: Nach dem Versand setzt der
+   Server den Entwurf auf „gesendet", der Datenlauscher zeichnet neu –
+   und die Ansicht blieb beim Formular stehen, weil dieselbe Firma
+   offen war. Man sah weiter „E-Mail versenden", obwohl die Mail
+   längst draußen war. Dasselbe galt für den Schritt von „entwurf"
+   auf „versandbereit": Die Vorschau erschien erst nach einem
+   Bereichswechsel. */
+let akqKontaktGezeichneterStand = null;
+
 function akqRenderKontaktAnsicht(neuAufbauen){
   const el = document.getElementById('akq-kontakt-inhalt');
   if(!el) return;
@@ -13576,17 +13661,64 @@ function akqRenderKontaktAnsicht(neuAufbauen){
     return;
   }
 
-  // Formular steht schon – nur den Prüfteil auffrischen
-  if(!neuAufbauen && akqKontaktGezeichnetFuer === f.id && document.getElementById('ent-betreff')){
+  const e = akqEntwurfFuer(f.id) || {};
+
+  /* Formular steht schon und der Zustand ist derselbe – dann nur den
+     Prüfteil auffrischen, damit der getippte Text erhalten bleibt. */
+  if(!neuAufbauen && akqKontaktGezeichnetFuer === f.id
+     && akqKontaktGezeichneterStand === (e.status || 'keiner')
+     && document.getElementById('ent-betreff')){
     akqKontaktPruefungZeichnen(f);
     return;
   }
-
-  const e = akqEntwurfFuer(f.id) || {};
+  akqKontaktGezeichneterStand = e.status || 'keiner';
   const grundlage = e.kontaktgrundlage || KONTAKTGRUNDLAGE_UNGEPRUEFT;
   const fj = sicherJs(f.id);
   const anschrift = [[f.strasse, f.hausnummer].filter(Boolean).join(' '),
                      [f.plz, f.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+
+  /* Eine versendete Nachricht ist der Nachweis dessen, was
+     hinausgegangen ist. Sie wird nicht mehr bearbeitet – so steht es
+     auch in den Firestore-Regeln. */
+  if(e.status === 'gesendet'){
+    akqKontaktGezeichnetFuer = f.id;
+    el.innerHTML = `
+      <div class="dub-status dub-frei">
+        <span class="dub-symbol" aria-hidden="true">✅</span>
+        <div class="dub-status-inhalt">
+          <div class="dub-status-titel">E-Mail erfolgreich gesendet</div>
+          Kundenantworten werden später automatisch hier im Dashboard angezeigt.
+          Das Gmail-Postfach muss niemand öffnen.
+        </div>
+      </div>
+
+      <div class="karte-block">
+        <div class="karte-block-titel">Versendet</div>
+        <div class="karte-daten">
+          <div><span style="color:rgba(255,255,255,0.6)">Firma:</span> ${sicher(f.firmenname || '–')}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Empfänger:</span> ${sicher(e.empfaenger || '–')}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Absender:</span> ${sicher(e.absender || AKQ_ABSENDER)}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Gesendet am:</span> ${sicher(e.gesendet_am ? formatDate(e.gesendet_am) : '–')}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Gesendet von:</span> ${sicher(e.gesendet_von || '–')}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Gesprächskennung:</span> ${sicher(e.gmail_thread_id || '–')}</div>
+        </div>
+      </div>
+
+      <div class="karte-block">
+        <div class="karte-block-titel">Betreff</div>
+        <div style="font-size:14.5px;font-weight:600;overflow-wrap:anywhere">${sicher(e.betreff || '')}</div>
+      </div>
+
+      <div class="karte-block">
+        <div class="karte-block-titel">Nachricht</div>
+        <div class="akq-vorschau-text">${sicher(e.nachricht || '')}</div>
+      </div>
+
+      <div class="akq-speicherleiste">
+        <button class="btn btn-sekundaer" onclick="akqAufgabeOeffnen('${fj}')">Zurück zur Firma</button>
+      </div>`;
+    return;
+  }
 
   el.innerHTML = `
     <div class="akq-naechster ${e.status === 'versandbereit' ? '' : 'ruht'}">
@@ -13596,6 +13728,34 @@ function akqRenderKontaktAnsicht(neuAufbauen){
         ${sicher(f.ansprechpartner || 'kein Ansprechpartner hinterlegt')}${f.branche ? ' · ' + sicher(f.branche) : ''}
       </div>
     </div>
+
+    ${e.status === 'versandbereit' ? `
+      <div class="karte-block" style="border-color:rgba(34,197,94,0.32)">
+        <div class="karte-block-titel">Bereit zum Versand</div>
+        <p class="karte-block-text">
+          So geht die E-Mail hinaus. Bitte noch einmal lesen – versendet wird über das
+          Waschlurch-Postfach, und rückgängig machen lässt sich das nicht.
+        </p>
+        <div class="karte-daten" style="margin-bottom:14px">
+          <div><span style="color:rgba(255,255,255,0.6)">Firma:</span> ${sicher(f.firmenname || '–')}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Empfänger:</span> ${sicher(f.email || '–')}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Absender:</span> ${sicher(AKQ_ABSENDER)}</div>
+          <div><span style="color:rgba(255,255,255,0.6)">Betreff:</span> ${sicher(e.betreff || '–')}</div>
+        </div>
+        <div class="akq-vorschau-text">${sicher(e.nachricht || '')}</div>
+        <div style="margin-top:16px">
+          <!-- Breite steht in der Regel .akq-sendeknopf, nicht hier:
+               eine Angabe im style-Attribut schlägt jede Regel im Stilblock,
+               und der wichtigste Knopf dieser Ansicht bliebe auf dem Handy
+               bei 170 px stehen. -->
+          <button class="btn btn-primary akq-sendeknopf"
+                  id="akq-senden-btn" onclick="akqMailVersenden('${fj}')">E-Mail versenden</button>
+          <div class="akq-karte-hinweis" style="margin-top:9px">
+            Kundenantworten werden später automatisch hier im Dashboard angezeigt.
+            Das Gmail-Postfach muss niemand öffnen.
+          </div>
+        </div>
+      </div>` : ''}
 
     <div class="karte-block">
       <div class="karte-block-titel">Empfänger</div>
@@ -13812,6 +13972,14 @@ window.akqEntwurfSpeichern = function(id){
   }
 
   const vorhanden = akqEntwurfFuer(f.id);
+  /* Eine versendete Nachricht ist der Nachweis dessen, was
+     hinausgegangen ist – sie wird nicht mehr geändert. Die
+     Firestore-Regeln lehnen das ohnehin ab; hier steht der
+     verständliche Satz dazu. */
+  if(vorhanden && vorhanden.status === 'gesendet'){
+    melde('Diese Nachricht ist bereits versendet und kann nicht mehr geändert werden.');
+    return;
+  }
   const warBereit = vorhanden && vorhanden.status === 'versandbereit';
 
   /* ⚠️ Ein geänderter Entwurf ist nicht mehr der geprüfte. Bliebe die
@@ -13828,6 +13996,75 @@ window.akqEntwurfSpeichern = function(id){
       }
     })
     .catch(() => {});
+};
+
+/* ══════════════════════════════════════════════════════════════
+   VERSAND (14.08.2026)
+   ══════════════════════════════════════════════════════════════
+   Der Browser schickt NUR zwei Kennungen. Empfänger, Betreff und
+   Text liest die Serverfunktion selbst aus der Datenbank – kämen
+   sie von hier, ließen sie sich im Entwicklerwerkzeug ändern und
+   über das Waschlurch-Postfach ginge eine beliebige Mail an eine
+   beliebige Adresse hinaus.
+
+   Die Zugangsdaten für Gmail liegen ausschließlich bei Vercel als
+   Umgebungsvariablen. Dieser Code kennt sie nicht und kann sie
+   nicht anfordern. */
+let akqVersandLaeuft = false;
+
+window.akqMailVersenden = async function(id){
+  /* Erste von drei Sperren gegen den Doppelklick: hier im Speicher,
+     dann der deaktivierte Knopf, und zuletzt – der eigentliche
+     Schutz – die Marke in der Serverfunktion. Die ersten beiden
+     helfen der Bedienung, die dritte ist die Zusage. */
+  if(akqVersandLaeuft) return;
+
+  const f = allFirmen.find(x => x.id === id);
+  const e = f ? akqEntwurfFuer(f.id) : null;
+  if(!f || !e) return;
+
+  if(f.do_not_contact === true){
+    alert('Dieser Kontakt darf nicht vorbereitet oder versendet werden.');
+    return;
+  }
+  if(e.status === 'gesendet'){ melde('Diese Nachricht ist bereits versendet.'); return; }
+  if(e.status !== 'versandbereit'){ melde('Dieser Entwurf ist nicht als versandbereit markiert.'); return; }
+
+  if(!confirm('E-Mail jetzt über Waschlurch versenden?\n\n' +
+              'An: ' + (f.email || '') + '\n' +
+              'Von: ' + AKQ_ABSENDER + '\n' +
+              'Betreff: ' + (e.betreff || '') + '\n\n' +
+              'Der Versand lässt sich nicht rückgängig machen.')) return;
+
+  akqVersandLaeuft = true;
+  const knopf = document.getElementById('akq-senden-btn');
+  if(knopf){ knopf.disabled = true; knopf.textContent = 'Wird gesendet ...'; }
+
+  try {
+    const antwort = await serverAufruf('/api/akquise-versenden', {
+      firma_id: f.id, nachricht_id: e.id,
+    });
+    melde('E-Mail erfolgreich gesendet an ' + (antwort.empfaenger || f.email) + '.');
+    /* Die Ansicht zieht über den Datenlauscher nach – der Server hat
+       den Status bereits auf „gesendet" gesetzt. */
+  } catch(err){
+    if(err && err.message === 'EINRICHTUNG_FEHLT'){
+      alert('Der Versand ist noch nicht eingerichtet.\n\n' +
+            'Die Serverfunktion /api/akquise-versenden ist nicht erreichbar. ' +
+            'Siehe EINRICHTUNG.md, Abschnitt Gmail.');
+    } else {
+      /* ⚠️ Ausdrücklich sagen, dass NICHTS hinausgegangen ist. Ein
+         bloßes „Fehler" lässt offen, ob die Mail vielleicht doch
+         raus ist – und dann schickt jemand sie sicherheitshalber
+         noch einmal. */
+      alert('Die E-Mail wurde NICHT versendet.\n\n' + ((err && err.message) || 'Unbekannter Fehler') +
+            '\n\nDer Entwurf bleibt versandbereit und kann erneut gesendet werden.');
+    }
+  } finally {
+    akqVersandLaeuft = false;
+    const jetzt = document.getElementById('akq-senden-btn');
+    if(jetzt){ jetzt.disabled = false; jetzt.textContent = 'E-Mail versenden'; }
+  }
 };
 
 window.akqAlsVersandbereit = function(id){
@@ -13869,42 +14106,170 @@ window.akqAlsVersandbereit = function(id){
     .catch(() => {});
 };
 
-/* ── Schritt 4: Antworten ────────────────────────────────────
-   Noch keine Gmail-Abfrage. Was hier steht, sind Firmen, bei denen
-   von Hand „Antwort eingegangen" oder „Rückfrage" gesetzt wurde. */
+/* ══════════════════════════════════════════════════════════════
+   SCHRITT 4: KUNDENANTWORTEN (14.08.2026)
+   ══════════════════════════════════════════════════════════════
+   Lukas soll Gmail nie öffnen müssen. Was hier steht, hat der
+   Abgleich aus dem Akquise-Postfach geholt – ausschließlich aus
+   Gesprächen, die Waschlurch selbst begonnen hat. */
+
+const AKQ_ANTWORT_AKTIONEN = [
+  { status:'interesse',      text:'Interesse',      wortlaut:'Interesse' },
+  { status:'rueckfrage',     text:'Rückfrage',      wortlaut:'Rückfrage' },
+  { status:'kein_interesse', text:'Kein Interesse', wortlaut:'kein Interesse', stop:true },
+  { status:'spaeter',        text:'Später',         wortlaut:'später erneut' },
+];
+
+function akqAntwortenSortiert(){
+  return allAkqAntworten.slice().sort((a, b) =>
+    String(b.empfangen_am || '').localeCompare(String(a.empfangen_am || '')));
+}
+
+function akqAntwortKarte(a){
+  const firma = allFirmen.find(f => f.id === a.firma_id) || {};
+  const aj = sicherJs(a.id);
+  const fj = sicherJs(a.firma_id || '');
+  const neu = a.gelesen !== true;
+  const gesperrt = firma.do_not_contact === true;
+
+  return `
+    <div class="antw-karte ${neu ? 'neu' : ''}" id="antw-${sicher(a.id)}">
+      <div class="antw-kopf">
+        <div class="antw-firma">${sicher([firma.firmenname || a.firma_name, firma.standort].filter(Boolean).join(' · ') || 'Unbekannte Firma')}</div>
+        ${neu ? '<span class="antw-marke">🔔 Neue Antwort</span>' : ''}
+      </div>
+      <div class="antw-meta">
+        ${sicher(firma.ansprechpartner || 'kein Ansprechpartner')} ·
+        von ${sicher(a.absender || '–')} ·
+        ${sicher(a.empfangen_am ? formatDate(a.empfangen_am) : '–')}
+      </div>
+      <div class="antw-betreff">${sicher(a.betreff || '(kein Betreff)')}</div>
+      <div class="antw-text">${sicher(a.text || '(kein Text)')}</div>
+
+      ${gesperrt ? `
+        <div class="antw-meta" style="color:#F87171;font-weight:600;margin-top:12px">
+          🔴 Diese Firma ist gesperrt – es geht keine weitere Nachricht hinaus.
+        </div>` : ''}
+
+      <div class="antw-aktionen">
+        ${AKQ_ANTWORT_AKTIONEN.map(k => `
+          <button class="karte-aktion ${k.stop ? 'stop' : ''}"
+                  onclick="akqAntwortBewerten('${aj}','${fj}','${sicherJs(k.status)}')">${sicher(k.text)}</button>`).join('')}
+        <button class="karte-aktion" onclick="akqAufgabeOeffnen('${fj}')">Firma öffnen</button>
+        ${neu ? `<button class="karte-aktion" onclick="akqAntwortGelesen('${aj}')">Als gelesen markieren</button>` : ''}
+      </div>
+    </div>`;
+}
+
 function akqRenderAntwortenAnsicht(){
   const el = document.getElementById('akq-antworten-inhalt');
   if(!el) return;
 
-  const offen = allFirmen.filter(f => ['antwort','rueckfrage'].includes(f.status || ''));
+  const alle = akqAntwortenSortiert();
+  const neue = alle.filter(a => a.gelesen !== true);
+  const gelesen = alle.filter(a => a.gelesen === true);
 
-  if(offen.length === 0){
-    el.innerHTML = `
+  /* Der Abgleich läuft nachts von selbst. Der Knopf ist für den Fall,
+     dass jemand nicht bis morgen warten will. */
+  const leiste = aktuelleRolle === ROLLE_ADMIN ? `
+    <div class="antw-leiste">
+      <button class="btn btn-sekundaer" style="width:auto;padding:12px 22px"
+              id="antw-sync-btn" onclick="akqAntwortenAbgleichen()">Antworten aktualisieren</button>
+      <span class="akq-karte-hinweis">Läuft täglich automatisch. Lukas muss Gmail nicht öffnen.</span>
+    </div>` : `
+    <div class="antw-leiste">
+      <span class="akq-karte-hinweis">Neue Antworten erscheinen automatisch – das Gmail-Postfach musst du nicht öffnen.</span>
+    </div>`;
+
+  if(alle.length === 0){
+    el.innerHTML = leiste + `
       <div class="akq-bau">
         <span class="akq-bau-symbol" aria-hidden="true">💬</span>
         <div class="akq-bau-titel">Noch keine offenen Antworten.</div>
-        Sobald eine Firma auf „Antwort eingegangen“ oder „Rückfrage“ steht, erscheint sie hier.
-        Das automatische Einlesen aus dem Postfach kommt später.
+        Sobald ein Kunde auf eine Akquise-E-Mail antwortet, erscheint sie hier von selbst.
       </div>`;
     return;
   }
 
-  el.innerHTML = offen.map(f => {
-    const naechster = akqNaechsterSchritt(f);
-    return `
-      <div class="req-card firma-karte rand-laeuft" role="button" tabindex="0"
-           onclick="akqAufgabeOeffnen('${sicherJs(f.id)}')"
-           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();akqAufgabeOeffnen('${sicherJs(f.id)}')}">
-        <div class="req-top">
-          <div>
-            <div class="req-name">${sicher([f.firmenname, f.standort].filter(Boolean).join(' · '))}</div>
-            <div class="req-meta">${sicher(naechster.titel)}</div>
-          </div>
-          <span class="f-pill f-laeuft">${sicher(FIRMEN_STATUS_TEXT[f.status] || f.status)}</span>
-        </div>
-      </div>`;
-  }).join('');
+  el.innerHTML = leiste +
+    (neue.length ? '<div class="antw-abschnitt">Neue Antworten (' + neue.length + ')</div>' +
+      neue.map(akqAntwortKarte).join('') : '') +
+    (gelesen.length ? '<div class="antw-abschnitt">Bereits gelesen (' + gelesen.length + ')</div>' +
+      gelesen.map(akqAntwortKarte).join('') : '');
 }
+
+/* Abgleich anstoßen. Der Browser bekommt Gmail nie zu sehen – er
+   ruft nur die Serverfunktion auf. */
+let akqAbgleichLaeuft = false;
+
+window.akqAntwortenAbgleichen = async function(){
+  if(akqAbgleichLaeuft) return;
+  akqAbgleichLaeuft = true;
+  const knopf = document.getElementById('antw-sync-btn');
+  if(knopf){ knopf.disabled = true; knopf.textContent = 'Wird abgeglichen ...'; }
+
+  try {
+    const bericht = await serverAufruf('/api/akquise-antworten-sync', { aktion:'sync' });
+    melde(bericht.neue_antworten
+      ? (bericht.neue_antworten === 1 ? 'Eine neue Antwort eingegangen.'
+                                      : bericht.neue_antworten + ' neue Antworten eingegangen.')
+      : 'Keine neuen Antworten.');
+  } catch(err){
+    if(err && err.message === 'EINRICHTUNG_FEHLT'){
+      alert('Der Abgleich ist noch nicht eingerichtet.\n\nSiehe EINRICHTUNG.md, Abschnitt Gmail.');
+    } else {
+      alert('Der Abgleich hat nicht geklappt.\n\n' + ((err && err.message) || 'Unbekannter Fehler'));
+    }
+  } finally {
+    akqAbgleichLaeuft = false;
+    const jetzt = document.getElementById('antw-sync-btn');
+    if(jetzt){ jetzt.disabled = false; jetzt.textContent = 'Antworten aktualisieren'; }
+  }
+};
+
+/* Als gelesen markieren läuft über den Server, weil dabei der
+   Zähler der Firma mitgeführt werden muss. Zwei getrennte
+   Schreibvorgänge aus dem Browser könnten auseinanderlaufen. */
+window.akqAntwortGelesen = async function(antwortId){
+  try {
+    await serverAufruf('/api/akquise-antworten-sync', { aktion:'gelesen', antwort_id: antwortId });
+  } catch(err){
+    console.error('Antwort konnte nicht als gelesen markiert werden:', err);
+  }
+};
+
+/* Die vier Bewertungsknöpfe. Sie setzen den Status der Firma und
+   halten im Verlauf fest, dass die Entscheidung aus einer Antwort
+   kam – „Status geändert" allein sagte später nicht, warum. */
+window.akqAntwortBewerten = async function(antwortId, firmaId, status){
+  const eintrag = AKQ_ANTWORT_AKTIONEN.find(k => k.status === status);
+  const firma = allFirmen.find(f => f.id === firmaId);
+  if(!eintrag || !firma) return;
+
+  const sperrt = FIRMEN_STATUS_SPERRT.includes(status);
+  if(sperrt && !confirm(
+      `„${firma.firmenname || 'Diese Firma'}" als „kein Interesse" festhalten?\n\n` +
+      'Damit wird eine dauerhafte Kontaktsperre gesetzt. Aufheben kann sie nur der Verwalter.')) return;
+
+  const daten = { status, aktualisiert_am: serverTimestamp() };
+  if(sperrt){
+    daten.do_not_contact = true;
+    daten.do_not_contact_grund = FIRMEN_STATUS_TEXT[status];
+    daten.do_not_contact_am = serverTimestamp();
+    daten.do_not_contact_von = akqWerBinIch().name;
+  }
+
+  try {
+    await updateDoc(doc(db, 'firmen', firmaId), daten);
+    await akqVerlaufEintragen(firmaId, 'antwort',
+      'Antwort als ' + eintrag.wortlaut + ' bewertet' + (sperrt ? ' (Kontaktsperre gesetzt)' : ''));
+    /* Wer eine Antwort bewertet, hat sie gelesen. */
+    await window.akqAntwortGelesen(antwortId);
+    melde(sperrt ? 'Festgehalten – die Firma ist jetzt gesperrt.' : 'Bewertung gespeichert.');
+  } catch(err){
+    meldeSchreibfehler(err, 'Das Bewerten der Antwort');
+  }
+};
 
 /* ── Bausteine für die Detailkarte ───────────────────────── */
 function akqFortschrittHtml(f){
