@@ -1846,6 +1846,87 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 }
 .antw-aktionen { display:flex; gap:9px; flex-wrap:wrap; margin-top:14px; }
 .antw-aktionen .karte-aktion.stop { border-color:rgba(248,113,113,0.3); color:#F87171; }
+/* ── GESPRÄCHSVERLAUF (14.08.2026, Phase 6C) ──────────────────
+   Ein einfacher Nachrichtenverlauf: eingehend links und neutral,
+   ausgehend rechts und grün. Die Richtung muss auf einen Blick
+   erkennbar sein – wer beim Nachlesen verwechselt, wer was
+   geschrieben hat, antwortet auf die eigene Nachricht. */
+.gespr { display:flex; flex-direction:column; gap:12px; margin:6px 0 4px; }
+.msg { max-width:82%; min-width:0; }
+.msg.ein { align-self:flex-start; }
+.msg.aus { align-self:flex-end; }
+.msg-kopf { font-size:11.5px; color:rgba(255,255,255,0.5); margin-bottom:4px; overflow-wrap:anywhere; }
+.msg.aus .msg-kopf { text-align:right; }
+/* ⚠️ Der Text kommt aus einer fremden E-Mail. Er wird als TEXT
+   gesetzt (`sicher()` + pre-wrap), nie als HTML. */
+.msg-blase {
+  white-space:pre-wrap; overflow-wrap:anywhere;
+  font-size:13.5px; line-height:1.6; padding:13px 15px; border-radius:16px;
+  max-height:260px; overflow-y:auto;
+}
+.msg.ein .msg-blase {
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.88); border-bottom-left-radius:5px;
+}
+.msg.aus .msg-blase {
+  background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.28);
+  color:#DCFCE7; border-bottom-right-radius:5px;
+}
+.msg-betreff { font-size:12px; font-weight:700; opacity:.8; margin-bottom:5px; }
+
+/* Antwortbereich */
+.antw-form { border-top:1px solid rgba(255,255,255,0.1); margin-top:16px; padding-top:16px; }
+.antw-form-kopf { font-size:12.5px; color:rgba(255,255,255,0.6); margin-bottom:10px; overflow-wrap:anywhere; }
+.antw-form-kopf b { color:rgba(255,255,255,0.85); font-weight:600; }
+/* ⚠️ Mit `#app-screen` davor. Die Grundierung für Eingabefelder steht
+   als `#app-screen input/select/textarea` – eine reine Klassenregel
+   verliert dagegen, und das Antwortfeld blieb bei 66 px statt der
+   gewünschten großen Fläche. Dieselbe Falle wie beim Kalender. */
+#app-screen .antw-form textarea { min-height:170px; }
+
+/* ── KUNDENÜBERNAHME (14.08.2026, Phase 7) ────────────────────
+   Der Abschluss des ganzen Ablaufs verdient die deutlichste
+   Anzeige im Bereich – deshalb kräftiger als „Nächster Schritt". */
+.kunde-box {
+  background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.4);
+  border-radius:18px; padding:20px 22px; margin-bottom:20px;
+}
+.kunde-box.fertig { background:rgba(34,197,94,0.16); border-color:var(--green); }
+.kunde-titel {
+  font-size:18px; font-weight:800; color:var(--green);
+  margin-bottom:6px; display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+}
+.kunde-text { font-size:13.5px; line-height:1.6; color:rgba(255,255,255,0.78); }
+.kunde-nummer {
+  display:inline-block; margin-top:10px; padding:6px 13px; border-radius:100px;
+  background:rgba(34,197,94,0.2); color:#DCFCE7;
+  font-size:14px; font-weight:800; letter-spacing:.6px; overflow-wrap:anywhere;
+}
+.kunde-daten {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 20px;
+  font-size:12.5px; color:rgba(255,255,255,0.72); margin-top:12px;
+}
+.kunde-daten > div { min-width:0; overflow-wrap:anywhere; }
+.kunde-daten span { color:rgba(255,255,255,0.55); margin-right:5px; }
+.kunde-box .btn { width:auto; padding:13px 24px; margin-top:14px; }
+
+/* ── FIRMENKUNDEN-ID auf der Karteikarte (Phase 8A) ─────────── */
+.kunden-id-zeile {
+  display:flex; align-items:center; gap:11px; flex-wrap:wrap;
+  background:rgba(34,197,94,0.09); border:1px solid rgba(34,197,94,0.28);
+  border-radius:14px; padding:12px 15px; margin-top:16px;
+}
+.kunden-id-zeile.ohne { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.12); }
+.kunden-id-lbl {
+  font-size:11.5px; font-weight:700; letter-spacing:.7px; text-transform:uppercase;
+  color:rgba(255,255,255,0.55); flex-shrink:0;
+}
+.kunden-id-wert {
+  font-size:16px; font-weight:800; letter-spacing:.8px; color:var(--green);
+  overflow-wrap:anywhere; min-width:0;
+}
+.kunden-id-wert.leer { font-size:13.5px; font-weight:500; letter-spacing:0; color:rgba(255,255,255,0.55); }
+
 .antw-leiste { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
 .antw-abschnitt { font-size:13px; font-weight:700; color:rgba(255,255,255,0.7);
   text-transform:uppercase; letter-spacing:.8px; margin:26px 0 14px; }
@@ -2031,6 +2112,23 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   .akq-naechster .btn { width:100%; }
   .firma-kopf-name { font-size:18px; }
   .verlauf-zeile { padding-left:18px; }
+
+  /* Zwei Spalten ergäben bei 375 px rund 150 px – „Übernommen von"
+     samt Namen bricht darin dreizeilig um. */
+  /* Beschriftung über die volle Breite, damit Nummer und Knöpfe
+     darunter nicht in eine 90-px-Spalte gequetscht werden.
+     ⚠️ Die Nummer braucht ebenfalls eine eigene Zeile: Stand sie
+     neben den Knöpfen, blieben bei 375 px nur 62 px je Knopf und
+     „Verknüpfungen ergänzen" war abgeschnitten (nachgemessen).
+     So sind es 125 px, und beide Beschriftungen bleiben lesbar. */
+  .kunden-id-lbl { flex-basis:100%; }
+  .kunden-id-wert { flex-basis:100%; }
+  .kunden-id-zeile .karte-aktion { flex:1; min-width:0; }
+
+  .kunde-daten { grid-template-columns:minmax(0,1fr); gap:5px; }
+  .kunde-box { padding:17px 18px; }
+  .kunde-box .btn { width:100%; }
+  .kunde-titel { font-size:16px; }
 
   .zugang-zeile { padding:13px 14px; gap:9px; }
   .zugang-rolle { order:0; }
@@ -2761,7 +2859,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
           <option value="abgelehnt">Abgelehnt</option>
           <option value="abgelaufen">Abgelaufen</option>
         </select>
-        <input type="text" id="ang-list-search" aria-label="Angebote durchsuchen" placeholder="Suche Name, Leistung ..." oninput="renderAngeboteListVerzoegert()" style="flex:1;min-width:180px">
+        <input type="text" id="ang-list-search" aria-label="Angebote durchsuchen" placeholder="Suche Name, Leistung, WK-F-ID ..." oninput="renderAngeboteListVerzoegert()" style="flex:1;min-width:180px">
       </div>
       <div id="angebote-list"><div class="empty-state">Lade Angebote ...</div></div>
     </div>
@@ -2824,7 +2922,7 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 
         <div class="listen-leiste">
           <button class="btn btn-primary" style="width:auto;padding:11px 20px;flex-shrink:0" onclick="kundeFormOeffnen()">+ Neuer Kunde</button>
-          <input type="text" id="kunden-search" placeholder="Suche Name, Firma, Ort, E-Mail ..." oninput="renderKundenVerzoegert()">
+          <input type="text" id="kunden-search" placeholder="Suche Name, Firma, Ort, E-Mail, WK-F-ID ..." oninput="renderKundenVerzoegert()">
           <select id="kunden-filter-status" onchange="renderKunden()">
             <option value="">Alle Status</option>
             <option value="interessent">Interessent</option>
@@ -5185,6 +5283,7 @@ window.vorkalkulationAusAnfrage = async function(anfrageId){
       status: 'DRAFT',
       anfrage_id: anfrageId,
       kunde_key: key,
+      ...kundenFelder(key),   // Firmenkundennummer, falls eindeutig (Phase 8A)
       // Stammdaten zum Zeitpunkt der Anlage – der Nachweis, worauf
       // die Kalkulation beruhte, auch wenn der Kunde später umzieht.
       vorname: r.vorname || '', nachname: r.nachname || '',
@@ -5680,6 +5779,14 @@ window.angebotAusVorkalkulation = async function(vkId){
       quelle_vk_nummer: vk.nummer,
       anfrage_id: vk.anfrage_id || null,
       kunde_key: vk.kunde_key || null,
+      /* Firmenkundennummer (Phase 8A): bevorzugt die, die schon auf
+         der Kalkulation steht – wurde sie dort beim Anlegen
+         festgehalten, gehört sie auch aufs Angebot. Sonst frisch
+         hergeleitet, für Kalkulationen aus der Zeit davor. */
+      ...(vk.kunden_id
+        ? { kunden_id: vk.kunden_id, kunden_dokument_id: vk.kunden_dokument_id || vk.kunde_key || '',
+            kundenname: vk.kundenname || vk.firma || '' }
+        : kundenFelder(vk.kunde_key || null)),
 
       vorname: vk.vorname || '', nachname: vk.nachname || '',
       firma: vk.firma || '',
@@ -5777,6 +5884,7 @@ window.terminAusVorkalkulation = function(vkId){
     notiz: 'Zur Vorabkalkulation ' + vk.nummer + ' über ' + euroCent(vk.brutto_gesamt_cent),
     kategorie: 'besichtigung',
     kunde_key: vk.kunde_key || null,
+    ...kundenFelder(vk.kunde_key || null),   // Firmenkundennummer (Phase 8A)
     vorkalkulation_id: vkId,
     createdAt: serverTimestamp(),
   })
@@ -9635,9 +9743,21 @@ async function getOrCreateInvoiceNumber(request){
   });
 
   const rechnungDatum = new Date().toISOString().slice(0,10);
-  await updateDoc(doc(db, 'anfragen', request.id), { rechnung_nummer: nummer, rechnung_datum: rechnungDatum });
+
+  /* Phase 8A: Die Rechnung bekommt zusätzlich die dauerhafte
+     Firmenkundennummer, sofern sich die Anfrage eindeutig einem
+     gewerblichen Kunden zuordnen lässt. Rechnungen leben als Felder
+     auf der Anfrage – eine eigene Sammlung gibt es nicht.
+
+     ⚠️ Die Rechnungsnummer selbst bleibt unberührt. */
+  const rechnungFelder = { rechnung_nummer: nummer, rechnung_datum: rechnungDatum };
+  const rechnungKunde = kundenFelder(request.email ? emailToKey(request.email) : null);
+  Object.assign(rechnungFelder, rechnungKunde);
+
+  await updateDoc(doc(db, 'anfragen', request.id), rechnungFelder);
   request.rechnung_nummer = nummer;
   request.rechnung_datum = rechnungDatum;
+  Object.assign(request, rechnungKunde);
   return nummer;
 }
 
@@ -10163,6 +10283,11 @@ function deriveKundenList(){
       email: kd.email||'', telefon: kd.telefon||'',
       strasse: kd.strasse||'', plz: kd.plz||'', ort: kd.ort||'',
       artManuell: kd.art||'', statusManuell: kd.status||'', notizen: kd.notizen||'',
+      /* Die dauerhafte Firmenkundennummer (Phase 8A). Sie steht nur
+         auf von Hand gepflegten Karteikarten – aus Anfragen
+         abgeleitete Kunden haben keine, solange niemand eine
+         Karteikarte angelegt hat. */
+      kunden_id: kd.kunden_id || '',
       anfragen: [], gesamtwert: 0,
       letzteAnfrage: (kd.createdAt && kd.createdAt.toMillis) ? kd.createdAt.toMillis() : 0
     };
@@ -10251,6 +10376,174 @@ function getKundeMeta(key){
   return allKunden.find(k => k.id === key) || {};
 }
 
+/* ══════════════════════════════════════════════════════════════
+   FIRMENKUNDEN-ID ALS MODULÜBERGREIFENDE VERBINDUNG (Phase 8A)
+   ══════════════════════════════════════════════════════════════
+   Bisher hing alles am Dokumentschlüssel `kunde_key` – der wird aus
+   der E-Mail-Adresse gebildet. Ändert ein Betrieb seine Adresse,
+   ändert sich der Schlüssel, und der Zusammenhang zwischen Angebot,
+   Auftrag und Rechnung reißt.
+
+   `WK-F-000123` bleibt. Sie wird ZUSÄTZLICH gespeichert, nicht
+   anstelle: Alle vorhandenen Verweise bleiben unangetastet, damit
+   nichts bricht, was heute funktioniert.
+
+   ⚠️ Nur für gewerbliche Kunden. Privatkunden bleiben getrennt –
+   eine „Firmenkundennummer" für Herrn Müller wäre eine Angabe, die
+   nichts bedeutet.
+
+   ⚠️ Gibt es keine eindeutige Zuordnung, wird NICHTS geraten: Die
+   Funktion gibt dann `null` zurück, und der Datensatz entsteht wie
+   bisher ohne Nummer. Ein falsch verknüpfter Kunde wäre schlimmer
+   als ein nicht verknüpfter. */
+function kundenVerknuepfung(key, kundenListe){
+  if(!key) return null;
+  const liste = kundenListe || deriveKundenList();
+  const k = liste.find(x => x.key === key);
+  if(!k) return null;
+  if(k.art !== 'gewerblich') return null;   // Privatkunden bleiben außen vor
+  if(!k.kunden_id) return null;             // noch keine Nummer vergeben
+  return {
+    kunden_id: k.kunden_id,
+    kunden_dokument_id: k.key,
+    /* ⚠️ Hier der FIRMENname, nicht `anzeigename`. Letzteres zeigt
+       bewusst den Ansprechpartner, sobald einer bekannt ist – auf
+       einem Angebot steht dann „Roth" statt „Pure Fitness GmbH".
+       Für eine Firmenkundennummer ist der Betrieb gemeint; der
+       Ansprechpartner wechselt, die Firma bleibt. */
+    kundenname: k.firma || k.anzeigename || '',
+  };
+}
+
+/* Für Schreibvorgänge: gibt die drei Felder zurück oder ein leeres
+   Objekt. So lässt sich das Ergebnis überall bedenkenlos
+   hineinspreizen, auch wenn es keine Verknüpfung gibt. */
+function kundenFelder(key, kundenListe){
+  const v = kundenVerknuepfung(key, kundenListe);
+  return v ? v : {};
+}
+
+/* Die Nummer in die Zwischenablage. `navigator.clipboard` gibt es
+   nur in sicheren Kontexten – der Rückfall über ein unsichtbares
+   Feld funktioniert überall, auch wenn die Seite einmal über
+   http:// aufgerufen wird. */
+window.kundenIdKopieren = async function(nummer){
+  try {
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(nummer);
+    } else {
+      const feld = document.createElement('textarea');
+      feld.value = nummer;
+      feld.setAttribute('readonly', '');
+      feld.style.position = 'fixed';
+      feld.style.left = '-9999px';
+      document.body.appendChild(feld);
+      feld.select();
+      document.execCommand('copy');
+      document.body.removeChild(feld);
+    }
+    melde('Firmenkunden-ID kopiert: ' + nummer);
+  } catch(err){
+    console.error('Kopieren fehlgeschlagen:', err);
+    melde('Kopieren hat nicht geklappt. Die Nummer lautet: ' + nummer, 'fehler');
+  }
+};
+
+/* Eine Nummer für einen Bestandskunden nachtragen. Vergeben wird sie
+   auf dem Server – es soll nur eine Nummernquelle geben. */
+let kundenIdLaeuft = false;
+
+window.kundenIdVergeben = async function(key){
+  if(kundenIdLaeuft) return;
+  const k = deriveKundenList().find(x => x.key === key);
+  if(!k) return;
+  if(k.art !== 'gewerblich'){
+    alert('Eine Firmenkundennummer gibt es nur für gewerbliche Kunden.');
+    return;
+  }
+
+  kundenIdLaeuft = true;
+  const knopf = document.getElementById('kunden-id-btn');
+  if(knopf){ knopf.disabled = true; knopf.textContent = 'Wird vergeben ...'; }
+
+  try {
+    const antwort = await serverAufruf('/api/kunden-nummer', { kunden_dokument_id: key });
+    melde('Firmenkunden-ID vergeben: ' + antwort.kunden_id);
+  } catch(err){
+    if(err && err.message === 'EINRICHTUNG_FEHLT'){
+      alert('Die Nummernvergabe ist noch nicht eingerichtet.\n\n' +
+            'Die Serverfunktion /api/kunden-nummer ist nicht erreichbar.');
+    } else {
+      alert('Die Nummer konnte nicht vergeben werden.\n\n' + ((err && err.message) || 'Unbekannter Fehler'));
+    }
+  } finally {
+    kundenIdLaeuft = false;
+    const jetzt = document.getElementById('kunden-id-btn');
+    if(jetzt){ jetzt.disabled = false; jetzt.textContent = 'Firmenkunden-ID vergeben'; }
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   VERKNÜPFUNGEN NACHTRAGEN (Phase 8A)
+   ══════════════════════════════════════════════════════════════
+   ⚠️ Bewusst ein Knopf und kein automatischer Lauf beim Anzeigen.
+
+   Ein Nachtragen während des Zeichnens löst Schreibvorgänge aus, die
+   den Datenlauscher wecken, der wieder zeichnet – bei vielen alten
+   Datensätzen ein Schwall von Schreibvorgängen, den niemand
+   angefordert hat. Und eine Migration, die von selbst losläuft, kann
+   man nicht zurücknehmen.
+
+   Ergänzt wird ausschließlich, was sich EINDEUTIG zuordnen lässt:
+   derselbe `kunde_key`, und nur dort, wo noch keine Nummer steht.
+   Geraten wird nichts. */
+window.kundenIdNachtragen = async function(key){
+  const verknuepfung = kundenVerknuepfung(key);
+  if(!verknuepfung){
+    alert('Für diesen Kunden gibt es keine Firmenkunden-ID.');
+    return;
+  }
+
+  const offen = [
+    ['angebote', allAngebote],
+    ['vorkalkulationen', allVorkalkulationen],
+    ['auftraege', allAuftraege],
+    ['termine', allTermine],
+  ].map(([sammlung, liste]) => ({
+    sammlung,
+    treffer: (liste || []).filter(d => d.kunde_key === key && !d.kunden_id),
+  })).filter(x => x.treffer.length);
+
+  /* Rechnungen leben als Felder auf der Anfrage – dort zählt die
+     E-Mail-Adresse, nicht der Schlüssel. */
+  const rechnungen = allRequests.filter(r =>
+    r.rechnung_nummer && !r.kunden_id && r.email && emailToKey(r.email) === key);
+
+  const anzahl = offen.reduce((s, x) => s + x.treffer.length, 0) + rechnungen.length;
+  if(anzahl === 0){ melde('Es gibt nichts nachzutragen – alles ist bereits verknüpft.'); return; }
+
+  const auflistung = offen.map(x => '· ' + x.treffer.length + ' × ' + x.sammlung).join('\n') +
+    (rechnungen.length ? '\n· ' + rechnungen.length + ' × Rechnung (an der Anfrage)' : '');
+  if(!confirm('Für „' + verknuepfung.kundenname + '" die Firmenkunden-ID ' + verknuepfung.kunden_id +
+              ' nachtragen?\n\n' + auflistung + '\n\nBestehende Angaben bleiben unangetastet.')) return;
+
+  let geschrieben = 0, fehler = 0;
+  for(const gruppe of offen){
+    for(const dok of gruppe.treffer){
+      try { await updateDoc(doc(db, gruppe.sammlung, dok.id), verknuepfung); geschrieben++; }
+      catch(err){ console.error('Nachtragen fehlgeschlagen (' + gruppe.sammlung + '):', err); fehler++; }
+    }
+  }
+  for(const r of rechnungen){
+    try { await updateDoc(doc(db, 'anfragen', r.id), verknuepfung); geschrieben++; }
+    catch(err){ console.error('Nachtragen fehlgeschlagen (anfragen):', err); fehler++; }
+  }
+
+  melde(fehler
+    ? (geschrieben + ' Verknüpfungen ergänzt, ' + fehler + ' fehlgeschlagen.')
+    : (geschrieben + ' Verknüpfungen ergänzt.'), fehler ? 'fehler' : undefined);
+};
+
 /* Vorschlag, solange kein Status von Hand gesetzt wurde. Zählt jetzt
    auch bezahlte Aufträge mit – die sind der härtere Beleg als eine
    abgeschlossene Anfrage. */
@@ -10300,7 +10593,10 @@ function renderKunden(){
   if(statusFilter) kunden = kunden.filter(k => k.status === statusFilter);
   if(suche){
     kunden = kunden.filter(k => {
-      const heu = `${k.vorname} ${k.nachname} ${k.firma} ${k.email} ${k.strasse} ${k.ort} ${k.plz} ${k.telefon}`.toLowerCase();
+      /* Die Firmenkunden-ID gehört mit in den Suchtext (Phase 8A):
+         Wer sie aus einem Angebot oder einer Rechnung kopiert hat,
+         muss damit den Kunden finden können. */
+      const heu = `${k.vorname} ${k.nachname} ${k.firma} ${k.email} ${k.strasse} ${k.ort} ${k.plz} ${k.telefon} ${k.kunden_id || ''}`.toLowerCase();
       return heu.includes(suche);
     });
   }
@@ -10538,6 +10834,24 @@ window.openKundeDetail = function(key, nurAuffrischen){
         <div><span>Adresse:</span>${sicher([k.strasse, [k.plz, k.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ')) || '–'}</div>
         <div><span>Anfragen:</span>${k.anfragen.length}</div>
       </div>
+
+      ${/* ── Firmenkunden-ID (Phase 8A) ────────────────────────
+            Nur bei gewerblichen Kunden. Sie verbindet Angebote,
+            Aufträge, Vorkalkulationen und Rechnungen dauerhaft –
+            auch wenn sich die E-Mail-Adresse einmal ändert. */
+        k.art !== 'gewerblich' ? '' : (k.kunden_id ? `
+        <div class="kunden-id-zeile">
+          <span class="kunden-id-lbl">Firmenkunden-ID</span>
+          <span class="kunden-id-wert" id="kunden-id-wert">${sicher(k.kunden_id)}</span>
+          <button class="karte-aktion" onclick="kundenIdKopieren('${sicherJs(k.kunden_id)}')">Kopieren</button>
+          <button class="karte-aktion" onclick="kundenIdNachtragen('${kj}')">Verknüpfungen ergänzen</button>
+        </div>` : `
+        <div class="kunden-id-zeile ohne">
+          <span class="kunden-id-lbl">Firmenkunden-ID</span>
+          <span class="kunden-id-wert leer">noch keine vergeben</span>
+          <button class="karte-aktion" id="kunden-id-btn"
+                  onclick="kundenIdVergeben('${kj}')">Firmenkunden-ID vergeben</button>
+        </div>`)}
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:18px">
         <button class="karte-aktion" onclick="kundeFormOeffnen('${kj}')">Stammdaten bearbeiten</button>
         <button class="karte-aktion" onclick="kundeSperrenUmschalten('${kj}')">${gesperrt ? 'Sperre aufheben' : 'Kunde sperren'}</button>
@@ -11144,6 +11458,7 @@ window.saveTermin = function(){
     bis: ganztags ? '' : bis,
     kategorie: document.getElementById('tm-kategorie').value,
     kunde_key: document.getElementById('tm-kunde').value || null,
+    ...kundenFelder(document.getElementById('tm-kunde').value),   // Phase 8A
     mitarbeiter_id: document.getElementById('tm-mitarbeiter').value || null,
     ort: document.getElementById('tm-ort').value.trim(),
     notiz: document.getElementById('tm-notiz').value.trim(),
@@ -11872,6 +12187,7 @@ window.saveAuftrag = function(){
   const daten = {
     kunde_key: kundeKey,
     kunde_name: kunde ? kunde.anzeigename : '',
+    ...kundenFelder(kundeKey),   // Firmenkundennummer, falls eindeutig (Phase 8A)
     titel, datum,
     umsatz: cent(umsatz),
     kosten: cent(kosten),
@@ -12593,8 +12909,9 @@ const AKQ_NAECHSTER = {
     text:'Die Firma hat nachgefragt. Beantworte die Rückfrage und halte das Ergebnis fest.',
     knopf:{ text:'Zu den Antworten', ziel:'antworten' } },
 
-  interesse: { art:'warten', titel:'Als Kunde übernehmen',
-    text:'Diese Firma hat Interesse. Die Übernahme in die Kundenkartei kommt in einer der nächsten Ausbaustufen.' },
+  interesse: { art:'tun', titel:'Als Kunde übernehmen',
+    text:'Diese Firma hat Interesse. Aus dem Lead kann jetzt eine reguläre Kundenkarte werden.',
+    knopf:{ text:'Als Kunden übernehmen', ziel:'kunde' } },
 
   kunde: { art:'fertig', titel:'Vorgang abgeschlossen',
     text:'Aus dieser Firma ist ein Kunde geworden.' },
@@ -13506,8 +13823,13 @@ window.akqRenderAkquiseStart = function(){
      Solange noch keine Antwort eingelesen wurde, fällt sie auf den
      Status zurück – sonst stünde bei einer von Hand auf „Antwort"
      gesetzten Firma eine 0. */
-  const ungelesen = allAkqAntworten.filter(a => a.gelesen !== true).length;
-  setz('akq-z-antworten', allAkqAntworten.length
+  /* Nur eingehende Nachrichten zählen. Seit Phase 6C stehen auch die
+     eigenen Antworten in derselben Sammlung – sie sind keine offene
+     Aufgabe und tragen `gelesen: true`, aber die Richtung ist das
+     verlässlichere Merkmal. */
+  const eingehende = allAkqAntworten.filter(akqIstEingehend);
+  const ungelesen = eingehende.filter(a => a.gelesen !== true).length;
+  setz('akq-z-antworten', eingehende.length
     ? ungelesen
     : (akqZaehle('antwort') + akqZaehle('rueckfrage')));
   setz('akq-z-interesse', akqZaehle('interesse'));
@@ -14125,38 +14447,130 @@ function akqAntwortenSortiert(){
     String(b.empfangen_am || '').localeCompare(String(a.empfangen_am || '')));
 }
 
-function akqAntwortKarte(a){
-  const firma = allFirmen.find(f => f.id === a.firma_id) || {};
-  const aj = sicherJs(a.id);
-  const fj = sicherJs(a.firma_id || '');
-  const neu = a.gelesen !== true;
+/* Eine eingehende Nachricht ist alles, was nicht ausdrücklich von
+   uns kommt. Altbestände ohne das Feld gelten als eingehend – sie
+   entstanden, als es nur eingehende gab. */
+function akqIstEingehend(a){ return (a.richtung || 'eingehend') !== 'ausgehend'; }
+
+/* ── Gesprächsverlauf (Phase 6C) ──────────────────────────────
+   Alle Nachrichten eines Gesprächs in einer Karte, chronologisch.
+   Die ursprünglich versendete Mail steht nicht in `akquise_antworten`,
+   sondern im Entwurf – sie wird hier vorangestellt, sonst begänne
+   der Verlauf mitten im Gespräch. */
+function akqGespraeche(){
+  const nachThread = {};
+  allAkqAntworten.forEach(a => {
+    const schluessel = a.gmail_thread_id || ('firma:' + a.firma_id);
+    (nachThread[schluessel] = nachThread[schluessel] || []).push(a);
+  });
+
+  return Object.entries(nachThread).map(([schluessel, nachrichten]) => {
+    const firmaId = nachrichten[0].firma_id;
+    const firma = allFirmen.find(f => f.id === firmaId) || {};
+    const entwurf = allAkqNachrichten.find(n =>
+      n.gmail_thread_id && n.gmail_thread_id === nachrichten[0].gmail_thread_id);
+
+    const verlauf = nachrichten.slice().sort((a, b) =>
+      String(a.empfangen_am || '').localeCompare(String(b.empfangen_am || '')));
+
+    /* Die versendete Mail als erste Blase – aber nur, wenn sie
+       zeitlich davor liegt. Sonst stünde sie bei einem Datenfehler
+       vor einer älteren Antwort. */
+    if(entwurf && entwurf.gesendet_am){
+      verlauf.unshift({
+        id: 'entwurf-' + entwurf.id,
+        richtung: 'ausgehend',
+        absender: entwurf.absender || AKQ_ABSENDER,
+        empfaenger: entwurf.empfaenger || '',
+        betreff: entwurf.betreff || '',
+        text: entwurf.nachricht || '',
+        empfangen_am: entwurf.gesendet_am,
+        gesendet_von: entwurf.gesendet_von || '',
+        gelesen: true,
+        nur_anzeige: true,
+      });
+    }
+
+    const eingehend = nachrichten.filter(akqIstEingehend);
+    return {
+      schluessel, firmaId, firma, verlauf,
+      ungelesen: eingehend.filter(a => a.gelesen !== true).length,
+      /* Für die Knöpfe: die jüngste eingehende Nachricht – auf sie
+         wird geantwortet und sie wird bewertet. */
+      letzteEingehend: eingehend.slice().sort((a, b) =>
+        String(b.empfangen_am || '').localeCompare(String(a.empfangen_am || '')))[0] || null,
+      zuletzt: verlauf.length ? verlauf[verlauf.length - 1].empfangen_am : '',
+    };
+  }).sort((a, b) => String(b.zuletzt || '').localeCompare(String(a.zuletzt || '')));
+}
+
+function akqMsgBlase(m){
+  const aus = m.richtung === 'ausgehend';
+  const wer = aus
+    ? ('Waschlurch' + (m.gesendet_von ? ' · ' + m.gesendet_von : ''))
+    : (m.absender_name || m.absender || 'Kunde');
+  return `
+    <div class="msg ${aus ? 'aus' : 'ein'}">
+      <div class="msg-kopf">${sicher(wer)} · ${sicher(m.empfangen_am ? formatDate(m.empfangen_am) : '–')}</div>
+      <div class="msg-blase">${m.betreff ? '<div class="msg-betreff">' + sicher(m.betreff) + '</div>' : ''}${sicher(m.text || '(kein Text)')}</div>
+    </div>`;
+}
+
+function akqGespraechKarte(g){
+  const firma = g.firma;
+  const fj = sicherJs(g.firmaId || '');
+  const bezug = g.letzteEingehend;
+  const aj = bezug ? sicherJs(bezug.id) : '';
   const gesperrt = firma.do_not_contact === true;
+  const abgeschlossen = ['kunde','kein_interesse','nicht_kontaktieren'].includes(firma.status);
+  const antwortenMoeglich = !!bezug && !gesperrt && !abgeschlossen && !!(bezug.gmail_thread_id);
 
   return `
-    <div class="antw-karte ${neu ? 'neu' : ''}" id="antw-${sicher(a.id)}">
+    <div class="antw-karte ${g.ungelesen ? 'neu' : ''}" id="gespr-${sicher(g.schluessel)}">
       <div class="antw-kopf">
-        <div class="antw-firma">${sicher([firma.firmenname || a.firma_name, firma.standort].filter(Boolean).join(' · ') || 'Unbekannte Firma')}</div>
-        ${neu ? '<span class="antw-marke">🔔 Neue Antwort</span>' : ''}
+        <div class="antw-firma">${sicher([firma.firmenname || (g.verlauf[0] && g.verlauf[0].firma_name), firma.standort].filter(Boolean).join(' · ') || 'Unbekannte Firma')}</div>
+        ${g.ungelesen ? '<span class="antw-marke">🔔 ' + (g.ungelesen === 1 ? 'Neue Antwort' : g.ungelesen + ' neue Antworten') + '</span>' : ''}
       </div>
       <div class="antw-meta">
-        ${sicher(firma.ansprechpartner || 'kein Ansprechpartner')} ·
-        von ${sicher(a.absender || '–')} ·
-        ${sicher(a.empfangen_am ? formatDate(a.empfangen_am) : '–')}
+        ${sicher(firma.ansprechpartner || 'kein Ansprechpartner')}${bezug ? ' · ' + sicher(bezug.absender || '') : ''}
       </div>
-      <div class="antw-betreff">${sicher(a.betreff || '(kein Betreff)')}</div>
-      <div class="antw-text">${sicher(a.text || '(kein Text)')}</div>
+
+      <div class="gespr">${g.verlauf.map(akqMsgBlase).join('')}</div>
 
       ${gesperrt ? `
         <div class="antw-meta" style="color:#F87171;font-weight:600;margin-top:12px">
           🔴 Diese Firma ist gesperrt – es geht keine weitere Nachricht hinaus.
         </div>` : ''}
+      ${(!gesperrt && abgeschlossen) ? `
+        <div class="antw-meta" style="margin-top:12px">Dieser Vorgang ist abgeschlossen.</div>` : ''}
 
       <div class="antw-aktionen">
-        ${AKQ_ANTWORT_AKTIONEN.map(k => `
+        ${bezug ? AKQ_ANTWORT_AKTIONEN.map(k => `
           <button class="karte-aktion ${k.stop ? 'stop' : ''}"
-                  onclick="akqAntwortBewerten('${aj}','${fj}','${sicherJs(k.status)}')">${sicher(k.text)}</button>`).join('')}
+                  onclick="akqAntwortBewerten('${aj}','${fj}','${sicherJs(k.status)}')">${sicher(k.text)}</button>`).join('') : ''}
+        ${antwortenMoeglich
+          ? `<button class="karte-aktion" onclick="akqAntwortFormOeffnen('${sicherJs(g.schluessel)}','${aj}')">Antworten</button>`
+          : ''}
         <button class="karte-aktion" onclick="akqAufgabeOeffnen('${fj}')">Firma öffnen</button>
-        ${neu ? `<button class="karte-aktion" onclick="akqAntwortGelesen('${aj}')">Als gelesen markieren</button>` : ''}
+        ${g.ungelesen ? `<button class="karte-aktion" onclick="akqGespraechGelesen('${fj}')">Als gelesen markieren</button>` : ''}
+      </div>
+
+      <div class="antw-form" id="antwform-${sicher(g.schluessel)}" hidden>
+        <div class="antw-form-kopf">
+          An: <b>${bezug ? sicher(bezug.absender || '') : ''}</b><br>
+          Von: <b>${sicher(AKQ_ABSENDER)}</b><br>
+          Betreff: <b>${bezug ? sicher(/^re:/i.test(bezug.betreff || '') ? bezug.betreff : 'Re: ' + (bezug.betreff || 'Ihre Nachricht')) : ''}</b>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="antwtext-${sicher(g.schluessel)}">Deine Antwort</label>
+          <textarea id="antwtext-${sicher(g.schluessel)}" rows="8"
+                    placeholder="Guten Tag, vielen Dank für Ihre Rückmeldung ..."></textarea>
+        </div>
+        <div class="akq-speicherleiste">
+          <button class="btn btn-primary akq-sendeknopf" id="antwsend-${sicher(g.schluessel)}"
+                  onclick="akqAntwortSenden('${sicherJs(g.schluessel)}','${fj}','${aj}')">Antwort senden</button>
+          <button class="btn akq-abbrechen" onclick="akqAntwortFormSchliessen('${sicherJs(g.schluessel)}')">Abbrechen</button>
+        </div>
       </div>
     </div>`;
 }
@@ -14165,9 +14579,10 @@ function akqRenderAntwortenAnsicht(){
   const el = document.getElementById('akq-antworten-inhalt');
   if(!el) return;
 
-  const alle = akqAntwortenSortiert();
-  const neue = alle.filter(a => a.gelesen !== true);
-  const gelesen = alle.filter(a => a.gelesen === true);
+  const gespraeche = akqGespraeche();
+  const neue = gespraeche.filter(g => g.ungelesen > 0);
+  const gelesen = gespraeche.filter(g => g.ungelesen === 0);
+  const alle = gespraeche;
 
   /* Der Abgleich läuft nachts von selbst. Der Knopf ist für den Fall,
      dass jemand nicht bis morgen warten will. */
@@ -14191,12 +14606,100 @@ function akqRenderAntwortenAnsicht(){
     return;
   }
 
+  /* ⚠️ Ein offenes Antwortfeld darf beim Neuzeichnen nicht
+     verschwinden – die Datenlauscher zeichnen bei jeder Änderung neu,
+     auch bei der, die das eigene Senden auslöst. Geschriebener Text
+     wird deshalb gerettet und wieder eingesetzt. */
+  const offeneFormulare = {};
+  document.querySelectorAll('.antw-form:not([hidden])').forEach(f => {
+    const schluessel = f.id.replace(/^antwform-/, '');
+    const feld = document.getElementById('antwtext-' + schluessel);
+    offeneFormulare[schluessel] = feld ? feld.value : '';
+  });
+
   el.innerHTML = leiste +
     (neue.length ? '<div class="antw-abschnitt">Neue Antworten (' + neue.length + ')</div>' +
-      neue.map(akqAntwortKarte).join('') : '') +
-    (gelesen.length ? '<div class="antw-abschnitt">Bereits gelesen (' + gelesen.length + ')</div>' +
-      gelesen.map(akqAntwortKarte).join('') : '');
+      neue.map(akqGespraechKarte).join('') : '') +
+    (gelesen.length ? '<div class="antw-abschnitt">Beantwortet und gelesen (' + gelesen.length + ')</div>' +
+      gelesen.map(akqGespraechKarte).join('') : '');
+
+  Object.entries(offeneFormulare).forEach(([schluessel, text]) => {
+    const form = document.getElementById('antwform-' + schluessel);
+    const feld = document.getElementById('antwtext-' + schluessel);
+    if(form && feld){ form.removeAttribute('hidden'); feld.value = text; }
+  });
 }
+
+/* ── Antworten schreiben (Phase 6C) ──────────────────────────── */
+window.akqAntwortFormOeffnen = function(schluessel){
+  const form = document.getElementById('antwform-' + schluessel);
+  if(!form) return;
+  form.removeAttribute('hidden');
+  const feld = document.getElementById('antwtext-' + schluessel);
+  if(feld) feld.focus();
+};
+
+window.akqAntwortFormSchliessen = function(schluessel){
+  const form = document.getElementById('antwform-' + schluessel);
+  const feld = document.getElementById('antwtext-' + schluessel);
+  if(feld && feld.value.trim() && !confirm('Der geschriebene Text geht verloren. Trotzdem abbrechen?')) return;
+  if(feld) feld.value = '';
+  if(form) form.setAttribute('hidden','');
+};
+
+/* Der Browser schickt nur zwei Kennungen und den Text. Empfänger,
+   Betreff und Gesprächskennung liest die Serverfunktion selbst –
+   sonst ließe sich über das Waschlurch-Postfach eine Nachricht an
+   eine beliebige Adresse schicken, die wie eine Antwort in einem
+   laufenden Gespräch aussieht. */
+let akqAntwortSendetGerade = false;
+
+window.akqAntwortSenden = async function(schluessel, firmaId, antwortId){
+  if(akqAntwortSendetGerade) return;
+
+  const feld = document.getElementById('antwtext-' + schluessel);
+  const text = feld ? feld.value.trim() : '';
+  if(!text){
+    alert('Bitte zuerst eine Antwort schreiben.');
+    if(feld) feld.focus();
+    return;
+  }
+
+  const firma = allFirmen.find(f => f.id === firmaId);
+  if(firma && firma.do_not_contact === true){
+    alert('Dieser Kontakt ist gesperrt. Es darf keine Nachricht an ihn hinausgehen.');
+    return;
+  }
+
+  if(!confirm('Antwort jetzt über Waschlurch senden?\n\nDer Versand lässt sich nicht rückgängig machen.')) return;
+
+  akqAntwortSendetGerade = true;
+  const knopf = document.getElementById('antwsend-' + schluessel);
+  if(knopf){ knopf.disabled = true; knopf.textContent = 'Antwort wird gesendet ...'; }
+
+  try {
+    await serverAufruf('/api/akquise-antwort-senden', {
+      firma_id: firmaId, antwort_id: antwortId, text,
+    });
+    if(feld) feld.value = '';
+    const form = document.getElementById('antwform-' + schluessel);
+    if(form) form.setAttribute('hidden','');
+    melde('Antwort erfolgreich gesendet.');
+    /* Die neue Nachricht kommt über den Datenlauscher in den Verlauf –
+       der Server hat sie bereits gespeichert. */
+  } catch(err){
+    if(err && err.message === 'EINRICHTUNG_FEHLT'){
+      alert('Der Versand ist noch nicht eingerichtet.\n\nSiehe EINRICHTUNG.md, Abschnitt Gmail.');
+    } else {
+      alert('Die Antwort wurde NICHT gesendet.\n\n' + ((err && err.message) || 'Unbekannter Fehler') +
+            '\n\nDer Text bleibt stehen und kann erneut gesendet werden.');
+    }
+  } finally {
+    akqAntwortSendetGerade = false;
+    const jetzt = document.getElementById('antwsend-' + schluessel);
+    if(jetzt){ jetzt.disabled = false; jetzt.textContent = 'Antwort senden'; }
+  }
+};
 
 /* Abgleich anstoßen. Der Browser bekommt Gmail nie zu sehen – er
    ruft nur die Serverfunktion auf. */
@@ -14238,6 +14741,18 @@ window.akqAntwortGelesen = async function(antwortId){
   }
 };
 
+/* Alle ungelesenen Nachrichten einer Firma auf einmal.
+
+   ⚠️ Nicht nur die jüngste: Kommen zwei Antworten hintereinander,
+   bliebe der Zähler sonst bei 1 stehen, obwohl beide auf dem
+   Bildschirm standen – und die Kennzahl auf der Startseite wäre
+   dauerhaft falsch. */
+window.akqGespraechGelesen = async function(firmaId){
+  const offen = allAkqAntworten.filter(a =>
+    a.firma_id === firmaId && akqIstEingehend(a) && a.gelesen !== true);
+  for(const a of offen) await window.akqAntwortGelesen(a.id);
+};
+
 /* Die vier Bewertungsknöpfe. Sie setzen den Status der Firma und
    halten im Verlauf fest, dass die Entscheidung aus einer Antwort
    kam – „Status geändert" allein sagte später nicht, warum. */
@@ -14263,8 +14778,9 @@ window.akqAntwortBewerten = async function(antwortId, firmaId, status){
     await updateDoc(doc(db, 'firmen', firmaId), daten);
     await akqVerlaufEintragen(firmaId, 'antwort',
       'Antwort als ' + eintrag.wortlaut + ' bewertet' + (sperrt ? ' (Kontaktsperre gesetzt)' : ''));
-    /* Wer eine Antwort bewertet, hat sie gelesen. */
-    await window.akqAntwortGelesen(antwortId);
+    /* Wer eine Antwort bewertet, hat das Gespräch gelesen – alle
+       offenen Nachrichten dieser Firma, nicht nur die jüngste. */
+    await window.akqGespraechGelesen(firmaId);
     melde(sperrt ? 'Festgehalten – die Firma ist jetzt gesperrt.' : 'Bewertung gespeichert.');
   } catch(err){
     meldeSchreibfehler(err, 'Das Bewerten der Antwort');
@@ -14302,6 +14818,8 @@ function akqNaechsterHtml(f){
       knopf = `<button class="btn btn-primary" onclick="akqKontaktVorbereiten('${fj}')">${sicher(n.knopf.text)}</button>`;
     } else if(n.knopf.ziel === 'antworten'){
       knopf = `<button class="btn btn-primary" onclick="switchView('akquise_antworten')">${sicher(n.knopf.text)}</button>`;
+    } else if(n.knopf.ziel === 'kunde'){
+      knopf = `<button class="btn btn-primary" onclick="akqKundeFormOeffnen('${fj}')">${sicher(n.knopf.text)}</button>`;
     }
   }
 
@@ -14313,6 +14831,175 @@ function akqNaechsterHtml(f){
       ${knopf}
     </div>`;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   KUNDENÜBERNAHME (14.08.2026, Phase 7)
+   ══════════════════════════════════════════════════════════════
+   ⚠️ Die Akquise-Rolle darf die Sammlung `kunden` NICHT lesen –
+   dort stehen alle Bestandskunden. Was hier angezeigt wird, steht
+   ausschließlich am Firmendatensatz: Kundennummer, Datum und wer
+   übernommen hat. Mehr braucht Lukas nicht, und mehr bekommt er
+   nicht. */
+
+const KUNDE_FELDER = [
+  ['firmenname','Firmenname'], ['standort','Standort'], ['ansprechpartner','Ansprechpartner'],
+  ['email','E-Mail'], ['telefon','Telefon'], ['strasse','Straße'], ['hausnummer','Hausnummer'],
+  ['plz','PLZ'], ['ort','Ort'], ['branche','Branche'],
+];
+
+function akqKundeHtml(f){
+  const fj = sicherJs(f.id);
+
+  if(f.kunden_id){
+    return `
+      <div class="kunde-box fertig">
+        <div class="kunde-titel"><span aria-hidden="true">✅</span> Aktiver Waschlurch-Kunde</div>
+        <div class="kunde-text">Aus diesem Lead ist eine reguläre Kundenkarte geworden.</div>
+        <div class="kunde-nummer">${sicher(f.kunden_id)}</div>
+        <div class="kunde-daten">
+          <div><span>Übernommen am:</span>${sicher(f.kunde_seit ? formatDate(f.kunde_seit) : '–')}</div>
+          <div><span>Übernommen von:</span>${sicher(f.uebernommen_von || '–')}</div>
+        </div>
+      </div>`;
+  }
+
+  if(f.status !== 'interesse' || f.do_not_contact === true) return '';
+
+  const wert = (feld) => sicher(f[feld] || '');
+  return `
+    <div class="kunde-box">
+      <div class="kunde-titel"><span aria-hidden="true">✅</span> Kunde hat Interesse</div>
+      <div class="kunde-text">
+        Aus diesem Lead kann jetzt eine reguläre Waschlurch-Kundenkarte werden.
+        Die Angaben lassen sich vorher noch ergänzen.
+      </div>
+      <button class="btn btn-primary" id="kunde-start-btn"
+              onclick="akqKundeFormOeffnen('${fj}')">Als Kunden übernehmen</button>
+
+      <div id="kunde-form" hidden style="margin-top:18px">
+        <div class="karte-block" style="margin-bottom:0">
+          <div class="karte-block-titel">Kundenkarte anlegen</div>
+          <p class="karte-block-text">
+            Diese Angaben landen in der Kundenkartei. Ergänze, was fehlt – korrigieren
+            lässt sich später alles unter „Kunden“.
+          </p>
+          <div class="field">
+            <label for="ku-firmenname">Firmenname *</label>
+            <input type="text" id="ku-firmenname" value="${wert('firmenname')}" autocomplete="off">
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="ku-standort">Standort</label>
+              <input type="text" id="ku-standort" value="${wert('standort')}" autocomplete="off"></div>
+            <div class="field"><label for="ku-ansprechpartner">Ansprechpartner</label>
+              <input type="text" id="ku-ansprechpartner" value="${wert('ansprechpartner')}" autocomplete="off"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="ku-email">E-Mail</label>
+              <input type="email" id="ku-email" value="${wert('email')}" autocomplete="off"></div>
+            <div class="field"><label for="ku-telefon">Telefon</label>
+              <input type="tel" id="ku-telefon" value="${wert('telefon')}" autocomplete="off"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="ku-strasse">Straße</label>
+              <input type="text" id="ku-strasse" value="${wert('strasse')}" autocomplete="off"></div>
+            <div class="field"><label for="ku-hausnummer">Hausnummer</label>
+              <input type="text" id="ku-hausnummer" value="${wert('hausnummer')}" autocomplete="off"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="ku-plz">PLZ</label>
+              <input type="text" inputmode="numeric" id="ku-plz" value="${wert('plz')}" autocomplete="off"></div>
+            <div class="field"><label for="ku-ort">Ort</label>
+              <input type="text" id="ku-ort" value="${wert('ort')}" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="ku-branche">Branche</label>
+            <input type="text" id="ku-branche" value="${wert('branche')}" autocomplete="off">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label for="ku-notizen">Notizen für die Kundenkarte</label>
+            <textarea id="ku-notizen" rows="4">${sicher(f.notiz || '')}</textarea>
+          </div>
+
+          <div class="akq-speicherleiste">
+            <button class="btn btn-primary akq-sendeknopf" id="kunde-save-btn"
+                    onclick="akqKundeUebernehmen('${fj}')">Kundenkarte erstellen</button>
+            <button class="btn akq-abbrechen" onclick="akqKundeFormSchliessen()">Abbrechen</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+window.akqKundeFormOeffnen = function(id){
+  /* Vom „Nächster Schritt"-Knopf aus kann die Detailkarte einer
+     anderen Firma offen sein – erst dorthin wechseln. */
+  if(akqAktuelleFirma !== id){ window.akqFirmaDetail(id); }
+  const form = document.getElementById('kunde-form');
+  if(!form) return;
+  form.removeAttribute('hidden');
+  const erstes = document.getElementById('ku-firmenname');
+  if(erstes) erstes.focus();
+};
+
+window.akqKundeFormSchliessen = function(){
+  const form = document.getElementById('kunde-form');
+  if(form) form.setAttribute('hidden','');
+};
+
+let akqUebernahmeLaeuft = false;
+
+window.akqKundeUebernehmen = async function(id){
+  if(akqUebernahmeLaeuft) return;
+
+  const f = allFirmen.find(x => x.id === id);
+  if(!f) return;
+  if(f.do_not_contact === true){
+    alert('Dieser Kontakt ist gesperrt und kann nicht als Kunde übernommen werden.');
+    return;
+  }
+
+  const hole = feld => {
+    const el = document.getElementById('ku-' + feld);
+    return el ? el.value.trim() : '';
+  };
+  const firmenname = hole('firmenname');
+  if(!firmenname){
+    alert('Für die Kundenkarte fehlt der Firmenname.');
+    const el = document.getElementById('ku-firmenname'); if(el) el.focus();
+    return;
+  }
+
+  if(!confirm('Aus „' + firmenname + '" jetzt eine Kundenkarte erstellen?\n\n' +
+              'Die Firma gilt danach als übernommener Kunde.')) return;
+
+  akqUebernahmeLaeuft = true;
+  const knopf = document.getElementById('kunde-save-btn');
+  if(knopf){ knopf.disabled = true; knopf.textContent = 'Wird übernommen ...'; }
+
+  try {
+    const nutzlast = { firma_id: id, firmenname };
+    KUNDE_FELDER.forEach(([feld]) => { if(feld !== 'firmenname') nutzlast[feld] = hole(feld); });
+    nutzlast.notizen = hole('notizen');
+
+    const antwort = await serverAufruf('/api/akquise-zu-kunde', nutzlast);
+    melde(antwort.bereits
+      ? 'Diese Firma war bereits Kunde: ' + (antwort.kunden_id || '')
+      : 'Kundenkarte erstellt: ' + (antwort.kunden_id || ''));
+    window.akqKundeFormSchliessen();
+    /* Der Datenlauscher zieht nach – der Server hat die Verknüpfung
+       am Firmendatensatz bereits gesetzt. */
+  } catch(err){
+    if(err && err.message === 'EINRICHTUNG_FEHLT'){
+      alert('Die Übernahme ist noch nicht eingerichtet.\n\nDie Serverfunktion /api/akquise-zu-kunde ist nicht erreichbar.');
+    } else {
+      alert('Die Übernahme hat NICHT geklappt.\n\n' + ((err && err.message) || 'Unbekannter Fehler'));
+    }
+  } finally {
+    akqUebernahmeLaeuft = false;
+    const jetzt = document.getElementById('kunde-save-btn');
+    if(jetzt){ jetzt.disabled = false; jetzt.textContent = 'Kundenkarte erstellen'; }
+  }
+};
 
 /* ── Detailkarte ──────────────────────────────────────────── */
 window.akqFirmaDetail = function(id){
@@ -14342,6 +15029,23 @@ function akqRenderFirmaDetail(){
 
   const verlauf = akqVerlaufFuer(f.id);
 
+  /* ⚠️ Ein offenes Übernahmeformular darf beim Neuzeichnen nicht
+     verschwinden. Die Datenlauscher zeichnen bei jeder Änderung neu –
+     auch bei der, die das eigene Speichern auslöst. Wer gerade eine
+     Anschrift ergänzt hat, verlöre sie sonst mitten im Tippen. */
+  const kundeFormOffen = (() => {
+    const form = document.getElementById('kunde-form');
+    if(!form || form.hasAttribute('hidden')) return null;
+    const werte = {};
+    KUNDE_FELDER.forEach(([feld]) => {
+      const eingabe = document.getElementById('ku-' + feld);
+      if(eingabe) werte[feld] = eingabe.value;
+    });
+    const notizen = document.getElementById('ku-notizen');
+    if(notizen) werte.notizen = notizen.value;
+    return werte;
+  })();
+
   el.innerHTML = `
     <button class="karte-aktion" style="margin-bottom:18px" onclick="akqZurueckZurListe()">← Zurück zur Liste</button>
 
@@ -14370,6 +15074,8 @@ function akqRenderFirmaDetail(){
     <div class="view-sub" style="margin-bottom:22px">
       ${sicher(f.standort || '')}${f.standort && f.branche ? ' · ' : ''}${sicher(f.branche || '')}
     </div>
+
+    ${akqKundeHtml(f)}
 
     ${akqNaechsterHtml(f)}
 
@@ -14427,6 +15133,18 @@ function akqRenderFirmaDetail(){
               <div class="verlauf-meta">${sicher(formatDate(v.createdAt))} · ${sicher(v.benutzer_name || 'unbekannt')}</div>
             </div>`).join('')}</div>`}
     </div>`;
+
+  // Offenes Übernahmeformular samt getippter Werte wiederherstellen
+  if(kundeFormOffen){
+    const form = document.getElementById('kunde-form');
+    if(form){
+      form.removeAttribute('hidden');
+      Object.entries(kundeFormOffen).forEach(([feld, wert]) => {
+        const eingabe = document.getElementById('ku-' + feld);
+        if(eingabe) eingabe.value = wert;
+      });
+    }
+  }
 }
 
 window.akqStatusSetzen = function(id, status){
@@ -15448,6 +16166,11 @@ window.createAngebotPDF = async function(alsoEmail){
   const btn = document.getElementById('ang-save-btn');
   btn.disabled = true; btn.textContent = 'Erstelle ...';
 
+  /* Verknüpfung zur Karteikarte: entweder direkt gewählt, oder über
+     die E-Mail hergeleitet. Einmal berechnet, damit sie unten auch
+     für die Firmenkundennummer zur Verfügung steht. */
+  const angebotKundeKey = document.getElementById('ang-kunde-key').value || (email ? emailToKey(email) : null);
+
   const angebotData = {
     ...lastAngebotBreakdown,
     vorname, nachname, email,
@@ -15457,10 +16180,12 @@ window.createAngebotPDF = async function(alsoEmail){
     gueltigkeit: parseInt(document.getElementById('ang-gueltigkeit').value) || 14,
     anmerkung: document.getElementById('ang-anmerkung').value.trim(),
     anfrage_id: document.getElementById('ang-anfrage-id').value || null,
-    /* Verknüpfung zur Karteikarte: entweder direkt gewählt, oder über
-       die E-Mail der Anfrage hergeleitet. Damit landet der spätere
-       Auftrag beim richtigen Kunden, ohne dass etwas gesucht werden muss. */
-    kunde_key: document.getElementById('ang-kunde-key').value || (email ? emailToKey(email) : null),
+    /* Damit landet der spätere Auftrag beim richtigen Kunden, ohne
+       dass etwas gesucht werden muss. */
+    kunde_key: angebotKundeKey,
+    /* Zusätzlich die dauerhafte Firmenkundennummer (Phase 8A) –
+       leer, wenn es keine eindeutige gewerbliche Zuordnung gibt. */
+    ...kundenFelder(angebotKundeKey),
   };
 
   try {
@@ -15538,7 +16263,11 @@ function renderAngeboteList(){
   let list = [...allAngebote];
   if(statusFilter) list = list.filter(a => a.status === statusFilter);
   if(searchTerm){
-    list = list.filter(a => `${a.vorname||''} ${a.nachname||''} ${a.leistungen_text||''} ${a.nummer||''}`.toLowerCase().includes(searchTerm));
+    /* Firmenkunden-ID und Kundenname mitdurchsuchen (Phase 8A) –
+       damit sich alle Angebote eines Betriebs über eine Kennung
+       finden lassen, auch wenn dort mal ein anderer Ansprechpartner
+       eingetragen war. */
+    list = list.filter(a => `${a.vorname||''} ${a.nachname||''} ${a.leistungen_text||''} ${a.nummer||''} ${a.kunden_id||''} ${a.kundenname||''}`.toLowerCase().includes(searchTerm));
   }
   list.sort((a,b) => {
     if(sortMode === 'datum-alt') return (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0);
