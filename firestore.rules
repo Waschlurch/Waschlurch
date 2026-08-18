@@ -1,0 +1,472 @@
+// ─────────────────────────────────────────────────────────────
+//  Waschlurch – Firestore-Sicherheitsregeln
+//
+//  Korrigiert am 03.08.2026. Die vorherige Fassung hatte drei
+//  schwere Fehler und hätte beim Einspielen Folgendes bewirkt:
+//
+//    1. `match /einstellungen/{docId}` mit `allow read: if true`
+//       machte IBAN, Steuernummer und Kalkulationssätze für jeden
+//       im Internet lesbar.
+//    2. Die Admin-Adresse war ein Platzhalter – niemand wäre
+//       Verwalter gewesen.
+//    3. `anfragen` erlaubte kein `create` für Nicht-Angemeldete –
+//       kein Kunde hätte mehr eine Anfrage absenden können.
+//       Bewerbungen, Partneranfragen, Einnahmen, Ausgaben und
+//       Mitarbeiter fehlten ganz und fielen in die Sperrregel.
+//
+//  Merksatz: Regeln sind permissiv-ODER. Gewährt irgendeine
+//  passende Regel Zugriff, ist er gewährt. Eine zu weit gefasste
+//  Wildcard hebt jede spezifische Einschränkung auf.
+// ─────────────────────────────────────────────────────────────
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "waschlurch@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // ── Rollen (14.08.2026) ──────────────────────────────────
+    // Bis hierher gab es genau zwei Zustände: Verwalter oder
+    // niemand. Für Mitarbeiter mit eingeschränktem Zugang steht
+    // die Rolle in `benutzer/{uid}`.
+    //
+    // ⚠️ `admins/{uid}` bleibt davon vollständig unberührt. Wer
+    // dort steht, ist Verwalter – eine Rolle in `benutzer` kann
+    // das weder erweitern noch entziehen. Die zwei getrennten
+    // Wege sind Absicht: Ein Tippfehler im neuen Rollenfeld darf
+    // niemanden zum Verwalter machen, und ein gelöschter
+    // Rolleneintrag darf den Verwalter nicht aussperren.
+    //
+    // `aktiv` wird mitgeprüft, damit ein ausgeschiedener
+    // Mitarbeiter gesperrt werden kann, ohne dass sein Eintrag
+    // gelöscht werden muss – daran hängt sein Aktivitätsprotokoll.
+    //
+    // Kostenhinweis: Jede `exists()`- und `get()`-Prüfung zählt als
+    // Dokumentzugriff. `hatRolle` kommt damit auf drei je Anfrage –
+    // erlaubt sind zehn. Bewusst nicht auf einen Zugriff verdichtet:
+    // Die kurze Fassung müsste `get()` auch dann ausführen, wenn
+    // niemand angemeldet ist, und liefe auf einen ungültigen Pfad.
+    function benutzerEintrag() {
+      return get(/databases/$(database)/documents/benutzer/$(request.auth.uid)).data;
+    }
+    function hatRolle(r) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/benutzer/$(request.auth.uid))
+        && benutzerEintrag().rolle == r
+        && benutzerEintrag().aktiv == true;
+    }
+
+    // Social Media & Akquise. Bewusst allgemein benannt, damit
+    // weitere Mitarbeiter dieselbe Rolle bekommen können.
+    function istAkquise() {
+      return hatRolle('acquisition');
+    }
+
+    // ── Benutzerkonten und Rollen ────────────────────────────
+    // Jeder Angemeldete darf SEINEN EIGENEN Eintrag lesen – das
+    // Dashboard braucht ihn, um zu wissen, welche Bereiche es
+    // überhaupt anzeigen darf. Fremde Einträge bleiben verborgen:
+    // Sie enthalten Namen und Kontaktdaten von Beschäftigten.
+    //
+    // Schreiben darf ausschließlich der Verwalter. Dürfte ein
+    // Benutzer sein eigenes Dokument ändern, könnte er sich
+    // `rolle: "admin"` eintragen – die Rechteprüfung wäre damit
+    // wertlos.
+    match /benutzer/{uid} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow write: if isAdmin();
+    }
+
+    // ── Öffentliche Formulare ────────────────────────────────
+    // Anlegen muss ohne Anmeldung möglich sein, sonst kann kein
+    // Kunde eine Anfrage stellen. Lesen bleibt dem Verwalter
+    // vorbehalten – die Einträge enthalten personenbezogene Daten.
+    match /anfragen/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /bewerbungen/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /partneranfragen/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Öffentlich sichtbare Website-Inhalte ─────────────────
+    match /preise/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /pakete/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /leistungen_anzeige/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /referenzen/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /faqs/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Einstellungen ────────────────────────────────────────
+    // NUR das Impressum-Dokument ist öffentlich. Es wird von
+    // impressum.html, datenschutz.html und agb.html gelesen.
+    //
+    // `firma` (IBAN, Bankverbindung, Steuernummer), `steuer` und
+    // `kalkulation` (Stundenkosten, Margen) bleiben privat.
+    // agb.html liest zwar `firma` für das Zahlungsziel, hat dafür
+    // aber einen stillen Rückfall auf das Impressum-Dokument –
+    // die Seite funktioniert ohne öffentlichen Zugriff.
+    match /einstellungen/impressum {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /einstellungen/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Interne Geschäftsdaten ───────────────────────────────
+    match /angebote/{docId}    { allow read, write: if isAdmin(); }
+    match /kunden/{docId}      { allow read, write: if isAdmin(); }
+    match /einnahmen/{docId}   { allow read, write: if isAdmin(); }
+    match /ausgaben/{docId}    { allow read, write: if isAdmin(); }
+    match /mitarbeiter/{docId} { allow read, write: if isAdmin(); }
+
+    // NEU (10.08.2026): Aufträge je Kunde mit Umsatz, Kosten und Gewinn.
+    // Enthält Margen – muss genauso privat bleiben wie `kalkulation`.
+    // Ohne diese Regel bleibt der Auftragsbereich in der Kundenkarte leer
+    // und meldet „Keine Leseberechtigung für auftraege".
+    match /auftraege/{docId}   { allow read, write: if isAdmin(); }
+
+    // NEU (10.08.2026): Urlaub, Krankheit und sonstige Abwesenheiten
+    // je Mitarbeiter. Gesundheitsdaten (Art. 9 DSGVO) – muss privat
+    // bleiben. Speist den Kalender.
+    match /abwesenheiten/{docId} { allow read, write: if isAdmin(); }
+
+    // NEU (10.08.2026): Eigene Kalendertermine, auch als Serie.
+    // Enthalten Kundenanschriften – müssen privat bleiben.
+    match /termine/{docId}       { allow read, write: if isAdmin(); }
+
+    // ═════════════════════════════════════════════════════════
+    //  AKQUISE (14.08.2026, zuletzt 17.08.2026)
+    // ═════════════════════════════════════════════════════════
+    //
+    //  Verwalter und Akquise-Rolle, sonst niemand. Ausdrücklich
+    //  NICHT öffentlich: Hier stehen Ansprechpartner, Telefonnummern
+    //  und Notizen zu Betrieben, die nie zugestimmt haben.
+    //
+    //  Der Bereich ist vollständig in Betrieb: Firmen erfassen,
+    //  Dublettenprüfung, Kontaktsperre, Entwurf, Gmail-Versand,
+    //  Antwortimport, Antworten aus dem Dashboard, Übernahme als
+    //  Kunde und Wiedervorlagen.
+    //
+    //  ⚠️ Vier Sammlungen schreibt AUSSCHLIESSLICH der Server mit dem
+    //  Dienstkonto, das diese Regeln planmäßig umgeht:
+    //  `akquise_antworten`, `kundennummern`, `akquise_uebernahmen`
+    //  und die Versandfelder in `akquise_nachrichten`. Für den
+    //  Browser stehen sie hier auf `false` – das ist kein Versehen,
+    //  sondern die Trennung zwischen „darf anzeigen" und „darf
+    //  behaupten, es sei geschehen".
+
+    // ── Schutzfelder ─────────────────────────────────────────
+    // Wer einen Datensatz angelegt hat, steht fest. Ohne diese
+    // Prüfung könnte die Akquise `erstellt_von` auf eine fremde
+    // Kennung setzen – und das Protokoll wäre wertlos, weil sich
+    // jede Eintragung im Nachhinein jemand anderem zuschieben
+    // ließe.
+    //
+    // `get(feld, null)` statt `data.feld`: Ein Dokument aus einer
+    // früheren Fassung hat das Feld womöglich nicht, und ein
+    // direkter Zugriff darauf lässt die Regelauswertung scheitern –
+    // was jede Änderung an Altbeständen blockiert hätte.
+    function firmaSchutzfelderUnveraendert() {
+      return request.resource.data.get('erstellt_von', null) == resource.data.get('erstellt_von', null)
+          && request.resource.data.get('erstellt_von_name', null) == resource.data.get('erstellt_von_name', null)
+          && request.resource.data.get('erstellt_am', null) == resource.data.get('erstellt_am', null);
+    }
+
+    // Eine gesetzte Kontaktsperre nimmt nur der Verwalter zurück.
+    //
+    // Sonst wäre die Sperre eine Empfehlung: Wer „kein Interesse"
+    // eingetragen hat, könnte den Haken selbst wieder entfernen und
+    // dieselbe Firma erneut anschreiben. Setzen darf die Akquise sie
+    // jederzeit – nur das Aufheben ist die Entscheidung des Chefs.
+    function sperreBleibtBestehen() {
+      return resource.data.get('do_not_contact', false) != true
+          || request.resource.data.get('do_not_contact', false) == true;
+    }
+
+    // ⚠️ Die Kontaktsperre schlägt jede Wiedervorlage (17.08.2026).
+    //
+    // Eine gesperrte Firma mit Wiedervorlagedatum stünde am Stichtag
+    // wieder unter „heute zu erledigen" und lüde genau zu dem
+    // Kontakt ein, den die Sperre verhindern soll. Im Dashboard wird
+    // das an zwei Stellen geprüft – hier ist es durchgesetzt.
+    //
+    // Gilt bewusst auch für den Verwalter: Der richtige Weg ist,
+    // erst die Sperre aufzuheben. Eine Wiedervorlage auf einer
+    // gesperrten Firma wäre in jedem Fall ein Widerspruch.
+    //
+    // `get(feld, '')` und nicht der direkte Zugriff: Bei einem
+    // Datensatz ohne das Feld ließe Letzterer die Auswertung
+    // scheitern und blockierte jede Änderung an Altbeständen.
+    function wiedervorlageNurOhneSperre() {
+      return request.resource.data.get('wiedervorlage_am', '') == ''
+          || request.resource.data.get('do_not_contact', false) != true;
+    }
+
+    // Erfasste Firmen und Leads.
+    //
+    // ⚠️ Löschen bleibt dem Verwalter vorbehalten. Ein Lead, den die
+    // Akquise selbst spurlos entfernen könnte, wäre der einfachste
+    // Weg um eine Kontaktsperre herum: Datensatz weg, Firma neu
+    // anlegen, wieder anschreiben. Genau das darf `do_not_contact`
+    // nicht zulassen.
+    // ⚠️ Die Kundenverknüpfung vergibt nur der Server (14.08.2026).
+    //
+    // Sie entsteht über /api/akquise-zu-kunde, das mit dem Dienstkonto
+    // arbeitet. Dürfte der Browser `kunden_id` setzen, könnte die
+    // Akquise eine Übernahme vortäuschen: Die Firma sähe im Dashboard
+    // wie ein Kunde aus, ohne dass je eine Karteikarte entstanden ist –
+    // und niemand käme auf die Idee, sie anzulegen.
+    function firmaKundenfelderUnveraendert() {
+      return request.resource.data.get('kunden_id', null) == resource.data.get('kunden_id', null)
+          && request.resource.data.get('kunden_dokument_id', null) == resource.data.get('kunden_dokument_id', null)
+          && request.resource.data.get('kunde_seit', null) == resource.data.get('kunde_seit', null);
+    }
+
+    match /firmen/{docId} {
+      allow read: if isAdmin() || istAkquise();
+      allow create: if (isAdmin()
+                        || (istAkquise()
+                            && request.resource.data.erstellt_von == request.auth.uid
+                            && request.resource.data.get('kunden_id', null) == null))
+                    && wiedervorlageNurOhneSperre();
+      allow update: if (isAdmin()
+                        || (istAkquise() && firmaSchutzfelderUnveraendert()
+                            && sperreBleibtBestehen() && firmaKundenfelderUnveraendert()))
+                    && wiedervorlageNurOhneSperre();
+      allow delete: if isAdmin();
+    }
+
+    // Vergebene Firmenkundennummern. Die Nummer ist die
+    // Dokumentkennung – daran hängt ihre Eindeutigkeit. Rein
+    // serverseitig; der Browser hat hier nichts zu suchen.
+    match /kundennummern/{nummer} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Laufmarken der Kundenübernahme (Schutz gegen Doppelklick).
+    match /akquise_uebernahmen/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Vorbereitete und versendete Akquise-Nachrichten.
+    //
+    // Dieselbe Überlegung wie bei den Firmen: Wer einen Entwurf
+    // verfasst hat, steht fest. Ein Nachweis, der sich nachträglich
+    // jemand anderem zuschieben lässt, ist keiner – und bei einer
+    // Werbemail ist genau das die Frage, die im Zweifel zählt.
+    function nachrichtSchutzfelderUnveraendert() {
+      return request.resource.data.get('firma_id', null) == resource.data.get('firma_id', null)
+          && request.resource.data.get('erstellt_von', null) == resource.data.get('erstellt_von', null)
+          && request.resource.data.get('erstellt_von_name', null) == resource.data.get('erstellt_von_name', null)
+          && request.resource.data.get('erstellt_am', null) == resource.data.get('erstellt_am', null);
+    }
+
+    // ⚠️ „Gesendet" vergibt nur der Server (14.08.2026).
+    //
+    // Der Versand läuft über /api/akquise-versenden mit dem
+    // Dienstkonto, das diese Regeln planmäßig umgeht. Dürfte der
+    // Browser `status: "gesendet"` und die Gmail-Kennungen setzen,
+    // könnte die Akquise einen Versand vortäuschen, der nie
+    // stattgefunden hat – und niemand käme je auf die Idee, die Mail
+    // wirklich zu verschicken.
+    //
+    // Ebenso: Eine bereits versendete Nachricht ist ein Nachweis
+    // dessen, was hinausgegangen ist. Sie wird nicht mehr geändert.
+    function nachrichtNurEntwurfsstatus() {
+      return request.resource.data.get('status', 'entwurf') in ['entwurf', 'versandbereit']
+          && request.resource.data.get('gmail_message_id', null) == resource.data.get('gmail_message_id', null)
+          && request.resource.data.get('gmail_thread_id', null) == resource.data.get('gmail_thread_id', null)
+          && request.resource.data.get('gesendet_am', null) == resource.data.get('gesendet_am', null)
+          && resource.data.get('status', 'entwurf') != 'gesendet';
+    }
+
+    match /akquise_nachrichten/{docId} {
+      allow read: if isAdmin() || istAkquise();
+      // ⚠️ Beim ANLEGEN dieselben Versandfelder sperren wie beim
+      // Ändern (17.08.2026). Vorher stand hier nur `gmail_message_id`
+      // – `gmail_thread_id` und `gesendet_am` waren frei setzbar.
+      //
+      // Das genügte für einen vorgetäuschten Versand: Der
+      // Gesprächsverlauf zeichnet jeden Entwurf mit `gesendet_am` als
+      // ausgehende Nachricht, und über eine fremde `gmail_thread_id`
+      // ließe er sich in ein fremdes Gespräch einhängen. Genau das,
+      // was `nachrichtNurEntwurfsstatus()` beim Ändern verhindert –
+      // eine Regel, die nur die halbe Lebensdauer eines Dokuments
+      // abdeckt, ist keine.
+      allow create: if isAdmin()
+                    || (istAkquise()
+                        && request.resource.data.erstellt_von == request.auth.uid
+                        && request.resource.data.get('status', 'entwurf') in ['entwurf', 'versandbereit']
+                        && request.resource.data.get('gmail_message_id', null) == null
+                        && request.resource.data.get('gmail_thread_id', null) == null
+                        && request.resource.data.get('gesendet_am', null) == null);
+      allow update: if isAdmin()
+                    || (istAkquise() && nachrichtSchutzfelderUnveraendert() && nachrichtNurEntwurfsstatus());
+      allow delete: if isAdmin();
+    }
+
+    // Eingegangene Kundenantworten (14.08.2026).
+    //
+    // Lesen ja, schreiben nie: Diese Dokumente entstehen
+    // ausschließlich beim Abgleich mit Gmail, und auch das
+    // Markieren als gelesen läuft über die Serverfunktion – dort
+    // wird der Zähler der Firma mitgeführt.
+    //
+    // Dürfte der Browser hier schreiben, ließe sich eine
+    // Kundenantwort erfinden oder ihr Text nachträglich ändern.
+    // Was ein Kunde geschrieben hat, ist ein Nachweis.
+    match /akquise_antworten/{docId} {
+      allow read: if isAdmin() || istAkquise();
+      allow create, update, delete: if false;
+    }
+
+    // Aktivitätsverlauf je Lead: wer wann was getan hat.
+    // Anhängen erlaubt, Ändern und Löschen nie – ein Protokoll, das
+    // sich nachträglich glätten lässt, belegt nichts.
+    //
+    // Beim Anlegen muss die eingetragene Kennung die eigene sein.
+    // Ohne das könnte die Akquise Einträge auf fremde Namen
+    // schreiben – und ein Protokoll, in dem das möglich ist, taugt
+    // nicht als Nachweis.
+    match /akquise_verlauf/{docId} {
+      allow read: if isAdmin() || istAkquise();
+      allow create: if isAdmin()
+                    || (istAkquise() && request.resource.data.benutzer_uid == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  ANGEBOTSSYSTEM (11.08.2026)
+    // ═════════════════════════════════════════════════════════
+    //
+    //  Grundsatz: Der KUNDE bekommt hier nirgends Zugriff – auch
+    //  nicht auf „seine eigenen" Dokumente. Die Kundenaktionsseite
+    //  spricht ausschließlich mit den Serverfunktionen unter /api/,
+    //  die den Token prüfen und nur die freigegebenen Felder
+    //  herausgeben. Diese Funktionen arbeiten mit dem Dienstkonto
+    //  und umgehen diese Regeln planmäßig.
+    //
+    //  Das ist bewusst strenger als „Kunde darf sein Dokument
+    //  lesen": Eine öffentlich lesbare Regel bräuchte den Token als
+    //  Dokument-ID im Klartext, und ein Vertippen in der Bedingung
+    //  legte sofort alle Kalkulationen samt Anschriften offen.
+
+    // Stufe 1 – unverbindliche Vorabkalkulation.
+    // Enthält Kundenanschriften und die interne Kostenseite.
+    match /vorkalkulationen/{docId} { allow read, write: if isAdmin(); }
+
+    // Unveränderbare Schnappschüsse jeder versendeten oder
+    // angenommenen Dokumentversion, inklusive PDF-Prüfsumme.
+    // ANLEGEN ja, ÄNDERN NIE – sonst wäre der Nachweis wertlos,
+    // was der Kunde tatsächlich bekommen hat.
+    match /dokument_versionen/{docId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Einmal-Tokens für Kundenaktionen. Dokument-ID ist der
+    // SHA-256-Hash des Tokens; der Klartext steht ausschließlich im
+    // versendeten Link und wird nirgends gespeichert.
+    //
+    // Anlegen kann nur die Serverfunktion beim Versand. Das
+    // Dashboard darf lesen (Übersicht: welcher Link ist noch gültig)
+    // und widerrufen, aber keine neuen Tokens erfinden.
+    match /aktions_tokens/{tokenHash} {
+      allow read, update: if isAdmin();
+      allow create, delete: if false;
+    }
+
+    // Protokoll bestätigter Kundenaktionen. Wird vom Server
+    // geschrieben; der Admin darf lesen und als erledigt markieren.
+    match /kundenreaktionen/{docId} {
+      allow read, update: if isAdmin();
+      allow create, delete: if false;
+    }
+
+    // Benachrichtigungszentrale im Dashboard.
+    match /benachrichtigungen/{docId} { allow read, write: if isAdmin(); }
+
+    // Versandprotokoll. Verhindert über den Idempotenzschlüssel,
+    // dass ein wiederholter Job dieselbe E-Mail zweimal schickt.
+    match /mail_ereignisse/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // Revisionssicheres Protokoll: Preisänderungen, Freigaben,
+    // Versand, Annahme, Ablehnung, Widerruf, Stornierung.
+    // Anhängen erlaubt, Ändern und Löschen nie.
+    match /protokoll/{docId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Laufmarken der zeitgesteuerten Abläufe. Nur der Server
+    // schreibt hier – daran hängt der Schutz vor Doppelausführung.
+    match /automatik_laeufe/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Sperrmarken: Von zwei gleichzeitigen Klicks auf denselben
+    // Aktionslink kommt genau einer durch. Rein serverseitig.
+    match /token_sperren/{tokenHash} {
+      allow read, write: if false;
+    }
+
+    // Ratenbegrenzung. Enthält nur gehashte Absenderkennungen und
+    // Zähler – trotzdem für den Browser komplett gesperrt, denn
+    // wer sie leeren könnte, hätte die Begrenzung ausgehebelt.
+    match /rate_limit/{kennung} {
+      allow read, write: if false;
+    }
+
+    match /admins/{userId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Alles Übrige sperren ─────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -19,10 +19,13 @@
    mitten im Lauf.
    ══════════════════════════════════════════════════════════════ */
 
+import crypto from 'node:crypto';
 import { alle, holen, aendern, anlegen, nurNeu, jetztIso } from '../lib/firestore.mjs';
 import { tokenErzeugen, antworte } from '../lib/sicherheit.mjs';
 import { versende } from '../lib/mail.mjs';
 import { erinnerung, abgelaufen } from '../lib/vorlagen.mjs';
+import { gmailEingerichtet } from '../lib/gmail.mjs';
+import { synchronisiereAntworten } from '../lib/antworten.mjs';
 
 const TAG = 86400000;
 
@@ -38,14 +41,39 @@ function tageBis(isoDatum){
 }
 
 export default async function handler(anfrage, antwort){
-  /* Vercel Cron schickt einen eigenen Kopf mit. Ohne diese Prüfung
-     könnte jeder den Lauf beliebig oft auslösen – die
-     Idempotenzschlüssel würden zwar doppelte Mails verhindern, aber
-     jeder Aufruf kostet Datenbankzugriffe. */
-    const vonCron = anfrage.headers['x-vercel-cron'] !== undefined;
-  const geheimnis = process.env.AKTION_GEHEIMNIS;
-  const mitGeheimnis = geheimnis && anfrage.headers['authorization'] === 'Bearer ' + geheimnis;
-  if(!vonCron && !mitGeheimnis){
+  /* ⚠️ NICHT über den Kopf `x-vercel-cron` prüfen.
+     Der ist ein EINGEHENDER Header – jeder kann ihn mitschicken.
+     Eine Prüfung darauf ist kein Schutz, sondern sieht nur so aus.
+
+     Vercel sendet bei gesetzter Umgebungsvariable `CRON_SECRET`
+     automatisch `Authorization: Bearer <CRON_SECRET>`. Nur das
+     zählt hier.
+
+     Und: Fehlt das Geheimnis, wird GESPERRT statt geöffnet. Die
+     vorherige Fassung ließ bei fehlender Variable jeden durch, der
+     den Kopf setzte – der Job wäre öffentlich auslösbar gewesen. */
+  const geheimnis = process.env.CRON_SECRET || process.env.AKTION_GEHEIMNIS;
+  if(!geheimnis){
+    console.error('CRON_SECRET ist nicht gesetzt – der Lauf wird abgelehnt. Siehe EINRICHTUNG.md.');
+    return antworte(antwort, 503, {
+      fehler:'Der nächtliche Lauf ist noch nicht eingerichtet (CRON_SECRET fehlt).',
+    });
+  }
+
+  /* Zeitkonstanter Vergleich: Ein Vergleich mit === bricht beim
+     ersten abweichenden Zeichen ab und verrät über die Laufzeit,
+     wie viele Zeichen stimmen.
+
+     ⚠️ Über BYTES vergleichen, nicht über Zeichen. `timingSafeEqual`
+     wirft einen RangeError, wenn die Puffer unterschiedlich lang
+     sind – und `'äöü'.length` ist 3, `Buffer.byteLength('äöü')`
+     aber 6. Ein Aufruf mit Umlauten passender Zeichenzahl hätte
+     einen unbehandelten Absturz statt einer 401 ergeben. */
+  const mitgeschickt = Buffer.from(String(anfrage.headers['authorization'] || ''), 'utf8');
+  const erwartet = Buffer.from('Bearer ' + geheimnis, 'utf8');
+  const gleich = mitgeschickt.length === erwartet.length
+    && crypto.timingSafeEqual(mitgeschickt, erwartet);
+  if(!gleich){
     return antworte(antwort, 401, { fehler:'Nicht berechtigt.' });
   }
 
@@ -172,6 +200,26 @@ export default async function handler(anfrage, antwort){
         });
       } catch(err){
         bericht.fehler.push('Angebot ' + (a.nummer || a.id) + ': ' + err.message);
+      }
+    }
+
+    /* ── Kundenantworten aus dem Akquise-Postfach (14.08.2026) ──
+       Bewusst hier und nicht als eigener Cron-Eintrag: Der Hobby-
+       Tarif bei Vercel lässt genau einen Lauf je Tag zu. Ein zweiter
+       Eintrag ließe sich zwar schreiben, würde dort aber nicht
+       ausgeführt – und niemand merkte, dass die Antworten nur beim
+       Knopfdruck kommen.
+
+       Ein Fehler hier darf den übrigen Lauf nicht mitreißen; die
+       Vormerkungen und Angebote sind wichtiger als ein Abgleich, der
+       sich in der nächsten Stunde von Hand nachholen lässt. */
+    if(gmailEingerichtet()){
+      try {
+        const antwortenBericht = await synchronisiereAntworten();
+        bericht.antworten_neu = antwortenBericht.neue_antworten;
+        bericht.antworten_gespraeche = antwortenBericht.gespraeche;
+      } catch(err){
+        bericht.fehler.push('Antwortabgleich: ' + err.message);
       }
     }
 
