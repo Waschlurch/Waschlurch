@@ -1939,14 +1939,6 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   border-radius:12px; padding:15px 16px; max-height:340px; overflow-y:auto;
 }
 
-/* ── GEFÜHRTER ABLAUF (14.08.2026) ────────────────────────────
-   Fünf Kennzahlen statt vier. `.stat-row` steht fest auf vier
-   Spalten; die Handy-Regeln dafür stehen weiter oben in der Datei
-   und würden eine hier gesetzte Spaltenzahl NICHT überschreiben –
-   deshalb gibt es zu dieser Regel einen Gegenpart im Handy-Block
-   ganz unten. */
-.stat-row.fuenf { grid-template-columns:repeat(5,minmax(0,1fr)); }
-
 /* Die vier großen Schrittkarten. Sie sind das Erste, was ein neuer
    Mitarbeiter sieht – deshalb Nummer, Satz und genau ein Knopf. */
 .akq-schrittkarten { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:28px; }
@@ -2031,10 +2023,100 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 .akq-aufgabe-punkt.warten { background:#FBBF24; }
 .akq-aufgabe-punkt.laeuft { background:#60A5FA; }
 .akq-aufgabe-haupt { flex:1; min-width:0; }
-.akq-aufgabe-name { font-size:14px; font-weight:600; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.akq-aufgabe-was { font-size:12.5px; color:rgba(255,255,255,0.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ⚠️ `display:block` ist hier Pflicht, keine Kosmetik. Beide sind
+   `<span>`, also standardmäßig inline – und auf Inline-Elementen
+   wirkt `text-overflow:ellipsis` überhaupt nicht. Solange die Texte
+   kurz waren, fiel das nicht auf; seit die Aufgabenzeile zusätzlich
+   einen Hinweis trägt („· Seit 6 Tagen überfällig"), lief die Zeile
+   bei 375 px um 56 px über den Rand hinaus (nachgemessen). */
+.akq-aufgabe-name { display:block; font-size:14px; font-weight:600; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.akq-aufgabe-was { display:block; font-size:12.5px; color:rgba(255,255,255,0.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .akq-aufgabe-pfeil { color:rgba(255,255,255,0.35); flex-shrink:0; }
 .akq-aufgaben-fuss { font-size:12.5px; color:rgba(255,255,255,0.55); padding-top:12px; }
+
+/* ── PHASE 9: AUFGABEN, WIEDERVORLAGE, KENNZAHLEN, TEAM ────── */
+.akq-aufgabe-punkt.gut { background:#22C55E; }
+.akq-aufgaben-gruppe + .akq-aufgaben-gruppe { margin-top:20px; }
+.akq-gruppe-titel {
+  font-size:12px; font-weight:700; letter-spacing:.7px; text-transform:uppercase;
+  color:rgba(255,255,255,0.5); margin:0 0 9px;
+}
+.akq-aufgaben-gruppe.ueberfaellig .akq-gruppe-titel { color:#F87171; }
+.akq-aufgaben-gruppe.ueberfaellig .akq-aufgabe { border-left:3px solid #F87171; }
+
+/* Sieben Zahlen. `auto-fit` statt fester Spaltenzahl – so ordnen sie
+   sich vom Handy bis zum Breitbild von selbst, ohne dass es für jede
+   Breite eine eigene Regel braucht.
+   ⚠️ minmax(0,…) und nicht minmax(auto,…): Eine lange Beschriftung
+   zöge die Spalte sonst über die Fensterbreite hinaus. */
+.akq-tageszahlen {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(min(122px, 100%), 1fr));
+  gap:10px;
+}
+.akq-tz {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px; padding:14px 12px; min-width:0;
+}
+.akq-tz-val { font-size:23px; font-weight:800; line-height:1.1; }
+.akq-tz-lbl { font-size:11.5px; color:rgba(255,255,255,0.6); margin-top:5px; overflow-wrap:anywhere; }
+
+.akq-aufgaben-zahlen {
+  display:flex; gap:16px; flex-wrap:wrap;
+  font-size:12.5px; color:rgba(255,255,255,0.6);
+  margin:-6px 0 14px;
+}
+.akq-aufgaben-zahlen b { color:#FFF; font-size:14px; }
+
+.wv-stand {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+  border-left:3px solid rgba(255,255,255,0.25);
+  border-radius:12px; padding:14px 15px; margin-bottom:14px;
+}
+.wv-stand.faellig      { border-left-color:#FBBF24; background:rgba(251,191,36,0.08); }
+.wv-stand.ueberfaellig { border-left-color:#F87171; background:rgba(248,113,113,0.09); }
+.wv-stand-datum { font-size:15px; font-weight:700; }
+.wv-stand-lage  { font-size:12.5px; color:rgba(255,255,255,0.7); margin-top:3px; }
+.wv-stand-notiz { font-size:13px; margin-top:9px; overflow-wrap:anywhere; }
+.wv-stand-wer   { font-size:11.5px; color:rgba(255,255,255,0.45); margin-top:7px; }
+.wv-stand-knoepfe { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.wv-stand-knoepfe .karte-aktion { flex:0 1 auto; min-width:0; }
+
+.wv-nachfass {
+  background:rgba(96,165,250,0.09); border:1px solid rgba(96,165,250,0.28);
+  border-radius:12px; padding:13px 15px; margin-bottom:14px;
+}
+.wv-nachfass-titel { font-size:14px; font-weight:700; color:#93C5FD; }
+.wv-nachfass-text  { font-size:12.5px; color:rgba(255,255,255,0.72); margin-top:4px; }
+
+.wv-vorschau { font-size:12.5px; color:rgba(255,255,255,0.62); margin:-6px 0 14px; overflow-wrap:anywhere; }
+.wv-form-knoepfe { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.wv-form-knoepfe .btn { width:auto; padding:13px 24px; }
+
+.team-leiste { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:20px; }
+.team-hinweis {
+  font-size:12.5px; color:rgba(255,255,255,0.6); margin-bottom:16px; line-height:1.6;
+}
+.team-karten { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap:14px; }
+.team-karte {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:18px; padding:18px 19px; min-width:0;
+}
+.team-karte.gesamt { margin-top:16px; background:rgba(34,197,94,0.07); border-color:rgba(34,197,94,0.22); }
+.team-karte.ruht { opacity:.6; }
+.team-kopf { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:14px; }
+.team-name { font-size:16px; font-weight:700; overflow-wrap:anywhere; min-width:0; }
+.team-zahlen { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(105px, 100%), 1fr)); gap:9px; }
+.team-zahl { background:rgba(0,0,0,0.18); border-radius:11px; padding:11px 10px; min-width:0; }
+.team-zahl-val { font-size:19px; font-weight:800; line-height:1.1; }
+.team-zahl-lbl { font-size:11px; color:rgba(255,255,255,0.58); margin-top:4px; overflow-wrap:anywhere; }
+.team-fuss { font-size:11.5px; color:rgba(255,255,255,0.45); margin-top:13px; }
+
+/* Kurz hervorheben, wenn die Aufgabenliste ein Gespräch ansteuert –
+   sonst weiß man nach dem Sprung nicht, welche der Karten gemeint war. */
+.antw-karte.hervor {
+  border-color:rgba(34,197,94,0.55);
+  box-shadow:0 0 0 3px rgba(34,197,94,0.15);
+}
 .akq-abbrechen {
   background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);
 }
@@ -2091,12 +2173,6 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   .dub-status { padding:11px 13px; gap:8px; }
   .dub-treffer { padding:12px 13px; margin-top:10px; }
 
-  /* ⚠️ Gegenpart zu `.stat-row.fuenf` weiter oben. Die allgemeinen
-     Handy-Regeln für `.stat-row` stehen früher in der Datei und
-     verlieren gegen die spätere Fünf-Spalten-Regel – ohne diese
-     Zeile stünden bei 375 px fünf Kacheln à 61 px nebeneinander. */
-  .stat-row.fuenf { grid-template-columns:repeat(2,minmax(0,1fr)); }
-
   /* Schrittkarten untereinander. Zwei Spalten ergäben bei 375 px
      rund 165 px je Karte – für Nummer, Titel, Satz und Knopf zu wenig. */
   .akq-schrittkarten { grid-template-columns:minmax(0,1fr); gap:13px; }
@@ -2110,6 +2186,27 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
   .akq-naechster { padding:17px 18px; }
   .akq-naechster-titel { font-size:16px; }
   .akq-naechster .btn { width:100%; }
+
+  /* ── Phase 9 auf dem Handy ─────────────────────────────────
+     ⚠️ Am Desktop wird der Aufgabenhinweis abgeschnitten, hier
+     umgebrochen. „Seit 6 Tagen überfällig" ist die eigentliche
+     Information der Zeile – eine Ellipse mitten darin macht die
+     Liste hübsch und unbrauchbar. Zwei Zeilen kosten 16 px. */
+  .akq-aufgabe-was { white-space:normal; overflow:visible; overflow-wrap:anywhere; }
+  .akq-aufgabe { align-items:flex-start; padding:14px 2px; }
+  .akq-aufgabe-punkt { margin-top:5px; }
+  .akq-aufgabe-pfeil { margin-top:2px; }
+  .akq-aufgaben-zahlen { gap:12px; }
+
+  /* Die Wiedervorlage-Knöpfe teilen sich eine Zeile – natürliche
+     Breite genügt hier, „Verschieben" und „Erledigt" sind kurz. */
+  .wv-form-knoepfe .btn { width:100%; }
+  .wv-form-knoepfe .karte-aktion { width:100%; }
+
+  /* Die Mitarbeiterkarten stehen untereinander; die Zahlen darin
+     bleiben zweispaltig, sonst wird die Karte 8 Kacheln hoch. */
+  .team-karten { grid-template-columns:minmax(0,1fr); }
+  .team-zahlen { grid-template-columns:repeat(2, minmax(0,1fr)); }
   .firma-kopf-name { font-size:18px; }
   .verlauf-zeile { padding-left:18px; }
 
@@ -2144,13 +2241,15 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
 
 }
 
-/* ⚠️ Eigene Grenze bei 360 px, nicht bei den sonst üblichen 400 px.
-   Nachgemessen: Bei 375 px – der häufigsten Handybreite – tragen zwei
-   Spalten die fünf Kennzahlen problemlos. Erst darunter wird es eng.
-   Mit der 400er-Grenze standen sie schon auf dem gewöhnlichen Handy
-   einspaltig und schoben die Schrittkarten 400 px nach unten. */
+/* Eigene Grenze bei 360 px, nicht bei den sonst üblichen 400 px:
+   Bei 375 px – der häufigsten Handybreite – ist noch alles lesbar,
+   erst darunter wird es eng.
+
+   Hier stand bis zum 17.08.2026 zusätzlich `.stat-row.fuenf`. Die
+   Klasse wurde mit dem Umbau der Akquise-Startseite überflüssig
+   (vier Bestandszahlen statt fünf, die Tageszahlen in einem eigenen
+   Raster) und ist samt ihrer beiden Gegenparts entfernt. */
 @media(max-width:360px){
-  .stat-row.fuenf { grid-template-columns:minmax(0,1fr); }
   .akq-stufe { padding-top:16px; }
 }
 
@@ -2223,6 +2322,11 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
     <div class="nav-item" data-view="akquise_firmen" onclick="switchView('akquise_firmen')"><span class="ni-icon">🏢</span><span class="ni-label">Firmen</span></div>
     <div class="nav-item" data-view="akquise_mails" onclick="switchView('akquise_mails')"><span class="ni-icon">✉️</span><span class="ni-label">Nachrichten</span></div>
     <div class="nav-item" data-view="akquise_antworten" onclick="switchView('akquise_antworten')"><span class="ni-icon">💬</span><span class="ni-label">Antworten</span></div>
+    <!-- ⚠️ Nur für den Verwalter. Der Bereich steht NICHT in
+         BEREICHE_JE_ROLLE[acquisition] – ein neuer Bereich ist für
+         eingeschränkte Rollen automatisch gesperrt, ein vergessener
+         Eintrag sperrt aus statt freizugeben. -->
+    <div class="nav-item" data-view="akquise_team" onclick="switchView('akquise_team')"><span class="ni-icon">👥</span><span class="ni-label">Mitarbeiter</span></div>
 
     <div class="nav-group">Finanzen</div>
     <div class="nav-item" data-view="planung" onclick="switchView('planung')"><span class="ni-icon">📈</span><span class="ni-label">Umsatzplanung</span></div>
@@ -2308,12 +2412,58 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <div class="view-sub">Akquise &amp; Social Media</div>
       </div>
 
-      <div class="stat-row fuenf">
-        <div class="stat-card"><div class="stat-val" id="akq-z-heute">0</div><div class="stat-lbl">Firmen heute erfasst</div></div>
+      <!-- ⚠️ Bestand, nicht Tagesleistung. „Firmen heute erfasst" und
+           „Interessenten" standen hier bis Phase 9 doppelt: einmal
+           hier über alle, einmal weiter unten personenbezogen. Zwei
+           gleich beschriftete Zahlen mit verschiedenen Rechnungen auf
+           einem Bildschirm sind ein Fehler, kein Überblick. Was heute
+           geschah, steht jetzt ausschließlich unter „Heute". -->
+      <div class="akq-bestand-titel">Aktueller Bestand</div>
+      <div class="stat-row">
         <div class="stat-card"><div class="stat-val" id="akq-z-versandbereit">0</div><div class="stat-lbl">Versandbereit</div></div>
-        <div class="stat-card"><div class="stat-val" id="akq-z-gesendet">0</div><div class="stat-lbl">Gesendete Kontakte</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-gesendet">0</div><div class="stat-lbl">Warten auf Antwort</div></div>
         <div class="stat-card"><div class="stat-val" id="akq-z-antworten">0</div><div class="stat-lbl">Offene Antworten</div></div>
-        <div class="stat-card"><div class="stat-val" id="akq-z-interesse">0</div><div class="stat-lbl">Interessenten</div></div>
+        <div class="stat-card"><div class="stat-val" id="akq-z-interesse">0</div><div class="stat-lbl">Interessenten gesamt</div></div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════
+           DEINE AUFGABEN HEUTE (17.08.2026, Phase 9)
+
+           Steht bewusst GANZ OBEN, vor Kennzahlen und Schrittkarten.
+           Die erste Frage am Morgen ist „was mache ich jetzt?", nicht
+           „wie viele Firmen habe ich". Kennzahlen sind Rückblick, die
+           Aufgabenliste ist Arbeit.
+           ═══════════════════════════════════════════════════════ -->
+      <div class="ueb-panel akq-heute">
+        <div class="ueb-panel-title">Deine Aufgaben heute</div>
+        <!-- ⚠️ Diese beiden Zahlen zählen dieselbe Menge wie die Liste
+             darunter – über ALLE Firmen, nicht nach Mitarbeiter. Eine
+             offene Aufgabe gehört niemandem; stünde hier eine nach
+             Person gefilterte Zahl, widerspräche sie der Liste
+             unmittelbar darunter. -->
+        <div class="akq-aufgaben-zahlen">
+          <span><b id="akq-t-aufgaben">0</b> offen</span>
+          <span><b id="akq-t-wiedervorlagen">0</b> Wiedervorlagen fällig</span>
+        </div>
+        <div id="akq-aufgaben"><div class="ueb-leer">Wird geladen ...</div></div>
+        <div class="antw-leiste" style="margin:16px 0 0">
+          <button class="btn btn-sekundaer" style="width:auto;padding:11px 20px"
+                  id="akq-sync-btn" class="js-sync-btn" onclick="akqAntwortenAbgleichen()">Antworten aktualisieren</button>
+          <span class="akq-karte-hinweis" id="akq-sync-stand">Läuft täglich automatisch und beim Öffnen dieses Bereichs.</span>
+        </div>
+      </div>
+
+      <!-- Was heute schon geschafft ist. Sieben Zahlen, keine
+           Bewertung: Es steht da, was war, nicht ob es genug war. -->
+      <div class="ueb-panel">
+        <div class="ueb-panel-title">Heute</div>
+        <div class="akq-tageszahlen">
+          <div class="akq-tz"><div class="akq-tz-val" id="akq-t-erfasst">0</div><div class="akq-tz-lbl">Firmen erfasst</div></div>
+          <div class="akq-tz"><div class="akq-tz-val" id="akq-t-gesendet">0</div><div class="akq-tz-lbl">E-Mails gesendet</div></div>
+          <div class="akq-tz"><div class="akq-tz-val" id="akq-t-antworten">0</div><div class="akq-tz-lbl">Antworten erhalten</div></div>
+          <div class="akq-tz"><div class="akq-tz-val" id="akq-t-interesse">0</div><div class="akq-tz-lbl">Interessenten</div></div>
+          <div class="akq-tz"><div class="akq-tz-val" id="akq-t-kunden">0</div><div class="akq-tz-lbl">Kunden gewonnen</div></div>
+        </div>
       </div>
 
       <!-- Der geführte Ablauf. Vier Karten, je genau ein Knopf –
@@ -2366,10 +2516,6 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         </div>
       </div>
 
-      <div class="ueb-panel">
-        <div class="ueb-panel-title">Deine offenen Aufgaben</div>
-        <div id="akq-aufgaben"><div class="ueb-leer">Wird geladen ...</div></div>
-      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
@@ -2518,6 +2664,32 @@ input[readonly] { opacity:.8; cursor:not-allowed; background:rgba(255,255,255,0.
         <div class="view-sub">Eingegangene Rückmeldungen auf deine Nachrichten</div>
       </div>
       <div id="akq-antworten-inhalt"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         AKQUISE – MITARBEITER (17.08.2026, Phase 9)
+
+         ⚠️ Bewusst KEINE Rangliste und keine Bewertung. Die Tabelle
+         sagt, was getan wurde, nicht ob es genug war. Eine Rangfolge
+         zwischen zwei Menschen, von denen einer halbtags arbeitet,
+         misst die Arbeitszeit und nennt es Leistung.
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="view" id="view-akquise_team">
+      <div class="view-head">
+        <div class="view-title">Mitarbeiter in der Akquise</div>
+        <div class="view-sub">Was in der gewählten Zeitspanne gelaufen ist</div>
+      </div>
+      <div class="team-leiste">
+        <div class="field" style="margin-bottom:0;max-width:220px">
+          <label for="team-zeitraum">Zeitraum</label>
+          <select id="team-zeitraum" onchange="akqRenderTeam()">
+            <option value="1">Heute</option>
+            <option value="7" selected>Letzte 7 Tage</option>
+            <option value="30">Letzte 30 Tage</option>
+          </select>
+        </div>
+      </div>
+      <div id="akq-team-inhalt"><div class="ueb-leer">Wird geladen ...</div></div>
     </div>
 
     <!-- ÜBERSICHT (Startbildschirm nach dem Anmelden) -->
@@ -7057,6 +7229,17 @@ window.switchView = function(name){
   if(name === 'akquise')            akqSicherAufrufen(window.akqRenderAkquiseStart);
   if(name === 'akquise_mails')      akqSicherAufrufen(akqRenderKontaktAnsicht);
   if(name === 'akquise_antworten')  akqSicherAufrufen(akqRenderAntwortenAnsicht);
+  if(name === 'akquise_team')       akqSicherAufrufen(window.akqRenderTeam);
+
+  /* ── Antworten holen, wenn wirklich jemand hinsieht (Phase 9) ──
+     Nur beim Betreten der beiden Ansichten, in denen Antworten
+     vorkommen, und nur wenn der letzte Abgleich zehn Minuten her
+     ist. So entsteht keine einzige Abfrage, während niemand am
+     Rechner sitzt. Läuft ohne `await` – der Bereichswechsel darf
+     nicht auf Gmail warten. */
+  if((name === 'akquise' || name === 'akquise_antworten') && aktuellerBereich !== name){
+    akqSicherAufrufen(akqAbgleichWennFaellig);
+  }
   aktuellerBereich = name;
 
   handyMenueSchliessen();
@@ -7387,11 +7570,16 @@ function startAkquiseListeners(){
     window.akqRenderAkquiseStart();
     akqRenderKontaktAnsicht();
     akqRenderAntwortenAnsicht();
+    akqSicherAufrufen(window.akqRenderTeam);
   }, err => meldeLadefehler(err, 'firmen', 'firmen-liste'));
 
   unsubAkqVerlauf = onSnapshot(collection(db, 'akquise_verlauf'), (snap) => {
     allAkqVerlauf = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     akqRenderFirmaDetail();
+    /* Die Mitarbeiterübersicht liest „letzte Aktivität" aus dem
+       Verlauf – ohne diesen Aufruf bliebe sie auf dem Stand von
+       vorhin stehen. */
+    akqSicherAufrufen(window.akqRenderTeam);
   }, err => console.error('Verlauf konnte nicht geladen werden:', err));
 
   /* Entwürfe. Werden beim Öffnen einer Firma nicht neu erzeugt,
@@ -12469,7 +12657,11 @@ function renderAbwesenheitAuswahl(){
   const aktive = allMitarbeiter.filter(m => m.status !== 'inaktiv');
   sel.innerHTML = aktive.length
     ? aktive.map(m => `<option value="${sicher(m.id)}">${sicher(m.name || 'Ohne Namen')}</option>`).join('')
-    : '<option value="">– noch kein Mitarbeiter angelegt –</option>';
+    /* Kurz gehalten: Bei 320 px passen rund 240 px in das
+       Auswahlfeld, und der frühere Text „– noch kein Mitarbeiter
+       angelegt –" brauchte 260 px – er wurde mitten im Wort
+       abgeschnitten. */
+    : '<option value="">– keine Mitarbeiter –</option>';
   sel.value = aktuell || (aktive[0] ? aktive[0].id : '');
 }
 
@@ -12933,6 +13125,305 @@ function akqNaechsterSchritt(firma){
     return AKQ_NAECHSTER.nicht_kontaktieren;
   }
   return AKQ_NAECHSTER[f.status || 'neu'] || AKQ_NAECHSTER.neu;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   WIEDERVORLAGE (17.08.2026, Phase 9)
+   ══════════════════════════════════════════════════════════════
+   „Später kontaktieren" ist die häufigste ehrliche Antwort in der
+   Akquise: Die Firma passt, aber jetzt gerade ist der falsche
+   Moment. Ohne Datum bleibt daraus ein Vorsatz, den niemand
+   wiederfindet – der Vorgang versandet auf `spaeter` und taucht nie
+   wieder auf.
+
+   Gespeichert wird am Firmendatensatz:
+     wiedervorlage_am     – 'JJJJ-MM-TT', der Tag des Wiedersehens
+     wiedervorlage_von    – wer sie gesetzt hat
+     wiedervorlage_notiz  – warum, in einem Satz
+
+   ⚠️ `isoDatum()` und nicht `toISOString()`. Letzteres rechnet nach
+   UTC um; eine Wiedervorlage auf den 1. März stünde in Deutschland
+   als 28. Februar im Kalender und wäre einen Tag zu früh fällig. */
+
+const WIEDERVORLAGE_WAHL = [
+  { wert:'morgen',        text:'Morgen',         tage:1 },
+  { wert:'drei_tage',     text:'In 3 Tagen',     tage:3 },
+  { wert:'naechste_woche',text:'Nächste Woche',  tage:7 },
+  { wert:'individuell',   text:'Eigenes Datum',  tage:null },
+];
+
+function akqHeuteIso(){ return isoDatum(new Date()); }
+
+/* Tage ab heute in ein Datum. Bewusst über `Date` mit Kalendertagen
+   und nicht über Millisekunden: Bei der Zeitumstellung hat ein Tag
+   23 oder 25 Stunden, und „in 3 Tagen" wäre dann der falsche Tag. */
+function akqDatumInTagen(tage){
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);          // Mittag – hält Abstand zu beiden Rändern
+  d.setDate(d.getDate() + Number(tage || 0));
+  return isoDatum(d);
+}
+
+/* Wie viele Tage liegt ein Datum in der Zukunft? Negativ = vorbei.
+   Tagesgenau, nicht auf die Stunde – sonst hinge das Ergebnis an der
+   Uhrzeit des Aufrufs. */
+function akqTageBis(iso, heuteIso){
+  if(!iso) return null;
+  const ziel  = ausIso(iso);            ziel.setHours(0,0,0,0);
+  const heute = ausIso(heuteIso || akqHeuteIso()); heute.setHours(0,0,0,0);
+  return Math.round((ziel.getTime() - heute.getTime()) / 86400000);
+}
+
+/* ⚠️ Die Sperre schlägt jede Wiedervorlage – dieselbe Regel wie bei
+   `akqNaechsterSchritt()`. Eine gesperrte Firma mit Wiedervorlage
+   stünde sonst am Stichtag wieder unter „heute zu erledigen" und
+   lüde genau zu dem Kontakt ein, den die Sperre verhindern soll.
+
+   Durchgesetzt wird das an drei Stellen: hier, beim Speichern und
+   in den Firestore-Regeln (`wiedervorlageNurOhneSperre`). */
+function akqWiedervorlageAktiv(f){
+  if(!f || f.do_not_contact === true) return null;
+  const am = String(f.wiedervorlage_am || '').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(am)) return null;
+  return am;
+}
+
+function akqWiedervorlageStand(f, heuteIso){
+  const am = akqWiedervorlageAktiv(f);
+  if(!am) return null;
+  const rest = akqTageBis(am, heuteIso);
+  return {
+    am, rest,
+    faellig:      rest === 0,
+    ueberfaellig: rest < 0,
+    kuenftig:     rest > 0,
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NACHFASSHINWEIS (17.08.2026, Phase 9)
+   ══════════════════════════════════════════════════════════════
+   ⚠️ Es wird NICHTS automatisch nachgefasst. Diese Funktion liefert
+   ausschließlich eine Zahl für einen Hinweis; ob und wann jemand
+   nachhakt, entscheidet ein Mensch mit einem Klick.
+
+   Eine automatische Nachfassmail wäre bei kalter Werbung genau das,
+   was die Empfänger als Belästigung erleben – und rechtlich das
+   Gegenteil dessen, was die Kontaktgrundlage leisten soll. */
+const AKQ_NACHFASS_AB_TAGEN = 7;
+
+function akqOhneAntwortSeit(f, heuteIso){
+  if(!f) return null;
+  /* Gesperrte und abgelehnte Firmen erscheinen hier nie – auch nicht
+     mit einem bloßen Hinweis. Wer abgesagt hat, soll nicht auf einer
+     Liste stehen, die zum Nachhaken einlädt. */
+  if(f.do_not_contact === true) return null;
+  if(AKQ_NEGATIV_BEENDET.includes(f.status)) return null;
+  if((f.status || 'neu') !== 'gesendet') return null;
+  if(Number(f.ungelesene_antworten) > 0) return null;
+  if(f.letzte_antwort_am) return null;
+
+  const gesendet = f.gesendet_am || f.letzter_kontakt;
+  const iso = akqZuIsoTag(gesendet);
+  if(!iso) return null;
+
+  const tage = -akqTageBis(iso, heuteIso);
+  if(!isFinite(tage) || tage < AKQ_NACHFASS_AB_TAGEN) return null;
+  return tage;
+}
+
+/* Firestore-Zeitstempel, ISO-Zeichenkette oder Datum – am Ende ein
+   Kalendertag. Die Akquise-Sammlungen enthalten alle drei Formen:
+   der Browser schreibt `serverTimestamp()`, der Server ISO-Text. */
+function akqZuIsoTag(wert){
+  if(!wert) return null;
+  try {
+    if(typeof wert === 'string'){
+      const t = wert.slice(0, 10);
+      return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+    }
+    if(wert.toDate) return isoDatum(wert.toDate());
+    if(wert instanceof Date) return isoDatum(wert);
+  } catch(_){ /* unbrauchbarer Wert – dann eben keiner */ }
+  return null;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   „DEINE AUFGABEN HEUTE" (17.08.2026, Phase 9)
+   ══════════════════════════════════════════════════════════════
+   Die Reihenfolge ist nicht Geschmackssache, sondern folgt dem
+   Schaden, den Liegenlassen anrichtet:
+
+     1 Antwort      – ein Mensch wartet auf Rückmeldung
+     2 Interesse    – hier ist Geld zu holen, und Interesse kühlt ab
+     3 Wiedervorlage– jemand hat sich diesen Tag selbst vorgemerkt
+     4 Versandbereit– fertig vorbereitet, nur noch abschicken
+     5 Prüfen       – Nachschub, hat als Einziges Zeit
+
+   ⚠️ Eine Firma erscheint höchstens EINMAL, mit ihrer dringendsten
+   Aufgabe. Eine Firma mit neuer Antwort und überfälliger
+   Wiedervorlage zweimal aufzulisten hieße, die Liste als Abarbeitung
+   unbrauchbar zu machen – man hakt einen Punkt ab und der zweite
+   bleibt stehen. */
+const AKQ_AUFGABEN_ARTEN = {
+  antwort:       { rang:1, punkt:'laeuft',  titel:'Antwort beantworten',      ziel:'antworten' },
+  interesse:     { rang:2, punkt:'gut',     titel:'Als Kunden übernehmen',    ziel:'kunde' },
+  wiedervorlage: { rang:3, punkt:'warten',  titel:'Wiedervorlage fällig',     ziel:'firma' },
+  versandbereit: { rang:4, punkt:'warten',  titel:'E-Mail versenden',         ziel:'kontakt' },
+  pruefen:       { rang:5, punkt:'',        titel:'Firma prüfen',             ziel:'firma' },
+};
+
+const AKQ_PRUEF_STATUS = ['neu', 'wird_geprueft', 'kontakt_moeglich'];
+const AKQ_AUFGABEN_GRENZE = 12;
+
+/* Reine Funktion über übergebene Listen – dieselbe Bauweise wie
+   `akqFindeDubletten()`. So lässt sie sich ohne Browser prüfen, und
+   die Kennzahlen können dieselbe Rechnung benutzen, statt eine
+   zweite aufzustellen, die irgendwann abweicht. */
+function akqAufgabenBauen(firmen, antworten, heuteIso){
+  const heute = heuteIso || akqHeuteIso();
+  const liste = Array.isArray(firmen) ? firmen : [];
+  const eingehend = (Array.isArray(antworten) ? antworten : []).filter(akqIstEingehend);
+
+  /* Ungelesene Antworten je Firma. Der Zähler am Firmendatensatz ist
+     die zweite Quelle – gezählt wird bevorzugt, was wirklich
+     dasteht. */
+  const ungelesenJeFirma = {};
+  eingehend.forEach(a => {
+    if(a.gelesen === true) return;
+    ungelesenJeFirma[a.firma_id] = (ungelesenJeFirma[a.firma_id] || 0) + 1;
+  });
+
+  const heuteListe = [], ueberfaellig = [];
+
+  liste.forEach(f => {
+    /* ⚠️ Gesperrt heißt: keine Aufgabe. Nicht „Aufgabe mit Hinweis". */
+    if(f.do_not_contact === true) return;
+
+    const status = f.status || 'neu';
+    const name = [f.firmenname, f.standort].filter(Boolean).join(' · ') || 'Ohne Namen';
+    const wv = akqWiedervorlageStand(f, heute);
+    const offeneAntworten = ungelesenJeFirma[f.id] || Number(f.ungelesene_antworten) || 0;
+
+    let art = null, hinweis = '';
+
+    if(offeneAntworten > 0){
+      art = 'antwort';
+      hinweis = offeneAntworten === 1 ? 'Eine neue Nachricht' : offeneAntworten + ' neue Nachrichten';
+    } else if(status === 'interesse'){
+      art = 'interesse';
+      hinweis = 'Die Firma hat Interesse gezeigt';
+    } else if(wv && (wv.faellig || wv.ueberfaellig)){
+      art = 'wiedervorlage';
+      hinweis = wv.ueberfaellig
+        ? ('Seit ' + Math.abs(wv.rest) + ' Tag' + (Math.abs(wv.rest) === 1 ? '' : 'en') + ' überfällig')
+        : 'Für heute vorgemerkt';
+      if(f.wiedervorlage_notiz) hinweis += ' · ' + f.wiedervorlage_notiz;
+    } else if(status === 'versandbereit'){
+      art = 'versandbereit';
+      hinweis = 'Der Entwurf ist geprüft';
+    } else if(AKQ_PRUEF_STATUS.includes(status)){
+      art = 'pruefen';
+      hinweis = FIRMEN_STATUS_TEXT[status] || '';
+    } else if(status === 'rueckfrage'){
+      /* Rückfrage ohne ungelesene Nachricht: Es wurde bereits
+         gelesen, aber noch nicht beantwortet. */
+      art = 'antwort';
+      hinweis = 'Rückfrage noch offen';
+    }
+
+    if(!art) return;
+
+    const vorlage = AKQ_AUFGABEN_ARTEN[art];
+    const eintrag = {
+      art, rang: vorlage.rang, punkt: vorlage.punkt, ziel: vorlage.ziel,
+      firma_id: f.id, name,
+      titel: vorlage.titel, hinweis,
+      wiedervorlage_am: wv ? wv.am : null,
+    };
+
+    /* Nur eine überfällige Wiedervorlage wandert in den eigenen
+       Block. Steht bei derselben Firma etwas Dringenderes an, ist das
+       die Aufgabe – die Wiedervorlage erledigt sich dabei mit. */
+    if(art === 'wiedervorlage' && wv.ueberfaellig) ueberfaellig.push(eintrag);
+    else heuteListe.push(eintrag);
+  });
+
+  const sortieren = (a, b) => (a.rang - b.rang) || a.name.localeCompare(b.name, 'de');
+  heuteListe.sort(sortieren);
+  ueberfaellig.sort((a, b) => (a.wiedervorlage_am || '').localeCompare(b.wiedervorlage_am || ''));
+
+  return { heute: heuteListe, ueberfaellig };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   KENNZAHLEN (17.08.2026, Phase 9)
+   ══════════════════════════════════════════════════════════════
+   Gerechnet wird ausschließlich aus den vier Sammlungen, die die
+   Akquise-Rolle ohnehin abonniert hat: `firmen`, `akquise_nachrichten`,
+   `akquise_antworten`, `akquise_verlauf`. Es wird nichts
+   nachgeladen und nichts geöffnet, was vorher zu war.
+
+   `uid = null` bedeutet „alle" – das braucht die Verwalteransicht.
+   Für die Akquise wird immer die eigene Kennung übergeben. */
+function akqImZeitraum(wert, vonIso, bisIso){
+  const tag = akqZuIsoTag(wert);
+  if(!tag) return false;
+  if(vonIso && tag < vonIso) return false;
+  if(bisIso && tag > bisIso) return false;
+  return true;
+}
+
+function akqKennzahlen({ uid, firmen, nachrichten, antworten, verlauf, vonIso, bisIso, heuteIso }){
+  const heute = heuteIso || akqHeuteIso();
+  const alleFirmen = Array.isArray(firmen) ? firmen : [];
+  const meine = uid ? alleFirmen.filter(f => f.erstellt_von === uid) : alleFirmen;
+  const firmaVon = {};
+  alleFirmen.forEach(f => { firmaVon[f.id] = f.erstellt_von || ''; });
+
+  const imZeitraum = (w) => akqImZeitraum(w, vonIso, bisIso);
+  const meineFirma = (id) => !uid || firmaVon[id] === uid;
+
+  /* Versendete Mails: `gesendet_von_uid` setzt der Server beim
+     Versand. Altbestände ohne das Feld werden über die Firma
+     zugeordnet – geraten wird nichts, sie fallen sonst heraus. */
+  const gesendet = (Array.isArray(nachrichten) ? nachrichten : []).filter(n =>
+    n.status === 'gesendet' && imZeitraum(n.gesendet_am) &&
+    (!uid || (n.gesendet_von_uid ? n.gesendet_von_uid === uid : meineFirma(n.firma_id))));
+
+  const eingehend = (Array.isArray(antworten) ? antworten : [])
+    .filter(akqIstEingehend)
+    .filter(a => imZeitraum(a.empfangen_am) && meineFirma(a.firma_id));
+
+  const aufgaben = akqAufgabenBauen(meine, antworten, heute);
+
+  const faellig = meine.filter(f => {
+    const wv = akqWiedervorlageStand(f, heute);
+    return !!wv && (wv.faellig || wv.ueberfaellig);
+  }).length;
+
+  /* „Kunden gewonnen" hängt an `kunde_seit`, nicht am Status: Der
+     Status kann jederzeit von Hand geändert werden, das Datum der
+     Übernahme setzt der Server einmal. */
+  const zaehleFirmen = (pruef) => meine.filter(pruef).length;
+
+  const letzte = (Array.isArray(verlauf) ? verlauf : [])
+    .filter(v => !uid || v.benutzer_uid === uid)
+    .map(v => akqZuIsoTag(v.createdAt))
+    .filter(Boolean)
+    .sort();
+
+  return {
+    erfasst:     zaehleFirmen(f => imZeitraum(f.erstellt_am || f.createdAt)),
+    gesendet:    gesendet.length,
+    antworten:   eingehend.length,
+    interesse:   zaehleFirmen(f => f.status === 'interesse' && f.do_not_contact !== true),
+    kein_interesse: zaehleFirmen(f => AKQ_NEGATIV_BEENDET.includes(f.status)),
+    kunden:      zaehleFirmen(f => !!f.kunden_id && imZeitraum(f.kunde_seit)),
+    offene_aufgaben: aufgaben.heute.length + aufgaben.ueberfaellig.length,
+    faellige_wiedervorlagen: faellig,
+    letzte_aktivitaet: letzte.length ? letzte[letzte.length - 1] : null,
+  };
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -13794,12 +14285,6 @@ function akqVorname(){
   return mail ? mail.split('@')[0] : '';
 }
 
-function akqIstHeute(ts){
-  if(!ts || !ts.toDate) return false;
-  const d = ts.toDate(), h = new Date();
-  return d.getFullYear() === h.getFullYear() && d.getMonth() === h.getMonth() && d.getDate() === h.getDate();
-}
-
 function akqZaehle(status){
   return allFirmen.filter(f => (f.status || 'neu') === status).length;
 }
@@ -13812,7 +14297,36 @@ window.akqRenderAkquiseStart = function(){
   }
 
   const setz = (id, wert) => { const el = document.getElementById(id); if(el) el.textContent = wert; };
-  setz('akq-z-heute', allFirmen.filter(f => akqIstHeute(f.erstellt_am) || akqIstHeute(f.createdAt)).length);
+
+  /* ── Kennzahlen des heutigen Tages (Phase 9) ────────────────
+     Zwei verschiedene Fragen, deshalb zwei verschiedene Rechnungen:
+
+       „Was habe ICH heute geschafft?"  → eigene Kennung
+       „Was liegt an?"                  → alle, ohne Filter
+
+     ⚠️ Die zweite Zahl MUSS ungefiltert sein: Sie steht direkt über
+     der Aufgabenliste, und die zeigt alles Offene. Eine nach Person
+     gefilterte Zahl widerspräche der Liste unmittelbar darunter.
+     Der Verwalter sieht in der Mitarbeiterübersicht, wie sich das
+     auf die Beteiligten verteilt. */
+  const heuteIso = akqHeuteIso();
+  const wer = akqWerBinIch();
+  const gemeinsam = { firmen: allFirmen, nachrichten: allAkqNachrichten,
+    antworten: allAkqAntworten, verlauf: allAkqVerlauf,
+    vonIso: heuteIso, bisIso: heuteIso, heuteIso };
+
+  const meins = akqKennzahlen({ uid: wer.uid, ...gemeinsam });
+  setz('akq-t-erfasst',   meins.erfasst);
+  setz('akq-t-gesendet',  meins.gesendet);
+  setz('akq-t-antworten', meins.antworten);
+  setz('akq-t-interesse', meins.interesse);
+  setz('akq-t-kunden',    meins.kunden);
+
+  const alles = akqKennzahlen({ uid: null, ...gemeinsam });
+  setz('akq-t-aufgaben',       alles.offene_aufgaben);
+  setz('akq-t-wiedervorlagen', alles.faellige_wiedervorlagen);
+  akqAbgleichStandZeigen();
+
   setz('akq-z-versandbereit', akqZaehle('versandbereit'));
   setz('akq-z-gesendet', akqZaehle('gesendet'));
   /* „Offene Antworten" zählt seit Phase 6B die tatsächlich
@@ -13839,50 +14353,174 @@ window.akqRenderAkquiseStart = function(){
 
 /* Eine Liste, keine Kachelsammlung: Es geht nicht darum, wie viele
    Firmen in welchem Zustand sind, sondern welche als Nächstes dran
-   ist. Ein Tippen führt direkt dorthin. */
-const AKQ_AUFGABEN_STATUS = ['antwort','rueckfrage','neu','wird_geprueft','kontakt_moeglich','versandbereit','spaeter'];
-const AKQ_AUFGABEN_PUNKT = {
-  antwort:'laeuft', rueckfrage:'laeuft', versandbereit:'warten', spaeter:'warten'
-};
-const AKQ_AUFGABEN_GRENZE = 12;
+   ist. Ein Tippen führt direkt dorthin.
+
+   Seit Phase 9 rechnet `akqAufgabenBauen()` die Reihenfolge; hier
+   wird nur noch gezeichnet. Die Trennung ist der Grund, warum sich
+   die Priorität ohne Browser prüfen lässt. */
+function akqAufgabeZeile(a){
+  return `
+    <button class="akq-aufgabe" onclick="akqAufgabeOeffnen('${sicherJs(a.firma_id)}','${sicherJs(a.ziel)}')">
+      <span class="akq-aufgabe-punkt ${sicher(a.punkt)}" aria-hidden="true"></span>
+      <span class="akq-aufgabe-haupt">
+        <span class="akq-aufgabe-name">${sicher(a.name)}</span>
+        <span class="akq-aufgabe-was">${sicher(a.titel)}${a.hinweis ? ' · ' + sicher(a.hinweis) : ''}</span>
+      </span>
+      <span class="akq-aufgabe-pfeil" aria-hidden="true">›</span>
+    </button>`;
+}
 
 function akqRenderOffeneAufgaben(){
   const el = document.getElementById('akq-aufgaben');
   if(!el) return;
 
-  /* Gesperrte Firmen sind keine Aufgabe mehr – auch dann nicht, wenn
-     ihr Status noch auf einem früheren Schritt steht. */
-  const offen = allFirmen
-    .filter(f => !f.do_not_contact && AKQ_AUFGABEN_STATUS.includes(f.status || 'neu'))
-    .sort((a, b) => AKQ_AUFGABEN_STATUS.indexOf(a.status || 'neu') - AKQ_AUFGABEN_STATUS.indexOf(b.status || 'neu'));
+  const { heute, ueberfaellig } = akqAufgabenBauen(allFirmen, allAkqAntworten, akqHeuteIso());
 
-  if(offen.length === 0){
-    el.innerHTML = allFirmen.length === 0
+  /* ⚠️ Überfälliges steht OBEN. Es ist die einzige Gruppe, bei der
+     schon etwas schiefgegangen ist – sie unter die heutigen Aufgaben
+     zu setzen hieße, sie weiter liegen zu lassen. */
+  let html = '';
+  if(ueberfaellig.length){
+    const zeigen = ueberfaellig.slice(0, AKQ_AUFGABEN_GRENZE);
+    html += `<div class="akq-aufgaben-gruppe ueberfaellig">
+        <div class="akq-gruppe-titel">Überfällig (${ueberfaellig.length})</div>
+        ${zeigen.map(akqAufgabeZeile).join('')}
+        ${ueberfaellig.length > zeigen.length
+          ? `<div class="akq-aufgaben-fuss">Und ${ueberfaellig.length - zeigen.length} weitere überfällige.</div>` : ''}
+      </div>`;
+  }
+
+  if(heute.length){
+    const zeigen = heute.slice(0, AKQ_AUFGABEN_GRENZE);
+    html += `<div class="akq-aufgaben-gruppe">
+        ${ueberfaellig.length ? '<div class="akq-gruppe-titel">Heute zu erledigen</div>' : ''}
+        ${zeigen.map(akqAufgabeZeile).join('')}
+        ${heute.length > zeigen.length
+          ? `<div class="akq-aufgaben-fuss">Und ${heute.length - zeigen.length} weitere.
+             <button class="karte-aktion" style="margin-left:8px" onclick="switchView('akquise_firmen')">Alle Firmen ansehen</button></div>`
+          : ''}
+      </div>`;
+  }
+
+  if(!html){
+    html = allFirmen.length === 0
       ? '<div class="ueb-leer">Noch keine Firma erfasst. Fang mit Schritt 1 an.</div>'
-      : '<div class="ueb-leer">Nichts offen – alle erfassten Firmen sind bearbeitet.</div>';
+      : '<div class="ueb-leer">Nichts offen – alles bearbeitet. Erfasse neue Firmen oder sieh dir die Wiedervorlagen an.</div>';
+  }
+  el.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MITARBEITERÜBERSICHT FÜR DEN VERWALTER (17.08.2026, Phase 9)
+   ══════════════════════════════════════════════════════════════
+   Gerechnet wird mit derselben Funktion wie die Kennzahlen des
+   Mitarbeiters (`akqKennzahlen`), nur mit einer anderen Kennung.
+   Zwei getrennte Rechnungen für dieselbe Frage liefen früher oder
+   später auseinander – und dann stritte man darüber, welche stimmt.
+
+   ⚠️ Keine Rangfolge, keine Bewertung, keine Zielvorgaben. Sortiert
+   wird nach Namen. */
+const TEAM_SPALTEN = [
+  ['erfasst',                 'Firmen erfasst'],
+  ['gesendet',                'Mails gesendet'],
+  ['antworten',               'Antworten'],
+  ['interesse',               'Interesse'],
+  ['kein_interesse',          'Kein Interesse'],
+  ['kunden',                  'Kunden gewonnen'],
+  ['offene_aufgaben',         'Offene Aufgaben'],
+  ['faellige_wiedervorlagen', 'Fällige Wiedervorlagen'],
+];
+
+window.akqRenderTeam = function(){
+  const el = document.getElementById('akq-team-inhalt');
+  if(!el) return;
+  /* Zweiter Riegel: Die Ansicht rechnet über alle Mitarbeiter. Sie
+     gehört dem Verwalter, und das steht hier noch einmal – nicht nur
+     im Menü und in `switchView`. */
+  if(aktuelleRolle !== ROLLE_ADMIN){
+    el.innerHTML = '<div class="ueb-leer">Dieser Bereich ist dem Verwalter vorbehalten.</div>';
     return;
   }
 
-  const zeigen = offen.slice(0, AKQ_AUFGABEN_GRENZE);
-  el.innerHTML = zeigen.map(f => {
-    const naechster = akqNaechsterSchritt(f);
-    const punkt = AKQ_AUFGABEN_PUNKT[f.status || 'neu'] || '';
-    return `
-      <button class="akq-aufgabe" onclick="akqAufgabeOeffnen('${sicherJs(f.id)}')">
-        <span class="akq-aufgabe-punkt ${punkt}" aria-hidden="true"></span>
-        <span class="akq-aufgabe-haupt">
-          <span class="akq-aufgabe-name">${sicher([f.firmenname, f.standort].filter(Boolean).join(' · ') || 'Ohne Namen')}</span>
-          <span class="akq-aufgabe-was">${sicher(naechster.titel)}</span>
-        </span>
-        <span class="akq-aufgabe-pfeil" aria-hidden="true">›</span>
-      </button>`;
-  }).join('') +
-  /* Kein stilles Abschneiden: Wenn etwas fehlt, steht da, wie viel. */
-  (offen.length > zeigen.length
-    ? `<div class="akq-aufgaben-fuss">Und ${offen.length - zeigen.length} weitere.
-       <button class="karte-aktion" style="margin-left:8px" onclick="switchView('akquise_firmen')">Alle Firmen ansehen</button></div>`
-    : '');
-}
+  const wahlEl = document.getElementById('team-zeitraum');
+  const tage = Math.max(1, Number(wahlEl ? wahlEl.value : 7) || 7);
+  const heuteIso = akqHeuteIso();
+  const vonIso = akqDatumInTagen(-(tage - 1));
+
+  /* Wer gezeigt wird: alle Konten aus `benutzer` – plus jeder, der
+     Firmen erfasst hat, aber dort (noch) nicht steht. Sonst
+     verschwände die Arbeit eines gelöschten Zugangs aus der
+     Statistik, als hätte es sie nie gegeben. */
+  const bekannt = {};
+  allBenutzer.forEach(b => { bekannt[b.uid] = b.name || b.email || b.uid; });
+  allFirmen.forEach(f => {
+    if(f.erstellt_von && !bekannt[f.erstellt_von]){
+      bekannt[f.erstellt_von] = (f.erstellt_von_name || 'Unbekanntes Konto') + ' (Zugang entfernt)';
+    }
+  });
+
+  const zeilen = Object.entries(bekannt).map(([uid, name]) => ({
+    uid, name,
+    rolle: (allBenutzer.find(b => b.uid === uid) || {}).rolle || '',
+    aktiv: (allBenutzer.find(b => b.uid === uid) || {}).aktiv !== false,
+    k: akqKennzahlen({
+      uid, firmen: allFirmen, nachrichten: allAkqNachrichten,
+      antworten: allAkqAntworten, verlauf: allAkqVerlauf,
+      vonIso, bisIso: heuteIso, heuteIso,
+    }),
+  })).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
+  if(zeilen.length === 0){
+    el.innerHTML = '<div class="ueb-leer">Noch keine Zugänge angelegt. ' +
+      '<button class="karte-aktion" style="margin-left:8px" onclick="switchView(\'zugaenge\')">Zu den Zugängen</button></div>';
+    return;
+  }
+
+  const gesamt = akqKennzahlen({
+    uid: null, firmen: allFirmen, nachrichten: allAkqNachrichten,
+    antworten: allAkqAntworten, verlauf: allAkqVerlauf,
+    vonIso, bisIso: heuteIso, heuteIso,
+  });
+
+  el.innerHTML = `
+    <div class="team-hinweis">
+      Zeitraum: ${sicher(formatDatumLang(vonIso))} bis heute.
+      „Offene Aufgaben" und „Fällige Wiedervorlagen" beschreiben immer den
+      <b>heutigen</b> Stand – sie sind kein Rückblick.
+    </div>
+
+    <div class="team-karten">
+      ${zeilen.map(z => `
+        <div class="team-karte ${z.aktiv ? '' : 'ruht'}">
+          <div class="team-kopf">
+            <div class="team-name">${sicher(z.name)}</div>
+            <span class="f-pill ${z.rolle === ROLLE_ADMIN ? 'f-gut' : ''}">${
+              sicher(z.rolle === ROLLE_ADMIN ? 'Verwalter' : z.rolle === ROLLE_AKQUISE ? 'Akquise' : 'ohne Rolle')}</span>
+            ${z.aktiv ? '' : '<span class="f-pill f-stop">deaktiviert</span>'}
+          </div>
+          <div class="team-zahlen">
+            ${TEAM_SPALTEN.map(([feld, text]) => `
+              <div class="team-zahl">
+                <div class="team-zahl-val">${sicher(String(z.k[feld]))}</div>
+                <div class="team-zahl-lbl">${sicher(text)}</div>
+              </div>`).join('')}
+          </div>
+          <div class="team-fuss">Letzte Aktivität: ${
+            z.k.letzte_aktivitaet ? sicher(formatDatumLang(z.k.letzte_aktivitaet)) : 'keine verzeichnet'}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="team-karte gesamt">
+      <div class="team-kopf"><div class="team-name">Alle zusammen</div></div>
+      <div class="team-zahlen">
+        ${TEAM_SPALTEN.map(([feld, text]) => `
+          <div class="team-zahl">
+            <div class="team-zahl-val">${sicher(String(gesamt[feld]))}</div>
+            <div class="team-zahl-lbl">${sicher(text)}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+};
 
 /* Ein Fehler beim Zeichnen einer Akquise-Ansicht darf den
    Bereichswechsel nicht mitreißen – sonst bliebe man auf der alten
@@ -13893,9 +14531,25 @@ function akqSicherAufrufen(fn){
   try { fn(); } catch(err){ console.error('Akquise-Ansicht konnte nicht gezeichnet werden:', err); }
 }
 
-window.akqAufgabeOeffnen = function(id){
+/* Jeder Eintrag führt dorthin, wo die Aufgabe wirklich erledigt
+   wird – nicht pauschal auf die Firmenkarte. Bei einer Antwort ist
+   das der Gesprächsverlauf, bei einem fertigen Entwurf die
+   Versandansicht. Ein Klick, der nur „in die Nähe" führt, kostet
+   jedes Mal zwei weitere. */
+window.akqAufgabeOeffnen = function(id, ziel){
+  if(ziel === 'antworten'){
+    window.switchView('akquise_antworten');
+    if(typeof window.akqGespraechOeffnen === 'function') akqSicherAufrufen(() => window.akqGespraechOeffnen(id));
+    return;
+  }
+  if(ziel === 'kontakt'){ window.akqKontaktVorbereiten(id); return; }
   window.switchView('akquise_firmen');
   window.akqFirmaDetail(id);
+  /* „Als Kunden übernehmen": Das Formular sitzt auf der Firmenkarte,
+     also erst dorthin und dann aufklappen. */
+  if(ziel === 'kunde' && typeof window.akqKundeFormOeffnen === 'function'){
+    akqSicherAufrufen(() => window.akqKundeFormOeffnen(id));
+  }
 };
 
 window.akqFirmaErfassenStarten = function(){
@@ -14526,7 +15180,8 @@ function akqGespraechKarte(g){
   const antwortenMoeglich = !!bezug && !gesperrt && !abgeschlossen && !!(bezug.gmail_thread_id);
 
   return `
-    <div class="antw-karte ${g.ungelesen ? 'neu' : ''}" id="gespr-${sicher(g.schluessel)}">
+    <div class="antw-karte ${g.ungelesen ? 'neu' : ''}" id="gespr-${sicher(g.schluessel)}"
+         data-firma="${sicher(g.firmaId || '')}">
       <div class="antw-kopf">
         <div class="antw-firma">${sicher([firma.firmenname || (g.verlauf[0] && g.verlauf[0].firma_name), firma.standort].filter(Boolean).join(' · ') || 'Unbekannte Firma')}</div>
         ${g.ungelesen ? '<span class="antw-marke">🔔 ' + (g.ungelesen === 1 ? 'Neue Antwort' : g.ungelesen + ' neue Antworten') + '</span>' : ''}
@@ -14584,16 +15239,15 @@ function akqRenderAntwortenAnsicht(){
   const gelesen = gespraeche.filter(g => g.ungelesen === 0);
   const alle = gespraeche;
 
-  /* Der Abgleich läuft nachts von selbst. Der Knopf ist für den Fall,
-     dass jemand nicht bis morgen warten will. */
-  const leiste = aktuelleRolle === ROLLE_ADMIN ? `
+  /* ⚠️ Der Knopf stand bis Phase 9 nur dem Verwalter zur Verfügung.
+     Das war falsch herum: Wer auf Antworten wartet, ist Lukas – der
+     Endpunkt lässt beide Rollen zu, nur die Ansicht tat es nicht.
+     Er hätte bis zum nächsten Morgen warten müssen. */
+  const leiste = `
     <div class="antw-leiste">
       <button class="btn btn-sekundaer" style="width:auto;padding:12px 22px"
-              id="antw-sync-btn" onclick="akqAntwortenAbgleichen()">Antworten aktualisieren</button>
-      <span class="akq-karte-hinweis">Läuft täglich automatisch. Lukas muss Gmail nicht öffnen.</span>
-    </div>` : `
-    <div class="antw-leiste">
-      <span class="akq-karte-hinweis">Neue Antworten erscheinen automatisch – das Gmail-Postfach musst du nicht öffnen.</span>
+              id="antw-sync-btn" class="js-sync-btn" onclick="akqAntwortenAbgleichen()">Antworten aktualisieren</button>
+      <span class="akq-karte-hinweis" id="antw-sync-stand">${sicher(akqAbgleichStandText())}</span>
     </div>`;
 
   if(alle.length === 0){
@@ -14701,33 +15355,160 @@ window.akqAntwortSenden = async function(schluessel, firmaId, antwortId){
   }
 };
 
-/* Abgleich anstoßen. Der Browser bekommt Gmail nie zu sehen – er
-   ruft nur die Serverfunktion auf. */
-let akqAbgleichLaeuft = false;
+/* ══════════════════════════════════════════════════════════════
+   ABGLEICH MIT DEM POSTFACH (Phase 6B, erweitert 17.08.2026)
+   ══════════════════════════════════════════════════════════════
+   ⚠️ Warum es keinen häufigeren automatischen Lauf gibt:
 
-window.akqAntwortenAbgleichen = async function(){
+   Vercel führt im Hobby-Tarif **einen** Cron-Auftrag je Tag aus. Ein
+   zweiter Eintrag in `vercel.json` ließe sich schreiben, würde dort
+   aber nie ausgeführt – und niemand merkte, dass die Antworten in
+   Wahrheit nur beim Knopfdruck kommen. Genau das wäre der
+   gefährlichere Zustand: ein Automatismus, an den man glaubt.
+
+   Stattdessen zwei ehrliche Wege:
+
+     1. Der nächtliche Lauf holt alles, was über Nacht kam.
+     2. Beim Öffnen des Akquise-Bereichs wird abgeglichen, wenn der
+        letzte Abgleich länger als `ABGLEICH_ABSTAND_MIN` her ist.
+
+   Der zweite Weg fragt Gmail genau dann, wenn wirklich jemand
+   hinsieht – und höchstens alle zehn Minuten. Keine Abfrage läuft
+   ins Leere, während niemand am Rechner sitzt.
+
+   Die bessere Lösung, wenn der Tarif es einmal hergibt, steht in
+   `website/obsidian/Akquise.md` unter „Was noch fehlt": Gmail-Push
+   über Cloud Pub/Sub (`users.watch`) meldet neue Nachrichten von
+   sich aus, ohne jede Abfrage. */
+let akqAbgleichLaeuft = false;
+const ABGLEICH_SCHLUESSEL = 'waschlurch_akq_abgleich';
+const ABGLEICH_ABSTAND_MIN = 10;
+
+function akqAbgleichStand(){
+  try {
+    const wert = Number(localStorage.getItem(ABGLEICH_SCHLUESSEL));
+    return isFinite(wert) && wert > 0 ? wert : 0;
+  } catch(_){ return 0; }   // privater Modus o. Ä. – dann eben ohne Gedächtnis
+}
+
+/* ⚠️ Auch ein FEHLGESCHLAGENER Versuch wird vermerkt – sonst liefe
+   der automatische Abgleich bei einer Störung bei jedem Ansehen des
+   Bereichs erneut gegen dieselbe Wand.
+
+   Aber er darf nicht als Erfolg aussehen: „Gerade eben aktualisiert"
+   nach einem misslungenen Abruf ließe Lukas glauben, es gebe nichts
+   Neues, obwohl in Wahrheit gar nicht nachgesehen wurde. */
+function akqAbgleichVermerken(geglueckt){
+  try {
+    localStorage.setItem(ABGLEICH_SCHLUESSEL, String(Date.now()));
+    if(geglueckt) localStorage.removeItem(ABGLEICH_SCHLUESSEL + '_fehler');
+    else localStorage.setItem(ABGLEICH_SCHLUESSEL + '_fehler', '1');
+  } catch(_){}
+}
+
+function akqAbgleichGestoert(){
+  try { return localStorage.getItem(ABGLEICH_SCHLUESSEL + '_fehler') === '1'; }
+  catch(_){ return false; }
+}
+
+function akqAbgleichStandText(){
+  const stand = akqAbgleichStand();
+  if(!stand) return 'Läuft täglich automatisch und beim Öffnen dieses Bereichs.';
+
+  const min = Math.floor((Date.now() - stand) / 60000);
+  const wann = min < 1 ? 'gerade eben'
+    : min === 1 ? 'vor einer Minute'
+    : min < 60 ? 'vor ' + min + ' Minuten'
+    : (() => { const std = Math.floor(min / 60);
+               return 'vor ' + std + ' Stunde' + (std === 1 ? '' : 'n'); })();
+
+  return akqAbgleichGestoert()
+    ? 'Letzter Versuch ' + wann + ' – fehlgeschlagen. Der nächtliche Lauf holt die Antworten nach.'
+    : 'Zuletzt ' + wann + ' aktualisiert.';
+}
+
+function akqAbgleichStandZeigen(){
+  document.querySelectorAll('#antw-sync-stand, #akq-sync-stand').forEach(el => {
+    el.textContent = akqAbgleichStandText();
+  });
+}
+
+/* Abgleich anstoßen. Der Browser bekommt Gmail nie zu sehen – er
+   ruft nur die Serverfunktion auf.
+
+   `still = true` beim automatischen Lauf: keine Erfolgsmeldung, kein
+   Hinweisfenster bei einem Fehler. Ein Abgleich, den niemand
+   angefordert hat, darf nicht mit einem Kasten vor der Nase enden. */
+window.akqAntwortenAbgleichen = async function(still){
   if(akqAbgleichLaeuft) return;
   akqAbgleichLaeuft = true;
-  const knopf = document.getElementById('antw-sync-btn');
-  if(knopf){ knopf.disabled = true; knopf.textContent = 'Wird abgeglichen ...'; }
+  /* ⚠️ Den Knopf gibt es ZWEIMAL: auf der Akquise-Startseite und in
+     der Antwortenansicht. Über `getElementById` erwischte man immer
+     nur den ersten – der andere bliebe beim Klicken unverändert
+     bedienbar und liefe in den zweiten Aufruf. */
+  const knoepfe = () => [...document.querySelectorAll('.js-sync-btn')];
+  if(!still) knoepfe().forEach(b => { b.disabled = true; b.textContent = 'Wird abgeglichen ...'; });
 
   try {
     const bericht = await serverAufruf('/api/akquise-antworten-sync', { aktion:'sync' });
-    melde(bericht.neue_antworten
-      ? (bericht.neue_antworten === 1 ? 'Eine neue Antwort eingegangen.'
-                                      : bericht.neue_antworten + ' neue Antworten eingegangen.')
-      : 'Keine neuen Antworten.');
+    akqAbgleichVermerken(true);
+    if(!still){
+      melde(bericht.neue_antworten
+        ? (bericht.neue_antworten === 1 ? 'Eine neue Antwort eingegangen.'
+                                        : bericht.neue_antworten + ' neue Antworten eingegangen.')
+        : 'Keine neuen Antworten.');
+    } else if(bericht.neue_antworten){
+      melde(bericht.neue_antworten === 1 ? 'Eine neue Antwort ist eingegangen.'
+                                         : bericht.neue_antworten + ' neue Antworten sind eingegangen.');
+    }
   } catch(err){
-    if(err && err.message === 'EINRICHTUNG_FEHLT'){
+    /* Vermerkt, aber ausdrücklich als Fehlschlag – die Leiste sagt
+       dann „Letzter Versuch fehlgeschlagen" statt „aktualisiert". */
+    akqAbgleichVermerken(false);
+    if(still){
+      console.error('Automatischer Antwortabgleich fehlgeschlagen:', err);
+    } else if(err && err.message === 'EINRICHTUNG_FEHLT'){
       alert('Der Abgleich ist noch nicht eingerichtet.\n\nSiehe EINRICHTUNG.md, Abschnitt Gmail.');
     } else {
       alert('Der Abgleich hat nicht geklappt.\n\n' + ((err && err.message) || 'Unbekannter Fehler'));
     }
   } finally {
     akqAbgleichLaeuft = false;
-    const jetzt = document.getElementById('antw-sync-btn');
-    if(jetzt){ jetzt.disabled = false; jetzt.textContent = 'Antworten aktualisieren'; }
+    knoepfe().forEach(b => { b.disabled = false; b.textContent = 'Antworten aktualisieren'; });
+    akqAbgleichStandZeigen();
   }
+};
+
+/* Beim Öffnen eines Akquise-Bereichs. Bewusst ohne `await` im
+   Aufrufer – der Bereichswechsel darf nicht auf Gmail warten. */
+function akqAbgleichWennFaellig(){
+  if(akqAbgleichLaeuft) return;
+  const stand = akqAbgleichStand();
+  if(stand && (Date.now() - stand) < ABGLEICH_ABSTAND_MIN * 60000) return;
+  window.akqAntwortenAbgleichen(true);
+}
+
+/* Ein Gespräch gezielt ansteuern. Die Aufgabenliste führt hierher;
+   ohne das landete man oben auf einer Seite mit zwanzig Karten und
+   müsste die richtige suchen. */
+window.akqGespraechOeffnen = function(firmaId){
+  const versuche = (n) => {
+    /* Die Karte trägt die Gesprächskennung als `id` und die
+       Firmenkennung als `data-firma` – gesucht wird über Letztere,
+       weil die Aufgabenliste von der Firma her kommt. */
+    const el = document.querySelector('.antw-karte[data-firma="' + CSS.escape(String(firmaId)) + '"]') ||
+      document.querySelector('.antw-karte.neu');
+    if(el){
+      el.scrollIntoView({ block:'nearest' });
+      el.classList.add('hervor');
+      setTimeout(() => el.classList.remove('hervor'), 2000);
+    } else if(n > 0){
+      /* Die Ansicht wird von einem Datenlauscher gezeichnet – beim
+         ersten Versuch steht sie unter Umständen noch nicht. */
+      setTimeout(() => versuche(n - 1), 120);
+    }
+  };
+  versuche(5);
 };
 
 /* Als gelesen markieren läuft über den Server, weil dabei der
@@ -14768,6 +15549,13 @@ window.akqAntwortBewerten = async function(antwortId, firmaId, status){
 
   const daten = { status, aktualisiert_am: serverTimestamp() };
   if(sperrt){
+    /* Wie bei `akqStatusSetzen`: Eine vorhandene Wiedervorlage muss
+       mit der Sperre weichen, sonst weist `wiedervorlageNurOhneSperre()`
+       den ganzen Schreibvorgang ab – und die Absage ließe sich nicht
+       festhalten. */
+    daten.wiedervorlage_am = '';
+    daten.wiedervorlage_notiz = '';
+    daten.wiedervorlage_von = '';
     daten.do_not_contact = true;
     daten.do_not_contact_grund = FIRMEN_STATUS_TEXT[status];
     daten.do_not_contact_am = serverTimestamp();
@@ -14776,7 +15564,11 @@ window.akqAntwortBewerten = async function(antwortId, firmaId, status){
 
   try {
     await updateDoc(doc(db, 'firmen', firmaId), daten);
-    await akqVerlaufEintragen(firmaId, 'antwort',
+    /* Eigener Ereignisschlüssel: 'antwort' vergibt der
+       automatische Abgleich für EINGEGANGENE Antworten. Beides unter
+       demselben Namen zu führen hieße, im Verlauf nicht mehr
+       unterscheiden zu können, was der Kunde tat und was Lukas. */
+    await akqVerlaufEintragen(firmaId, 'antwort_bewertet',
       'Antwort als ' + eintrag.wortlaut + ' bewertet' + (sperrt ? ' (Kontaktsperre gesetzt)' : ''));
     /* Wer eine Antwort bewertet, hat das Gespräch gelesen – alle
        offenen Nachrichten dieser Firma, nicht nur die jüngste. */
@@ -14797,6 +15589,80 @@ function akqFortschrittHtml(f){
       const klasse = nr < stufe ? 'erledigt' : (nr === stufe ? 'erledigt jetzt' : '');
       return `<div class="akq-stufe ${klasse}"><div class="akq-stufe-text">${sicher(name)}</div></div>`;
     }).join('') + '</div>';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   WIEDERVORLAGE UND NACHFASSHINWEIS AUF DER KARTE (Phase 9)
+   ══════════════════════════════════════════════════════════════ */
+function akqWiedervorlageHtml(f){
+  const fj = sicherJs(f.id);
+
+  /* Bei gesperrten Firmen gibt es den Kasten gar nicht – kein
+     ausgegrauter Knopf, keine Erklärung, warum etwas nicht geht.
+     Der Sperrkasten weiter oben sagt bereits alles. */
+  if(f.do_not_contact === true) return '';
+
+  const wv = akqWiedervorlageStand(f, akqHeuteIso());
+  const nachfass = akqOhneAntwortSeit(f, akqHeuteIso());
+
+  const auswahl = WIEDERVORLAGE_WAHL.map(w =>
+    `<option value="${sicher(w.wert)}">${sicher(w.text)}</option>`).join('');
+
+  const bestand = wv ? `
+    <div class="wv-stand ${wv.ueberfaellig ? 'ueberfaellig' : (wv.faellig ? 'faellig' : '')}">
+      <div class="wv-stand-datum">${sicher(formatDatumLang(wv.am))}</div>
+      <div class="wv-stand-lage">${
+        wv.ueberfaellig ? 'Überfällig seit ' + Math.abs(wv.rest) + ' Tag' + (Math.abs(wv.rest) === 1 ? '' : 'en')
+        : wv.faellig ? 'Heute fällig'
+        : 'In ' + wv.rest + ' Tag' + (wv.rest === 1 ? '' : 'en')}</div>
+      ${f.wiedervorlage_notiz ? `<div class="wv-stand-notiz">${sicher(f.wiedervorlage_notiz)}</div>` : ''}
+      ${f.wiedervorlage_von ? `<div class="wv-stand-wer">gesetzt von ${sicher(f.wiedervorlage_von)}</div>` : ''}
+      <div class="wv-stand-knoepfe">
+        <button class="karte-aktion" onclick="akqWvFormOeffnen('${fj}')">Verschieben</button>
+        <button class="karte-aktion" onclick="akqWvErledigt('${fj}')">Erledigt</button>
+      </div>
+    </div>` : '';
+
+  /* ⚠️ Nur ein Hinweis, niemals eine Mail. Der Knopf setzt eine
+     Wiedervorlage – er verschickt nichts. */
+  const nachfassKasten = (nachfass && !wv) ? `
+    <div class="wv-nachfass">
+      <div class="wv-nachfass-titel">Seit ${nachfass} Tagen keine Antwort</div>
+      <div class="wv-nachfass-text">
+        Ob und wann nachgefasst wird, entscheidest du. Es geht nichts von selbst hinaus.
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="karte-block">
+      <div class="karte-block-titel">Wiedervorlage</div>
+      ${nachfassKasten}
+      ${bestand}
+      <button class="karte-aktion" id="wv-start-btn" ${wv ? 'hidden' : ''}
+              onclick="akqWvFormOeffnen('${fj}')">${nachfass ? 'Wiedervorlage setzen' : 'Später kontaktieren'}</button>
+
+      <div id="wv-form" hidden style="margin-top:14px">
+        <div class="field">
+          <label for="wv-wahl">Wann wieder ansehen?</label>
+          <select id="wv-wahl" onchange="akqWvWahlGeaendert()">${auswahl}</select>
+        </div>
+        <div class="field" id="wv-datum-zeile" hidden>
+          <label for="wv-datum">Datum</label>
+          <input type="date" id="wv-datum" onchange="akqWvWahlGeaendert()">
+        </div>
+        <div class="wv-vorschau" id="wv-vorschau"></div>
+        <div class="field">
+          <label for="wv-notiz">Warum später? (freiwillig)</label>
+          <input type="text" id="wv-notiz" maxlength="300"
+                 placeholder="z. B. Ansprechpartner ist im Urlaub"
+                 value="${sicher(f.wiedervorlage_notiz || '')}">
+        </div>
+        <div class="wv-form-knoepfe">
+          <button class="btn btn-primary" onclick="akqWvSpeichern('${fj}')">Wiedervorlage setzen</button>
+          <button class="karte-aktion" onclick="akqWvFormSchliessen()">Abbrechen</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function akqNaechsterHtml(f){
@@ -15046,6 +15912,17 @@ function akqRenderFirmaDetail(){
     return werte;
   })();
 
+  /* ⚠️ Dasselbe für das Wiedervorlage-Formular. Die Datenlauscher
+     zeichnen bei jeder Firmenänderung neu – auch bei einer, die eine
+     ganz andere Firma betrifft. Wer gerade ein Datum gewählt und
+     einen Grund getippt hat, verlöre beides. */
+  const wvFormOffen = (() => {
+    const form = document.getElementById('wv-form');
+    if(!form || form.hasAttribute('hidden')) return null;
+    const holen = (id) => { const e = document.getElementById(id); return e ? e.value : ''; };
+    return { wahl: holen('wv-wahl'), datum: holen('wv-datum'), notiz: holen('wv-notiz') };
+  })();
+
   el.innerHTML = `
     <button class="karte-aktion" style="margin-bottom:18px" onclick="akqZurueckZurListe()">← Zurück zur Liste</button>
 
@@ -15078,6 +15955,8 @@ function akqRenderFirmaDetail(){
     ${akqKundeHtml(f)}
 
     ${akqNaechsterHtml(f)}
+
+    ${akqWiedervorlageHtml(f)}
 
     <div class="karte-block">
       <div class="karte-block-titel">Stammdaten</div>
@@ -15145,6 +16024,21 @@ function akqRenderFirmaDetail(){
       });
     }
   }
+
+  // Dasselbe für das Wiedervorlage-Formular
+  if(wvFormOffen){
+    const form = document.getElementById('wv-form');
+    if(form){
+      form.removeAttribute('hidden');
+      const knopf = document.getElementById('wv-start-btn');
+      if(knopf) knopf.setAttribute('hidden', '');
+      const setz = (id, wert) => { const e = document.getElementById(id); if(e && wert) e.value = wert; };
+      setz('wv-wahl', wvFormOffen.wahl);
+      setz('wv-datum', wvFormOffen.datum);
+      setz('wv-notiz', wvFormOffen.notiz);
+      window.akqWvWahlGeaendert();
+    }
+  }
 }
 
 window.akqStatusSetzen = function(id, status){
@@ -15155,6 +16049,16 @@ window.akqStatusSetzen = function(id, status){
   const daten = { status, aktualisiert_am: serverTimestamp() };
   const sperrt = FIRMEN_STATUS_SPERRT.includes(status);
   if(sperrt){
+    /* ⚠️ Eine vorhandene Wiedervorlage muss MIT dem Sperren weichen –
+       nicht nur, weil sie fachlich keinen Sinn mehr ergibt, sondern
+       weil die Firestore-Regel `wiedervorlageNurOhneSperre()` den
+       Endzustand prüft: Stünde nach dem Schreiben `do_not_contact:
+       true` neben einem gesetzten `wiedervorlage_am`, wiese sie den
+       ganzen Vorgang ab – und eine Firma mit Wiedervorlage ließe sich
+       überhaupt nicht mehr auf „kein Interesse" setzen. */
+    daten.wiedervorlage_am = '';
+    daten.wiedervorlage_notiz = '';
+    daten.wiedervorlage_von = '';
     daten.do_not_contact = true;
     /* Wann und warum gesperrt wurde, gehört an den Datensatz. Ein
        nackter Haken beantwortet später niemandem die Frage, ob die
@@ -15174,6 +16078,147 @@ window.akqStatusSetzen = function(id, status){
     .catch(err => meldeSchreibfehler(err, 'Das Ändern des Status'));
 };
 
+/* ══════════════════════════════════════════════════════════════
+   WIEDERVORLAGE SETZEN, ÄNDERN, ERLEDIGEN (17.08.2026, Phase 9)
+   ══════════════════════════════════════════════════════════════ */
+
+window.akqWvFormOeffnen = function(id){
+  const f = allFirmen.find(x => x.id === id);
+  if(!f) return;
+  /* Erste von drei Sperrprüfungen: hier, beim Speichern, und in den
+     Firestore-Regeln. Die letzte ist die verbindliche. */
+  if(f.do_not_contact === true){
+    alert('Diese Firma ist gesperrt („nicht erneut kontaktieren").\n\n' +
+          'Für sie lässt sich keine Wiedervorlage setzen – sie soll ja gerade nicht ' +
+          'wieder auf einer Aufgabenliste erscheinen.');
+    return;
+  }
+  const kasten = document.getElementById('wv-form');
+  if(kasten) kasten.removeAttribute('hidden');
+  const knopf = document.getElementById('wv-start-btn');
+  if(knopf) knopf.setAttribute('hidden', '');
+  window.akqWvWahlGeaendert();
+};
+
+window.akqWvFormSchliessen = function(){
+  const kasten = document.getElementById('wv-form');
+  if(kasten) kasten.setAttribute('hidden', '');
+  const knopf = document.getElementById('wv-start-btn');
+  if(knopf) knopf.removeAttribute('hidden');
+};
+
+/* Das Datumsfeld erscheint nur bei „Eigenes Datum". Vorbelegt wird
+   es mit dem Ergebnis der zuletzt gewählten Kurzform – so steht dort
+   nie ein leeres Feld, in das man erst tippen muss. */
+window.akqWvWahlGeaendert = function(){
+  const wahl = document.getElementById('wv-wahl');
+  const zeile = document.getElementById('wv-datum-zeile');
+  const feld = document.getElementById('wv-datum');
+  if(!wahl || !zeile || !feld) return;
+
+  const eintrag = WIEDERVORLAGE_WAHL.find(w => w.wert === wahl.value);
+  if(eintrag && eintrag.tage !== null){
+    zeile.setAttribute('hidden', '');
+    feld.value = akqDatumInTagen(eintrag.tage);
+  } else {
+    zeile.removeAttribute('hidden');
+    if(!feld.value) feld.value = akqDatumInTagen(7);
+  }
+  const vorschau = document.getElementById('wv-vorschau');
+  if(vorschau){
+    const tage = akqTageBis(feld.value);
+    vorschau.textContent = feld.value
+      ? ('Erscheint am ' + formatDatumLang(feld.value) +
+         (tage === 0 ? ' – also heute' : tage === 1 ? ' – also morgen'
+          : tage > 1 ? ' – in ' + tage + ' Tagen' : ' – dieser Tag ist bereits vorbei'))
+      : '';
+  }
+};
+
+/* Für die Vorschau: „Dienstag, 19.08.2026". Ein nacktes ISO-Datum
+   liest sich niemand als Wochentag, und genau der entscheidet, ob
+   die Wiedervorlage sinnvoll liegt. */
+function formatDatumLang(iso){
+  if(!iso) return '';
+  try {
+    return ausIso(iso).toLocaleDateString('de-DE',
+      { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' });
+  } catch(_){ return iso; }
+}
+
+window.akqWvSpeichern = async function(id){
+  const f = allFirmen.find(x => x.id === id);
+  if(!f) return;
+
+  /* ⚠️ Zweite Prüfung, und sie liest den frischen Datensatz aus der
+     geladenen Liste – nicht den Stand von vorhin. Zwischen Öffnen
+     des Formulars und Klick kann die Firma gesperrt worden sein. */
+  if(f.do_not_contact === true){
+    alert('Diese Firma wurde inzwischen gesperrt. Es wird keine Wiedervorlage gesetzt.');
+    window.akqWvFormSchliessen();
+    return;
+  }
+
+  const feld = document.getElementById('wv-datum');
+  const notizFeld = document.getElementById('wv-notiz');
+  const am = feld ? String(feld.value || '').trim() : '';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(am)){
+    alert('Bitte ein Datum wählen.');
+    return;
+  }
+  if(akqTageBis(am) < 0 &&
+     !confirm('Der ' + formatDatumLang(am) + ' liegt in der Vergangenheit.\n\n' +
+              'Die Firma steht dann sofort unter „Überfällig". Trotzdem so speichern?')) return;
+
+  const wer = akqWerBinIch();
+  const vorher = akqWiedervorlageAktiv(f);
+  const notiz = notizFeld ? notizFeld.value.trim().slice(0, 300) : '';
+
+  const daten = {
+    wiedervorlage_am: am,
+    wiedervorlage_von: wer.name,
+    wiedervorlage_notiz: notiz,
+    wiedervorlage_gesetzt_am: serverTimestamp(),
+    aktualisiert_am: serverTimestamp(),
+  };
+  /* Der Status wandert nur dann auf „Später erneut", wenn der Vorgang
+     noch offen ist. Eine Firma mit Interesse behält ihren Status –
+     eine Wiedervorlage ist dort eine Terminnotiz, keine Rückstufung. */
+  const offenerVorgang = ['neu','wird_geprueft','kontakt_moeglich','versandbereit','gesendet','spaeter'];
+  if(offenerVorgang.includes(f.status || 'neu')) daten.status = 'spaeter';
+
+  try {
+    await updateDoc(doc(db, 'firmen', id), daten);
+    akqVerlaufEintragen(id, vorher ? 'wiedervorlage_geaendert' : 'wiedervorlage_gesetzt',
+      (vorher ? 'Wiedervorlage verschoben von ' + formatDatumLang(vorher) + ' auf ' : 'Wiedervorlage gesetzt auf ') +
+      formatDatumLang(am) + (notiz ? ' · ' + notiz : ''));
+    window.akqWvFormSchliessen();
+    melde('Wiedervorlage gesetzt: ' + formatDatumLang(am));
+  } catch(err){
+    meldeSchreibfehler(err, 'Das Setzen der Wiedervorlage');
+  }
+};
+
+window.akqWvErledigt = async function(id){
+  const f = allFirmen.find(x => x.id === id);
+  if(!f) return;
+  const vorher = String(f.wiedervorlage_am || '');
+  if(!vorher) return;
+
+  try {
+    await updateDoc(doc(db, 'firmen', id), {
+      wiedervorlage_am: '', wiedervorlage_notiz: '', wiedervorlage_von: '',
+      wiedervorlage_erledigt_am: serverTimestamp(),
+      aktualisiert_am: serverTimestamp(),
+    });
+    akqVerlaufEintragen(id, 'wiedervorlage_erledigt',
+      'Wiedervorlage vom ' + formatDatumLang(vorher) + ' erledigt');
+    melde('Wiedervorlage erledigt. Der Status bleibt unverändert – ändere ihn, wenn es weitergeht.');
+  } catch(err){
+    meldeSchreibfehler(err, 'Das Erledigen der Wiedervorlage');
+  }
+};
+
 window.akqNotizSpeichern = function(id){
   const feld = document.getElementById('firma-notiz-feld');
   if(!feld) return;
@@ -15190,6 +16235,21 @@ window.akqNotizSpeichern = function(id){
    Eine Sperre, die derselbe Mensch wieder aufheben kann, der sie
    gesetzt hat, ist keine. */
 window.akqSperreAufheben = function(id){
+  /* ⚠️ Die Rolle wird HIER geprüft, nicht nur beim Zeichnen des
+     Knopfes. Ein ausgeblendeter Knopf ist keine Sperre: Die Funktion
+     hängt am `window`-Objekt und lässt sich über die
+     Entwicklerwerkzeuge aufrufen. Beim Endtest ging genau das durch.
+
+     Die Firestore-Regel `sperreBleibtBestehen()` hätte den
+     Schreibvorgang zwar abgewiesen – aber dann stünde vor dem
+     Mitarbeiter eine kryptische Rechtemeldung statt einer klaren
+     Ansage, und das Dashboard hätte einen Zustand versucht, den es
+     selbst für zulässig hielt. Dieselbe Antwort auf allen drei
+     Ebenen ist der Grundsatz. */
+  if(aktuelleRolle !== ROLLE_ADMIN){
+    alert('Eine Kontaktsperre kann nur der Verwalter aufheben.');
+    return;
+  }
   const f = allFirmen.find(x => x.id === id) || {};
   if(!confirm(`Kontaktsperre für „${f.firmenname || 'diese Firma'}" aufheben?\n\nDanach darf sie aus der Akquise wieder angeschrieben werden. Das ist nur richtig, wenn die Ablehnung nachweislich zurückgenommen wurde.`)) return;
   updateDoc(doc(db, 'firmen', id), {
@@ -15202,6 +16262,16 @@ window.akqSperreAufheben = function(id){
 };
 
 window.akqFirmaLoeschen = function(id){
+  /* ⚠️ Wie bei `akqSperreAufheben`: Das Löschen gehört dem Verwalter,
+     und zwar auf allen drei Ebenen. Ein Lead, den die Akquise selbst
+     entfernen könnte, wäre der einfachste Weg um eine Kontaktsperre
+     herum – Datensatz weg, Firma neu anlegen, wieder anschreiben. */
+  if(aktuelleRolle !== ROLLE_ADMIN){
+    alert('Firmen kann nur der Verwalter löschen.\n\n' +
+          'Bei einer Ablehnung ist „Nicht kontaktieren" der richtige Weg – ' +
+          'die Sperre bleibt damit erhalten.');
+    return;
+  }
   const f = allFirmen.find(x => x.id === id) || {};
   if(!confirm(`„${f.firmenname || 'Diese Firma'}" endgültig löschen?\n\nDer Verlauf bleibt als Protokoll bestehen. Bei einer Ablehnung ist „Nicht kontaktieren" der richtige Weg – gelöschte Firmen lassen sich versehentlich erneut anlegen und anschreiben.`)) return;
   deleteDoc(doc(db, 'firmen', id))
