@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ink Bridge</title>
-<meta name="description" content="Die Brücke zwischen Goodnotes und Claude: Handschrift lesen, zusammenfassen, Lernkarten bauen – und als Goodnotes-fertiges PDF zurückschicken.">
+<meta name="description" content="Ganze Goodnotes-Ordner laden – Claude liest sie selbst und schreibt Antworten als Goodnotes-fertiges PDF zurück.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#F4F2EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0C0C0F" media="(prefers-color-scheme: dark)">
@@ -27,6 +27,7 @@
     <svg viewBox="0 0 40 20" aria-hidden="true"><path d="M3 16 C 12 2, 28 2, 37 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="16" r="2.6"/><circle cx="37" cy="16" r="2.6"/></svg>
     <span>Ink&nbsp;Bridge</span>
   </div>
+  <p class="kopf-zahl" id="kopfZahl" aria-live="polite"></p>
   <nav class="kopf-rechts">
     <button class="knopf-leise" id="verlaufAuf" aria-haspopup="dialog">Verlauf</button>
     <button class="knopf-leise" id="hilfeAuf" aria-haspopup="dialog">So geht’s</button>
@@ -39,30 +40,46 @@
 <main id="arbeit">
   <section class="held">
     <p class="ueber">Goodnotes <span class="pfeil" aria-hidden="true">⇄</span> Claude</p>
-    <h1>Von Handschrift zu Gedanken.<br><em>Und zurück aufs Papier.</em></h1>
+    <h1>Dein Notizbuch-Regal.<br><em>Claude liest darin.</em></h1>
     <ol class="held-schritte">
-      <li><b>Exportieren</b><span>Seiten aus Goodnotes als PDF oder Bild ablegen.</span></li>
-      <li><b>Verstehen</b><span>Claude liest Handschrift, Skizzen und Tabellen.</span></li>
-      <li><b>Zurückschreiben</b><span>Als Goodnotes-fertiges PDF mit Notizrand.</span></li>
+      <li><b>Ordner hineinziehen</b><span>Ganze Goodnotes-Ordner samt Unterordnern. Alles bleibt auf deinem Gerät.</span></li>
+      <li><b>Claude blättert selbst</b><span>Es sucht, öffnet Notizbücher und liest nur die Seiten, die es braucht.</span></li>
+      <li><b>Antwort zurück aufs Papier</b><span>Als Goodnotes-fertiges PDF mit Notizrand.</span></li>
     </ol>
   </section>
 
   <div class="buehne">
-    <!-- ── Ufer 1: Goodnotes ───────────────────────── -->
-    <section class="ufer" aria-labelledby="t-ein">
+    <!-- ── Bibliothek ─────────────────────────────── -->
+    <section class="ufer" aria-labelledby="t-bib">
       <header class="ufer-kopf">
         <span class="nummer">01</span>
-        <h2 id="t-ein">Aus Goodnotes</h2>
+        <h2 id="t-bib">Deine Bibliothek</h2>
+        <div class="werkzeuge">
+          <button class="knopf-leise" id="ordnerAuf">Ordner laden</button>
+          <button class="knopf-leise" id="dateienAuf">Dateien</button>
+        </div>
       </header>
 
-      <label class="ablage" id="ablage" tabindex="0">
-        <input type="file" id="dateiwahl" accept="application/pdf,image/*" multiple hidden>
-        <span class="ablage-blatt" aria-hidden="true"><span></span><span></span><span></span></span>
-        <strong>Seiten ablegen</strong>
-        <span class="leise">In Goodnotes: Teilen → Exportieren → PDF oder Bild. Hier tippen oder hineinziehen.</span>
-      </label>
+      <input type="file" id="ordnerwahl" webkitdirectory directory multiple hidden>
+      <input type="file" id="dateiwahl" accept="application/pdf,image/*" multiple hidden>
 
-      <ul class="dateien" id="dateien" aria-live="polite"></ul>
+      <div class="ablage" id="ablage" tabindex="0" role="button" aria-label="Goodnotes-Ordner hier ablegen">
+        <span class="ablage-blatt" aria-hidden="true"><span></span><span></span><span></span></span>
+        <strong>Goodnotes-Ordner hierher ziehen</strong>
+        <span class="leise">Ganze Ordner samt Unterordnern. In Goodnotes: Notizbücher auswählen → Exportieren → PDF → in <em>Dateien</em> sichern.</span>
+      </div>
+
+      <div class="bib" id="bib" hidden>
+        <div class="bib-leiste">
+          <input type="search" id="bibSuche" placeholder="In der Bibliothek suchen …" aria-label="Bibliothek durchsuchen">
+          <button class="knopf-leise" id="allesAb">Auswahl leeren</button>
+        </div>
+        <div class="baum" id="baum" role="tree" aria-label="Notizbücher"></div>
+        <p class="bib-fuss">
+          <span id="bibZahl" class="leise"></span>
+          <button class="knopf-leise" id="bibLeeren">Bibliothek leeren</button>
+        </p>
+      </div>
 
       <fieldset class="modi">
         <legend>Was soll Claude tun?</legend>
@@ -75,24 +92,25 @@
       </label>
 
       <button class="los" id="los">
-        <span class="los-text">Über die Brücke schicken</span>
+        <span class="los-text">Claude losschicken</span>
         <kbd>⌘ ↵</kbd>
       </button>
     </section>
 
-    <!-- ── Die Brücke ──────────────────────────────── -->
+    <!-- ── Brücke ─────────────────────────────────── -->
     <div class="bruecke" aria-hidden="true">
       <svg viewBox="0 0 60 600" preserveAspectRatio="none" class="bruecke-v">
-        <path id="pfad" d="M30 0 C 60 150, 0 300, 30 450 S 30 600, 30 600" fill="none"/>
+        <path d="M30 0 C 60 150, 0 300, 30 450 S 30 600, 30 600" fill="none"/>
       </svg>
     </div>
 
-    <!-- ── Ufer 2: Claude ─────────────────────────── -->
+    <!-- ── Claude ─────────────────────────────────── -->
     <section class="ufer ufer-claude" aria-labelledby="t-aus">
       <header class="ufer-kopf">
         <span class="nummer">02</span>
-        <h2 id="t-aus">Von Claude</h2>
+        <h2 id="t-aus">Claude</h2>
         <div class="werkzeuge">
+          <button class="knopf-leise" id="neu" disabled>Neues Gespräch</button>
           <button class="knopf-leise" id="bearbeiten" disabled aria-pressed="false">Bearbeiten</button>
           <button class="knopf-leise" id="kopieren" disabled>Kopieren</button>
         </div>
@@ -100,16 +118,20 @@
 
       <div class="status" id="status" role="status" aria-live="polite"></div>
 
-      <article class="blatt" id="blatt" tabindex="0" aria-label="Antwort von Claude">
+      <div class="blatt" id="blatt" tabindex="0" aria-label="Gespräch mit Claude">
         <div class="leer" id="leer">
           <p class="leer-gross">Noch ist das Blatt leer.</p>
-          <p class="leise">Lege links Seiten ab – oder wähle <strong>Neue Seite</strong> und beschreibe, was Claude für dein Notizbuch schreiben soll.</p>
+          <p class="leise">Zieh links deine Goodnotes-Ordner hinein. Claude durchsucht sie dann selbst – du musst nicht einmal sagen, in welchem Notizbuch etwas steht.</p>
         </div>
-        <div class="md" id="ausgabe" hidden></div>
+        <div class="lauf" id="lauf"></div>
         <textarea class="md-edit" id="editor" hidden aria-label="Markdown bearbeiten"></textarea>
-      </article>
+      </div>
 
-      <!-- Zurück nach Goodnotes -->
+      <form class="nachfrage" id="nachfrageForm" hidden>
+        <input id="nachfrage" placeholder="Nachfragen – Claude kennt die Bibliothek bereits …" aria-label="Nachfrage an Claude" maxlength="4000" autocomplete="off">
+        <button class="rund rund-voll" aria-label="Senden">↑</button>
+      </form>
+
       <div class="dock" id="dock" aria-labelledby="t-zurueck">
         <h3 id="t-zurueck"><span class="nummer">03</span> Zurück nach Goodnotes</h3>
         <div class="dock-reihe">
@@ -117,15 +139,15 @@
         </div>
         <div class="dock-reihe optionen">
           <div class="segment" role="radiogroup" aria-label="Papier" id="optMuster">
-            <button role="radio" data-v="liniert" aria-checked="true">Liniert</button>
-            <button role="radio" data-v="punkte" aria-checked="false">Punkte</button>
-            <button role="radio" data-v="kariert" aria-checked="false">Kariert</button>
-            <button role="radio" data-v="blanko" aria-checked="false">Blanko</button>
+            <button type="button" role="radio" data-v="liniert" aria-checked="true">Liniert</button>
+            <button type="button" role="radio" data-v="punkte" aria-checked="false">Punkte</button>
+            <button type="button" role="radio" data-v="kariert" aria-checked="false">Kariert</button>
+            <button type="button" role="radio" data-v="blanko" aria-checked="false">Blanko</button>
           </div>
           <div class="segment" role="radiogroup" aria-label="Farbe" id="optThema">
-            <button role="radio" data-v="hell" aria-checked="true">Weiß</button>
-            <button role="radio" data-v="creme" aria-checked="false">Creme</button>
-            <button role="radio" data-v="dunkel" aria-checked="false">Dunkel</button>
+            <button type="button" role="radio" data-v="hell" aria-checked="true">Weiß</button>
+            <button type="button" role="radio" data-v="creme" aria-checked="false">Creme</button>
+            <button type="button" role="radio" data-v="dunkel" aria-checked="false">Dunkel</button>
           </div>
           <label class="auswahl">Format
             <select id="optFormat">
@@ -146,7 +168,6 @@
   </div>
 </main>
 
-<!-- Zugangscode -->
 <dialog id="zugang" class="dialog" aria-labelledby="t-zugang">
   <form method="dialog" id="zugangForm">
     <h2 id="t-zugang">Zugangscode</h2>
@@ -157,23 +178,22 @@
   </form>
 </dialog>
 
-<!-- Verlauf -->
 <dialog id="verlauf" class="dialog dialog-breit" aria-labelledby="t-verlauf">
   <div class="dialog-kopf"><h2 id="t-verlauf">Verlauf</h2><button class="rund" data-zu aria-label="Schließen">✕</button></div>
-  <p class="leise">Nur auf diesem Gerät gespeichert. Dateien selbst werden nicht aufbewahrt.</p>
+  <p class="leise">Nur auf diesem Gerät gespeichert.</p>
   <ol class="verlauf-liste" id="verlaufListe"></ol>
   <div class="dialog-aktionen"><button class="knopf-leise" id="verlaufLeeren">Verlauf löschen</button></div>
 </dialog>
 
-<!-- Hilfe -->
 <dialog id="hilfe" class="dialog dialog-breit" aria-labelledby="t-hilfe">
   <div class="dialog-kopf"><h2 id="t-hilfe">So funktioniert die Brücke</h2><button class="rund" data-zu aria-label="Schließen">✕</button></div>
   <ol class="schritte">
-    <li><strong>Goodnotes → Brücke.</strong> In Goodnotes eine Seite oder ein Notizbuch öffnen, <em>Teilen → Exportieren</em>, „PDF“ oder „Bild“ wählen und in <em>Dateien</em> sichern. Hier ablegen. Auf dem iPad geht auch Split View: Seiten direkt herüberziehen.</li>
-    <li><strong>Claude arbeitet.</strong> Modus wählen – Transkribieren, Zusammenfassen, Aufgaben, Lernkarten, Ausarbeiten, Frei fragen. Claude liest Handschrift, Skizzen und Tabellen.</li>
-    <li><strong>Brücke → Goodnotes.</strong> Papier wählen und <em>An Goodnotes senden</em>: Im Teilen-Menü „Goodnotes“ antippen. Das PDF landet als neues Dokument mit Notizrand für deine Handschrift.</li>
+    <li><strong>Bibliothek füllen.</strong> In Goodnotes die Notizbücher auswählen, <em>Exportieren → PDF</em>, in <em>Dateien</em> in einen Ordner sichern. Diesen Ordner hier hineinziehen oder über „Ordner laden“ wählen – samt Unterordnern. Die Dateien bleiben auf deinem Gerät und sind beim nächsten Öffnen noch da.</li>
+    <li><strong>Claude arbeiten lassen.</strong> Du musst nichts auswählen: Claude listet die Ordner selbst auf, sucht die passenden Notizbücher und liest nur die Seiten, die es braucht. Du siehst live, was es gerade öffnet. Hast du etwas angehakt, bleibt Claude dabei.</li>
+    <li><strong>Nachfragen.</strong> Unten im Gesprächsfeld kannst du weiterfragen – Claude kennt die Bibliothek und das bisher Gelesene.</li>
+    <li><strong>Zurück nach Goodnotes.</strong> Papier wählen und <em>An Goodnotes senden</em>: im Teilen-Menü „Goodnotes“ antippen. Das PDF landet als neues Dokument mit Notizrand.</li>
   </ol>
-  <p class="leise">Tipp: Über Safari → Teilen → „Zum Home-Bildschirm“ wird die Brücke zur App.</p>
+  <p class="leise">Tipp: Über Safari → Teilen → „Zum Home-Bildschirm“ wird die Brücke zur App. Große Bibliotheken sind kein Problem: Hochgeladen wird nur, was Claude wirklich liest.</p>
 </dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>

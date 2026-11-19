@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/claude.mjs": {
+    "api/chat.mjs": {
       "maxDuration": 300
     },
     "api/pdf.mjs": {

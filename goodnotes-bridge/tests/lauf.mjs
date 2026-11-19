@@ -1,10 +1,11 @@
 /* Prüflauf: node tests/lauf.mjs */
 import { Readable } from 'node:stream';
-import { erstelleHandler, baueInhalt, fehlerText } from '../api/claude.mjs';
+import { erstelleHandler, pruefeVerlauf, fehlerText } from '../api/chat.mjs';
 import pdfHandler, { dateiname } from '../api/pdf.mjs';
 import { zerlege, inline, saeubern, pdfBuffer } from '../lib/markdown-pdf.mjs';
 import { zugangOk, ratenGrenze } from '../lib/guard.mjs';
-import { MODI, MODEL } from '../lib/prompts.mjs';
+import { MODI, MODEL, nutzerText, systemPrompt } from '../lib/prompts.mjs';
+import { WERKZEUGE, SEITEN_PRO_AUFRUF } from '../lib/werkzeuge.mjs';
 import { attrappe, BEISPIEL } from './attrappe.mjs';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -15,6 +16,7 @@ const block = t => console.log('\n── ' + t);
 function anfrage(koerper, { methode = 'POST', code = 'geheim', ip = '1.1.1.' + Math.random() } = {}){
   const r = Readable.from([Buffer.from(typeof koerper === 'string' ? koerper : JSON.stringify(koerper))]);
   r.method = methode; r.headers = { 'x-bridge-code': code, 'x-forwarded-for': ip };
+  r.on ??= () => {};
   return r;
 }
 function antwort(){
@@ -25,24 +27,40 @@ function antwort(){
     end(t){ if(t) teile.push(Buffer.from(t)); this.writableEnded = true; },
     get body(){ return Buffer.concat(teile); },
     get json(){ return JSON.parse(this.body.toString()); },
-    get zeilen(){ return this.body.toString().trim().split('\n').map(z => JSON.parse(z)); } };
+    get zeilen(){ return this.body.toString().trim().split('\n').filter(Boolean).map(z => JSON.parse(z)); } };
 }
-const BILD = { name: 'seite.png', type: 'image/png', data: 'iVBORw0KGgo=' };
+const nutzer = text => [{ role: 'user', content: [{ type: 'text', text }] }];
 process.env.BRIDGE_PASSCODE = 'geheim';
 
-block('Eingabe prüfen');
-pruefe('Unbekannter Modus → 400', (() => { try { baueInhalt({ modus: 'x', dateien: [BILD] }); } catch(e){ return e.status === 400; } })());
-pruefe('Ohne Dateien → Fehler', (() => { try { baueInhalt({ modus: 'transkribieren', dateien: [] }); } catch(e){ return e.code === 'keine_dateien'; } })());
-pruefe('Neue Seite braucht Wunsch', (() => { try { baueInhalt({ modus: 'schreiben' }); } catch(e){ return e.code === 'kein_wunsch'; } })());
-pruefe('Neue Seite ohne Dateien erlaubt', baueInhalt({ modus: 'schreiben', frage: 'Lernblatt' }).length === 1);
-pruefe('Falscher Typ → 415', (() => { try { baueInhalt({ modus: 'transkribieren', dateien: [{ type: 'text/html', data: 'AA==' }] }); } catch(e){ return e.status === 415; } })());
-pruefe('Kaputtes Base64 → 400', (() => { try { baueInhalt({ modus: 'transkribieren', dateien: [{ type: 'image/png', data: '<script>' }] }); } catch(e){ return e.code === 'base64'; } })());
-pruefe('Mehr als 20 Dateien → Fehler', (() => { try { baueInhalt({ modus: 'transkribieren', dateien: Array(21).fill(BILD) }); } catch(e){ return e.code === 'zu_viele'; } })());
-const inh = baueInhalt({ modus: 'zusammenfassen', frage: 'kurz', dateien: [{ name: 'a.pdf', type: 'application/pdf', data: 'JVBERi0=' }, BILD] });
-pruefe('PDF → document-Block', inh[0].type === 'document' && inh[0].source.media_type === 'application/pdf');
-pruefe('Bild → image-Block', inh[1].type === 'image');
-pruefe('Anweisung steht hinter den Dateien', inh[2].type === 'text' && inh[2].text.includes('kurz'));
-pruefe('Alle Modi haben Anweisung und Aufwand', Object.values(MODI).every(m => m.anweisung && ['low','medium','high','xhigh','max'].includes(m.effort)));
+block('Werkzeuge');
+pruefe('Drei Werkzeuge', WERKZEUGE.length === 3);
+pruefe('Namen', WERKZEUGE.map(w => w.name).join() === 'ordner_auflisten,notizen_suchen,notiz_lesen');
+pruefe('Schemata sind streng und vollständig', WERKZEUGE.every(w =>
+  w.strict === true && w.input_schema.additionalProperties === false
+  && Object.keys(w.input_schema.properties).every(p => w.input_schema.required.includes(p))
+  && w.description.length > 60));
+pruefe('Seitengrenze wird beschrieben', WERKZEUGE[2].description.includes(String(SEITEN_PRO_AUFRUF)));
+
+block('Anweisungen');
+pruefe('Systemanweisung nennt die Werkzeuge', WERKZEUGE.every(w => systemPrompt().includes(w.name)));
+pruefe('Systemanweisung bleibt konstant (Caching)', systemPrompt() === systemPrompt());
+pruefe('Alle Modi vollständig', Object.values(MODI).every(m => m.anweisung && m.titel && m.kurz && ['low','medium','high','xhigh','max'].includes(m.effort)));
+const t1 = nutzerText('zusammenfassen', 'kurz halten', [{ pfad: 'Bio/Zellen.pdf', seiten: 12 }]);
+pruefe('Auswahl steht in der Anweisung', t1.includes('Bio/Zellen.pdf') && t1.includes('12 Seiten') && t1.includes('kurz halten'));
+pruefe('Ohne Auswahl darf Claude selbst suchen', nutzerText('fragen', 'Wo steht X?').includes('Sieh dich in der Bibliothek um'));
+
+block('Verlauf prüfen');
+const wirft = (f, code) => { try { f(); return false; } catch(e){ return code ? e.code === code : e.status === 400; } };
+pruefe('Leerer Verlauf → Fehler', wirft(() => pruefeVerlauf([])));
+pruefe('Falsche Rolle → Fehler', wirft(() => pruefeVerlauf([{ role: 'system', content: 'x' }])));
+pruefe('Unbekannter Block → Fehler', wirft(() => pruefeVerlauf([{ role: 'user', content: [{ type: 'video' }] }])));
+pruefe('Letzter Zug muss vom Nutzer sein', wirft(() => pruefeVerlauf([...nutzer('a'), { role: 'assistant', content: [{ type: 'text', text: 'b' }] }])));
+pruefe('Zu langes Gespräch → Fehler', wirft(() => pruefeVerlauf(Array(401).fill(nutzer('x')[0])), 'zu_lang'));
+pruefe('Gültiger Verlauf mit Werkzeugergebnis', !!pruefeVerlauf([
+  ...nutzer('a'),
+  { role: 'assistant', content: [{ type: 'thinking', thinking: '' }, { type: 'tool_use', id: 't', name: 'notiz_lesen', input: {} }] },
+  { role: 'user', content: [{ type: 'tool_result', tool_use_id: 't', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'AA==' } }] }] },
+]));
 
 block('Zugang & Rate');
 pruefe('Richtiger Code', zugangOk({ headers: { 'x-bridge-code': 'geheim' } }));
@@ -53,35 +71,44 @@ let durch = 0; for(let i = 0; i < 25; i++) if(ratenGrenze('test', 20, 60000, 100
 pruefe('Ratenbegrenzung greift bei 20', durch === 20, durch);
 pruefe('Fenster läuft ab', ratenGrenze('test', 20, 60000, 1000 + 60001));
 
-block('Claude-Handler');
+block('Gesprächs-Endpunkt');
 {
   const protokoll = [];
-  const h = erstelleHandler(() => attrappe({ verzoegerung: 0, protokoll }));
-  const res = antwort(); await h(anfrage({ modus: 'transkribieren', dateien: [BILD] }), res);
+  const h = erstelleHandler(() => attrappe({ verzoegerung: 0, protokoll, zuege: [{ text: BEISPIEL }] }));
+  const res = antwort(); await h(anfrage({ messages: nutzer('Fasse zusammen'), modus: 'zusammenfassen' }), res);
   const z = res.zeilen;
   pruefe('Status 200 + NDJSON', res.statusCode === 200 && res.kopf['content-type'].includes('ndjson'));
   pruefe('Text kommt vollständig an', z.filter(e => e.t === 'text').map(e => e.d).join('') === BEISPIEL);
-  pruefe('Abschluss-Ereignis', z.at(-1).t === 'done' && z.at(-1).stop === 'end_turn');
+  pruefe('Zug enthält die Blöcke', z.at(-1).t === 'zug' && z.at(-1).content[0].type === 'text' && z.at(-1).stop === 'end_turn');
   const p = protokoll[0];
   pruefe('Modell ist ' + MODEL, p.model === MODEL);
+  pruefe('Werkzeuge werden mitgeschickt', p.tools === WERKZEUGE);
   pruefe('Fallbacks aktiv', p.fallbacks === 'default' && p.betas.includes('server-side-fallback-2026-07-01'));
-  pruefe('Kein thinking/budget_tokens gesendet', !('thinking' in p) && !('temperature' in p));
-  pruefe('Effort aus Modus', p.output_config.effort === MODI.transkribieren.effort);
+  pruefe('Kein thinking/temperature gesendet', !('thinking' in p) && !('temperature' in p));
+  pruefe('Kein erzwungenes Werkzeug (Opus 5.5)', !('tool_choice' in p));
+  pruefe('Effort aus Modus', p.output_config.effort === MODI.zusammenfassen.effort);
+  pruefe('Verlauf wird unverändert weitergereicht', JSON.stringify(p.messages) === JSON.stringify(nutzer('Fasse zusammen')));
 
-  const r401 = antwort(); await h(anfrage({ modus: 'transkribieren', dateien: [BILD] }, { code: 'x' }), r401);
+  const res2 = antwort();
+  await erstelleHandler(() => attrappe({ verzoegerung: 0, zuege: [{ text: 'Ich sehe nach.', werkzeuge: [{ name: 'ordner_auflisten', input: { pfad: '' } }] }] }))
+    (anfrage({ messages: nutzer('Was habe ich?'), modus: 'fragen' }), res2);
+  const zug = res2.zeilen.at(-1);
+  pruefe('Werkzeugwunsch kommt beim Browser an', zug.stop === 'tool_use' && zug.content.some(b => b.type === 'tool_use' && b.name === 'ordner_auflisten'));
+
+  const r401 = antwort(); await h(anfrage({ messages: nutzer('x') }, { code: 'x' }), r401);
   pruefe('Falscher Code → 401', r401.statusCode === 401);
   const r405 = antwort(); await h(anfrage({}, { methode: 'GET' }), r405);
   pruefe('GET → 405', r405.statusCode === 405);
   const rjson = antwort(); await h(anfrage('{kaputt'), rjson);
   pruefe('Kaputtes JSON → 400', rjson.statusCode === 400);
-  const rgross = antwort(); await h(anfrage({ modus: 'transkribieren', dateien: [{ ...BILD, data: 'A'.repeat(4_500_000) }] }), rgross);
-  pruefe('Zu groß → 413', rgross.statusCode === 413, rgross.statusCode);
+  const rgross = antwort(); await h(anfrage({ messages: nutzer('A'.repeat(4_500_000)) }), rgross);
+  pruefe('Zu groß → 413 mit Hinweis', rgross.statusCode === 413 && /Seiten/.test(rgross.json.message), rgross.statusCode);
 
   const rref = antwort();
-  await erstelleHandler(() => attrappe({ verzoegerung: 0, stop: 'refusal', text: '' }))(anfrage({ modus: 'fragen', frage: 'x', dateien: [BILD] }), rref);
+  await erstelleHandler(() => attrappe({ verzoegerung: 0, zuege: [{ text: '', stop: 'refusal' }] }))(anfrage({ messages: nutzer('x') }), rref);
   pruefe('Ablehnung wird gemeldet', rref.zeilen.at(-1).code === 'refusal');
   const rerr = antwort();
-  await erstelleHandler(() => attrappe({ fehler: new Error('boom') }))(anfrage({ modus: 'fragen', frage: 'x', dateien: [BILD] }), rerr);
+  await erstelleHandler(() => attrappe({ fehler: new Error('boom') }))(anfrage({ messages: nutzer('x') }), rerr);
   pruefe('Unerwarteter Fehler → error-Zeile, kein Leck', rerr.zeilen.at(-1).t === 'error' && !JSON.stringify(rerr.zeilen).includes('boom'));
   pruefe('Verbindungsfehler wird übersetzt', fehlerText(new Anthropic.APIConnectionError({ message: 'x' })).code === 'netz');
 }
