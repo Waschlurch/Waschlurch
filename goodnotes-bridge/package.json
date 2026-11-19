@@ -1,0 +1,19 @@
+{
+  "name": "ink-bridge",
+  "version": "1.0.0",
+  "description": "Brücke zwischen Goodnotes und Claude",
+  "scripts": {
+    "dev": "node dev.mjs",
+    "dev:mock": "BRIDGE_MOCK=1 node dev.mjs",
+    "test": "node tests/lauf.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.11.0",
+    "pdfkit": "^0.20.2"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}

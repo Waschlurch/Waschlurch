@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ink Bridge</title>
+<meta name="description" content="Die Brücke zwischen Goodnotes und Claude: Handschrift lesen, zusammenfassen, Lernkarten bauen – und als Goodnotes-fertiges PDF zurückschicken.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#F4F2EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C0C0F" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ink Bridge">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#arbeit">Zum Arbeitsbereich springen</a>
+
+<header class="kopf">
+  <div class="marke" aria-label="Ink Bridge">
+    <svg viewBox="0 0 40 20" aria-hidden="true"><path d="M3 16 C 12 2, 28 2, 37 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="16" r="2.6"/><circle cx="37" cy="16" r="2.6"/></svg>
+    <span>Ink&nbsp;Bridge</span>
+  </div>
+  <nav class="kopf-rechts">
+    <button class="knopf-leise" id="verlaufAuf" aria-haspopup="dialog">Verlauf</button>
+    <button class="knopf-leise" id="hilfeAuf" aria-haspopup="dialog">So geht’s</button>
+    <button class="rund" id="themaWechsel" aria-label="Hell/Dunkel umschalten">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="currentColor"/></svg>
+    </button>
+  </nav>
+</header>
+
+<main id="arbeit">
+  <section class="held">
+    <p class="ueber">Goodnotes <span class="pfeil" aria-hidden="true">⇄</span> Claude</p>
+    <h1>Von Handschrift zu Gedanken.<br><em>Und zurück aufs Papier.</em></h1>
+    <ol class="held-schritte">
+      <li><b>Exportieren</b><span>Seiten aus Goodnotes als PDF oder Bild ablegen.</span></li>
+      <li><b>Verstehen</b><span>Claude liest Handschrift, Skizzen und Tabellen.</span></li>
+      <li><b>Zurückschreiben</b><span>Als Goodnotes-fertiges PDF mit Notizrand.</span></li>
+    </ol>
+  </section>
+
+  <div class="buehne">
+    <!-- ── Ufer 1: Goodnotes ───────────────────────── -->
+    <section class="ufer" aria-labelledby="t-ein">
+      <header class="ufer-kopf">
+        <span class="nummer">01</span>
+        <h2 id="t-ein">Aus Goodnotes</h2>
+      </header>
+
+      <label class="ablage" id="ablage" tabindex="0">
+        <input type="file" id="dateiwahl" accept="application/pdf,image/*" multiple hidden>
+        <span class="ablage-blatt" aria-hidden="true"><span></span><span></span><span></span></span>
+        <strong>Seiten ablegen</strong>
+        <span class="leise">In Goodnotes: Teilen → Exportieren → PDF oder Bild. Hier tippen oder hineinziehen.</span>
+      </label>
+
+      <ul class="dateien" id="dateien" aria-live="polite"></ul>
+
+      <fieldset class="modi">
+        <legend>Was soll Claude tun?</legend>
+        <div class="chips" id="modi"></div>
+      </fieldset>
+
+      <label class="wunsch">
+        <span id="wunschLabel">Zusatzwunsch <span class="leise">(optional)</span></span>
+        <textarea id="wunsch" rows="3" maxlength="4000" placeholder="z. B. „Nur Kapitel 2“, „auf Englisch“, „für die Klausur am Montag“"></textarea>
+      </label>
+
+      <button class="los" id="los">
+        <span class="los-text">Über die Brücke schicken</span>
+        <kbd>⌘ ↵</kbd>
+      </button>
+    </section>
+
+    <!-- ── Die Brücke ──────────────────────────────── -->
+    <div class="bruecke" aria-hidden="true">
+      <svg viewBox="0 0 60 600" preserveAspectRatio="none" class="bruecke-v">
+        <path id="pfad" d="M30 0 C 60 150, 0 300, 30 450 S 30 600, 30 600" fill="none"/>
+      </svg>
+    </div>
+
+    <!-- ── Ufer 2: Claude ─────────────────────────── -->
+    <section class="ufer ufer-claude" aria-labelledby="t-aus">
+      <header class="ufer-kopf">
+        <span class="nummer">02</span>
+        <h2 id="t-aus">Von Claude</h2>
+        <div class="werkzeuge">
+          <button class="knopf-leise" id="bearbeiten" disabled aria-pressed="false">Bearbeiten</button>
+          <button class="knopf-leise" id="kopieren" disabled>Kopieren</button>
+        </div>
+      </header>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+      <article class="blatt" id="blatt" tabindex="0" aria-label="Antwort von Claude">
+        <div class="leer" id="leer">
+          <p class="leer-gross">Noch ist das Blatt leer.</p>
+          <p class="leise">Lege links Seiten ab – oder wähle <strong>Neue Seite</strong> und beschreibe, was Claude für dein Notizbuch schreiben soll.</p>
+        </div>
+        <div class="md" id="ausgabe" hidden></div>
+        <textarea class="md-edit" id="editor" hidden aria-label="Markdown bearbeiten"></textarea>
+      </article>
+
+      <!-- Zurück nach Goodnotes -->
+      <div class="dock" id="dock" aria-labelledby="t-zurueck">
+        <h3 id="t-zurueck"><span class="nummer">03</span> Zurück nach Goodnotes</h3>
+        <div class="dock-reihe">
+          <label class="feld">Titel<input id="pdfTitel" type="text" maxlength="120" placeholder="Titel der Seite"></label>
+        </div>
+        <div class="dock-reihe optionen">
+          <div class="segment" role="radiogroup" aria-label="Papier" id="optMuster">
+            <button role="radio" data-v="liniert" aria-checked="true">Liniert</button>
+            <button role="radio" data-v="punkte" aria-checked="false">Punkte</button>
+            <button role="radio" data-v="kariert" aria-checked="false">Kariert</button>
+            <button role="radio" data-v="blanko" aria-checked="false">Blanko</button>
+          </div>
+          <div class="segment" role="radiogroup" aria-label="Farbe" id="optThema">
+            <button role="radio" data-v="hell" aria-checked="true">Weiß</button>
+            <button role="radio" data-v="creme" aria-checked="false">Creme</button>
+            <button role="radio" data-v="dunkel" aria-checked="false">Dunkel</button>
+          </div>
+          <label class="auswahl">Format
+            <select id="optFormat">
+              <option value="a4">A4</option>
+              <option value="ipad">iPad (4:3)</option>
+              <option value="letter">Letter</option>
+              <option value="quer">A4 quer</option>
+            </select>
+          </label>
+          <label class="schalter"><input type="checkbox" id="optRand" checked> <span>Notizrand für Handschrift</span></label>
+        </div>
+        <div class="dock-reihe aktionen">
+          <button class="los los-klein" id="teilen" disabled>An Goodnotes senden</button>
+          <button class="knopf" id="laden" disabled>PDF laden</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Zugangscode -->
+<dialog id="zugang" class="dialog" aria-labelledby="t-zugang">
+  <form method="dialog" id="zugangForm">
+    <h2 id="t-zugang">Zugangscode</h2>
+    <p class="leise">Die Brücke nutzt deinen Claude-Zugang auf dem Server. Der Code schützt ihn vor Fremden und bleibt nur auf diesem Gerät gespeichert.</p>
+    <input id="zugangCode" type="password" autocomplete="current-password" required aria-label="Zugangscode">
+    <p class="fehler" id="zugangFehler" hidden></p>
+    <div class="dialog-aktionen"><button class="los los-klein" value="ok">Entsperren</button></div>
+  </form>
+</dialog>
+
+<!-- Verlauf -->
+<dialog id="verlauf" class="dialog dialog-breit" aria-labelledby="t-verlauf">
+  <div class="dialog-kopf"><h2 id="t-verlauf">Verlauf</h2><button class="rund" data-zu aria-label="Schließen">✕</button></div>
+  <p class="leise">Nur auf diesem Gerät gespeichert. Dateien selbst werden nicht aufbewahrt.</p>
+  <ol class="verlauf-liste" id="verlaufListe"></ol>
+  <div class="dialog-aktionen"><button class="knopf-leise" id="verlaufLeeren">Verlauf löschen</button></div>
+</dialog>
+
+<!-- Hilfe -->
+<dialog id="hilfe" class="dialog dialog-breit" aria-labelledby="t-hilfe">
+  <div class="dialog-kopf"><h2 id="t-hilfe">So funktioniert die Brücke</h2><button class="rund" data-zu aria-label="Schließen">✕</button></div>
+  <ol class="schritte">
+    <li><strong>Goodnotes → Brücke.</strong> In Goodnotes eine Seite oder ein Notizbuch öffnen, <em>Teilen → Exportieren</em>, „PDF“ oder „Bild“ wählen und in <em>Dateien</em> sichern. Hier ablegen. Auf dem iPad geht auch Split View: Seiten direkt herüberziehen.</li>
+    <li><strong>Claude arbeitet.</strong> Modus wählen – Transkribieren, Zusammenfassen, Aufgaben, Lernkarten, Ausarbeiten, Frei fragen. Claude liest Handschrift, Skizzen und Tabellen.</li>
+    <li><strong>Brücke → Goodnotes.</strong> Papier wählen und <em>An Goodnotes senden</em>: Im Teilen-Menü „Goodnotes“ antippen. Das PDF landet als neues Dokument mit Notizrand für deine Handschrift.</li>
+  </ol>
+  <p class="leise">Tipp: Über Safari → Teilen → „Zum Home-Bildschirm“ wird die Brücke zur App.</p>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" defer></script>
+<script src="app.js" type="module"></script>
+</body>
+</html>
