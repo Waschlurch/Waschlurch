@@ -17,7 +17,7 @@ import { MODEL, MODI, systemPrompt } from '../lib/prompts.mjs';
 import { WERKZEUGE } from '../lib/werkzeuge.mjs';
 import { antworte, zugangOk, ratenGrenze, absender, koerperLesen } from '../lib/guard.mjs';
 
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 
 const ROLLEN = new Set(['user', 'assistant']);
 const BLOECKE = new Set(['text', 'image', 'document', 'tool_use', 'tool_result', 'thinking', 'redacted_thinking', 'fallback']);

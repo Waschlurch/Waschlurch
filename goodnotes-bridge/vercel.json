@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/chat.mjs": {
-      "maxDuration": 300
+      "maxDuration": 60
     },
     "api/pdf.mjs": {
       "maxDuration": 30
