@@ -39,6 +39,7 @@ async function tx(modus, arbeit){
 }
 
 export const alleNotizen = () => tx('readonly', s => s.getAll());
+export const eintragSpeichern = e => tx('readwrite', s => s.put(e));
 export const notiz = pfad => tx('readonly', s => s.get(pfad));
 export const loesche = pfad => tx('readwrite', s => s.delete(pfad));
 export const leeren = () => tx('readwrite', s => s.clear());
@@ -49,6 +50,32 @@ export async function ordnerLoeschen(pfad){
   for(const n of raus) geoeffnet.delete(n.pfad);
   return raus.length;
 }
+
+/** Ersetzt alle Einträge einer Quelle durch eine neue Liste.
+    Bereits geladene Dateien bleiben erhalten, solange sie aktuell sind. */
+export async function eintraegeErsetzen(quelle, liste){
+  const alt = new Map((await alleNotizen()).filter(e => e.quelle === quelle).map(e => [e.pfad, e]));
+  let neu = 0, behalten = 0;
+  const kommen = new Set(liste.map(e => e.pfad));
+  await tx('readwrite', s => {
+    for(const [pfad] of alt) if(!kommen.has(pfad)) s.delete(pfad);
+    for(const e of liste){
+      const a = alt.get(e.pfad);
+      if(a && a.geaendert === e.geaendert && a.blob){
+        behalten++; s.put({ ...e, blob: a.blob, seiten: a.seiten || e.seiten, zwischenstand: a.zwischenstand });
+      } else {
+        if(!a) neu++;
+        s.put({ ...e, seiten: a && a.geaendert === e.geaendert ? (a.seiten || 0) : 0 });
+      }
+    }
+  });
+  for(const e of liste) geoeffnet.delete(e.pfad);
+  return { neu, behalten };
+}
+
+/* Wird von drive.js gesetzt: holt fehlende Dateien aus der Cloud. */
+let lader = null;
+export function setzeLader(f){ lader = f; }
 
 /* ── pdf.js ────────────────────────────────────────────── */
 let pdfP;
@@ -68,10 +95,10 @@ export function pdfjs(){
 
 /* Geöffnete PDFs bleiben kurz im Speicher, damit Seite 2 nicht erneut lädt. */
 const geoeffnet = new Map();
-async function pdfOeffnen(eintrag){
+async function pdfOeffnen(eintrag, blob){
   if(geoeffnet.has(eintrag.pfad)) return geoeffnet.get(eintrag.pfad);
   const lib = await pdfjs();
-  const doc = await lib.getDocument({ data: await eintrag.blob.arrayBuffer() }).promise;
+  const doc = await lib.getDocument({ data: await blob.arrayBuffer() }).promise;
   if(geoeffnet.size > 3){ const [alt, d] = geoeffnet.entries().next().value; geoeffnet.delete(alt); d.then?.(x => x.destroy?.()); }
   geoeffnet.set(eintrag.pfad, doc);
   return doc;
@@ -128,7 +155,7 @@ export async function aufnehmen(liste, bericht = () => {}){
     const eintrag = {
       pfad, name: teile.pop(), ordner: teile.join('/'),
       typ: istPdf ? 'application/pdf' : (datei.type || 'image/jpeg'),
-      blob: datei, seiten, groesse: datei.size, zeit: Date.now(),
+      quelle: 'geraet', blob: datei, seiten, groesse: datei.size, zeit: Date.now(),
     };
     await tx('readwrite', s => s.put(eintrag));
     neu.push(eintrag);
@@ -171,12 +198,18 @@ export async function seitenLesen(pfad, von = 1, bis = 0, melde = () => {}){
   const e = await notiz(pfad);
   if(!e) throw Object.assign(new Error(`Kein Notizbuch unter „${pfad}“.`), { sanft: true });
 
+  let blob = e.blob;
+  const veraltet = e.quelle === 'drive' && e.zwischenstand !== e.geaendert;
+  if((!blob || veraltet) && lader) blob = await lader(e, t => melde(0, 0, t)) || blob;
+  if(!blob) throw Object.assign(new Error(`„${pfad}“ ließ sich nicht öffnen.`), { sanft: true });
+
   if(e.typ !== 'application/pdf'){
     melde(1, 1);
-    return { seiten: [{ nummer: 1, data: await bildAlsJpeg(e.blob) }], gesamt: 1, eintrag: e };
+    return { seiten: [{ nummer: 1, data: await bildAlsJpeg(blob) }], gesamt: 1, eintrag: e };
   }
-  const doc = await pdfOeffnen(e);
+  const doc = await pdfOeffnen(e, blob);
   const gesamt = doc.numPages;
+  if(e.seiten !== gesamt) await eintragSpeichern({ ...e, blob, seiten: gesamt });
   const start = Math.max(1, Math.min(von || 1, gesamt));
   const ende = Math.min(gesamt, start + SEITEN_PRO_AUFRUF - 1, (bis && bis >= start) ? bis : Infinity);
   const seiten = [];

@@ -4,6 +4,7 @@ import { MODI, nutzerText } from './lib/prompts.mjs';
 import { ausDrop, aufnehmen, alleNotizen, baum, ordnerFinden, ordnerLoeschen,
          leeren as bibLeerenAlles, groesseText, istBrauchbar } from './bibliothek.js';
 import { werkzeugAusfuehren } from './werkzeuge-client.js';
+import * as drive from './drive.js';
 
 const $ = s => document.querySelector(s);
 const KOERPER_GRENZE = 3_400_000;   // ab hier wird der Verlauf verdichtet
@@ -207,6 +208,105 @@ function dateiZeile(f, tiefe){
   zahl.textContent = f.seiten ? `${f.seiten} S.` : groesseText(f.groesse);
   l.append(hk, name, zahl);
   return l;
+}
+
+/* ── Google Drive ──────────────────────────────────────── */
+const dlg = $('#drive');
+$('#driveAuf').addEventListener('click', async () => {
+  $('#gClient').value = drive.clientIdLesen();
+  $('#gHerkunft').textContent = location.origin;
+  gFehler(''); $('#gOrdner').hidden = true;
+  $('#gTrennen').hidden = !drive.verbunden();
+  $('#gVerbinden').textContent = drive.verbunden() ? 'Anderen Ordner wählen' : 'Mit Google anmelden';
+  dlg.showModal();
+  if(!$('#gClient').value){
+    const vomServer = await drive.clientIdVomServer();
+    if(vomServer) $('#gClient').value = vomServer;
+  }
+});
+function gFehler(text){ const p = $('#gFehler'); p.hidden = !text; p.textContent = text || ''; }
+
+$('#gVerbinden').addEventListener('click', async e => {
+  const knopf = e.currentTarget;
+  drive.clientIdSetzen($('#gClient').value);
+  if(!drive.clientIdLesen()) return gFehler('Bitte zuerst die Client-ID einsetzen.');
+  knopf.disabled = true; gFehler('');
+  try {
+    await drive.anmelden();
+    const ordner = await drive.ordnerVorschlagen();
+    const box = $('#gOrdner'); box.replaceChildren(); box.hidden = false;
+    if(!ordner.length){
+      const p = document.createElement('p'); p.className = 'leise'; p.style.padding = '10px';
+      p.textContent = 'In diesem Google-Konto liegt kein Ordner. Schalte in Goodnotes zuerst das automatische Backup ein.';
+      box.append(p);
+    }
+    for(const o of ordner){
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = o.name;
+      b.addEventListener('click', async () => {
+        await drive.wurzelWaehlen(o);
+        dlg.close();
+        await driveEinlesen();
+      });
+      box.append(b);
+    }
+  } catch(err){
+    gFehler(err?.code === 'client_id' ? 'Die Client-ID fehlt oder ist ungültig.' : (err?.message || 'Die Anmeldung ist fehlgeschlagen.'));
+  }
+  knopf.disabled = false;
+});
+
+$('#gTrennen').addEventListener('click', async () => {
+  drive.abmelden();
+  await bibEintraegeDerQuelleLoeschen();
+  dlg.close(); await bibliothekZeigen(); driveBandZeigen();
+  toast('Google Drive getrennt. Die Notizbücher sind aus der Bibliothek entfernt.');
+});
+async function bibEintraegeDerQuelleLoeschen(){
+  const { eintraegeErsetzen } = await import('./bibliothek.js');
+  await eintraegeErsetzen('drive', []);
+}
+
+$('#aktualisieren').addEventListener('click', () => driveEinlesen());
+
+async function driveEinlesen({ still = false } = {}){
+  if(!drive.verbunden()) return;
+  try {
+    status('Liest Google Drive …', true);
+    const b = await drive.einlesen(t => status(t, true));
+    await bibliothekZeigen();
+    if(!still){                       // nach dem Verbinden die oberste Ebene zeigen
+      for(const e of zustand.eintraege) if(e.ordner) zustand.offen.add(e.ordner.split('/')[0]);
+      baumZeichnen();
+    }
+    status('');
+    driveBandZeigen('gerade abgeglichen');
+    if(!still || b.neu) toast(`${b.gesamt} Notizbücher aus „${b.wurzel.name}“${b.neu ? `, davon ${b.neu} neu` : ''}.`);
+  } catch(e){
+    status('');
+    if(still) driveBandZeigen('Abgleich steht aus – tippe auf „Aktualisieren“.');
+    else gFehlerOderStatus(e);
+  }
+}
+function gFehlerOderStatus(e){
+  const text = e?.message || 'Google Drive ließ sich nicht lesen.';
+  if(dlg.open) gFehler(text); else status(text, false, true);
+}
+
+function driveBandZeigen(zusatz){
+  const band = $('#driveBand');
+  const w = drive.wurzelLesen();
+  band.hidden = !w;
+  $('#aktualisieren').hidden = !w;
+  if(!w) return;
+  band.replaceChildren();
+  const t = document.createElement('span');
+  const b0 = document.createElement('b'); b0.textContent = w.name;
+  t.append('Google Drive · ', b0, zusatz ? ' · ' : '');
+  band.append(t);
+  if(zusatz){ const z = document.createElement('span'); z.className = 'leise'; z.textContent = zusatz; band.append(z); }
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Ändern';
+  b.addEventListener('click', () => $('#driveAuf').click());
+  band.append(b);
 }
 
 /* ── Gespräch ──────────────────────────────────────────── */
@@ -563,7 +663,9 @@ function toast(text){
 
 /* ── Start ─────────────────────────────────────────────── */
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-bibliothekZeigen().catch(e => { console.error(e); status('Die Bibliothek ließ sich nicht öffnen.', false, true); });
+bibliothekZeigen()
+  .then(() => { driveBandZeigen(); if(drive.verbunden()) return driveEinlesen({ still: true }); })
+  .catch(e => { console.error(e); status('Die Bibliothek ließ sich nicht öffnen.', false, true); });
 
 if(new URLSearchParams(location.search).has('geteilt') && 'caches' in window){
   (async () => {

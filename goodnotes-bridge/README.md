@@ -6,8 +6,13 @@ Eine Web-App (PWA), die ganze **Goodnotes-Ordner** aufnimmt und Claude darin les
 Goodnotes-Ordner  →  Bibliothek auf dem Gerät  →  Claude blättert selbst  →  PDF zurück in Goodnotes
 ```
 
-1. **Bibliothek füllen.** Ganze Ordner samt Unterordnern hineinziehen oder über „Ordner laden“ wählen.
-   Die Dateien liegen in IndexedDB auf dem Gerät und sind beim nächsten Öffnen noch da.
+1. **Bibliothek füllen.** Zwei Wege:
+   - **Google Drive (lebende Verbindung).** Goodnotes sichert per *Auto-Backup* selbst als PDF nach Drive;
+     Ink Bridge liest dieses Verzeichnis und gleicht es bei jedem Start ab. Kein Export von Hand.
+     Gelesen werden nur Verzeichnisdaten; eine Datei wird erst heruntergeladen, wenn Claude eine Seite daraus braucht,
+     und bleibt dann zwischengespeichert, bis Goodnotes sie ändert.
+   - **Ordner vom Gerät.** Ganze Ordner samt Unterordnern hineinziehen oder über „Ordner laden“ wählen.
+   Beides liegt in IndexedDB auf dem Gerät und ist beim nächsten Öffnen noch da.
 2. **Claude arbeiten lassen.** Claude bekommt drei Werkzeuge und sucht sich selbst, was es braucht:
    `ordner_auflisten`, `notizen_suchen`, `notiz_lesen`. Man sieht live, welches Notizbuch es gerade öffnet.
    Angehakte Notizbücher schränken die Arbeit ein, nötig ist das nicht.
@@ -32,6 +37,8 @@ Claude kann sie bei Bedarf erneut lesen.
 |---|---|
 | `index.html`, `app.css`, `app.js` | Oberfläche ohne Build-Schritt, Gesprächsansicht, Werkzeugschleife |
 | `bibliothek.js` | Ordneraufnahme (auch per Drag & Drop), IndexedDB, Seiten-Rendering |
+| `drive.js` | Google Drive: Anmeldung im Browser, Verzeichnis einlesen, Dateien bei Bedarf holen |
+| `api/konfig.mjs` | reicht die öffentliche Google-Client-ID an den Browser |
 | `werkzeuge-client.js` | führt die Werkzeuge im Browser auf der Bibliothek aus |
 | `lib/werkzeuge.mjs` | Werkzeugbeschreibungen (Server und Browser lesen dieselbe Datei) |
 | `lib/prompts.mjs` | Modi, Anweisungen, Effort pro Modus – wird auch im Browser geladen |
@@ -57,6 +64,7 @@ npm test                                 # 60 Prüfungen
    - `ANTHROPIC_API_KEY` – Schlüssel von console.anthropic.com
    - `BRIDGE_PASSCODE` – frei gewählter Zugangscode. **Pflicht**: ohne ihn lehnt die Brücke in Produktion
      jede Anfrage ab, damit niemand Fremdes den Schlüssel verbraucht.
+   - `GOOGLE_CLIENT_ID` – optional. Ist sie gesetzt, muss die Client-ID nicht im Browser eingetragen werden.
 3. Deployen, am iPad in Safari öffnen, *Teilen → Zum Home-Bildschirm*.
 
 Die Website im Repository-Stamm bleibt davon unberührt.
@@ -67,3 +75,15 @@ Die Website im Repository-Stamm bleibt davon unberührt.
 - Ein Durchgang ist auf 40 Werkzeugrunden begrenzt, damit eine zu weite Frage nicht die halbe Bibliothek liest.
 - Das PDF nutzt Standardschriften; Emoji und seltene Sonderzeichen werden ersetzt (→ wird zu „->“).
 - Gespräche und erzeugte Antworten liegen nur im Browser des Geräts.
+
+## Google Drive einrichten
+
+1. **Goodnotes:** Menü → *Cloud & Backup* → *Automatisches Backup* → Google Drive, Format **PDF**.
+2. **Google Cloud Console** (console.cloud.google.com), einmalig:
+   - Projekt anlegen, unter *APIs & Dienste* die **Google Drive API** aktivieren.
+   - *OAuth-Zustimmungsbildschirm*: extern, eigene Mailadresse als Testnutzer eintragen.
+   - *Anmeldedaten → OAuth-Client-ID → Webanwendung*: als autorisierte JavaScript-Herkunft die Adresse
+     der App eintragen (z. B. `https://…vercel.app`), speichern, Client-ID kopieren.
+3. **In der App:** „Google Drive“ → Client-ID einsetzen → anmelden → Backup-Ordner wählen.
+
+Der Zugriff läuft allein im Browser mit dem Bereich `drive.readonly`; der Server sieht weder Token noch Dateien.

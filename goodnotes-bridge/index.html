@@ -55,6 +55,8 @@
         <span class="nummer">01</span>
         <h2 id="t-bib">Deine Bibliothek</h2>
         <div class="werkzeuge">
+          <button class="knopf-leise" id="driveAuf">Google Drive</button>
+          <button class="knopf-leise" id="aktualisieren" hidden>Aktualisieren</button>
           <button class="knopf-leise" id="ordnerAuf">Ordner laden</button>
           <button class="knopf-leise" id="dateienAuf">Dateien</button>
         </div>
@@ -62,6 +64,8 @@
 
       <input type="file" id="ordnerwahl" webkitdirectory directory multiple hidden>
       <input type="file" id="dateiwahl" accept="application/pdf,image/*" multiple hidden>
+
+      <p class="drive-band" id="driveBand" hidden></p>
 
       <div class="ablage" id="ablage" tabindex="0" role="button" aria-label="Goodnotes-Ordner hier ablegen">
         <span class="ablage-blatt" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -121,7 +125,7 @@
       <div class="blatt" id="blatt" tabindex="0" aria-label="Gespräch mit Claude">
         <div class="leer" id="leer">
           <p class="leer-gross">Noch ist das Blatt leer.</p>
-          <p class="leise">Zieh links deine Goodnotes-Ordner hinein. Claude durchsucht sie dann selbst – du musst nicht einmal sagen, in welchem Notizbuch etwas steht.</p>
+          <p class="leise">Verbinde links Google Drive oder zieh deine Goodnotes-Ordner hinein. Claude durchsucht sie dann selbst – du musst nicht einmal sagen, in welchem Notizbuch etwas steht.</p>
         </div>
         <div class="lauf" id="lauf"></div>
         <textarea class="md-edit" id="editor" hidden aria-label="Markdown bearbeiten"></textarea>
@@ -176,6 +180,25 @@
     <p class="fehler" id="zugangFehler" hidden></p>
     <div class="dialog-aktionen"><button class="los los-klein" value="ok">Entsperren</button></div>
   </form>
+</dialog>
+
+<dialog id="drive" class="dialog dialog-breit" aria-labelledby="t-drive">
+  <div class="dialog-kopf"><h2 id="t-drive">Google Drive verbinden</h2><button class="rund" data-zu aria-label="Schließen">✕</button></div>
+  <p class="leise">Goodnotes sichert deine Notizbücher von selbst in die Cloud. Ist dieser Ordner hier verbunden, sieht Claude immer den neuesten Stand – ohne dass du etwas exportierst.</p>
+  <ol class="schritte">
+    <li><strong>In Goodnotes einschalten:</strong> Menü → <em>Cloud &amp; Backup</em> → <em>Automatisches Backup</em> → Google Drive, Format <strong>PDF</strong>.</li>
+    <li><strong>Einmalig einen Zugang anlegen:</strong> in der Google Cloud Console eine OAuth-Client-ID vom Typ „Web“ erstellen und diese Adresse als erlaubte Herkunft eintragen: <code id="gHerkunft"></code></li>
+    <li><strong>Client-ID hier einsetzen</strong> und anmelden. Ink Bridge darf dann ausschließlich lesen.</li>
+  </ol>
+  <label class="feld">Google-Client-ID
+    <input id="gClient" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="1234-abc.apps.googleusercontent.com">
+  </label>
+  <p class="fehler" id="gFehler" hidden></p>
+  <div class="g-ordner" id="gOrdner" hidden></div>
+  <div class="dialog-aktionen zwei">
+    <button class="knopf-leise" id="gTrennen" hidden>Verbindung trennen</button>
+    <button class="los los-klein" id="gVerbinden">Mit Google anmelden</button>
+  </div>
 </dialog>
 
 <dialog id="verlauf" class="dialog dialog-breit" aria-labelledby="t-verlauf">

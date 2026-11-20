@@ -283,3 +283,20 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--akzent);
 
 .status .balken{flex:1;max-width:120px;height:3px;border-radius:2px;background:var(--linie);position:relative;overflow:hidden}
 .status .balken::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--p,0%);background:var(--akzent);transition:width .25s var(--ease)}
+
+/* ── Google Drive ─────────────────────── */
+.drive-band{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:9px 13px;border-radius:999px;background:var(--akzent-weich);color:var(--tinte);font-size:13px}
+.drive-band::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.drive-band.band-alt::before{background:var(--leise)}
+.drive-band b{font-weight:600}
+.drive-band button{margin-left:auto;border:0;background:none;color:var(--akzent);cursor:pointer;font-size:13px;padding:2px 4px}
+.g-ordner{display:grid;gap:6px;max-height:40vh;overflow:auto;margin:14px 0 0;padding:4px;border:1px solid var(--linie);border-radius:var(--r-klein)}
+.g-ordner button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 13px;border:0;border-radius:10px;background:transparent;cursor:pointer;font-size:14px}
+.g-ordner button:hover{background:var(--akzent-weich)}
+.g-ordner button::before{content:"";width:16px;height:13px;border-radius:2px 4px 4px 4px;background:var(--akzent);opacity:.75;flex:none}
+.dialog .feld{margin-top:16px}
+.dialog .feld input{background:var(--papier)}
+.dialog code{font:12.5px var(--mono);background:var(--papier);border:1px solid var(--linie);padding:2px 6px;border-radius:6px;word-break:break-all}
+.dialog-aktionen.zwei{justify-content:space-between;gap:10px}
+.werkzeuge{flex-wrap:wrap;justify-content:flex-end}
+.werkzeuge button{white-space:nowrap}

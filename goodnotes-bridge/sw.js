@@ -1,6 +1,6 @@
 /* Service Worker: Offline-Hülle + Empfang geteilter Dateien (Android/Chromium). */
 const HUELLE = 'ib-huelle-v1';
-const DATEIEN = ['./', 'index.html', 'app.css', 'app.js', 'bibliothek.js', 'werkzeuge-client.js',
+const DATEIEN = ['./', 'index.html', 'app.css', 'app.js', 'bibliothek.js', 'werkzeuge-client.js', 'drive.js',
   'lib/prompts.mjs', 'icon.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', e => {

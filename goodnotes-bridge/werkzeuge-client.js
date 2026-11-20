@@ -62,7 +62,7 @@ async function lesen(aufruf, melde){
   const { pfad, von = 1, bis = 0 } = aufruf.input || {};
   const name = String(pfad || '').split('/').pop();
   const { seiten, gesamt } = await seitenLesen(String(pfad || ''), Number(von) || 1, Number(bis) || 0,
-    (n, ges) => melde(`Liest „${name}“ – Seite ${n} von ${ges}`, { n, ges }));
+    (n, ges, hinweis) => melde(hinweis || `Liest „${name}“ – Seite ${n} von ${ges}`, hinweis ? null : { n, ges }));
   if(!seiten.length) return ergebnis(aufruf, [text(`„${pfad}“ hat keine Seite in diesem Bereich (insgesamt ${gesamt}).`)], true);
 
   const erste = seiten[0].nummer, letzte = seiten.at(-1).nummer;
