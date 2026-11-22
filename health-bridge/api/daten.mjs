@@ -1,7 +1,7 @@
 /* GET /api/daten?tage=30 – Rohbasis für das Dashboard; gerechnet wird im Browser mit /kern (Zoom ohne Nachladen).
    Zugang: x-puls-code. ?verbindung=1 liefert zusätzlich die Adressen für iPhone und Claude. */
 
-import { antworte, passcodeOk, ratenGrenze, absender } from '../lib/guard.mjs';
+import { antworte, passcodeOk, ratenGrenze, absender, codeZuKurz, MIN_CODE } from '../lib/guard.mjs';
 import { basisLaden, letzterSync, zeitraum } from '../lib/abfragen.mjs';
 import { laden as protokollLaden } from '../lib/protokoll.mjs';
 import { KATALOG, BEREICHE } from '../lib/katalog.mjs';
@@ -22,6 +22,7 @@ export const katalogKurz = () => Object.fromEntries(Object.entries(KATALOG).map(
 export default async function handler(req, res){
   if(req.method !== 'GET') return antworte(res, 405, { code: 'methode', message: 'Nur GET.' }, { Allow: 'GET' });
   if(!ratenGrenze('daten:' + absender(req), 60)) return antworte(res, 429, { code: 'zu_oft', message: 'Zu viele Anfragen.' });
+  if(codeZuKurz()) return antworte(res, 503, { code: 'code_zu_kurz', message: `Sicherheit: PULS_PASSCODE muss mindestens ${MIN_CODE} Zeichen haben (PULS_TOKEN mindestens 24).` });
   if(!passcodeOk(req)) return antworte(res, 401, { code: 'zugang', message: 'Zugangscode fehlt oder ist falsch.' });
   const url = new URL(req.url, 'http://x');
   try {

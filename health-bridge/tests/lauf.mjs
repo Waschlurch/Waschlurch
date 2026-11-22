@@ -128,6 +128,10 @@ pruefe('Bearer-Token', tokenOk(req({ authorization: 'Bearer tok-123' })));
 pruefe('Token in URL', tokenOk(req({}, '/api/mcp?key=tok-123')));
 pruefe('Falsches Token abgelehnt', !tokenOk(req({ authorization: 'Bearer x' })) && !tokenOk(req({})));
 pruefe('Passcode', passcodeOk(req({ 'x-puls-code': 'code' })) && !passcodeOk(req({ 'x-puls-code': 'nein' })));
+pruefe('Zu kurzer Code/Token in Produktion gesperrt', !passcodeOk(req({ 'x-puls-code': 'kurz' }), { VERCEL: '1', PULS_PASSCODE: 'kurz' }) && passcodeOk(req({ 'x-puls-code': 'lang-genug-123' }), { VERCEL: '1', PULS_PASSCODE: 'lang-genug-123' })
+  && !tokenOk(req({ authorization: 'Bearer abc' }), { VERCEL: '1', PULS_TOKEN: 'abc' }));
+{ const rls = await q(`select relname, relrowsecurity from pg_class where relname in ('messwerte','fotos','protokoll','einstellungen') and relkind = 'r'`);
+  pruefe('Row Level Security auf allen Datentabellen aktiv', rls.length === 4 && rls.every(r => r.relrowsecurity === true || r.relrowsecurity === 't'), rls); }
 pruefe('Ohne Werte in Produktion gesperrt', !tokenOk(req({}), { VERCEL: '1' }) && !passcodeOk(req({}), { NODE_ENV: 'production' }));
 
 block('API');

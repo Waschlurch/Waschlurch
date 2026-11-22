@@ -186,6 +186,8 @@ Deutsche und englische Namen werden beide erkannt („Schritte“ oder `step_cou
 Probier zum Beispiel: *„Wie war mein Schlaf diese Woche im Vergleich zur letzten, und hängt er mit meinem Training zusammen?“*
 
 ## Sicherheit
+- **Supabase-Data-API gesperrt:** Supabase stellt Tabellen im Schema `public` sonst über seine öffentliche REST-Schnittstelle bereit. Puls schaltet deshalb auf allen Tabellen Row Level Security ein, ohne Freigaberegeln, und entzieht den Rollen `anon` und `authenticated` alle Rechte. Nur Puls selbst greift als Eigentümer über `DATABASE_URL` zu. Ein Test prüft, dass `anon` keinen Zugriff hat.
+- **Mindestlängen:** In Produktion muss `PULS_PASSCODE` mindestens 10 Zeichen haben und `PULS_TOKEN` mindestens 24, sonst lehnt Puls alles ab.
 - Gesundheitsdaten sind sensibel. Die Connector-URL enthält den Token, behandle sie also wie ein Passwort. Ist sie in falsche Hände geraten, setzt du in Vercel einen neuen `PULS_TOKEN` und trägst die neue Adresse am iPhone und in Claude ein.
 - Ohne `PULS_TOKEN` oder `PULS_PASSCODE` lehnt Puls in Produktion jede Anfrage ab.
 - Die Daten liegen nur in deiner eigenen Datenbank. Claude liest sie, wenn du im Chat danach fragst. Was im Gespräch landet, gilt dann wie jede andere Nachricht an Claude.

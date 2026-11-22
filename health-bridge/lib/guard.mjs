@@ -27,14 +27,20 @@ function url(req){ return new URL(req.url || '/', 'http://x'); }
 export function tokenOk(req, env = process.env){
   const soll = env.PULS_TOKEN;
   if(!soll) return lokal(env);
+  if(!lokal(env) && soll.length < 24) return false; // Token muss lang und zufällig sein
   const auth = String(req.headers.authorization || '');
   const ist = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : req.headers['x-puls-token'] || url(req).searchParams.get('key') || '';
   return !!ist && gleich(ist, soll);
 }
 
+export const MIN_CODE = 10;
+/** In Produktion muss der Zugangscode mindestens 10 Zeichen haben – sonst wird alles abgelehnt. */
+export const codeZuKurz = (env = process.env) => !lokal(env) && (!env.PULS_PASSCODE || env.PULS_PASSCODE.length < MIN_CODE);
+
 export function passcodeOk(req, env = process.env){
   const soll = env.PULS_PASSCODE;
   if(!soll) return lokal(env);
+  if(codeZuKurz(env)) return false;
   return gleich(req.headers['x-puls-code'] || '', soll);
 }
 

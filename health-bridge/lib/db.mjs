@@ -92,6 +92,20 @@ create table if not exists syncs (
   format text,
   messwerte int, naechte int, workouts int, verworfen int
 );
+
+-- Sicherheit: Supabase stellt Tabellen im Schema „public“ sonst über die öffentliche Data-API bereit.
+-- Row Level Security ohne Regeln sperrt jeden Zugriff über diese API; Puls selbst verbindet sich als Eigentümer.
+do $$
+declare t text;
+begin
+  foreach t in array array['messwerte','schlaf_naechte','workouts','einstellungen','protokoll','ki_berichte','fotos','formchecks','syncs'] loop
+    execute format('alter table %I enable row level security', t);
+  end loop;
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    execute 'revoke all on messwerte, schlaf_naechte, workouts, einstellungen, protokoll, ki_berichte, fotos, formchecks, syncs from anon, authenticated';
+    execute 'revoke all on all sequences in schema public from anon, authenticated';
+  end if;
+end $$;
 `;
 
 let instanz = null;
@@ -104,6 +118,7 @@ export async function db(){
     const postgres = (await import('postgres')).default;
     const sql = postgres(url, { prepare: false, max: 1, idle_timeout: 20, connect_timeout: 10, onnotice: () => {} });
     q = (text, params = []) => sql.unsafe(text, params);
+    q.exec = t => sql.unsafe(t).simple(); // mehrere Anweisungen inkl. DO-Block in einem Rutsch
   } else {
     if(process.env.VERCEL) throw Object.assign(new Error('DATABASE_URL fehlt'), { status: 503, code: 'keine_datenbank' });
     const { PGlite } = await import('@electric-sql/pglite');
@@ -111,8 +126,7 @@ export async function db(){
     q = async (text, params = []) => (await pg.query(text, params)).rows;
     q.exec = t => pg.exec(t);
   }
-  if(q.exec) await q.exec(SCHEMA);
-  else if(process.env.PULS_SCHEMA_AUTO !== '0') for(const teil of SCHEMA.split(';').map(s => s.trim()).filter(Boolean)) await q(teil);
+  if(process.env.PULS_SCHEMA_AUTO !== '0') await q.exec(SCHEMA);
   instanz = { q };
   return instanz;
 }
