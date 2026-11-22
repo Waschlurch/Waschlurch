@@ -729,3 +729,16 @@ legend + *{ clear:both; }
 .seg button{ white-space:nowrap; }
 @media (max-width: 620px){ .seg button{ padding:6px 7px; font-size:12.5px; min-height:30px; } .menue-knopf{ padding:7px 10px 7px 12px; font-size:13px; } }
 @media (max-width: 620px){ .marke{ display:none; } .kopf-innen{ gap:8px; } .menue-knopf{ max-width:none; flex:1; } .menue-wrap{ flex:1; min-width:0; } }
+
+/* ── Menü rechts, auf allen Größen ── */
+.sprung{ display:none !important; }
+.menue-wrap{ display:block !important; flex:none !important; min-width:0; }
+.menue{ left:auto; right:0; }
+.menue-knopf{ max-width:200px; }
+@media (max-width: 620px){
+  .marke{ display:flex !important; }
+  .kopf-innen{ gap:8px; }
+  .kopf-rechts{ gap:6px; }
+  .menue-knopf{ flex:none !important; max-width:34vw; padding:7px 9px 7px 11px; }
+  .seg button{ padding:6px 6px; }
+}
