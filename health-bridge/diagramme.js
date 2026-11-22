@@ -8,6 +8,8 @@ const MON = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Ok
 
 export const tagKurz = (t, lang = false) => { const d = new Date(t + 'T12:00:00Z'); return lang ? `${WT[d.getUTCDay()]}, ${d.getUTCDate()}. ${MON[d.getUTCMonth()]}` : `${d.getUTCDate()}.${d.getUTCMonth() + 1}.`; };
 const wt = t => WT[new Date(t + 'T12:00:00Z').getUTCDay()];
+const istDatum = t => /^\d{4}-\d{2}-\d{2}$/.test(t);
+const achsText = (t, n) => !istDatum(t) ? t : n <= 10 ? wt(t) : tagKurz(t);
 
 function schoen(max, min = 0, schritte = 3){
   if(max === min) max = min + 1;
@@ -42,7 +44,7 @@ function geruest(el, { tage, hoehe = 220, y, yFormat = kompakt, links = 40, zeic
   const jede = Math.ceil(tage.length / Math.max(2, Math.floor(pw / 54)));
   tage.forEach((t, i) => {
     if((tage.length - 1 - i) % jede) return;
-    s += `<text class="ax" x="${X(i)}" y="${hoehe - 8}" text-anchor="middle">${tage.length <= 10 ? wt(t) : tagKurz(t)}</text>`;
+    s += `<text class="ax" x="${X(i)}" y="${hoehe - 8}" text-anchor="middle">${esc(achsText(t, tage.length))}</text>`;
   });
   s += `<g class="marks">${zeichne({ X, Y, band, ph, oben, links, breite, rechts })}</g>`;
   s += `<line class="cursor" x1="0" x2="0" y1="${oben}" y2="${oben + ph}" opacity="0"/>`;
@@ -65,7 +67,7 @@ function geruest(el, { tage, hoehe = 220, y, yFormat = kompakt, links = 40, zeic
 }
 
 const zeile = (farbe, name, wert) => `<div class="tt-z">${farbe ? `<i style="background:${farbe}"></i>` : ''}<span>${esc(name)}</span><b>${esc(wert)}</b></div>`;
-const kopf = t => `<div class="tt-k">${esc(tagKurz(t, true))}</div>`;
+const kopf = t => `<div class="tt-k">${esc(istDatum(t) ? tagKurz(t, true) : t)}</div>`;
 
 /** Balken: werte[i] je Tag (null = keine Daten). ziel = gestrichelte Linie. */
 export function balken(el, { tage, werte, farbe, ziel, format, name, einheit = '', label }){
@@ -115,8 +117,8 @@ export function stapel(el, { tage, teile, format, label, ziel }){
 }
 
 /** Linie (2 px) mit optionaler Min/Max-Spanne als Fläche; Lücken bleiben Lücken. */
-export function linie(el, { tage, werte, spanne, farbe, format, name, einheit = '', label, null: nullBasis = false }){
-  const alle = [...werte, ...(spanne || []).flatMap(s => s ? [s.min, s.max] : [])].filter(v => v != null);
+export function linie(el, { tage, werte, spanne, punkte, farbe, format, name, einheit = '', label, null: nullBasis = false, punkteName = 'Messung' }){
+  const alle = [...werte, ...(punkte || []), ...(spanne || []).flatMap(s => s ? [s.min, s.max] : [])].filter(v => v != null);
   if(!alle.length) return leer(el, label);
   let lo = Math.min(...alle), hi = Math.max(...alle); const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.05 || 1;
   const y = schoen(hi + pad, nullBasis ? 0 : lo - pad);
@@ -129,17 +131,18 @@ export function linie(el, { tage, werte, spanne, farbe, format, name, einheit = 
         if(cur.length) seg.push(cur);
         for(const c of seg) s += `<path class="band" fill="${farbe}" d="M${c.map(([i, p]) => `${X(i)},${Y(p.max)}`).join('L')}L${[...c].reverse().map(([i, p]) => `${X(i)},${Y(p.min)}`).join('L')}Z"/>`;
       }
+      if(punkte) punkte.forEach((v, i) => { if(v != null) s += `<circle class="roh" cx="${X(i)}" cy="${Y(v)}" r="2.6" fill="${farbe}"/>`; });
       let d = '', offen = false;
       const verbinden = werte.filter(v => v != null).length < werte.length * 0.8; // spärliche Werte (Gewicht) verbinden
       werte.forEach((v, i) => { if(v == null){ offen = offen && verbinden; return; } d += (offen ? 'L' : 'M') + X(i) + ',' + Y(v); offen = true; });
       s += `<path class="linie" stroke="${farbe}" d="${d}" pathLength="1"/>`;
-      werte.forEach((v, i) => { if(v != null) s += `<circle data-i="${i}" class="pkt" cx="${X(i)}" cy="${Y(v)}" r="${tage.length > 45 ? 0 : 3}" fill="${farbe}"/>`; });
+      werte.forEach((v, i) => { if(v != null) s += `<circle data-i="${i}" class="pkt" cx="${X(i)}" cy="${Y(v)}" r="${tage.length > 45 || punkte ? 0 : 3}" fill="${farbe}"/>`; });
       const letzter = werte.findLastIndex(v => v != null);
       if(letzter >= 0) s += `<circle class="ende" cx="${X(letzter)}" cy="${Y(werte[letzter])}" r="4.5" fill="${farbe}"/>`;
       return s;
     },
     tooltip: i => werte[i] == null ? kopf(tage[i]) + '<div class="tt-leer">Keine Daten</div>' :
-      kopf(tage[i]) + zeile(farbe, name, format(werte[i]) + (einheit ? ' ' + einheit : '')) + (spanne?.[i]?.min != null ? zeile('', 'Spanne', `${format(spanne[i].min)}–${format(spanne[i].max)}`) : ''),
+      kopf(tage[i]) + zeile(farbe, name, format(werte[i]) + (einheit ? ' ' + einheit : '')) + (punkte?.[i] != null ? zeile('', punkteName, format(punkte[i]) + (einheit ? ' ' + einheit : '')) : '') + (spanne?.[i]?.min != null ? zeile('', 'Spanne', `${format(spanne[i].min)}–${format(spanne[i].max)}`) : ''),
   });
 }
 
@@ -175,4 +178,27 @@ export function spark(werte, farbe, b = 96, h = 28){
   const d = v.map(([i, x], k) => (k ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(x).toFixed(1)).join('');
   const [li, lx] = v.at(-1);
   return `<svg class="spark" viewBox="0 0 ${b} ${h}" width="${b}" height="${h}" aria-hidden="true"><path d="${d}" stroke="${farbe}"/><circle cx="${X(li)}" cy="${Y(lx)}" r="2.6" fill="${farbe}"/></svg>`;
+}
+
+/** Divergierende Balken um null: Überschuss nach oben, Defizit nach unten. */
+export function divergierend(el, { tage, werte, farbePlus, farbeMinus, format, einheit = '', label, namePlus = 'Überschuss', nameMinus = 'Defizit' }){
+  const v = werte.filter(x => x != null);
+  if(!v.length) return leer(el, label);
+  const m = Math.max(...v.map(Math.abs), 1);
+  const y = schoen(m, -m, 4);
+  geruest(el, { tage, y, label, yFormat: t => (t > 0 ? '+' : '') + kompakt(t),
+    zeichne: ({ X, Y, band }) => {
+      const b = Math.max(2, Math.min(22, band - 2));
+      let s = `<line class="null" x1="${X(0) - band / 2}" x2="${X(tage.length - 1) + band / 2}" y1="${Y(0)}" y2="${Y(0)}"/>`;
+      werte.forEach((w, i) => {
+        if(w == null || Math.abs(Y(w) - Y(0)) < 0.5) return;
+        const x = X(i) - b / 2, r = Math.min(4, b / 2, Math.abs(Y(w) - Y(0)));
+        if(w > 0){ const t = Y(w), u = Y(0); s += `<path data-i="${i}" fill="${farbePlus}" d="M${x},${u}V${t + r}Q${x},${t} ${x + r},${t}H${x + b - r}Q${x + b},${t} ${x + b},${t + r}V${u}Z"/>`; }
+        else { const t = Y(0), u = Y(w); s += `<path data-i="${i}" class="unten" fill="${farbeMinus}" d="M${x},${t}V${u - r}Q${x},${u} ${x + r},${u}H${x + b - r}Q${x + b},${u} ${x + b},${u - r}V${t}Z"/>`; }
+      });
+      return s;
+    },
+    tooltip: i => werte[i] == null ? kopf(tage[i]) + '<div class="tt-leer">Keine Daten</div>' :
+      kopf(tage[i]) + zeile(werte[i] >= 0 ? farbePlus : farbeMinus, werte[i] >= 0 ? namePlus : nameMinus, (werte[i] > 0 ? '+' : '') + format(werte[i]) + (einheit ? ' ' + einheit : '')),
+  });
 }

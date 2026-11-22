@@ -28,11 +28,13 @@ export function demoNutzlast(tage = 120, seed = 7){
       add('blood_oxygen_saturation', '%', { date: d, qty: +n(96.8, 0.7).toFixed(1), source: 'Apple Watch' });
       if(i % 7 === 3) add('vo2_max', 'ml/(kg·min)', { date: d, qty: +n(44 + trend * 1.5, 0.4).toFixed(1), source: 'Apple Watch' });
       add('mindful_minutes', 'min', { date: d, qty: r() < 0.45 ? Math.round(n(10, 4)) : 0, source: 'Apple Watch' });
-      if(i % 2 === 0){ gewicht += n(-0.04, 0.25); add('weight_body_mass', 'kg', { date: d, qty: +gewicht.toFixed(1), source: 'Waage' }); add('body_fat_percentage', '%', { date: d, qty: +n(19.5 - trend, 0.4).toFixed(1), source: 'Waage' }); }
+      if(i % 2 === 0){ gewicht += n(0.035, 0.22); add('weight_body_mass', 'kg', { date: d, qty: +gewicht.toFixed(1), source: 'Waage' }); add('body_fat_percentage', '%', { date: d, qty: +n(15.5 + trend * 0.4, 0.4).toFixed(1), source: 'Waage' }); }
+      if(i % 7 === 0) add('waist_circumference', 'cm', { date: d, qty: +n(82 + trend * 0.5, 0.3).toFixed(1), source: 'Manuell' });
+      if(i === tage - 1) add('height', 'cm', { date: d, qty: 182, source: 'Manuell' });
       if(r() < 0.85){
-        const kcal = Math.round(n(wochenende ? 2550 : 2250, 260));
+        const kcal = Math.round(n(wochenende ? 3050 : 2850, 220));
         add('dietary_energy', 'kcal', { date: d, qty: kcal, source: 'Yazio' });
-        add('protein', 'g', { date: d, qty: Math.round(kcal * n(0.27, 0.04) / 4), source: 'Yazio' });
+        add('protein', 'g', { date: d, qty: Math.round(kcal * n(0.24, 0.03) / 4), source: 'Yazio' });
         add('carbohydrates', 'g', { date: d, qty: Math.round(kcal * n(0.45, 0.05) / 4), source: 'Yazio' });
         add('total_fat', 'g', { date: d, qty: Math.round(kcal * n(0.28, 0.04) / 9), source: 'Yazio' });
         add('dietary_sugar', 'g', { date: d, qty: Math.round(n(52, 15)), source: 'Yazio' });
@@ -48,7 +50,7 @@ export function demoNutzlast(tage = 120, seed = 7){
     const start = new Date(bett + n(14, 6) * 60000); const ende = new Date(start.getTime() + (gesamt + Math.max(0.05, wach)) * 3600e3);
     add('sleep_analysis', 'hr', { date: d, totalSleep: +gesamt.toFixed(3), asleep: 0, deep: +tief.toFixed(3), rem: +rem.toFixed(3), core: +(gesamt - tief - rem).toFixed(3), awake: +Math.max(0.05, wach).toFixed(3), inBed: +(gesamt + wach + 0.25).toFixed(3), sleepStart: f(start), sleepEnd: f(ende), inBedStart: f(new Date(bett)), inBedEnd: f(ende), source: 'Apple Watch' });
     // Trainings
-    const plan = [['Laufen', 1, 42, 8.2, 152], ['Krafttraining', 2, 55, null, 118], ['Radfahren', 4, 65, 24.5, 136], ['Laufen', 5, 36, 6.8, 149], ['Yoga', 6, 30, null, 96]];
+    const plan = [['Krafttraining · Push', 1, 68, null, 118], ['Krafttraining · Pull', 2, 64, null, 115], ['Laufen', 3, 32, 5.8, 148], ['Krafttraining · Beine', 4, 72, null, 124], ['Krafttraining · Oberkörper', 5, 62, null, 116], ['Radfahren', 6, 55, 21.5, 132]];
     const wd = new Date(tag + 'T12:00:00Z').getUTCDay();
     for(const [art, w, min, km, hf] of plan) if(w === wd && r() < 0.85){
       const st = ausLokal(j, mo, t, 18, Math.round(r() * 50)); const dauer = n(min, 6);

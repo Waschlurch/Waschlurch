@@ -14,6 +14,7 @@ Apple lässt Health-Daten nur auf dem iPhone selbst auslesen. Deshalb schickt ei
 
 | Werkzeug | Inhalt |
 |---|---|
+| `bodybuilding_analyse` | Trendgewicht, Tempo in kg und % pro Woche im Vergleich zum Phasenziel, adaptiver TDEE, Energiebilanz, empfohlene kcal, Eiweiß g/kg, Körperfett, Magermasse, FFMI, Taille, Krafttraining pro Woche |
 | `gesundheit_ueberblick` | Alle Bereiche, jeweils mit Mittelwert, letztem Wert und Veränderung zum Zeitraum davor |
 | `schlaf_naechte` | Jede Nacht mit Einschlaf- und Aufwachzeit und den Phasen Tief, Kern, REM und Wach |
 | `tageswerte` | Ein Wert pro Tag für beliebige Messgrößen (Schritte, Ruhepuls, HRV, VO₂max …) |
@@ -23,6 +24,25 @@ Apple lässt Health-Daten nur auf dem iPhone selbst auslesen. Deshalb schickt ei
 | `verfuegbare_daten` | Welche Daten es gibt und wie weit sie zurückreichen |
 
 Alle Werkzeuge lesen nur. Claude kann über sie nichts ändern oder löschen.
+
+## Vorlagen & Ziele
+
+Mit dem Regler-Symbol oben öffnest du **Ansicht & Ziele**:
+- **Vorlagen:** Bodybuilding, Definition, Erholung & Schlaf, Ausdauer, Kompakt. Daneben gibt es „Eigene“.
+- **Kennzahlen oben:** 18 Kacheln stehen zur Wahl, zum Beispiel Trendgewicht, Pro Woche, Eiweiß/kg, Energiebilanz, TDEE, Körperfett, Magermasse, FFMI, Taille, Kraft/Woche, Schlaf oder HRV.
+- **Bereiche:** Körper & Aufbau, Krafttraining, Ernährung, Schlaf, Herz, Aktivität. Du kannst sie ein- und ausblenden und ihre Reihenfolge ändern.
+- **Ziele:** Phase (Aufbau, Diät, Erhalt, Rekomposition), Tempo in % KG pro Woche, Zielgewicht, Eiweiß in g/kg, Kalorienziel, Größe, Krafteinheiten pro Woche, Schritte und Schlaf.
+
+Die Einstellungen liegen in der Datenbank. Dadurch zeigen iPhone und Mac dasselbe, und Claude rechnet mit denselben Zielen.
+
+**So rechnet Puls:**
+- *Trendgewicht:* Die Messungen werden exponentiell geglättet (10 % pro Tag). Schwankungen durch Wasser und Salz fallen dadurch heraus.
+- *Tempo:* Steigung des Trends über die letzten 14 Tage.
+- *TDEE:* Ø Zufuhr der letzten 21 Tage minus Gewichtsänderung × 7700 kcal/kg, geteilt durch die Tage. Dafür braucht es mindestens 10 geloggte Tage, sonst nimmt Puls den Verbrauch aus Apple Health.
+- *Empfehlung:* TDEE plus das Zieltempo in kcal.
+- *Magermasse:* Wird sie gemessen, gilt der Messwert. Sonst rechnet Puls Gewicht × (1 − Körperfett).
+- *FFMI:* Magermasse / Größe² + 6,1 × (1,8 − Größe).
+- *Krafttraining:* Workouts, deren Art Kraft, Strength, Functional, HIIT, Core oder CrossFit enthält. Apps wie Hevy oder Strong schreiben solche Einträge nach Apple Health.
 
 ## Einrichtung (ca. 15 Minuten)
 
@@ -90,6 +110,8 @@ Probier zum Beispiel: *„Wie war mein Schlaf diese Woche im Vergleich zur letzt
 | `index.html`, `app.css`, `app.js`, `diagramme.js` | Dashboard ohne Build-Schritt; SVG-Diagramme mit Tooltips, Tabellenansicht, hell/dunkel |
 | `api/sync.mjs`, `lib/import.mjs` | Eingang: Health Auto Export (v1/v2) und Kurzbefehl-JSON, Schlafsegmente → Nächte |
 | `api/daten.mjs` | Daten fürs Dashboard (Zugangscode) |
+| `api/einstellungen.mjs`, `lib/einstellungen.mjs` | Vorlagen, Kacheln, Bereiche, Ziele |
+| `lib/bodybuilding.mjs` | Trend, Tempo, TDEE, Bilanz, Eiweiß/kg, Magermasse, FFMI, Kraft pro Woche |
 | `api/mcp.mjs`, `lib/mcp.mjs` | MCP-Server (Streamable HTTP, zustandslos, nur lesend) |
 | `lib/abfragen.mjs` | Tageswerte, Schlaf, Workouts, Überblick – gemeinsam für Dashboard und Claude |
 | `lib/katalog.mjs` | Messgrößen, deutsche Namen, Einheiten, Tagesaggregation |
@@ -103,5 +125,5 @@ Tageswerte: **Summen** wie Schritte oder kcal werden pro Quelle addiert, gezähl
 cd health-bridge
 npm install
 npm run demo     # http://localhost:5174 mit 120 Tagen Beispieldaten (PGlite im Speicher)
-npm test         # 68 Prüfungen; mit DATABASE_URL gegen echtes Postgres
+npm test         # 84 Prüfungen; mit DATABASE_URL gegen echtes Postgres
 ```

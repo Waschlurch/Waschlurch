@@ -6,7 +6,8 @@
   "functions": {
     "api/sync.mjs": { "maxDuration": 60 },
     "api/daten.mjs": { "maxDuration": 20 },
-    "api/mcp.mjs": { "maxDuration": 30 }
+    "api/mcp.mjs": { "maxDuration": 30 },
+    "api/einstellungen.mjs": { "maxDuration": 10 }
   },
   "headers": [
     {

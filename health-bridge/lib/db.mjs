@@ -41,6 +41,12 @@ create table if not exists workouts (
 );
 create index if not exists workouts_start on workouts (start);
 
+create table if not exists einstellungen (
+  id     text primary key,
+  daten  jsonb not null,
+  geaendert timestamptz not null default now()
+);
+
 create table if not exists syncs (
   id     bigserial primary key,
   zeit   timestamptz not null default now(),

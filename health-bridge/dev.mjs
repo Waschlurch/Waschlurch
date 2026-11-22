@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import sync from './api/sync.mjs';
 import daten from './api/daten.mjs';
 import mcp from './api/mcp.mjs';
+import einstellungen from './api/einstellungen.mjs';
 
 const wurzel = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT) || 5174;
@@ -27,6 +28,7 @@ http.createServer(async (req, res) => {
   if(url.pathname === '/api/mcp') return mcp(req, res);
   if(url.pathname === '/api/sync') return sync(req, res);
   if(url.pathname === '/api/daten') return daten(req, res);
+  if(url.pathname === '/api/einstellungen') return einstellungen(req, res);
   const name = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
   if(!OEFFENTLICH.has(name)){ res.statusCode = 404; return res.end('404'); }
   res.setHeader('Content-Type', TYPEN[path.extname(name)] || 'application/octet-stream');

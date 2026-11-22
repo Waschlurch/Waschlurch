@@ -4,12 +4,14 @@
 import { KATALOG, BEREICHE, SCHLAF, metrikName } from './katalog.mjs';
 import { tageswerte, schlaf, workouts, rohwerte, verfuegbar, ueberblick, zeitraum } from './abfragen.mjs';
 import { ZONE } from './zeit.mjs';
+import { bodybuilding } from './bodybuilding.mjs';
+import { laden as einstellungenLaden } from './einstellungen.mjs';
 
 export const PROTOKOLLE = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 export const SERVER = { name: 'puls-apple-health', title: 'Puls · Apple Health', version: '1.0.0' };
 
 const ANWEISUNG = `Puls stellt die Apple-Health-Daten des Nutzers bereit, die das iPhone regelmäßig synchronisiert.
-Beginne mit „gesundheit_ueberblick“ für ein Gesamtbild; vertiefe dann mit „schlaf_naechte“, „tageswerte“, „ernaehrung“, „workouts“ oder „rohwerte“.
+Beginne mit „gesundheit_ueberblick“ für ein Gesamtbild; für Training, Aufbau, Diät, Gewicht und Körperzusammensetzung nimm „bodybuilding_analyse“; vertiefe dann mit „schlaf_naechte“, „tageswerte“, „ernaehrung“, „workouts“ oder „rohwerte“.
 „verfuegbare_daten“ zeigt, welche Werte es gibt und wie weit sie zurückreichen. Datumsangaben sind lokale Tage (YYYY-MM-DD), beide Grenzen inklusive.
 Schlafnächte zählen zum Tag des Aufwachens. Antworte auf Deutsch, nenne Zahlen mit Einheit, und weise darauf hin, dass du keine ärztliche Diagnose stellst.`;
 
@@ -29,6 +31,12 @@ export const WERKZEUGE = [
     description: 'Gesamtbild der letzten Tage über alle Bereiche (Schlaf, Herz, Aktivität, Ernährung, Körper): Tagesmittel, letzter Wert und Veränderung in Prozent gegenüber dem gleich langen Zeitraum davor. Guter Einstieg für jede Frage.',
     inputSchema: { type: 'object', properties: { tage: { type: 'integer', minimum: 1, maximum: 180, default: 7, description: 'Länge des Zeitraums in Tagen (Standard 7).' } }, additionalProperties: false },
     run: a => ueberblick(a.tage ?? 7),
+  },
+  {
+    name: 'bodybuilding_analyse', title: 'Bodybuilding-Auswertung',
+    description: 'Auswertung für Muskelaufbau und Diät: Trendgewicht (geglättet) und Tempo in kg und % Körpergewicht pro Woche gegenüber dem Ziel der aktuellen Phase (Aufbau, Diät, Erhalt, Rekomposition), adaptiver Kalorienverbrauch (TDEE) aus Zufuhr und Gewichtstrend, Energiebilanz, empfohlene Kalorien, Eiweiß in g/kg gegenüber Ziel, Körperfett, Magermasse, FFMI, Taillenumfang sowie Krafttrainings pro Woche. Enthält auch die Tagesreihen. Ziele stammen aus den Einstellungen im Dashboard.',
+    inputSchema: { type: 'object', properties: ZEIT, additionalProperties: false },
+    run: async a => { const z = zeitraum(a, 28, 180); const e = await einstellungenLaden(); return { zeitraum: z, ...(await bodybuilding(z, e.ziele)) }; },
   },
   {
     name: 'schlaf_naechte', title: 'Schlaf pro Nacht',

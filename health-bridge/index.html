@@ -45,12 +45,13 @@
       <span>Puls</span>
     </a>
     <nav class="sprung" aria-label="Bereiche">
-      <a href="#schlaf">Schlaf</a><a href="#herz">Herz</a><a href="#aktivitaet">Aktivität</a><a href="#ernaehrung">Ernährung</a><a href="#koerper">Körper</a>
+
     </nav>
     <div class="kopf-rechts">
       <div class="seg" role="radiogroup" aria-label="Zeitraum" id="zeitraum">
         <button role="radio" data-tage="7">7 T</button><button role="radio" data-tage="30">30 T</button><button role="radio" data-tage="90">90 T</button>
       </div>
+      <button class="knopf-rund" id="anpassen-knopf" aria-haspopup="dialog" aria-label="Ansicht anpassen" title="Ansicht anpassen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
       <button class="knopf-claude" id="claude-knopf" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l1.6 6.2 6.1-2.4-4.1 5.2 5.9 2.8-6.5.3 1 6.4L12 16l-4 5 1-6.4-6.5-.3 5.9-2.8-4.1-5.2 6.1 2.4z"/></svg><span>Claude</span></button>
     </div>
   </div>
@@ -67,9 +68,53 @@
 
   <section class="kacheln" id="kacheln" aria-label="Kennzahlen"></section>
 
-  <section class="bereich" id="schlaf" aria-labelledby="h-schlaf" style="--akzent: var(--schlaf)">
+  <div id="bereiche">
+  <section class="bereich" id="aufbau" data-bereich="aufbau" aria-labelledby="h-aufbau" style="--akzent: var(--koerper)">
     <div class="bereich-kopf">
-      <h2 id="h-schlaf"><span class="nr">01</span>Schlaf</h2>
+      <h2 id="h-aufbau"><span class="nr"></span>Körper &amp; Aufbau</h2>
+      <p class="kennzahl" id="aufbau-k"></p>
+    </div>
+    <div class="phase" id="phase"></div>
+    <div class="raster zwei">
+      <article class="karte breit"><header><h3>Gewicht</h3><ul class="legende"><li><i class="strich" style="background:var(--koerper)"></i>Trend</li><li><i class="rund" style="background:var(--koerper)"></i>Messung</li></ul></header><div class="dia" id="d-gewicht"></div></article>
+      <article class="karte mini" id="aufbau-mini"></article>
+    </div>
+    <div class="raster zwei">
+      <article class="karte breit"><header><h3>Energiebilanz</h3><ul class="legende"><li><i style="background:var(--plus)"></i>Überschuss</li><li><i style="background:var(--minus)"></i>Defizit</li><li class="klein">Zufuhr − Verbrauch laut Apple Health</li></ul></header><div class="dia" id="d-bilanz"></div></article>
+      <article class="karte"><header><h3>Eiweiß pro kg</h3><p class="klein" id="gkg-k"></p></header><div class="dia" id="d-gkg"></div></article>
+    </div>
+    <div class="raster gleich">
+      <article class="karte"><header><h3>Magermasse</h3><p class="klein">kg · gemessen oder aus Körperfett</p></header><div class="dia" id="d-lbm"></div></article>
+      <article class="karte"><header><h3>Körperfett</h3><p class="klein">%</p></header><div class="dia" id="d-fett"></div></article>
+    </div>
+  </section>
+
+  <section class="bereich" id="training" data-bereich="training" aria-labelledby="h-training" style="--akzent: var(--aktiv)">
+    <div class="bereich-kopf">
+      <h2 id="h-training"><span class="nr"></span>Krafttraining</h2>
+      <p class="kennzahl" id="training-k"></p>
+    </div>
+    <div class="raster zwei">
+      <article class="karte breit"><header><h3>Einheiten pro Woche</h3><p class="klein" id="kw-k"></p></header><div class="dia" id="d-kraft"></div></article>
+      <article class="karte"><header><h3>Trainingstage</h3><p class="klein">Krafttraining je Tag</p></header><div class="kalender" id="kalender"></div></article>
+    </div>
+    <article class="karte"><header><h3>Letzte Einheiten</h3><p class="klein" id="kraft-k"></p></header><ol class="workouts" id="kraft-liste"></ol></article>
+  </section>
+
+  <section class="bereich" id="ernaehrung" data-bereich="ernaehrung" aria-labelledby="h-ern" style="--akzent: var(--ernaehrung)">
+    <div class="bereich-kopf">
+      <h2 id="h-ern"><span class="nr"></span>Ernährung</h2>
+      <p class="kennzahl" id="ern-k"></p>
+    </div>
+    <div class="raster zwei">
+      <article class="karte breit"><header><h3>Makronährstoffe pro Tag</h3><ul class="legende" id="makro-leg"></ul></header><div class="dia" id="d-makro"></div></article>
+      <article class="karte"><header><h3>Im Schnitt</h3><p class="klein">pro Tag mit Einträgen</p></header><div id="ern-schnitt" class="schnitt"></div></article>
+    </div>
+  </section>
+
+  <section class="bereich" id="schlaf" data-bereich="schlaf" aria-labelledby="h-schlaf" style="--akzent: var(--schlaf)">
+    <div class="bereich-kopf">
+      <h2 id="h-schlaf"><span class="nr"></span>Schlaf</h2>
       <p class="kennzahl" id="schlaf-k"></p>
     </div>
     <div class="raster zwei">
@@ -85,12 +130,12 @@
     <details class="tabelle"><summary>Als Tabelle</summary><div id="t-schlaf"></div></details>
   </section>
 
-  <section class="bereich" id="herz" aria-labelledby="h-herz" style="--akzent: var(--herz)">
+  <section class="bereich" id="herz" data-bereich="herz" aria-labelledby="h-herz" style="--akzent: var(--herz)">
     <div class="bereich-kopf">
-      <h2 id="h-herz"><span class="nr">02</span>Herz</h2>
+      <h2 id="h-herz"><span class="nr"></span>Herz</h2>
       <p class="kennzahl" id="herz-k"></p>
     </div>
-    <div class="raster zwei gleich">
+    <div class="raster gleich">
       <article class="karte"><header><h3>Ruhepuls</h3><p class="klein">Tageswert · bpm</p></header><div class="dia" id="d-rhr"></div></article>
       <article class="karte"><header><h3>Herzfrequenzvariabilität</h3><p class="klein">Tagesmittel · ms</p></header><div class="dia" id="d-hrv"></div></article>
       <article class="karte"><header><h3>Herzfrequenz</h3><p class="klein">Mittel mit Tagesspanne · bpm</p></header><div class="dia" id="d-hf"></div></article>
@@ -98,9 +143,9 @@
     </div>
   </section>
 
-  <section class="bereich" id="aktivitaet" aria-labelledby="h-akt" style="--akzent: var(--aktiv)">
+  <section class="bereich" id="aktivitaet" data-bereich="aktivitaet" aria-labelledby="h-akt" style="--akzent: var(--aktiv)">
     <div class="bereich-kopf">
-      <h2 id="h-akt"><span class="nr">03</span>Aktivität</h2>
+      <h2 id="h-akt"><span class="nr"></span>Aktivität</h2>
       <p class="kennzahl" id="akt-k"></p>
     </div>
     <div class="raster zwei">
@@ -108,32 +153,11 @@
       <article class="karte"><header><h3>Aktivkalorien</h3><p class="klein">kcal pro Tag</p></header><div class="dia" id="d-energie"></div></article>
     </div>
     <article class="karte">
-      <header><h3>Trainings</h3><p class="klein" id="wo-k"></p></header>
+      <header><h3>Alle Trainings</h3><p class="klein" id="wo-k"></p></header>
       <ol class="workouts" id="workouts"></ol>
     </article>
   </section>
-
-  <section class="bereich" id="ernaehrung" aria-labelledby="h-ern" style="--akzent: var(--ernaehrung)">
-    <div class="bereich-kopf">
-      <h2 id="h-ern"><span class="nr">04</span>Ernährung</h2>
-      <p class="kennzahl" id="ern-k"></p>
-    </div>
-    <div class="raster zwei">
-      <article class="karte breit"><header><h3>Makronährstoffe pro Tag</h3><ul class="legende" id="makro-leg"></ul></header><div class="dia" id="d-makro"></div></article>
-      <article class="karte"><header><h3>Im Schnitt</h3><p class="klein">pro Tag mit Einträgen</p></header><div id="ern-schnitt" class="schnitt"></div></article>
-    </div>
-  </section>
-
-  <section class="bereich" id="koerper" aria-labelledby="h-koe" style="--akzent: var(--koerper)">
-    <div class="bereich-kopf">
-      <h2 id="h-koe"><span class="nr">05</span>Körper</h2>
-      <p class="kennzahl" id="koe-k"></p>
-    </div>
-    <div class="raster zwei gleich">
-      <article class="karte"><header><h3>Gewicht</h3><p class="klein">kg</p></header><div class="dia" id="d-gewicht"></div></article>
-      <article class="karte"><header><h3>Körperfett</h3><p class="klein">%</p></header><div class="dia" id="d-fett"></div></article>
-    </div>
-  </section>
+  </div>
 
   <section class="claude-band" aria-labelledby="h-claude">
     <div>
@@ -151,6 +175,30 @@
 </main>
 
 <footer class="fuss"><span>Puls · Apple Health ⇄ Claude</span><span id="fuss-zone"></span></footer>
+
+<dialog id="anpassen" aria-labelledby="a-titel">
+  <form class="dlg breit" id="anpassen-form">
+    <header><h2 id="a-titel">Ansicht &amp; Ziele</h2><button type="button" class="zu" data-zu aria-label="Schließen">×</button></header>
+    <fieldset><legend>Vorlage</legend><div class="vorlagen" id="a-vorlagen"></div></fieldset>
+    <fieldset><legend>Kennzahlen oben <span class="klein" id="a-kachel-n"></span></legend><div class="chips" id="a-kacheln"></div></fieldset>
+    <fieldset><legend>Bereiche &amp; Reihenfolge</legend><ol class="sortier" id="a-bereiche"></ol></fieldset>
+    <fieldset><legend>Ziele</legend>
+      <div class="felder">
+        <label>Phase<select name="phase" id="a-phase"></select></label>
+        <label>Tempo % KG / Woche<input name="rate_prozent_woche" type="number" step="0.05" min="-1.5" max="1.5" inputmode="decimal" placeholder="automatisch"></label>
+        <label>Zielgewicht kg<input name="zielgewicht_kg" type="number" step="0.1" min="30" max="250" inputmode="decimal" placeholder="–"></label>
+        <label>Eiweiß g / kg<input name="protein_g_pro_kg" type="number" step="0.1" min="0.5" max="4" inputmode="decimal"></label>
+        <label>Kalorienziel kcal<input name="kcal_ziel" type="number" step="10" min="800" max="8000" inputmode="numeric" placeholder="automatisch"></label>
+        <label>Körpergröße cm<input name="groesse_cm" type="number" step="1" min="120" max="230" inputmode="numeric" placeholder="aus Health"></label>
+        <label>Krafteinheiten / Woche<input name="kraft_pro_woche" type="number" step="1" min="0" max="14" inputmode="numeric"></label>
+        <label>Schritte / Tag<input name="schritte_ziel" type="number" step="500" min="1000" max="50000" inputmode="numeric"></label>
+        <label>Schlaf h<input name="schlaf_ziel_h" type="number" step="0.25" min="4" max="12" inputmode="decimal"></label>
+      </div>
+      <p class="klein">Leer lassen = automatisch: Tempo aus der Phase, Kalorien aus deinem gemessenen Verbrauch.</p>
+    </fieldset>
+    <div class="dlg-fuss"><span class="klein" id="a-status" role="status"></span><button type="submit" class="knopf-hell">Speichern</button></div>
+  </form>
+</dialog>
 
 <dialog id="verbinden" aria-labelledby="v-titel">
   <form method="dialog" class="dlg">

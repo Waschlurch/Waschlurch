@@ -12,6 +12,9 @@ import syncHandler from '../api/sync.mjs';
 import datenHandler from '../api/daten.mjs';
 import mcpHandler from '../api/mcp.mjs';
 import { demoNutzlast } from '../scripts/demo-daten.mjs';
+import einstHandler from '../api/einstellungen.mjs';
+import { saeubern, STANDARD } from '../lib/einstellungen.mjs';
+import { trend, steigung, isoWoche, bodybuilding } from '../lib/bodybuilding.mjs';
 
 let ok = 0, nein = 0;
 const pruefe = (name, b, ist) => { if(b){ ok++; console.log('  ✓ ' + name); } else { nein++; console.log('  ✗ ' + name + (ist !== undefined ? '  → ' + JSON.stringify(ist).slice(0, 300) : '')); } };
@@ -83,7 +86,7 @@ pruefe('Einzelobjekt ohne „reihen“', lesen({ metrik: 'hrv', werte: [50], dat
 
 block('Datenbank ' + (process.env.DATABASE_URL ? '(Postgres)' : '(PGlite)'));
 const { q } = await db();
-await q('truncate messwerte, schlaf_naechte, workouts, syncs');
+await q('truncate messwerte, schlaf_naechte, workouts, syncs, einstellungen');
 const g1 = await speichern(hae);
 pruefe('Gespeichert', g1.messwerte === 5 && g1.naechte === 1 && g1.workouts === 1, g1);
 const g2 = await speichern(hae);
@@ -140,7 +143,7 @@ r = await mcp({ jsonrpc: '2.0', method: 'notifications/initialized' });
 pruefe('Benachrichtigung → 202 ohne Körper', r.statusCode === 202 && r.text === '');
 r = await mcp(rpc('tools/list', {}));
 const namen = r.json.result.tools.map(t => t.name);
-pruefe('Sieben Werkzeuge, nur lesend', namen.length === 7 && r.json.result.tools.every(t => t.annotations.readOnlyHint && t.inputSchema.type === 'object' && !t.run), namen);
+pruefe('Acht Werkzeuge, nur lesend', namen.length === 8 && r.json.result.tools.every(t => t.annotations.readOnlyHint && t.inputSchema.type === 'object' && !t.run), namen);
 r = await mcp(rpc('tools/call', { name: 'gesundheit_ueberblick', arguments: { tage: 7 } }));
 pruefe('Überblick über MCP', !r.json.result.isError && JSON.parse(r.json.result.content[0].text).bereiche.herz, r.text.slice(0, 300));
 r = await mcp(rpc('tools/call', { name: 'tageswerte', arguments: { metriken: ['Schritte', 'Ruhepuls'], tage: 5 } }));
@@ -169,6 +172,40 @@ r = await ruf(mcpHandler, null, { methode: 'GET', url: '/api/mcp?key=tok-123' })
 pruefe('GET 405', r.statusCode === 405);
 pruefe('Schemaprüfung: Pflichtfeld', schemaPruefe(WERKZEUGE.find(w => w.name === 'tageswerte').inputSchema, {}) !== null);
 pruefe('Schemaprüfung: Grenze', schemaPruefe(WERKZEUGE[0].inputSchema, { tage: 999 }) !== null && schemaPruefe(WERKZEUGE[0].inputSchema, { tage: 30 }) === null);
+
+block('Bodybuilding');
+pruefe('Trend glättet und überbrückt Lücken', (() => { const t = trend([80, null, 82]); return t[0] === 80 && t[1] === 80 && Math.abs(t[2] - 80.2) < 1e-9; })());
+pruefe('Steigung', Math.abs(steigung([1, 2, null, 4]) - 1) < 1e-9 && steigung([5]) === null);
+pruefe('ISO-Woche (Jahreswechsel)', isoWoche('2026-11-22') === '2026-W47' && isoWoche('2027-01-01') === '2026-W53' && isoWoche('2026-01-01') === '2026-W01');
+pruefe('Einstellungen säubern', (() => { const e = saeubern({ kacheln: ['gewicht', 'boese', 'gewicht'], bereiche: ['schlaf', 'x'], ziele: { phase: 'diaet', protein_g_pro_kg: 99, rate_prozent_woche: '-0.5', groesse_cm: 180 } });
+  return e.kacheln.join() === 'gewicht' && e.bereiche.join() === 'schlaf' && e.ziele.phase === 'diaet' && e.ziele.protein_g_pro_kg === 2 && e.ziele.rate_prozent_woche === -0.5 && e.ziele.groesse_cm === 180; })());
+await q('truncate messwerte, workouts');
+// 28 Tage: 80 → 81,4 kg (+0,35 kg/Woche), 3000 kcal Zufuhr, 160 g Eiweiß, 3×/Woche Kraft
+const heute = lokalerTag(new Date()), reihen = { gewicht: [], kcal: [], prot: [], d: [] };
+for(let i = 41; i >= 0; i--){ const t = tagPlus(heute, -i); reihen.d.push(t + 'T06:00:00Z'); reihen.gewicht.push(+(81.4 - i * 0.05).toFixed(2)); reihen.kcal.push(3000); reihen.prot.push(160); }
+await speichern(lesen({ reihen: [ { metrik: 'Gewicht', werte: reihen.gewicht, daten: reihen.d }, { metrik: 'Nahrungsenergie', werte: reihen.kcal, daten: reihen.d }, { metrik: 'Protein', werte: reihen.prot, daten: reihen.d },
+  { metrik: 'Körpergröße', werte: [1.8], daten: [reihen.d[0]], einheit: 'm' } ],
+  workouts: [0, 2, 4, 7, 9, 11].map(i => ({ art: 'Krafttraining', start: tagPlus(heute, -i) + 'T17:00:00Z', dauer: 60 })) }));
+const bb = await bodybuilding(zeitraum({ tage: 14 }), { ...STANDARD.ziele, phase: 'aufbau' });
+pruefe('Tempo ≈ +0,35 kg/Woche', Math.abs(bb.gewicht.rate_kg_woche - 0.35) < 0.05, bb.gewicht);
+pruefe('Adaptiver TDEE ≈ 3000 − 0,05·7700 ≈ 2615', bb.energie.tdee_methode.startsWith('adaptiv') && Math.abs(bb.energie.tdee_kcal - 2615) < 80, bb.energie);
+pruefe('Empfehlung = TDEE + Zieltempo', Math.abs(bb.energie.empfohlene_kcal - (bb.energie.tdee_kcal + bb.gewicht.ziel_rate_kg_woche * 1100)) < 8);
+pruefe('Eiweiß g/kg', Math.abs(bb.eiweiss.mittel_g_pro_kg - 160 / 81) < 0.08, bb.eiweiss);
+pruefe('Größe aus Health (m → cm)', bb.koerper.groesse_cm === 180);
+pruefe('Krafttraining gezählt', bb.kraft.einheiten >= 5 && bb.kraft.wochen.length >= 2, bb.kraft);
+pruefe('Reihen so lang wie der Zeitraum', bb.reihen.tage.length === 14 && bb.reihen.trend_kg.length === 14);
+
+block('Einstellungen-API');
+r = await ruf(einstHandler, null, { methode: 'GET', kopf: { 'x-puls-code': 'code' } });
+pruefe('GET liefert Standard + Vorlagen', r.statusCode === 200 && r.json.einstellungen.vorlage === 'bodybuilding' && r.json.vorlagen.erholung);
+r = await ruf(einstHandler, { vorlage: 'erholung', kacheln: ['schlaf', 'hrv'], bereiche: ['schlaf', 'herz'], ziele: { phase: 'diaet', zielgewicht_kg: 78 } }, { methode: 'PUT', kopf: { 'x-puls-code': 'code' } });
+pruefe('PUT speichert', r.statusCode === 200 && r.json.einstellungen.ziele.zielgewicht_kg === 78);
+r = await ruf(einstHandler, null, { methode: 'GET', kopf: { 'x-puls-code': 'code' } });
+pruefe('Bleibt gespeichert', r.json.einstellungen.vorlage === 'erholung' && r.json.einstellungen.bereiche.join() === 'schlaf,herz');
+r = await ruf(einstHandler, {}, { methode: 'PUT' });
+pruefe('Ohne Code 401', r.statusCode === 401);
+r = await mcp(rpc('tools/call', { name: 'bodybuilding_analyse', arguments: { tage: 14 } }));
+pruefe('MCP nutzt gespeicherte Ziele', r.json.result.structuredContent.phase.schluessel === 'diaet' && r.json.result.structuredContent.gewicht.zielgewicht_kg === 78, r.text.slice(0, 300));
 
 console.log(`\n${ok} bestanden, ${nein} fehlgeschlagen`);
 process.exit(nein ? 1 : 0);

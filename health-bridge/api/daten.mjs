@@ -5,6 +5,8 @@ import { antworte, passcodeOk, ratenGrenze, absender } from '../lib/guard.mjs';
 import { tageswerte, schlaf, workouts, letzterSync, zeitraum, tageListe } from '../lib/abfragen.mjs';
 import { KATALOG, BEREICHE } from '../lib/katalog.mjs';
 import { ZONE } from '../lib/zeit.mjs';
+import { laden as einstellungenLaden } from '../lib/einstellungen.mjs';
+import { bodybuilding } from '../lib/bodybuilding.mjs';
 
 export function basisUrl(req){
   const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
@@ -19,8 +21,9 @@ export default async function handler(req, res){
   const url = new URL(req.url, 'http://x');
   try {
     const z = zeitraum({ tage: url.searchParams.get('tage') || 30, bis: url.searchParams.get('bis') }, 30, 366);
-    const [reihen, naechte, wo, sync] = await Promise.all([tageswerte(Object.keys(KATALOG), z), schlaf(z), workouts(z), letzterSync()]);
-    const antwort = { zeitraum: z, zeitzone: ZONE(), tage: tageListe(z), reihen, schlaf: naechte, workouts: wo, letzterSync: sync,
+    const einstellungen = await einstellungenLaden();
+    const [reihen, naechte, wo, sync, bb] = await Promise.all([tageswerte(Object.keys(KATALOG), z), schlaf(z), workouts(z), letzterSync(), bodybuilding(z, einstellungen.ziele)]);
+    const antwort = { zeitraum: z, zeitzone: ZONE(), tage: tageListe(z), reihen, schlaf: naechte, workouts: wo, letzterSync: sync, einstellungen, bodybuilding: bb,
       katalog: Object.fromEntries(Object.entries(KATALOG).map(([k, v]) => [k, { titel: v.titel, einheit: v.einheit, bereich: v.bereich, agg: v.agg, nk: v.nk }])), bereiche: BEREICHE };
     if(url.searchParams.get('verbindung')){
       const basis = basisUrl(req), t = process.env.PULS_TOKEN || 'lokal';

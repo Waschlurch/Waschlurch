@@ -47,7 +47,9 @@ export const KATALOG = {
   weight_body_mass:           m('koerper', 'Gewicht', 'kg', 'letzter', ['gewicht', 'körpergewicht', 'weight', 'body mass'], 1),
   body_fat_percentage:        m('koerper', 'Körperfett', '%', 'letzter', ['körperfett', 'körperfettanteil', 'body fat'], 1),
   body_mass_index:            m('koerper', 'BMI', '', 'letzter', ['bmi'], 1),
-  lean_body_mass:             m('koerper', 'Magermasse', 'kg', 'letzter', ['magermasse', 'fettfreie körpermasse'], 1),
+  lean_body_mass:             m('koerper', 'Magermasse', 'kg', 'letzter', ['magermasse', 'fettfreie körpermasse', 'lean body mass'], 1),
+  waist_circumference:        m('koerper', 'Taillenumfang', 'cm', 'letzter', ['taillenumfang', 'taille', 'bauchumfang', 'waist'], 1),
+  height:                     m('koerper', 'Körpergröße', 'cm', 'letzter', ['größe', 'groesse', 'körpergröße', 'height']),
 
   mindful_minutes:            m('geist', 'Achtsamkeit', 'min', 'summe', ['achtsamkeitsminuten', 'achtsamkeit', 'mindful minutes']),
 };
@@ -82,5 +84,7 @@ export function umrechnen(name, wert, einheit){
   if(ziel === 'ml' && (e === 'fl_oz_us' || e === 'fl oz')) return wert * 29.5735;
   if(ziel === '%' && wert > 0 && wert <= 1) return wert * 100;
   if(ziel === 'min' && (e === 'hr' || e === 'h')) return wert * 60;
+  if(ziel === 'cm' && (e === 'in' || e === 'inch')) return wert * 2.54;
+  if(ziel === 'cm' && (e === 'm' || wert < 3)) return wert * 100;
   return wert;
 }
