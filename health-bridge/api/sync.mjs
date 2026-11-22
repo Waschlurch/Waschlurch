@@ -5,10 +5,13 @@ import { antworte, tokenOk, koerperLesen, ratenGrenze, absender } from '../lib/g
 import { lesen } from '../lib/import.mjs';
 import { speichern } from '../lib/abfragen.mjs';
 
-export default async function handler(req, res){
+export default function handler(req, res){ return annehmen(req, res, { pruefen: tokenOk, schluessel: 'sync', max: 120 }); }
+
+/** Gemeinsame Annahme für iPhone-Sync (Token) und Import aus dem Dashboard (Zugangscode). */
+export async function annehmen(req, res, { pruefen, schluessel, max }){
   if(req.method !== 'POST') return antworte(res, 405, { code: 'methode', message: 'Nur POST.' }, { Allow: 'POST' });
-  if(!ratenGrenze('sync:' + absender(req), 120)) return antworte(res, 429, { code: 'zu_oft', message: 'Zu viele Anfragen.' });
-  if(!tokenOk(req)) return antworte(res, 401, { code: 'zugang', message: 'Token fehlt oder ist falsch.' });
+  if(!ratenGrenze(schluessel + ':' + absender(req), max)) return antworte(res, 429, { code: 'zu_oft', message: 'Zu viele Anfragen.' });
+  if(!pruefen(req)) return antworte(res, 401, { code: 'zugang', message: 'Zugang fehlt oder ist falsch.' });
   try {
     const nutzlast = await koerperLesen(req);
     const aus = lesen(nutzlast);

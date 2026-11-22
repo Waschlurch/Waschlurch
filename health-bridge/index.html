@@ -44,6 +44,10 @@
       <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" /><path d="M5 17h6l2.5-6 4 11 3-8 1.5 3H27"/></svg>
       <span>Puls</span>
     </a>
+    <div class="menue-wrap">
+      <button type="button" class="menue-knopf" id="menue-knopf" aria-haspopup="true" aria-expanded="false" aria-controls="menue"><span id="menue-titel">Übersicht</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
+      <div class="menue" id="menue" hidden></div>
+    </div>
     <nav class="sprung" aria-label="Bereiche">
 
     </nav>
@@ -78,22 +82,25 @@
       <h2 id="h-analyse"><span class="nr"></span>Coach-Analyse</h2>
       <p class="kennzahl" id="analyse-k"></p>
     </div>
+    <div class="basis" id="basis" aria-label="Datengrundlage"></div>
     <div class="raster umgekehrt">
       <article class="karte score-karte" id="score"></article>
-      <article class="karte"><header><h3>Diese Woche gegen letzte</h3><p class="klein" id="vgl-k"></p></header><div id="vergleich" class="vergleich"></div></article>
-    </div>
-    <div class="raster umgekehrt intel">
       <article class="karte bereit-karte" id="bereitschaft"></article>
-      <article class="karte"><header><h3>Deine größten Hebel</h3><p class="klein">wo eine Änderung am meisten bringt</p></header><ol class="hebel" id="hebel"></ol><div class="prognose" id="prognose"></div></article>
     </div>
-    <article class="karte"><header><h3>Was deine Daten verraten</h3><p class="klein" id="zh-k">nur statistisch belastbare Zusammenhänge</p></header><ul class="zusammenhaenge" id="zusammenhaenge"></ul><details class="methodik"><summary>Wie wird das berechnet?</summary><p id="methodik"></p></details></article>
+    <article class="karte"><header><h3>Die 3 wichtigsten Punkte</h3><p class="klein">aus allen Regeln, nach Dringlichkeit</p></header><ol class="erkenntnisse kurz" id="top3"></ol></article>
     <article class="karte ki-karte" id="ki">
       <header><h3><span class="ki-stern" aria-hidden="true">✶</span> KI-Coach</h3><p class="klein" id="ki-stand"></p></header>
-      <div id="ki-inhalt"><p class="ki-leer">Claude liest alle deine Daten, die Statistik und deine Ziele und schreibt dir eine persönliche Analyse mit konkreten Anpassungen – wie ein Coach.</p></div>
+      <div id="ki-inhalt"><p class="ki-leer">Claude bekommt deine Daten der letzten 28 Tage, die Statistik, dein Körperprofil, Supplements und den letzten Form-Check – und sagt dir in wenigen Sätzen, was du ändern solltest.</p></div>
       <div class="ki-fuss"><button type="button" class="knopf-hell" id="ki-knopf">KI-Analyse erstellen</button><button type="button" class="knopf-leise" id="ki-stopp" hidden>Abbrechen</button><span class="klein" id="ki-status" role="status"></span></div>
     </article>
-    <h3 class="unter-h">Alle Hinweise</h3>
-    <ol class="erkenntnisse" id="erkenntnisse"></ol>
+    <details class="aufklapp"><summary>Hebel &amp; Prognose</summary>
+      <article class="karte"><ol class="hebel" id="hebel"></ol><div class="prognose" id="prognose"></div></article></details>
+    <details class="aufklapp"><summary>Was deine Daten verraten <span id="zh-n"></span></summary>
+      <article class="karte"><p class="klein" id="zh-k"></p><ul class="zusammenhaenge" id="zusammenhaenge"></ul><details class="methodik"><summary>Wie wird das berechnet?</summary><p id="methodik"></p></details></article></details>
+    <details class="aufklapp"><summary>Diese Woche gegen letzte <span id="vgl-n"></span></summary>
+      <article class="karte"><p class="klein" id="vgl-k"></p><div id="vergleich" class="vergleich"></div></article></details>
+    <details class="aufklapp"><summary>Alle Hinweise <span id="hinweise-n"></span></summary>
+      <ol class="erkenntnisse" id="erkenntnisse"></ol></details>
   </section>
 
   <section class="bereich" id="protokoll" data-bereich="protokoll" aria-labelledby="h-prot" style="--akzent: var(--schlaf)">
@@ -215,7 +222,75 @@
       <ol class="workouts" id="workouts"></ol>
     </article>
   </section>
+  <section class="bereich" id="formcheck" data-bereich="formcheck" aria-labelledby="h-form" style="--akzent: var(--koerper)">
+    <div class="bereich-kopf">
+      <h2 id="h-form"><span class="nr"></span>Form-Checks</h2>
+      <p class="kennzahl" id="form-k">Fotos deiner Posen – vergleichen und von der KI bewerten lassen.</p>
+    </div>
+    <article class="karte">
+      <header><h3>Foto hinzufügen</h3><p class="klein">Gleiches Licht, gleiche Pose, morgens – dann sind Vergleiche aussagekräftig.</p></header>
+      <form class="foto-neu" id="foto-form">
+        <label class="foto-wahl"><input type="file" id="foto-datei" accept="image/*" required><span id="foto-wahl-text">Foto wählen oder aufnehmen</span></label>
+        <label>Pose<select id="foto-pose"></select></label>
+        <label>Datum<input type="date" id="foto-tag" required></label>
+        <label class="breit">Notiz<input type="text" id="foto-notiz" maxlength="200" placeholder="z. B. 12 Wochen Aufbau, nach dem Training"></label>
+        <button type="submit" class="knopf-hell">Hochladen</button>
+        <span class="klein" id="foto-status" role="status"></span>
+      </form>
+    </article>
+    <article class="karte"><header><h3>Galerie</h3><p class="klein" id="galerie-k">Tippe zwei Fotos derselben Pose an, um sie zu vergleichen.</p></header><div class="galerie" id="galerie"></div><div class="vergleich-fotos" id="foto-vergleich" hidden></div></article>
+    <article class="karte ki-karte" id="formki">
+      <header><h3><span class="ki-stern" aria-hidden="true">✶</span> KI-Form-Check</h3><p class="klein" id="formki-stand"></p></header>
+      <div id="formki-inhalt"><p class="ki-leer">Claude sieht deine neuesten Fotos je Pose (und zum Vergleich das älteste) zusammen mit Größe, Gewicht, Körperfett und Phase – und bewertet Kondition, Stärken, Schwachstellen und Posing.</p></div>
+      <div class="ki-fuss"><button type="button" class="knopf-hell" id="formki-knopf">Form-Check auswerten</button><span class="klein" id="formki-status" role="status"></span></div>
+    </article>
+  </section>
+
+  <section class="bereich" id="supplements" data-bereich="supplements" aria-labelledby="h-supp" style="--akzent: var(--mk-kh)">
+    <div class="bereich-kopf">
+      <h2 id="h-supp"><span class="nr"></span>Supplements</h2>
+      <p class="kennzahl" id="supp-k"></p>
+    </div>
+    <div class="raster zwei">
+      <article class="karte"><header><h3>Heute</h3><p class="klein" id="supp-heute-k"></p></header><div id="supp-heute" class="supp-heute"></div></article>
+      <article class="karte"><header><h3>Einnahme</h3><p class="klein">letzte 14 Tage, nur erfasste Tage</p></header><ul class="hbalken" id="supp-treue"></ul></article>
+    </div>
+    <article class="karte"><header><h3>Deine Routine</h3><button type="button" class="knopf-leise" id="supp-plus">+ Supplement</button></header>
+      <form id="supp-form"><ol class="supp-liste" id="supp-liste"></ol><div class="dlg-fuss statisch"><span class="klein" id="supp-status" role="status"></span><button type="submit" class="knopf-hell">Routine speichern</button></div></form></article>
+  </section>
   </div>
+
+  <section class="bereich" id="daten" data-bereich="daten" aria-labelledby="h-daten" style="--akzent: var(--minus)">
+    <div class="bereich-kopf">
+      <h2 id="h-daten">Daten &amp; Import</h2>
+      <p class="kennzahl">Alte Daten aus Apple Health (inklusive YAZIO, Waage, Watch) oder aus einer CSV übernehmen.</p>
+    </div>
+    <div class="raster zwei">
+      <article class="karte">
+        <header><h3>Apple-Health-Export</h3></header>
+        <ol class="anleitung">
+          <li>Health-App öffnen → oben rechts dein <b>Profilbild</b> → <b>Alle Gesundheitsdaten exportieren</b>.</li>
+          <li>Warten (bei Jahren an Daten ein paar Minuten) → <b>In Dateien sichern</b>.</li>
+          <li>Hier <b>export.zip</b> auswählen. Die Datei wird auf deinem Gerät gelesen; hochgeladen werden nur die Werte.</li>
+        </ol>
+        <div class="import-feld">
+          <label class="foto-wahl"><input type="file" id="import-datei" accept=".zip,.xml,.csv,.txt,application/zip,text/xml,text/csv"><span id="import-wahl-text">export.zip, export.xml oder CSV wählen</span></label>
+          <label>Nur ab Datum (optional)<input type="date" id="import-ab"></label>
+          <button type="button" class="knopf-hell" id="import-start" disabled>Einlesen</button>
+        </div>
+        <div class="import-fortschritt" id="import-fortschritt" hidden><div class="balken"><i id="import-balken"></i></div><p class="klein" id="import-text" role="status"></p></div>
+        <div id="import-ergebnis"></div>
+      </article>
+      <article class="karte">
+        <header><h3>CSV aus anderen Apps</h3></header>
+        <p class="klein">Eine Spalte <b>Datum</b> (optional <b>Uhrzeit</b>), weitere Spalten mit Messgrößen – deutsche Namen gehen: <code>Gewicht</code>, <code>Kalorien</code>, <code>Eiweiß</code>, <code>Kohlenhydrate</code>, <code>Fett</code>, <code>Schritte</code>, <code>Ruhepuls</code> … Einheit in Klammern, z. B. <code>Gewicht (kg)</code>.</p>
+        <pre class="csv-beispiel">Datum;Uhrzeit;Gewicht (kg);Kalorien;Eiweiß (g)
+03.01.2022;07:10;84,2;;
+03.01.2022;12:30;;850;55</pre>
+        <p class="klein">Mehrfach importieren ist unbedenklich: gleiche Werte werden überschrieben, nicht verdoppelt. Neue Daten vom iPhone kommen danach automatisch über den Sync.</p>
+      </article>
+    </div>
+  </section>
 
   <section class="claude-band" aria-labelledby="h-claude">
     <div>
@@ -254,6 +329,22 @@
       <ol class="split-liste" id="a-split"></ol>
       <button type="button" class="knopf-leise" id="a-split-neu">+ Split-Tag</button>
       <p class="klein">Der Split läuft der Reihe nach über deine Trainingstage. Trainierst du anders, erkennt Puls die Einheit aus dem Workout-Namen (z. B. „Push“, „Leg Day“) oder du wählst sie im Protokoll.</p>
+    </fieldset>
+    <fieldset id="a-profil"><legend>Körperprofil <span class="klein">damit der KI-Coach dich wirklich kennt</span></legend>
+      <div class="felder">
+        <label>Geschlecht<select data-p="geschlecht"><option value="">–</option><option value="m">männlich</option><option value="w">weiblich</option><option value="d">divers</option></select></label>
+        <label>Geburtsjahr<input data-p="geburtsjahr" type="number" min="1930" max="2015" inputmode="numeric" placeholder="z. B. 1996"></label>
+        <label>Trainingserfahrung (Jahre)<input data-p="erfahrung_jahre" type="number" min="0" max="60" step="0.5" inputmode="decimal"></label>
+        <label>Klasse / Ziel<input data-p="klasse" type="text" maxlength="60" list="klassen" placeholder="z. B. Classic Physique"></label>
+        <label>Nächster Wettkampf<input data-p="wettkampf_datum" type="date"></label>
+      </div>
+      <datalist id="klassen"><option>Men's Physique</option><option>Classic Physique</option><option>Bodybuilding</option><option>Bodybuilding bis 90 kg</option><option>Bikini</option><option>Wellness</option><option>Figure</option><option>Kein Wettkampf – Ästhetik</option></datalist>
+      <h4 class="unterkopf">Schwachstellen</h4><div class="chips klein-chips" id="a-schwach"></div>
+      <h4 class="unterkopf">Stärken</h4><div class="chips klein-chips" id="a-stark"></div>
+      <div class="felder zwei-text">
+        <label>Verletzungen / Einschränkungen<textarea data-p="verletzungen" rows="2" maxlength="400" placeholder="z. B. linke Schulter: kein schweres Überkopfdrücken"></textarea></label>
+        <label>Dein Ziel in eigenen Worten<textarea data-p="ziel_text" rows="2" maxlength="400" placeholder="z. B. 2027 Classic Physique, mehr Beine und hintere Schulter"></textarea></label>
+      </div>
     </fieldset>
     <fieldset><legend>Ziele</legend>
       <h4 class="unterkopf">Kalorien</h4>
@@ -309,6 +400,9 @@
     </fieldset>
     <fieldset><legend>Ernährung</legend>
       <div class="chips"><label><input type="checkbox" name="cheat" id="t-cheat">Cheat Day</label></div>
+    </fieldset>
+    <fieldset id="t-supp-feld"><legend>Supplements genommen</legend>
+      <div class="chips" id="t-supp"></div>
     </fieldset>
     <fieldset><legend>Notiz</legend>
       <textarea name="notiz" id="t-notiz" rows="2" maxlength="500" placeholder="z. B. krank, Refeed, Wettkampf, neues Programm"></textarea>

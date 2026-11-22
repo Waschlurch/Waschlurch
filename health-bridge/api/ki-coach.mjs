@@ -12,6 +12,7 @@ import { basisBereich } from '../lib/bodybuilding.mjs';
 import { analyse } from '../kern/analyse.mjs';
 import { KI_ANWEISUNG, KI_SCHEMA, kiKontext, kiAufgabe, kiPruefen } from '../kern/ki.mjs';
 import { lokalerTag } from '../lib/zeit.mjs';
+import { letzterCheck } from '../lib/fotos.mjs';
 
 export const MODEL = 'claude-opus-5-5';
 
@@ -53,7 +54,8 @@ export function erstelleHandler(clientFabrik = () => new Anthropic()){
       const b = basisBereich({ von: bis, bis }, e);
       const [basis, prot] = await Promise.all([basisLaden(b), protokollLaden(b)]);
       const an = analyse(basis, e, prot, bis);
-      const { bericht, modell } = await berichtErstellen(clientFabrik(), kiKontext({ basis, einstellungen: e, protokoll: prot, analyse: an, bis }));
+      const fc = await letzterCheck().catch(() => null);
+      const { bericht, modell } = await berichtErstellen(clientFabrik(), kiKontext({ basis, einstellungen: e, protokoll: prot, analyse: an, bis, formcheck: fc ? { datum: fc.erstellt.slice(0, 10), ...fc.check } : null }));
       const { q } = await db();
       await q('insert into ki_berichte (tag, modell, inhalt) values ($1::date, $2, $3::jsonb)', [bis, modell, JSON.stringify(bericht)]);
       return antworte(res, 200, { letzter: { tag: bis, erstellt: new Date().toISOString(), modell, bericht } });

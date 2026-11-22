@@ -57,6 +57,26 @@ create table if not exists protokoll (
 );
 alter table protokoll add column if not exists fokus text;
 alter table protokoll add column if not exists einheiten jsonb not null default '[]'::jsonb;
+alter table protokoll add column if not exists supplements jsonb;
+
+create table if not exists fotos (
+  id      bigserial primary key,
+  tag     date not null,
+  pose    text not null,
+  notiz   text not null default '',
+  mime    text not null,
+  breite  int, hoehe int,
+  bild    bytea not null,
+  erstellt timestamptz not null default now()
+);
+
+create table if not exists formchecks (
+  id      bigserial primary key,
+  erstellt timestamptz not null default now(),
+  foto_ids jsonb not null,
+  modell  text,
+  inhalt  jsonb not null
+);
 
 create table if not exists ki_berichte (
   id      bigserial primary key,

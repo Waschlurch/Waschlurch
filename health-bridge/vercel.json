@@ -9,7 +9,9 @@
     "api/mcp.mjs": { "maxDuration": 30 },
     "api/einstellungen.mjs": { "maxDuration": 10 },
     "api/protokoll.mjs": { "maxDuration": 10 },
-    "api/ki-coach.mjs": { "maxDuration": 300 }
+    "api/ki-coach.mjs": { "maxDuration": 300 },
+    "api/fotos.mjs": { "maxDuration": 300 },
+    "api/import.mjs": { "maxDuration": 60 }
   },
   "headers": [
     {

@@ -104,6 +104,11 @@ export function demoEinstellungen(tage = 120){
     ziele: { phase: 'aufbau', protein_g_pro_kg: 2.2, groesse_cm: 182, schritte_ziel: 10000, cardio_min_ziel: 20, cardio_min_rest: 35, schlaf_ziel_h: 8, kraft_pro_woche: 5, ueberschuss_kcal: 300 },
     phasen: [{ phase: 'diaet', start: tagPlus(heute, -tage + 1), notiz: 'Diät bis Herbst' }, { phase: 'aufbau', start: tagPlus(heute, -70), notiz: 'Off-Season-Aufbau' }],
     plan: { muster: ['T', 'T', 'R'], start: tagPlus(heute, -startI) },
+    profil: { geschlecht: 'm', geburtsjahr: 1997, erfahrung_jahre: 7, klasse: 'Classic Physique', wettkampf_datum: tagPlus(heute, 200), schwachstellen: ['Waden', 'Beinbeuger'], staerken: ['Rücken', 'Brust'],
+      verletzungen: 'Linke Schulter: schweres Überkopfdrücken vermeiden', ziel_text: 'Nächstes Jahr Classic Physique – mehr Beine und Waden, Taille schmal halten.' },
+    supplements: [{ name: 'Kreatin', dosis: 5, einheit: 'g', zeit: 'morgens', tage: 'taeglich', notiz: '' }, { name: 'Whey', dosis: 30, einheit: 'g', zeit: 'post', tage: 'training', notiz: 'mit Banane' },
+      { name: 'Pre-Workout', dosis: 1, einheit: 'Scoops', zeit: 'pre', tage: 'training', notiz: '200 mg Koffein' }, { name: 'Vitamin D3', dosis: 2000, einheit: 'IE', zeit: 'morgens', tage: 'taeglich', notiz: '' },
+      { name: 'Omega-3', dosis: 2, einheit: 'Kapseln', zeit: 'zum_essen', tage: 'taeglich', notiz: '' }, { name: 'Magnesium', dosis: 300, einheit: 'mg', zeit: 'vor_schlaf', tage: 'taeglich', notiz: '' }],
     split: { vorlage: 'ppl', tage: [{ name: 'Push', muskeln: ['Brust', 'Schultern', 'Trizeps'] }, { name: 'Pull', muskeln: ['Rücken', 'Bizeps', 'Unterarme', 'Nacken'] }, { name: 'Beine', muskeln: ['Quadrizeps', 'Beinbeuger', 'Gesäß', 'Waden', 'Bauch'] }] },
   };
 }
@@ -112,5 +117,9 @@ export function demoProtokoll(tage = 120){
   for(let i = tage - 1; i >= 0; i--) if(i % 11 === 4) aus.push({ tag: tagPlus(heute, -i), cheat: true, tagtyp: null, notiz: i < 20 ? 'Pizza-Abend' : '' });
   aus.push({ tag: tagPlus(heute, -9), cheat: false, tagtyp: 'rest', notiz: 'Krank – Training ausgefallen' });
   for(const i of [2, 5, 13, 20]) aus.push({ tag: tagPlus(heute, -i), cheat: false, tagtyp: null, notiz: '', einheiten: [{ art: 'Posing', dauer_min: 20 }] });
+  // Supplement-Einnahme: an den meisten Tagen vollständig, Vitamin D und Magnesium öfter vergessen
+  for(let i = 1; i < 30; i++){ const t = tagPlus(heute, -i), training = i % 3 !== 0, e = aus.find(x => x.tag === t);
+    const l = ['Kreatin', 'Omega-3', ...(i % 4 ? ['Vitamin D3'] : []), ...(i % 3 === 1 ? [] : ['Magnesium']), ...(training ? ['Whey', 'Pre-Workout'] : [])];
+    if(e) e.supplements = l; else aus.push({ tag: t, cheat: false, tagtyp: null, notiz: '', supplements: l }); }
   return aus;
 }

@@ -1,7 +1,7 @@
 import { balken, stapel, linie, fenster, spark, leer, tagKurz, divergierend } from './diagramme.js';
 import { bodybuilding as bbKern, tagPlus, tagesListe, phaseAm, tagTyp, PHASEN as PHASE_TITEL, SPLITS, MUSKELN, ARTEN } from './kern/rechnen.mjs';
 import { analyse as analyseKern } from './kern/analyse.mjs';
-import { KI_ANWEISUNG, kiKontext, kiAufgabe, kiPruefen } from './kern/ki.mjs';
+import { KI_ANWEISUNG, kiKontext, kiAufgabe, kiPruefen, FORM_ANWEISUNG, FORM_FORMAT_HINWEIS, formKontext, formPruefen } from './kern/ki.mjs';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -107,7 +107,7 @@ function zeichnen(){
 function zeichnenInnen(d){
   zoomKnoepfe();
   ordnen(d.einstellungen);
-  held(d); vorlagenLeiste(d); kacheln(d); analyseBereich(d); protokollBereich(d); aufbau(d); training(d); schlaf(d); herz(d); aktivitaet(d); ernaehrung(d);
+  held(d); vorlagenLeiste(d); kacheln(d); analyseBereich(d); protokollBereich(d); aufbau(d); training(d); schlaf(d); herz(d); aktivitaet(d); ernaehrung(d); suppZeichnen(d); fotosZeichnen();
   $('#fuss-zone').textContent = `${tagKurz(d.zeitraum.von)} – ${tagKurz(d.zeitraum.bis)} · ${d.zeitzone}`;
 }
 
@@ -154,14 +154,50 @@ function pulslinie(rhr, hrv){
 }
 
 /* ── Bereiche ordnen ───────────────────────────────────── */
-const BEREICH_TITEL = { analyse: 'Coach', protokoll: 'Protokoll', aufbau: 'Aufbau', training: 'Training', ernaehrung: 'Ernährung', schlaf: 'Schlaf', herz: 'Herz', aktivitaet: 'Aktivität' };
+const BEREICH_TITEL = { analyse: 'Coach', protokoll: 'Protokoll', aufbau: 'Aufbau', training: 'Training', ernaehrung: 'Ernährung', formcheck: 'Form-Checks', supplements: 'Supplements', schlaf: 'Schlaf', herz: 'Herz', aktivitaet: 'Aktivität' };
+const MENUE_TITEL = { uebersicht: 'Übersicht', analyse: 'Coach-Analyse', aufbau: 'Körper & Aufbau', protokoll: 'Protokoll & Plan', ernaehrung: 'Ernährung', training: 'Krafttraining', formcheck: 'Form-Checks', supplements: 'Supplements', schlaf: 'Schlaf', herz: 'Herz', aktivitaet: 'Aktivität', daten: 'Daten & Import' };
+const mobil = matchMedia('(max-width: 1060px)');
 function ordnen(e){
   const wrap = $('#bereiche'), nav = $('.sprung');
   const an = e.bereiche;
   wrap.querySelectorAll('[data-bereich]').forEach(sec => { sec.hidden = !an.includes(sec.dataset.bereich); });
   an.forEach((id, i) => { const sec = wrap.querySelector(`[data-bereich="${id}"]`); if(sec){ wrap.appendChild(sec); sec.querySelector('.nr').textContent = String(i + 1).padStart(2, '0'); } });
-  nav.innerHTML = an.map(id => `<a href="#${id}">${BEREICH_TITEL[id]}</a>`).join('');
+  nav.innerHTML = an.map(id => `<a href="#${id}">${BEREICH_TITEL[id]}</a>`).join('') + '<a href="#daten">Import</a>';
+  menueBauen(an);
 }
+
+/* ── Menü: auf Handy & Tablet je ein Bereich pro Ansicht ── */
+let aktiv = (location.hash.slice(1) || SPEICHER.get('puls.ansicht') || 'uebersicht');
+function ansichten(){ return ['uebersicht', ...(zustand.roh?.einstellungen.bereiche || []), 'daten']; }
+function menueBauen(an){
+  $('#menue').innerHTML = ['uebersicht', ...an, 'daten'].map(id => `<button type="button" role="menuitem" data-ansicht="${id}" aria-current="${id === aktiv}">${MENUE_TITEL[id]}</button>`).join('');
+  ansichtAnwenden(false);
+}
+function ansichtAnwenden(scrollen = true){
+  if(!ansichten().includes(aktiv)) aktiv = 'uebersicht';
+  document.body.dataset.modus = mobil.matches ? 'ansicht' : 'seite';
+  document.body.dataset.ansicht = aktiv;
+  $('#menue-titel').textContent = MENUE_TITEL[aktiv];
+  $('#menue').querySelectorAll('[data-ansicht]').forEach(b => b.setAttribute('aria-current', String(b.dataset.ansicht === aktiv)));
+  if(scrollen){ if(mobil.matches) scrollTo({ top: 0 }); else if(aktiv !== 'uebersicht') document.getElementById(aktiv)?.scrollIntoView({ behavior: 'smooth' }); else scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+function zeigeAnsicht(id){
+  aktiv = id; SPEICHER.set('puls.ansicht', id);
+  if(location.hash.slice(1) !== id) history.replaceState(null, '', id === 'uebersicht' ? location.pathname + location.search : '#' + id);
+  ansichtAnwenden(); menueZu();
+  if(mobil.matches) requestAnimationFrame(zeichnen); // vorher versteckte Diagramme in voller Breite neu zeichnen
+}
+const menueZu = () => { $('#menue').hidden = true; $('#menue-knopf').setAttribute('aria-expanded', 'false'); };
+$('#menue-knopf').addEventListener('click', e => { e.stopPropagation(); const zu = !$('#menue').hidden; if(zu) return menueZu(); $('#menue').hidden = false; $('#menue-knopf').setAttribute('aria-expanded', 'true'); $('#menue [aria-current="true"]')?.focus(); });
+$('#menue').addEventListener('click', e => { const b = e.target.closest('[data-ansicht]'); if(b) zeigeAnsicht(b.dataset.ansicht); });
+$('#menue').addEventListener('keydown', e => {
+  const l = [...$('#menue').querySelectorAll('button')], i = l.indexOf(document.activeElement);
+  if(e.key === 'ArrowDown'){ e.preventDefault(); l[(i + 1) % l.length].focus(); } else if(e.key === 'ArrowUp'){ e.preventDefault(); l[(i - 1 + l.length) % l.length].focus(); } else if(e.key === 'Escape'){ menueZu(); $('#menue-knopf').focus(); }
+});
+document.addEventListener('click', e => { if(!e.target.closest('.menue-wrap')) menueZu(); });
+addEventListener('hashchange', () => { const id = location.hash.slice(1); if(ansichten().includes(id) && id !== aktiv) zeigeAnsicht(id); });
+mobil.addEventListener('change', () => { ansichtAnwenden(false); zeichnen(); });
+document.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if(!a || !mobil.matches) return; const id = a.getAttribute('href').slice(1); if(ansichten().includes(id)){ e.preventDefault(); zeigeAnsicht(id); } });
 
 /* ── Kennzahl-Kacheln ──────────────────────────────────── */
 const vorz = (v, nk = 0) => v == null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '±') + zahl(Math.abs(v), nk);
@@ -314,8 +350,32 @@ function analyseBereich(d){
     : '<li class="e-info"><span class="e-z">i</span><div><p class="e-t">Noch keine Auswertung</p><p>Sobald Gewicht, Ernährung, Schlaf und Training ein paar Tage gesynct sind, erscheinen hier Bewertungen.</p></div></li>';
   intelligenzZeichnen(a.intelligenz);
   kiZeichnen();
+  // Top 3 und Zähler für die aufklappbaren Details
+  const top = a.erkenntnisse.filter(x => x.ton !== 'gut').slice(0, 3);
+  $('#top3').innerHTML = (top.length ? top : a.erkenntnisse.slice(0, 3)).map(x => `<li class="e-${x.ton}"><span class="e-z" aria-hidden="true">${TON[x.ton].z}</span><div><p class="e-t"><span class="sr">${TON[x.ton].t}: </span>${esc(x.titel)}</p><p>${esc(x.text)}</p></div></li>`).join('')
+    || '<li class="e-info"><span class="e-z">i</span><div><p class="e-t">Noch keine Auswertung</p><p>Sobald ein paar Tage Daten da sind, stehen hier die drei wichtigsten Punkte.</p></div></li>';
+  $('#hinweise-n').textContent = `(${a.erkenntnisse.length})`;
+  $('#vgl-n').textContent = `· ${w.besser} besser, ${w.schlechter} schlechter`;
+  $('#zh-n').textContent = `(${(a.intelligenz?.zusammenhaenge.length || 0) + (a.intelligenz?.trends.length || 0) + (a.intelligenz?.ausreisser.length || 0)})`;
+  basisZeichnen(d);
   const dringend = a.erkenntnisse.filter(x => x.ton === 'kritisch' || x.ton === 'warnung').length;
   $('#analyse-k').innerHTML = `${esc(a.phase.titel)}${a.phase.seit ? ` · Woche ${Math.ceil(a.phase.seit.tage / 7)}` : ''} · <b>${dringend}</b> ${dringend === 1 ? 'Punkt braucht' : 'Punkte brauchen'} Aufmerksamkeit, <b>${a.erkenntnisse.filter(x => x.ton === 'gut').length}</b> laufen gut.`;
+}
+
+/** Worauf die Analyse beruht: Zeitraum und welche Daten vorhanden sind. */
+function basisZeichnen(d){
+  const a = d.analyse, roh = zustand.roh, R = roh.basis.reihen, von = a.vergleich_mit.von, bis = a.zeitraum.bis;
+  const n = (m, ab = tagPlus(bis, -6)) => (R[m] || []).filter(p => p.tag >= ab && p.tag <= bis).length;
+  const quellen = [...new Set(roh.basis.eintraege?.filter(e => e.m === 'dietary_energy').length ? ['YAZIO'] : [])];
+  const bb = d.bodybuilding, pr = roh.einstellungen.profil || {};
+  const profilOk = pr.geburtsjahr || pr.klasse || pr.erfahrung_jahre;
+  const chip = (ok, text) => `<span class="${ok ? 'ok' : 'fehlt'}">${ok ? '✓' : '–'} ${text}</span>`;
+  $('#basis').innerHTML = `<p><b>Grundlage:</b> letzte 7 Tage (${tagKurz(a.zeitraum.von)}–${tagKurz(bis)}) gegen die 7 davor, Muster aus 90 Tagen.</p><div class="basis-chips">
+    ${chip(n('weight_body_mass'), `Waage ${n('weight_body_mass')}/7 Tage`)}${chip(n('dietary_energy'), `Ernährung ${n('dietary_energy')}/7${quellen.length ? ' (' + quellen.join(', ') + ')' : ''}`)}
+    ${chip(a.intelligenz?.tage_mit_daten, `Schlaf & HRV ${n('heart_rate_variability')}/7`)}${chip(bb.kraft.einheiten, `${bb.kraft.einheiten} Krafteinheiten (${d.tage.length} T)`)}
+    ${chip(bb.koerper.groesse_cm, `Körper: ${bb.koerper.groesse_cm || '?'} cm · ${zahl(bb.gewicht.aktuell_trend_kg, 1)} kg · ${zahl(bb.koerper.koerperfett_prozent, 1)} % KFA`)}
+    ${chip(profilOk, profilOk ? `Profil: ${[pr.klasse, pr.erfahrung_jahre ? pr.erfahrung_jahre + ' J. Training' : '', pr.geburtsjahr ? (Number(bis.slice(0, 4)) - pr.geburtsjahr) + ' J.' : ''].filter(Boolean).join(' · ')}` : 'Körperprofil fehlt')}
+    ${chip(roh.einstellungen.supplements?.length, `${roh.einstellungen.supplements?.length || 0} Supplements`)}${chip(fotos.check, fotos.check ? `Form-Check ${tagKurz(fotos.check.erstellt.slice(0, 10))}` : 'kein Form-Check')}</div>`;
 }
 
 /* ── Mahlzeiten & Timing ──────────────────────────────── */
@@ -385,7 +445,8 @@ function kiZeichnen(){
   const urteil = { 'sehr gut': 'gut', gut: 'gut', gemischt: 'mittel', schwach: 'schwach' }[r.gesamturteil];
   const e = r.ernaehrung, li = l => l.map(x => `<li>${esc(x)}</li>`).join('');
   $('#ki-inhalt').innerHTML = `<p class="ki-kern"><span class="ki-urteil ${urteil}">${esc(r.gesamturteil)}</span>${esc(r.kernaussage)}</p>
-    <ol class="ki-prio">${r.prioritaeten.map(p => `<li class="d-${p.dringlichkeit}"><p class="kp-t">${esc(p.titel)}<small>${esc(p.dringlichkeit)}</small></p><p><b>Warum:</b> ${esc(p.warum)}</p><p><b>Tun:</b> ${esc(p.aktion)}</p><p class="kp-m">Messen: ${esc(p.messgroesse)}</p></li>`).join('')}</ol>
+    <ol class="ki-prio">${r.prioritaeten.slice(0, 3).map(p => `<li class="d-${p.dringlichkeit}"><p class="kp-t">${esc(p.titel)}</p><p>${esc(p.aktion)}</p><p class="kp-m">${esc(p.warum)}${p.messgroesse ? ` · Messen: ${esc(p.messgroesse)}` : ''}</p></li>`).join('')}</ol>
+    <details class="aufklapp innen"><summary>Ernährung, Training, Erholung${r.fragen.length ? ' & Rückfragen' : ''}</summary>
     <div class="ki-raster">
       <section><h4>Ernährung</h4><table class="ki-tab"><tbody>
         <tr><th scope="row">Trainingstag</th><td>${zahl(e.kcal_trainingstag)} kcal</td><td>${zahl(e.kohlenhydrate_g_training)} g KH</td></tr>
@@ -398,7 +459,7 @@ function kiZeichnen(){
       ${r.gut_laeuft.length ? `<section><h4>Läuft gut</h4><ul class="ki-liste gut">${li(r.gut_laeuft)}</ul></section>` : ''}
       ${r.warnsignale.length ? `<section><h4>Warnsignale</h4><ul class="ki-liste warn">${li(r.warnsignale)}</ul></section>` : ''}
     </div>
-    ${r.fragen.length ? `<section class="ki-fragen"><h4>Rückfragen von Claude</h4><ul>${li(r.fragen)}</ul><p class="klein">Beantworte sie im Protokoll als Notiz oder direkt im Chat mit Claude – dort kennt Claude über den Connector dieselben Daten.</p></section>` : ''}`;
+    ${r.fragen.length ? `<section class="ki-fragen"><h4>Rückfragen von Claude</h4><ul>${li(r.fragen)}</ul><p class="klein">Beantworte sie im Körperprofil, im Protokoll als Notiz oder direkt im Chat mit Claude.</p></section>` : ''}</details>`;
 }
 
 async function kiBereit(){
@@ -706,6 +767,7 @@ function anpassenZeichnen(){
     : '<li class="leer">Noch kein Split. Wähle oben eine Vorlage oder lege eigene Tage an.</li>';
   const f = $('#anpassen-form');
   for(const [k, v] of Object.entries(e.ziele)) if(f.elements[k] && f.elements[k].tagName === 'INPUT') f.elements[k].value = v ?? '';
+  profilZeichnen();
 }
 
 async function anpassenOeffnen(){
@@ -823,6 +885,7 @@ function tagOeffnen(tag){
   const optionen = [...new Set([...sp.map(x => x.name), ...(p.fokus && !sp.some(x => x.name === p.fokus) ? [p.fokus] : [])])];
   $('#t-fokus').innerHTML = `<option value="">Automatisch${erkannt && !p.fokus ? ` – erkannt: ${esc(erkannt)}` : geplantF ? ` – geplant: ${esc(geplantF)}` : ''}</option>` + optionen.map(n => `<option value="${esc(n)}"${p.fokus === n ? ' selected' : ''}>${esc(n)}</option>`).join('');
   einheitenZeichnen();
+  tagSuppZeichnen(p, i >= 0 ? bb.reihen.tagtyp[i] : null);
   const f = $('#tag-form');
   f.dataset.tag = tag;
   f.querySelectorAll('input[name=tagtyp]').forEach(r => r.checked = (r.value || null) === (p.tagtyp || null));
@@ -845,11 +908,233 @@ $('#tag-form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.currentTarget, typ = f.querySelector('input[name=tagtyp]:checked')?.value || null;
   $('#t-status').textContent = 'Speichere …';
-  try { await protokollSpeichern({ tag: f.dataset.tag, cheat: $('#t-cheat').checked, tagtyp: typ, notiz: $('#t-notiz').value.trim(), fokus: $('#t-fokus').value || null, einheiten: tagEntwurf.einheiten }); $('#tag-dlg').close(); }
+  try { await protokollSpeichern({ tag: f.dataset.tag, cheat: $('#t-cheat').checked, tagtyp: typ, notiz: $('#t-notiz').value.trim(), fokus: $('#t-fokus').value || null, einheiten: tagEntwurf.einheiten, supplements: tagEntwurf.suppBeruehrt ? [...$('#t-supp').querySelectorAll('input:checked')].map(x => x.value) : (tagEntwurf.supplements ?? null) }); $('#tag-dlg').close(); }
   catch(err){ $('#t-status').textContent = err.message; }
 });
 $('#tag-dlg').addEventListener('click', e => { if(e.target === e.currentTarget || e.target.closest('[data-zu]')) e.currentTarget.close(); });
 $('#prot-gitter').addEventListener('click', e => { const b = e.target.closest('[data-tag]'); if(b) tagOeffnen(b.dataset.tag); });
+
+/* ── Körperprofil (im Dialog „Ansicht & Ziele“) ───────── */
+function profilZeichnen(){
+  const pr = anpassen.entwurf.profil ||= {}, muskeln = zustand.roh.meta.muskeln;
+  $('#a-profil').querySelectorAll('[data-p]').forEach(el => { el.value = pr[el.dataset.p] ?? ''; });
+  const chips = (feld, ziel) => { $(ziel).innerHTML = muskeln.map(m => `<label><input type="checkbox" value="${m}" data-liste="${feld}"${(pr[feld] || []).includes(m) ? ' checked' : ''}>${m}</label>`).join(''); };
+  chips('schwachstellen', '#a-schwach'); chips('staerken', '#a-stark');
+}
+$('#a-profil').addEventListener('input', e => {
+  const pr = anpassen.entwurf.profil ||= {}, el = e.target;
+  if(el.dataset.p) pr[el.dataset.p] = el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value || (el.type === 'date' || el.tagName === 'SELECT' ? null : '');
+  else if(el.dataset.liste){ const l = pr[el.dataset.liste] ||= []; pr[el.dataset.liste] = el.checked ? [...new Set([...l, el.value])] : l.filter(x => x !== el.value); }
+});
+
+/* ── Supplements ───────────────────────────────────────── */
+let suppEntwurf = null;
+const suppFaellig = (x, typ) => x.tage === 'taeglich' || (x.tage === 'training' && typ === 'training') || (x.tage === 'rest' && typ === 'rest');
+function suppZeichnen(d){
+  const e = d.einstellungen, meta = zustand.roh.meta, liste = e.supplements || [], heute = d.zeitraum.bis;
+  const typ = d.bodybuilding.reihen.tagtyp.at(-1), p = d.protokoll.find(x => x.tag === heute);
+  const genommen = new Set(p?.supplements || []);
+  const faellig = liste.filter(x => suppFaellig(x, typ));
+  const gruppen = Object.keys(meta.supp_zeiten).map(z => [z, faellig.filter(x => x.zeit === z)]).filter(([, l]) => l.length);
+  $('#supp-heute').innerHTML = liste.length ? gruppen.map(([z, l]) => `<div class="supp-gruppe"><p>${meta.supp_zeiten[z]}</p>${l.map(x => `<label class="supp-check"><input type="checkbox" data-supp="${esc(x.name)}"${genommen.has(x.name) ? ' checked' : ''}><span><b>${esc(x.name)}</b>${x.dosis ? ` ${zahl(x.dosis, 2)} ${esc(x.einheit)}` : ''}${x.notiz ? ` · ${esc(x.notiz)}` : ''}</span></label>`).join('')}</div>`).join('') || '<p class="klein">Heute ist nichts geplant.</p>'
+    : '<p class="klein">Noch keine Routine. Trage unten ein, was du nimmst – z. B. Kreatin 5 g täglich, Whey nach dem Training.</p>';
+  $('#supp-heute-k').textContent = faellig.length ? `${[...genommen].filter(n => faellig.some(x => x.name === n)).length} von ${faellig.length} genommen · ${typ === 'training' ? 'Trainingstag' : 'Rest-Day'}` : '';
+  // Treue 14 Tage
+  const von = tagPlus(heute, -13), erfasst = d.protokoll.filter(x => x.tag >= von && Array.isArray(x.supplements));
+  const pm = new Map(d.protokoll.map(x => [x.tag, x]));
+  $('#supp-treue').innerHTML = liste.length && erfasst.length ? liste.map(x => {
+    const faelligAn = erfasst.filter(t => suppFaellig(x, tagTyp(t.tag, e.plan, pm) ?? 'training')), n = faelligAn.filter(t => t.supplements.includes(x.name)).length, q = faelligAn.length ? n / faelligAn.length : 0;
+    return `<li class="${q >= 0.85 ? 'gut' : q >= 0.6 ? 'mittel' : 'schwach'}"><span>${esc(x.name)}</span><i><b style="width:${q * 100}%"></b></i><em>${Math.round(q * 100)} %</em><small>${n}/${faelligAn.length} T</small></li>`; }).join('')
+    : '<li class="leer">Hake die Einnahme unter „Heute“ oder im Protokoll ab – dann siehst du hier deine Treue.</li>';
+  $('#supp-k').textContent = liste.length ? `${liste.length} in deiner Routine` : '';
+  if(!suppEntwurf) suppRoutineZeichnen(structuredClone(liste));
+}
+function suppRoutineZeichnen(l){
+  suppEntwurf = l; const meta = zustand.roh.meta;
+  const opt = (o, w) => Object.entries(o).map(([k, t]) => `<option value="${k}"${k === w ? ' selected' : ''}>${t}</option>`).join('');
+  $('#supp-liste').innerHTML = l.length ? l.map((x, i) => `<li data-i="${i}">
+      <input type="text" data-f="name" value="${esc(x.name)}" maxlength="40" placeholder="Name" aria-label="Name" required>
+      <input type="number" data-f="dosis" value="${x.dosis ?? ''}" step="any" min="0" placeholder="Dosis" aria-label="Dosis" inputmode="decimal">
+      <select data-f="einheit" aria-label="Einheit">${meta.supp_einheiten.map(u => `<option${u === x.einheit ? ' selected' : ''}>${u}</option>`).join('')}</select>
+      <select data-f="zeit" aria-label="Zeitpunkt">${opt(meta.supp_zeiten, x.zeit)}</select>
+      <select data-f="tage" aria-label="Tage">${opt(meta.supp_tage, x.tage)}</select>
+      <input type="text" data-f="notiz" value="${esc(x.notiz || '')}" maxlength="120" placeholder="Notiz (optional)" aria-label="Notiz">
+      <button type="button" data-weg aria-label="${esc(x.name || 'Supplement')} entfernen">×</button></li>`).join('')
+    : '<li class="leer">Noch nichts eingetragen.</li>';
+}
+$('#supp-plus').addEventListener('click', () => { suppRoutineZeichnen([...(suppEntwurf || []), { name: '', dosis: null, einheit: 'g', zeit: 'morgens', tage: 'taeglich', notiz: '' }]); $('#supp-liste li:last-child input')?.focus(); });
+$('#supp-liste').addEventListener('input', e => { const li = e.target.closest('li[data-i]'); if(!li) return; const f = e.target.dataset.f; suppEntwurf[+li.dataset.i][f] = f === 'dosis' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value; });
+$('#supp-liste').addEventListener('click', e => { const w = e.target.closest('[data-weg]'); if(w){ suppEntwurf.splice(+w.closest('li').dataset.i, 1); suppRoutineZeichnen(suppEntwurf); } });
+$('#supp-form').addEventListener('submit', async e => {
+  e.preventDefault(); const st = $('#supp-status'); st.textContent = 'Speichere …';
+  try { await einstellungenSpeichern({ ...zustand.roh.einstellungen, supplements: suppEntwurf.filter(x => x.name.trim()) }); suppEntwurf = null; st.textContent = 'Gespeichert ✓'; setTimeout(() => st.textContent = '', 1800); }
+  catch(err){ st.textContent = err.message; }
+});
+$('#supp-heute').addEventListener('change', async e => {
+  const cb = e.target.closest('[data-supp]'); if(!cb) return;
+  const heute = zustand.daten.zeitraum.bis, alt = zustand.roh.protokoll.find(x => x.tag === heute) || { tag: heute, cheat: false, tagtyp: null, notiz: '', fokus: null, einheiten: [] };
+  const l = new Set(alt.supplements || []); cb.checked ? l.add(cb.dataset.supp) : l.delete(cb.dataset.supp);
+  try { await protokollSpeichern({ ...alt, supplements: [...l] }); } catch(err){ cb.checked = !cb.checked; $('#supp-heute-k').textContent = err.message; }
+});
+function tagSuppZeichnen(p, typ){
+  const liste = zustand.roh.einstellungen.supplements || [];
+  $('#t-supp-feld').hidden = !liste.length;
+  tagEntwurf.supplements = p.supplements ?? null; tagEntwurf.suppBeruehrt = false;
+  const g = new Set(p.supplements || []);
+  $('#t-supp').innerHTML = liste.map(x => `<label><input type="checkbox" value="${esc(x.name)}"${g.has(x.name) ? ' checked' : ''}>${esc(x.name)}${suppFaellig(x, typ) ? '' : ' <small>(nicht geplant)</small>'}</label>`).join('');
+}
+$('#t-supp').addEventListener('change', () => { tagEntwurf.suppBeruehrt = true; });
+
+/* ── Form-Checks ───────────────────────────────────────── */
+const fotos = { liste: [], check: null, posen: [], ki: false, urls: new Map(), wahl: [] };
+const fotoDB = {
+  async db(){ return this._db ||= await new Promise((ok, nein) => { const r = indexedDB.open('puls-vorschau', 1); r.onupgradeneeded = () => r.result.createObjectStore('fotos', { keyPath: 'id', autoIncrement: true }); r.onsuccess = () => ok(r.result); r.onerror = () => nein(r.error); }); },
+  async alle(){ const d = await this.db(); return new Promise(ok => { const r = d.transaction('fotos').objectStore('fotos').getAll(); r.onsuccess = () => ok(r.result || []); r.onerror = () => ok([]); }); },
+  async neu(x){ const d = await this.db(); return new Promise((ok, nein) => { const r = d.transaction('fotos', 'readwrite').objectStore('fotos').add(x); r.onsuccess = () => ok(r.result); r.onerror = () => nein(r.error); }); },
+  async weg(id){ const d = await this.db(); return new Promise(ok => { const t = d.transaction('fotos', 'readwrite'); t.objectStore('fotos').delete(id); t.oncomplete = ok; t.onerror = ok; }); },
+};
+async function fotosLaden(){
+  $('#foto-tag').value ||= zustand.roh?.heute || '';
+  if(VORSCHAU){
+    fotos.posen = zustand.roh.meta.posen; fotos.ki = !!ki.sample;
+    try { const l = await fotoDB.alle(); fotos.liste = l.map(({ blob, ...m }) => m).sort((a, b) => b.tag.localeCompare(a.tag) || b.id - a.id); for(const f of l) if(!fotos.urls.has(f.id)) fotos.urls.set(f.id, URL.createObjectURL(f.blob)); } catch { fotos.liste = []; }
+    fotos.check = lokal.lesen('puls.vorschau.formcheck');
+  } else {
+    const r = await fetch('/api/fotos', { headers: { 'x-puls-code': zustand.code } }).then(x => x.ok ? x.json() : null).catch(() => null);
+    if(r){ fotos.liste = r.fotos; fotos.posen = r.posen; fotos.check = r.letzter_check; fotos.ki = r.ki; }
+  }
+  $('#foto-pose').innerHTML = (fotos.posen.length ? fotos.posen : zustand.roh.meta.posen).map(p => `<option>${esc(p)}</option>`).join('');
+  fotosZeichnen(); if(zustand.daten) basisZeichnen(zustand.daten);
+}
+async function fotoUrl(id){
+  if(fotos.urls.has(id)) return fotos.urls.get(id);
+  const b = await fetch(`/api/fotos?id=${id}`, { headers: { 'x-puls-code': zustand.code } }).then(r => r.ok ? r.blob() : null).catch(() => null);
+  const u = b ? URL.createObjectURL(b) : ''; fotos.urls.set(id, u); return u;
+}
+function fotosZeichnen(){
+  const box = $('#galerie'); if(!box) return;
+  const proPose = new Map(); for(const f of fotos.liste) (proPose.get(f.pose) || proPose.set(f.pose, []).get(f.pose)).push(f);
+  box.innerHTML = fotos.liste.length ? [...proPose].map(([pose, l]) => `<div class="pose"><p>${esc(pose)} <small>${l.length}</small></p><div class="pose-reihe">${l.map(f => `<button type="button" class="foto${fotos.wahl.includes(f.id) ? ' gewaehlt' : ''}" data-id="${f.id}" aria-pressed="${fotos.wahl.includes(f.id)}" aria-label="${esc(pose)} vom ${tagKurz(f.tag, true)}${f.notiz ? ', ' + esc(f.notiz) : ''}"><img alt="" data-src="${f.id}"><span>${tagKurz(f.tag)}</span></button>`).join('')}</div></div>`).join('')
+    : '<p class="klein">Noch keine Fotos. Tipp: Front, Seite und Rücken alle 2–4 Wochen bei gleichem Licht.</p>';
+  box.querySelectorAll('img[data-src]').forEach(async img => { img.src = await fotoUrl(+img.dataset.src); });
+  $('#galerie-k').textContent = fotos.liste.length ? `${fotos.liste.length} Fotos · tippe zwei derselben Pose an, um sie zu vergleichen` : '';
+  $('#form-k').textContent = fotos.liste.length ? `${proPose.size} Posen · zuletzt ${tagKurz(fotos.liste[0].tag, true)}` : 'Fotos deiner Posen – vergleichen und von der KI bewerten lassen.';
+  formCheckZeichnen();
+  $('#formki-knopf').disabled = !fotos.liste.length || !fotos.ki;
+  $('#formki-status').textContent = !fotos.ki ? (VORSCHAU ? 'Die KI-Bewertung läuft in der Vorschau nur, wenn du die Seite in Claude öffnest.' : 'Für den KI-Form-Check fehlt ANTHROPIC_API_KEY.') : '';
+}
+function formCheckZeichnen(){
+  const c = fotos.check?.check; if(!c) return;
+  $('#formki-stand').textContent = `Stand ${new Date(fotos.check.erstellt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}`;
+  $('#formki-inhalt').innerHTML = `<p class="ki-kern"><span class="ki-urteil mittel">${esc(c.kondition)}</span>${esc(c.zusammenfassung)}</p>
+    <div class="form-werte"><div><span>Körperfett geschätzt</span><b>${zahl(c.kfa_von)}–${zahl(c.kfa_bis)} %</b></div><div><span>Symmetrie</span><p>${esc(c.symmetrie)}</p></div>${c.veraenderung ? `<div><span>Veränderung</span><p>${esc(c.veraenderung)}</p></div>` : ''}</div>
+    <div class="ki-raster"><section><h4>Stärken</h4><ul class="ki-liste gut">${c.staerken.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
+      <section><h4>Posing</h4><ul class="ki-liste">${c.posing_tipps.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section></div>
+    <ol class="ki-prio">${c.schwachstellen.map(x => `<li class="d-mittel"><p class="kp-t">${esc(x.muskelgruppe)}</p><p>${esc(x.empfehlung)}</p><p class="kp-m">${esc(x.beobachtung)}</p></li>`).join('')}</ol>
+    ${c.fotoqualitaet ? `<p class="klein">Foto-Hinweis: ${esc(c.fotoqualitaet)}</p>` : ''}`;
+}
+$('#galerie').addEventListener('click', async e => {
+  const b = e.target.closest('.foto'); if(!b) return;
+  const id = +b.dataset.id, f = fotos.liste.find(x => x.id === id);
+  fotos.wahl = fotos.wahl.includes(id) ? fotos.wahl.filter(x => x !== id) : [...fotos.wahl.filter(x => fotos.liste.find(y => y.id === x)?.pose === f.pose), id].slice(-2);
+  fotosZeichnen();
+  const v = $('#foto-vergleich'), w = fotos.wahl.map(i => fotos.liste.find(x => x.id === i)).sort((a, c) => a.tag.localeCompare(c.tag));
+  v.hidden = !w.length;
+  const urls = await Promise.all(w.map(x => fotoUrl(x.id)));
+  v.innerHTML = w.map((x, k) => `<figure><img alt="${esc(x.pose)} vom ${tagKurz(x.tag, true)}" src="${urls[k]}"><figcaption>${tagKurz(x.tag, true)}${x.notiz ? ' · ' + esc(x.notiz) : ''} <button type="button" class="knopf-leise klein-knopf" data-loeschen="${x.id}">Löschen</button></figcaption></figure>`).join('')
+    + (w.length === 2 ? `<p class="klein vergleich-abstand">${Math.round((new Date(w[1].tag) - new Date(w[0].tag)) / 864e5)} Tage dazwischen</p>` : '');
+});
+$('#foto-vergleich').addEventListener('click', async e => {
+  const b = e.target.closest('[data-loeschen]'); if(!b) return;
+  if(b.dataset.sicher !== '1'){ b.dataset.sicher = '1'; b.textContent = 'Wirklich löschen?'; return; }
+  const id = +b.dataset.loeschen;
+  if(VORSCHAU) await fotoDB.weg(id); else await fetch(`/api/fotos?id=${id}`, { method: 'DELETE', headers: { 'x-puls-code': zustand.code } });
+  fotos.wahl = fotos.wahl.filter(x => x !== id); $('#foto-vergleich').hidden = true; fotosLaden();
+});
+$('#foto-datei').addEventListener('change', e => { $('#foto-wahl-text').textContent = e.target.files[0]?.name || 'Foto wählen oder aufnehmen'; });
+/** Bild verkleinern (max. 1600 px) und als JPEG kodieren. */
+async function verkleinern(datei){
+  const bmp = await createImageBitmap(datei, { imageOrientation: 'from-image' });
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.86));
+  return { blob, breite: c.width, hoehe: c.height };
+}
+$('#foto-form').addEventListener('submit', async e => {
+  e.preventDefault(); const st = $('#foto-status'), datei = $('#foto-datei').files[0]; if(!datei) return;
+  st.textContent = 'Bereite vor …';
+  try {
+    const { blob, breite, hoehe } = await verkleinern(datei), x = { tag: $('#foto-tag').value, pose: $('#foto-pose').value, notiz: $('#foto-notiz').value.trim() };
+    if(VORSCHAU) await fotoDB.neu({ ...x, blob, breite, hoehe });
+    else {
+      const daten = await new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(blob); });
+      const r = await fetch('/api/fotos', { method: 'POST', headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...x, daten, breite, hoehe }) });
+      if(!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Hochladen fehlgeschlagen.');
+    }
+    st.textContent = 'Gespeichert ✓'; $('#foto-form').reset(); $('#foto-tag').value = zustand.roh.heute; $('#foto-wahl-text').textContent = 'Foto wählen oder aufnehmen';
+    fotosLaden();
+  } catch(err){ st.textContent = err.message || 'Das Foto konnte nicht verarbeitet werden.'; }
+});
+$('#formki-knopf').addEventListener('click', async () => {
+  const knopf = $('#formki-knopf'), st = $('#formki-status'); knopf.disabled = true; st.textContent = 'Claude sieht sich deine Fotos an … das dauert meist 30–90 Sekunden.'; $('#formki').classList.add('denkt');
+  try {
+    if(VORSCHAU){
+      const alle = await fotoDB.alle(), proPose = new Map();
+      for(const f of alle.sort((a, b) => b.tag.localeCompare(a.tag))) (proPose.get(f.pose) || proPose.set(f.pose, []).get(f.pose)).push(f);
+      const wahl = [...proPose.values()].flatMap(l => l.length > 1 && l.at(-1).tag !== l[0].tag ? [l[0], l.at(-1)] : [l[0]]).slice(0, 6);
+      const bb = zustand.daten.bodybuilding, e = zustand.roh.einstellungen;
+      const text = `${FORM_ANWEISUNG}\n\n${formKontext({ profil: e.profil, phase: bb.phase.titel, fotos: wahl, koerper: { groesse_cm: bb.koerper.groesse_cm, gewicht_kg: bb.gewicht.aktuell_trend_kg, koerperfett_waage: bb.koerper.koerperfett_prozent, ffmi: bb.koerper.ffmi } })}\n\n${FORM_FORMAT_HINWEIS}`;
+      const antwort = await ki.sample.json(text, { images: wahl.map(f => f.blob), modelTier: 'complex', effort: 'high', cache: false });
+      fotos.check = { erstellt: new Date().toISOString(), check: formPruefen(antwort) }; lokal.schreiben('puls.vorschau.formcheck', fotos.check);
+    } else {
+      const r = await fetch('/api/fotos?check=1', { method: 'POST', headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: '{}' });
+      const j = await r.json().catch(() => ({})); if(!r.ok) throw { code: j.code, message: j.message };
+      fotos.check = j.letzter_check;
+    }
+    st.textContent = ''; formCheckZeichnen(); if(zustand.daten) basisZeichnen(zustand.daten);
+  } catch(err){ st.textContent = KI_FEHLER[err?.code] || (err?.code === 'images_unavailable' ? 'In dieser Ansicht können keine Bilder an Claude gesendet werden.' : err?.message) || 'Der Form-Check ist fehlgeschlagen.'; }
+  finally { knopf.disabled = false; $('#formki').classList.remove('denkt'); }
+});
+
+/* ── Import alter Daten ────────────────────────────────── */
+let importPakete = null;
+$('#import-datei').addEventListener('change', e => { const f = e.target.files[0]; $('#import-wahl-text').textContent = f ? `${f.name} · ${(f.size / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 1 })} MB` : 'export.zip, export.xml oder CSV wählen'; $('#import-start').disabled = !f; $('#import-start').textContent = 'Einlesen'; importPakete = null; $('#import-ergebnis').innerHTML = ''; });
+$('#import-start').addEventListener('click', async () => {
+  const knopf = $('#import-start'), f = $('#import-datei').files[0]; if(!f) return;
+  const box = $('#import-fortschritt'), balken = $('#import-balken'), text = $('#import-text');
+  box.hidden = false; knopf.disabled = true;
+  if(importPakete) return hochladen();
+  text.textContent = 'Lese Datei … (bleibt auf deinem Gerät)'; balken.style.width = '2%';
+  const w = new Worker('import-worker.js');
+  w.onmessage = ({ data: m }) => {
+    if(m.typ === 'fortschritt'){ balken.style.width = `${Math.round((m.anteil ?? 0.5) * 100)}%`; text.textContent = `Lese … ${(m.zeichen / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 0 })} Mio. Zeichen`; }
+    else if(m.typ === 'fehler'){ text.textContent = m.text; knopf.disabled = false; w.terminate(); }
+    else if(m.typ === 'fertig'){
+      w.terminate(); importPakete = m.pakete; balken.style.width = '100%';
+      const datum = t => new Date(t + 'T12:00:00Z').toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+      text.textContent = `Gefunden: ${m.punkte.toLocaleString('de-DE')} Werte${m.von ? ` vom ${datum(m.von)} bis ${datum(m.bis)}` : ''} in ${m.pakete.length} Paketen.`;
+      $('#import-ergebnis').innerHTML = `<table class="ki-tab"><tbody>${m.uebersicht.slice(0, 14).map(u => `<tr><th scope="row">${esc(u.titel)}</th><td>${u.n.toLocaleString('de-DE')} Einträge</td></tr>`).join('')}</tbody></table>`
+        + (VORSCHAU ? '<p class="klein">In der Vorschau wird nur gezählt, nicht gespeichert.</p>' : '');
+      knopf.textContent = VORSCHAU ? 'Fertig' : `${m.pakete.length} Pakete übernehmen`; knopf.disabled = VORSCHAU || !m.pakete.length;
+    }
+  };
+  w.postMessage({ datei: f, ab: $('#import-ab').value || null });
+});
+async function hochladen(){
+  const knopf = $('#import-start'), balken = $('#import-balken'), text = $('#import-text'), n = importPakete.length;
+  let werte = 0;
+  for(let i = 0; i < n; i++){
+    let ok = false;
+    for(let versuch = 0; versuch < 3 && !ok; versuch++){
+      const r = await fetch('/api/import', { method: 'POST', headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: JSON.stringify(importPakete[i]) }).catch(() => null);
+      if(r?.ok){ const j = await r.json(); werte += j.messwerte + j.naechte + j.workouts; ok = true; } else await new Promise(z => setTimeout(z, 1500 * (versuch + 1)));
+    }
+    if(!ok){ text.textContent = `Paket ${i + 1} von ${n} konnte nicht gespeichert werden. Einfach erneut starten – Doppeltes wird überschrieben.`; knopf.disabled = false; return; }
+    balken.style.width = `${Math.round((i + 1) / n * 100)}%`; text.textContent = `Übertrage … ${i + 1} von ${n} Paketen`;
+  }
+  text.textContent = `Fertig: ${werte.toLocaleString('de-DE')} Werte übernommen.`; knopf.textContent = 'Übernommen ✓'; importPakete = null;
+  aktualisieren({ neu: true });
+}
 
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(zeichnen, 150); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', zeichnen);
@@ -858,4 +1143,4 @@ document.addEventListener('visibilitychange', () => { if(document.visibilityStat
 
 if(!VORSCHAU && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-aktualisieren({ neu: true }).then(ok => { if(ok) kiBereit(); });
+aktualisieren({ neu: true }).then(ok => { if(ok){ kiBereit(); fotosLaden(); } });

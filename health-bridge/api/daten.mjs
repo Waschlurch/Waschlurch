@@ -6,7 +6,8 @@ import { basisLaden, letzterSync, zeitraum } from '../lib/abfragen.mjs';
 import { laden as protokollLaden } from '../lib/protokoll.mjs';
 import { KATALOG, BEREICHE } from '../lib/katalog.mjs';
 import { ZONE, lokalerTag } from '../lib/zeit.mjs';
-import { laden as einstellungenLaden, VORLAGEN, KACHELN, BEREICH_TITEL, PHASEN } from '../lib/einstellungen.mjs';
+import { laden as einstellungenLaden, VORLAGEN, KACHELN, BEREICH_TITEL, PHASEN, SUPP_ZEITEN, SUPP_TAGE, SUPP_EINHEITEN } from '../lib/einstellungen.mjs';
+import { POSEN } from '../lib/fotos.mjs';
 import { basisBereich } from '../lib/bodybuilding.mjs';
 import { SPLITS, MUSKELN, ARTEN } from '../kern/rechnen.mjs';
 
@@ -30,7 +31,7 @@ export default async function handler(req, res){
     const [basis, protokoll, sync] = await Promise.all([basisLaden(b), protokollLaden({ von: b.von, bis: z.bis }), letzterSync()]);
     const antwort = { heute: lokalerTag(new Date()), tage_geladen: Math.round((new Date(z.bis) - new Date(z.von)) / 864e5) + 1, zeitzone: ZONE(),
       basis, protokoll, einstellungen, letzterSync: sync, katalog: katalogKurz(), bereiche: BEREICHE,
-      meta: { vorlagen: VORLAGEN, kacheln: KACHELN, bereiche: BEREICH_TITEL, phasen: PHASEN, splits: SPLITS, muskeln: MUSKELN, arten: ARTEN } };
+      meta: { vorlagen: VORLAGEN, kacheln: KACHELN, bereiche: BEREICH_TITEL, phasen: PHASEN, splits: SPLITS, muskeln: MUSKELN, arten: ARTEN, supp_zeiten: SUPP_ZEITEN, supp_tage: SUPP_TAGE, supp_einheiten: SUPP_EINHEITEN, posen: POSEN } };
     if(url.searchParams.get('verbindung')){
       const basisU = basisUrl(req), t = process.env.PULS_TOKEN || 'lokal';
       antwort.verbindung = { sync: `${basisU}/api/sync?key=${t}`, mcp: `${basisU}/mcp/${t}`, token: t, tokenGesetzt: !!process.env.PULS_TOKEN };

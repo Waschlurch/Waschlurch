@@ -10,12 +10,15 @@ import mcp from './api/mcp.mjs';
 import einstellungen from './api/einstellungen.mjs';
 import protokoll from './api/protokoll.mjs';
 import kiCoach, { erstelleHandler as kiFabrik } from './api/ki-coach.mjs';
+import fotosStd, { erstelleHandler as fotoFabrik } from './api/fotos.mjs';
+import importH from './api/import.mjs';
+const fotos = process.env.PULS_KI_ATTRAPPE ? fotoFabrik((await import('./tests/ki-attrappe.mjs')).formAttrappe) : fotosStd;
 const ki = process.env.PULS_KI_ATTRAPPE ? kiFabrik((await import('./tests/ki-attrappe.mjs')).attrappe) : kiCoach;
 
 const wurzel = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT) || 5174;
 const TYPEN = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
-const OEFFENTLICH = new Set(['index.html', 'app.css', 'app.js', 'diagramme.js', 'kern/rechnen.mjs', 'kern/analyse.mjs', 'kern/erkenntnis.mjs', 'kern/ki.mjs', 'kern/mahlzeiten.mjs', 'sw.js', 'icon.svg', 'manifest.webmanifest']);
+const OEFFENTLICH = new Set(['index.html', 'app.css', 'app.js', 'diagramme.js', 'kern/rechnen.mjs', 'kern/analyse.mjs', 'kern/erkenntnis.mjs', 'kern/ki.mjs', 'kern/mahlzeiten.mjs', 'import-worker.js', 'sw.js', 'icon.svg', 'manifest.webmanifest']);
 
 if(process.env.PULS_DEMO){
   const { demoNutzlast } = await import('./scripts/demo-daten.mjs');
@@ -37,6 +40,8 @@ http.createServer(async (req, res) => {
   if(url.pathname === '/api/einstellungen') return einstellungen(req, res);
   if(url.pathname === '/api/protokoll') return protokoll(req, res);
   if(url.pathname === '/api/ki-coach') return ki(req, res);
+  if(url.pathname === '/api/fotos') return fotos(req, res);
+  if(url.pathname === '/api/import') return importH(req, res);
   const name = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
   if(!OEFFENTLICH.has(name)){ res.statusCode = 404; return res.end('404'); }
   res.setHeader('Content-Type', TYPEN[path.extname(name)] || 'application/octet-stream');

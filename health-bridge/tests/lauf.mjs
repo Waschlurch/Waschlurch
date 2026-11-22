@@ -21,7 +21,9 @@ import { korrelation, welch, pWert, intelligenz } from '../kern/erkenntnis.mjs';
 import { kiKontext, kiPruefen, KI_SCHEMA } from '../kern/ki.mjs';
 import { mahlzeitenAus, mahlzeitenAnalyse, lokal } from '../kern/mahlzeiten.mjs';
 import { erstelleHandler as kiHandlerFabrik, MODEL as KI_MODEL } from '../api/ki-coach.mjs';
-import { attrappe as kiAttrappe, BEISPIEL as KI_BEISPIEL } from './ki-attrappe.mjs';
+import { attrappe as kiAttrappe, BEISPIEL as KI_BEISPIEL, formAttrappe, FORM_BEISPIEL } from './ki-attrappe.mjs';
+import { erstelleHandler as fotoHandlerFabrik } from '../api/fotos.mjs';
+import importHandler from '../api/import.mjs';
 import { trend, steigung, isoWoche, bodybuilding } from '../lib/bodybuilding.mjs';
 
 let ok = 0, nein = 0;
@@ -94,7 +96,7 @@ pruefe('Einzelobjekt ohne „reihen“', lesen({ metrik: 'hrv', werte: [50], dat
 
 block('Datenbank ' + (process.env.DATABASE_URL ? '(Postgres)' : '(PGlite)'));
 const { q } = await db();
-await q('truncate messwerte, schlaf_naechte, workouts, syncs, einstellungen, protokoll, ki_berichte');
+await q('truncate messwerte, schlaf_naechte, workouts, syncs, einstellungen, protokoll, ki_berichte, fotos, formchecks');
 const g1 = await speichern(hae);
 pruefe('Gespeichert', g1.messwerte === 5 && g1.naechte === 1 && g1.workouts === 1, g1);
 const g2 = await speichern(hae);
@@ -369,6 +371,48 @@ r = await ruf(kiH, null, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
 pruefe('Ohne API-Schlüssel → 503 ki_fehlt', r.statusCode === 503 && r.json.code === 'ki_fehlt');
 r = await ruf(kiH, null, { methode: 'POST' });
 pruefe('Ohne Code 401', r.statusCode === 401);
+
+block('Profil, Supplements, Fotos, Import');
+pruefe('Profil gesäubert', (() => { const e = saeubern({ profil: { geschlecht: 'm', geburtsjahr: 1996, erfahrung_jahre: 8, klasse: 'Classic Physique', wettkampf_datum: '2027-05-01', schwachstellen: ['Waden', 'Quatsch'], verletzungen: 'Schulter links' } });
+  return e.profil.geburtsjahr === 1996 && e.profil.schwachstellen.join() === 'Waden' && e.profil.klasse === 'Classic Physique' && e.version === 2; })());
+pruefe('Supplements gesäubert', (() => { const e = saeubern({ supplements: [{ name: 'Kreatin', dosis: 5, einheit: 'g', zeit: 'morgens', tage: 'taeglich' }, { name: '', dosis: 1 }, { name: 'Whey', einheit: 'Eimer', zeit: 'nie', tage: 'x' }] });
+  return e.supplements.length === 2 && e.supplements[1].einheit === 'g' && e.supplements[1].zeit === 'morgens' && e.supplements[1].tage === 'taeglich'; })());
+pruefe('Alte Einstellungen bekommen neue Bereiche, eigene nicht', saeubern({ vorlage: 'bodybuilding', bereiche: ['analyse', 'aufbau'] }).bereiche.includes('formcheck') && !saeubern({ vorlage: 'eigene', bereiche: ['analyse'] }).bereiche.includes('formcheck') && !saeubern({ vorlage: 'bodybuilding', bereiche: ['analyse'], version: 2 }).bereiche.includes('formcheck'));
+r = await ruf(protHandler, { tag: '2026-10-18', supplements: ['Kreatin', 'Kreatin', 'Whey'] }, { methode: 'PUT', kopf: { 'x-puls-code': 'code' } });
+pruefe('Supplement-Einnahme im Protokoll', r.statusCode === 200 && r.json.eintrag.supplements.join() === 'Kreatin,Whey', r.text);
+// kleinstes gültiges JPEG (1×1)
+const JPG = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
+process.env.PULS_KI_ATTRAPPE = '1';
+const fc = formAttrappe(), fotoH = fotoHandlerFabrik(() => fc);
+r = await ruf(fotoH, { tag: '2026-09-01', pose: 'Front Doppelbizeps', notiz: 'Start', daten: JPG, breite: 1, hoehe: 1 }, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+const fotoAlt = r.json.foto?.id;
+r = await ruf(fotoH, { tag: '2026-11-20', pose: 'Front Doppelbizeps', daten: JPG }, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('Foto hochgeladen', r.statusCode === 200 && r.json.foto.id > fotoAlt, r.text);
+r = await ruf(fotoH, { tag: '2026-11-20', pose: 'Erfunden', daten: JPG }, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('Unbekannte Pose → 400', r.statusCode === 400);
+r = await ruf(fotoH, { tag: '2026-11-20', pose: 'Seite Brust', daten: 'data:text/html;base64,PGgxPg==' }, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('Kein Bild → 400', r.statusCode === 400);
+r = await ruf(fotoH, null, { methode: 'GET', kopf: { 'x-puls-code': 'code' } });
+pruefe('Liste ohne Bilddaten', r.json.fotos.length === 2 && !('bild' in r.json.fotos[0]) && r.json.posen.includes('Front Doppelbizeps'));
+r = await ruf(fotoH, null, { methode: 'GET', url: '/api/fotos?id=' + fotoAlt, kopf: { 'x-puls-code': 'code' } });
+pruefe('Bild abrufbar (JPEG)', r.statusCode === 200 && r.kopf['content-type'] === 'image/jpeg' && r.body?.length > 50 || r.text.length > 50);
+r = await ruf(fotoH, null, { methode: 'GET', url: '/api/fotos?id=' + fotoAlt });
+pruefe('Bild ohne Code → 401', r.statusCode === 401);
+r = await ruf(fotoH, {}, { methode: 'POST', url: '/api/fotos?check=1', kopf: { 'x-puls-code': 'code' } });
+pruefe('KI-Form-Check erstellt', r.statusCode === 200 && r.json.letzter_check.check.schwachstellen.length === 2 && r.json.letzter_check.foto_ids.length === 2, r.text.slice(0, 300));
+const fa = fc.aufrufe[0], bilder = fa.messages[0].content.filter(b => b.type === 'image');
+pruefe('Claude bekommt neuestes + ältestes Foto, Körperdaten, Schema', bilder.length === 2 && bilder[0].source.media_type === 'image/jpeg' && fa.output_config.format.type === 'json_schema' && fa.messages[0].content[0].text.includes('Körperdaten'));
+const kc2 = kiAttrappe(); await ruf(kiHandlerFabrik(() => kc2), null, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+const kt = kc2.aufrufe[0]?.messages[0].content || '';
+pruefe('KI-Coach bekommt Form-Check, Körperprofil und Supplements', kt.includes('letzter_formcheck') && kt.includes('koerperprofil') && kt.includes('"supplements"') && kc2.aufrufe[0].system[0].text.includes('FASSE DICH KURZ'));
+delete process.env.PULS_KI_ATTRAPPE;
+r = await ruf(fotoH, null, { methode: 'DELETE', url: '/api/fotos?id=' + fotoAlt, kopf: { 'x-puls-code': 'code' } });
+r = await ruf(fotoH, null, { methode: 'GET', kopf: { 'x-puls-code': 'code' } });
+pruefe('Foto gelöscht', r.json.fotos.length === 1);
+r = await ruf(importHandler, { data: { metrics: [{ name: 'weight_body_mass', units: 'kg', data: [{ date: '2022-03-01 07:10:00 +0100', qty: 79.4, source: 'Waage' }] }] } }, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('Import mit Zugangscode', r.statusCode === 200 && r.json.messwerte === 1, r.text);
+r = await ruf(importHandler, { data: { metrics: [] } }, { methode: 'POST', kopf: { 'x-puls-token': 'tok-123' } });
+pruefe('Import nur mit Zugangscode (Token reicht nicht)', r.statusCode === 401);
 
 block('Protokoll-API');
 r = await ruf(protHandler, { tag: '2026-11-20', cheat: true, notiz: 'Pizza' }, { methode: 'PUT', kopf: { 'x-puls-code': 'code' } });

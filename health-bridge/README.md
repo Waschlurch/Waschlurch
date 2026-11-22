@@ -47,6 +47,37 @@ Alle Werkzeuge lesen nur. Claude kann über sie nichts ändern oder löschen.
 - **Protokoll:** Ein Tag im Raster lässt sich antippen. Dort markierst du einen Cheat Day, änderst Trainings- oder Rest-Day oder schreibst eine Notiz.
 - **Zoom:** In jedem Diagramm mit zwei Fingern auf- und zuziehen. Am Rechner geht das mit Strg + Mausrad, von 7 Tagen bis zu einem Jahr. Gerechnet wird im Browser (`kern/`), deshalb lädt beim Zoomen nichts nach. Claude nutzt denselben Kern.
 
+## Alte Daten übernehmen (Jahre an Gewicht, YAZIO, Watch …)
+
+Im Bereich **Daten & Import**:
+1. In der Health-App auf dein Profilbild tippen, dann **Alle Gesundheitsdaten exportieren** und **In Dateien sichern**.
+2. `export.zip` in Puls auswählen.
+
+Die Datei wird **auf dem Gerät** gelesen, und zwar in einem Web Worker, gestreamt und auch im ZIP64-Format über 4 GB. Hochgeladen werden nur die Werte, in Paketen:
+- **Einzelwerte mit Uhrzeit:** Gewicht, Körperfett, Ernährung (z. B. YAZIO, für Mahlzeiten und Timing), Schlafphasen und Trainings inklusive Kalorien und Puls.
+- **Pro Tag und Quelle zusammengefasst:** Schritte, Aktivkalorien, Herzfrequenz (Min/Ø/Max), Ruhepuls, HRV und Ähnliches.
+
+Optional lässt sich ein Startdatum setzen. Mehrfach importieren ist unbedenklich, gleiche Werte werden überschrieben. Daneben gibt es einen **CSV-Import** für andere Apps: eine Spalte `Datum` (optional `Uhrzeit`), weitere Spalten mit deutschen oder englischen Namen, z. B. `Gewicht (kg)` oder `Kalorien`.
+
+## Navigation, Körperprofil, Form-Checks, Supplements
+
+- **Handy und Tablet:** Über das Menü oben öffnest du jeweils einen Bereich, statt alles auf einer Seite zu scrollen. Am Rechner bleibt es eine Seite mit Sprungmarken. Die Kacheln der Übersicht führen direkt in den passenden Bereich.
+- **Coach-Analyse kompakt:**
+  - oben die **Datengrundlage**, also welche Daten aus welchem Zeitraum eingeflossen sind
+  - darunter Score, Bereitschaft, die **3 wichtigsten Punkte** und der KI-Coach
+  - Hebel, Zusammenhänge, Vorwochen-Vergleich und alle Hinweise sind aufklappbar
+  - der KI-Coach antwortet kurz: 2 Sätze, 3 Prioritäten, Details aufklappbar
+- **Körperprofil** (unter „Ansicht & Ziele“): Geschlecht, Geburtsjahr, Trainingserfahrung, Klasse, Wettkampftermin, Schwachstellen und Stärken, Verletzungen, Ziel in eigenen Worten. Der KI-Coach bekommt all das.
+- **Form-Checks:**
+  - Fotos je Pose hochladen; sie werden im Browser auf 1600 px verkleinert und landen in deiner eigenen Datenbank
+  - zwei Fotos nebeneinander vergleichen
+  - **KI-Form-Check** mit Claude: neuestes und ältestes Foto je Pose plus Körperdaten. Ergebnis: Körperfett-Spanne, Kondition, Stärken, Schwachstellen mit Trainingsempfehlung, Symmetrie, Veränderung und Posing-Tipps. Der letzte Form-Check fließt in den KI-Coach ein.
+- **Supplements:**
+  - Routine mit Dosis, Zeitpunkt und Tagen (täglich, Trainingstage, Rest-Days)
+  - „Heute“-Checkliste zum Abhaken und Abhaken auch im Protokoll
+  - Einnahme-Treue gegen die fälligen Tage
+  - der KI-Coach kennt Routine und Treue
+
 ## YAZIO & Ernährung
 
 YAZIO hat keine öffentliche Schnittstelle. Inoffizielle Zugänge würden dein YAZIO-Passwort brauchen und verstoßen gegen die Nutzungsbedingungen, deshalb nutzt Puls sie nicht. Der Weg führt so: **YAZIO → Apple Health → Health Auto Export → Puls**.
@@ -169,6 +200,8 @@ Probier zum Beispiel: *„Wie war mein Schlaf diese Woche im Vergleich zur letzt
 | `api/einstellungen.mjs`, `lib/einstellungen.mjs` | Vorlagen, Kacheln, Bereiche, Ziele |
 | `kern/rechnen.mjs`, `kern/analyse.mjs` | Rechenkern für Browser und Server: Trend, TDEE, Tagtyp, Phasen, Kalorienziele, Coach-Analyse |
 | `api/protokoll.mjs`, `lib/protokoll.mjs` | Cheat Days, Tagtyp-Ausnahmen, Notizen |
+| `import-worker.js`, `api/import.mjs` | Altdaten-Import: Apple-Health-Export (ZIP/ZIP64/XML) und CSV, in Paketen |
+| `api/fotos.mjs`, `lib/fotos.mjs` | Form-Check-Fotos und KI-Form-Check |
 | `kern/mahlzeiten.mjs` | Mahlzeiten aus Einzeleinträgen, Pre-/Post-Workout, Abstand zum Schlaf, Mikronährstoffe |
 | `kern/erkenntnis.mjs` | Statistik-Motor: Zusammenhänge, Bereitschaft, Prognose, Trends, Ausreißer, Hebel |
 | `kern/ki.mjs`, `api/ki-coach.mjs` | KI-Coach: Anweisung, Antwortschema, Datenkontext; Claude-Aufruf und Speicherung |
@@ -190,5 +223,5 @@ Tageswerte: **Summen** wie Schritte oder kcal werden pro Quelle addiert, gezähl
 cd health-bridge
 npm install
 npm run demo     # http://localhost:5174 mit 120 Tagen Beispieldaten (PGlite im Speicher)
-npm test         # 159 Prüfungen; mit DATABASE_URL gegen echtes Postgres
+npm test         # 175 Prüfungen; mit DATABASE_URL gegen echtes Postgres
 ```

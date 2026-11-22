@@ -1,7 +1,7 @@
 /* KI-Coach: Anweisung, Antwortformat und Datenkontext für Claude.
    Gemeinsam genutzt vom Server (Anthropic SDK) und von der Vorschau (Claude über die Artifact-Fähigkeit „sample“). */
 
-import { bodybuilding, ausrichten, tagesListe, tagPlus, r1 } from './rechnen.mjs';
+import { bodybuilding, ausrichten, tagesListe, tagPlus, r1, tagTyp } from './rechnen.mjs';
 import { uhr } from './mahlzeiten.mjs';
 
 export const KI_ANWEISUNG = `Du bist ein erfahrener Coach für Profi-Bodybuilding mit fundiertem Wissen in Trainingswissenschaft, Sporternährung und Regeneration.
@@ -18,7 +18,9 @@ So arbeitest du:
 - Unterscheide Trainings- und Rest-Days. Achte auf Rest-Day-Kalorien, Beintage, Muskelgruppen-Frequenz (≈ 2× pro Woche).
 - Wenn Daten fehlen oder zu dünn sind, sag es und stelle gezielte Rückfragen.
 - Keine medizinischen Diagnosen. Bei auffälligen Werten (z. B. stark erhöhter Ruhepuls über Tage) zur ärztlichen Abklärung raten.
-- Schreibe auf Deutsch, direkt und motivierend, wie ein Coach zu seinem Athleten (du-Form).`;
+- Schreibe auf Deutsch, direkt und motivierend, wie ein Coach zu seinem Athleten (du-Form).
+- FASSE DICH KURZ: Kernaussage höchstens 2 Sätze. Genau 3 Prioritäten; „warum“, „aktion“ und „messgroesse“ je höchstens ein kurzer Satz. Training und Erholung je höchstens 2 Sätze. Höchstens 3 Einträge in „gut_laeuft“, „warnsignale“ und „fragen“.
+- Berücksichtige das Körperprofil (Alter, Erfahrung, Klasse, Wettkampftermin, Schwachstellen, Verletzungen), die Supplement-Routine und – falls vorhanden – den letzten Form-Check.`;
 
 /** JSON-Schema der Antwort (für strukturierte Ausgabe; alle Felder Pflicht). */
 export const KI_SCHEMA = {
@@ -52,7 +54,16 @@ export const KI_FORMAT_HINWEIS = `Antworte ausschließlich mit einem JSON-Objekt
  "training": "…", "erholung": "…", "gut_laeuft": ["…"], "warnsignale": ["…"], "fragen": ["…"]}`;
 
 /** Kompakter Datenkontext (≈ 8–15 KB) aus Rohbasis, Einstellungen, Protokoll und fertiger Analyse. */
-export function kiKontext({ basis, einstellungen: e, protokoll = [], analyse, bis }){
+/** Einnahme-Treue pro Supplement über 14 Tage (nur Tage mit Eintrag zählen). */
+export function supplementTreue(e, protokoll, bis){
+  const von = tagPlus(bis, -13), tage = protokoll.filter(p => p.tag >= von && p.tag <= bis && Array.isArray(p.supplements));
+  if(!tage.length || !e.supplements?.length) return undefined;
+  const pm = new Map(protokoll.map(p => [p.tag, p]));
+  const faellig = (x, t) => { const typ = tagTyp(t.tag, e.plan, pm) ?? 'training'; return x.tage === 'taeglich' || x.tage === typ; };
+  return { tage_erfasst: tage.length, pro_supplement: Object.fromEntries(e.supplements.map(x => { const f = tage.filter(t => faellig(x, t)); return [x.name, `${f.filter(t => t.supplements.includes(x.name)).length} von ${f.length} fälligen Tagen`]; })) };
+}
+
+export function kiKontext({ basis, einstellungen: e, protokoll = [], analyse, bis, formcheck = null }){
   const von = tagPlus(bis, -27);
   const bb = bodybuilding(basis, { von, bis }, e, protokoll);
   const t14 = tagesListe(tagPlus(bis, -13), bis), R = ausrichten(basis.reihen, t14);
@@ -69,6 +80,11 @@ export function kiKontext({ basis, einstellungen: e, protokoll = [], analyse, bi
   const I = analyse.intelligenz || {};
   const kontext = {
     heute: bis, phase: bb.phase, ziele: e.ziele, rhythmus: e.plan, split: e.split?.tage,
+    koerperprofil: { ...e.profil, alter: e.profil?.geburtsjahr ? Number(bis.slice(0, 4)) - e.profil.geburtsjahr : undefined, groesse_cm: bb.koerper.groesse_cm,
+      gewicht_trend_kg: bb.gewicht.aktuell_trend_kg, koerperfett_prozent: bb.koerper.koerperfett_prozent, magermasse_kg: bb.koerper.magermasse_kg, ffmi: bb.koerper.ffmi, taille_cm: bb.koerper.taille_cm,
+      wochen_bis_wettkampf: e.profil?.wettkampf_datum ? Math.round((new Date(e.profil.wettkampf_datum) - new Date(bis)) / 6048e5) : undefined },
+    supplements: e.supplements, supplement_einnahme_14_tage: supplementTreue(e, protokoll, bis),
+    letzter_formcheck: formcheck || undefined,
     wochen_score: { diese: analyse.woche.score, vorwoche: analyse.woche.score_vorher.wert, urteil: analyse.woche.urteil, vergleich: analyse.woche.vergleich.map(v => ({ titel: v.titel, diese: v.diese, letzte: v.letzte, besser: v.besser })) },
     regel_erkenntnisse: analyse.erkenntnisse.map(x => `[${x.ton}] ${x.titel}: ${x.text}`),
     statistik: { bereitschaft_heute: I.bereitschaft, prognose: I.prognose, zusammenhaenge: (I.zusammenhaenge || []).map(z => `${z.titel}: ${z.text} (${z.sicherheit})`),
@@ -102,4 +118,45 @@ export function kiPruefen(o){
     prioritaeten: o.prioritaeten.slice(0, 6).map(p => ({ titel: s(p?.titel), dringlichkeit: ['hoch', 'mittel', 'niedrig'].includes(p?.dringlichkeit) ? p.dringlichkeit : 'mittel', warum: s(p?.warum), aktion: s(p?.aktion), messgroesse: s(p?.messgroesse) })).filter(p => p.titel),
     ernaehrung: { kcal_trainingstag: z(er.kcal_trainingstag), kcal_restday: z(er.kcal_restday), eiweiss_g: z(er.eiweiss_g), kohlenhydrate_g_training: z(er.kohlenhydrate_g_training), kohlenhydrate_g_rest: z(er.kohlenhydrate_g_rest), fett_g: z(er.fett_g), begruendung: s(er.begruendung) },
     training: s(o.training), erholung: s(o.erholung), gut_laeuft: l(o.gut_laeuft), warnsignale: l(o.warnsignale), fragen: l(o.fragen) };
+}
+
+/* ── Form-Check ── */
+export const FORM_ANWEISUNG = `Du bist Bodybuilding-Coach und Wettkampf-Juror. Du bekommst Form-Check-Fotos deines Athleten (Posen mit Datum) und seine Körperdaten.
+Bewerte nur Physis und Posing – sachlich, respektvoll, konkret; keine Aussagen über Gesundheit, Medikamente oder andere Personen.
+Schätze den Körperfettanteil als Spanne. Nenne Stärken und Schwachstellen pro Muskelgruppe mit konkreter Trainingsempfehlung (Übung/Volumen/Frequenz).
+Bewerte Symmetrie, Proportionen und Kondition. Wenn ältere Fotos dabei sind, beschreibe die Veränderung. Gib kurze Posing-Tipps.
+Fasse dich kurz: Zusammenfassung höchstens 2 Sätze, höchstens 3 Stärken, höchstens 4 Schwachstellen, höchstens 3 Posing-Tipps. Deutsch, du-Form.
+Wenn ein Foto für eine Bewertung ungeeignet ist (Licht, Winkel, Kleidung), sag es.`;
+
+export const FORM_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['zusammenfassung', 'kfa_von', 'kfa_bis', 'kondition', 'staerken', 'schwachstellen', 'symmetrie', 'veraenderung', 'posing_tipps', 'fotoqualitaet'],
+  properties: {
+    zusammenfassung: { type: 'string' }, kfa_von: { type: 'number' }, kfa_bis: { type: 'number' },
+    kondition: { type: 'string', enum: ['Off-Season', 'Aufbau', 'Definiert', 'Wettkampfnah', 'Wettkampfform'] },
+    staerken: { type: 'array', items: { type: 'string' } },
+    schwachstellen: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['muskelgruppe', 'beobachtung', 'empfehlung'],
+      properties: { muskelgruppe: { type: 'string' }, beobachtung: { type: 'string' }, empfehlung: { type: 'string' } } } },
+    symmetrie: { type: 'string' }, veraenderung: { type: 'string', description: 'Vergleich zu älteren Fotos oder leer' },
+    posing_tipps: { type: 'array', items: { type: 'string' } }, fotoqualitaet: { type: 'string', description: 'Kurzer Hinweis zur Bildqualität oder leer' },
+  },
+};
+
+export const FORM_FORMAT_HINWEIS = `Antworte ausschließlich mit einem JSON-Objekt genau dieser Form:
+{"zusammenfassung": "…", "kfa_von": 0, "kfa_bis": 0, "kondition": "Off-Season|Aufbau|Definiert|Wettkampfnah|Wettkampfform", "staerken": ["…"],
+ "schwachstellen": [{"muskelgruppe": "…", "beobachtung": "…", "empfehlung": "…"}], "symmetrie": "…", "veraenderung": "…", "posing_tipps": ["…"], "fotoqualitaet": "…"}`;
+
+/** Text zu den Fotos: Körperdaten und welche Bilder in welcher Reihenfolge kommen. */
+export function formKontext({ profil = {}, koerper = {}, phase, fotos }){
+  return `Körperdaten: ${JSON.stringify({ ...profil, ...koerper, phase })}
+Die Bilder folgen in dieser Reihenfolge:
+${fotos.map((f, i) => `${i + 1}. ${f.pose} vom ${f.tag}${f.notiz ? ` (${f.notiz})` : ''}`).join('\n')}`;
+}
+
+export function formPruefen(o){
+  if(!o || typeof o.zusammenfassung !== 'string') throw Object.assign(new Error('Ungültige Form-Check-Antwort'), { code: 'ki_format' });
+  const s = v => typeof v === 'string' ? v : '', l = v => Array.isArray(v) ? v.filter(x => typeof x === 'string').slice(0, 5) : [], n = v => Number.isFinite(Number(v)) ? Math.round(Number(v) * 10) / 10 : null;
+  return { zusammenfassung: s(o.zusammenfassung), kfa_von: n(o.kfa_von), kfa_bis: n(o.kfa_bis), kondition: s(o.kondition), staerken: l(o.staerken),
+    schwachstellen: (Array.isArray(o.schwachstellen) ? o.schwachstellen : []).slice(0, 6).map(x => ({ muskelgruppe: s(x?.muskelgruppe), beobachtung: s(x?.beobachtung), empfehlung: s(x?.empfehlung) })).filter(x => x.muskelgruppe),
+    symmetrie: s(o.symmetrie), veraenderung: s(o.veraenderung), posing_tipps: l(o.posing_tipps), fotoqualitaet: s(o.fotoqualitaet) };
 }

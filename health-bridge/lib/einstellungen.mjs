@@ -31,16 +31,16 @@ export const KACHELN = {
   wasser:        'Wasser',
 };
 
-export const BEREICH_IDS = ['analyse', 'aufbau', 'protokoll', 'ernaehrung', 'training', 'schlaf', 'herz', 'aktivitaet'];
-export const BEREICH_TITEL = { analyse: 'Coach-Analyse', protokoll: 'Protokoll & Plan', aufbau: 'Körper & Aufbau', ernaehrung: 'Ernährung', training: 'Krafttraining', schlaf: 'Schlaf', herz: 'Herz', aktivitaet: 'Aktivität' };
+export const BEREICH_IDS = ['analyse', 'aufbau', 'protokoll', 'ernaehrung', 'training', 'formcheck', 'supplements', 'schlaf', 'herz', 'aktivitaet'];
+export const BEREICH_TITEL = { analyse: 'Coach-Analyse', protokoll: 'Protokoll & Plan', formcheck: 'Form-Checks', supplements: 'Supplements', aufbau: 'Körper & Aufbau', ernaehrung: 'Ernährung', training: 'Krafttraining', schlaf: 'Schlaf', herz: 'Herz', aktivitaet: 'Aktivität' };
 
 export const VORLAGEN = {
   bodybuilding: { titel: 'Bodybuilding', text: 'Gewichtstrend, Energiebilanz, Eiweiß, Magermasse und Krafttraining zuerst.',
     kacheln: ['score', 'naechster', 'gewicht', 'rate', 'kcal_heute', 'protein_gkg', 'muskelfrequenz', 'schlaf'],
-    bereiche: ['analyse', 'aufbau', 'protokoll', 'ernaehrung', 'training', 'schlaf', 'herz', 'aktivitaet'] },
+    bereiche: ['analyse', 'aufbau', 'protokoll', 'ernaehrung', 'training', 'formcheck', 'supplements', 'schlaf', 'herz', 'aktivitaet'] },
   diaet: { titel: 'Definition', text: 'Defizit, Abnahmetempo, Taille und Erhalt der Magermasse im Blick.',
     kacheln: ['score', 'gewicht', 'rate', 'kcal_heute', 'protein_gkg', 'cardio', 'schritte', 'taille'],
-    bereiche: ['analyse', 'aufbau', 'ernaehrung', 'aktivitaet', 'protokoll', 'training', 'schlaf', 'herz'] },
+    bereiche: ['analyse', 'aufbau', 'ernaehrung', 'aktivitaet', 'protokoll', 'formcheck', 'training', 'supplements', 'schlaf', 'herz'] },
   erholung: { titel: 'Erholung & Schlaf', text: 'Schlaf, HRV und Ruhepuls – wie bereit du fürs Training bist.',
     kacheln: ['schlaf', 'hrv', 'ruhepuls', 'gewicht', 'schritte'],
     bereiche: ['schlaf', 'herz', 'analyse', 'training', 'aufbau', 'ernaehrung', 'aktivitaet', 'protokoll'] },
@@ -66,7 +66,12 @@ export const STANDARD = {
   phasen: [],
   plan: { muster: [], start: null },
   split: { vorlage: null, tage: [] },
+  profil: { geschlecht: null, geburtsjahr: null, erfahrung_jahre: null, klasse: '', wettkampf_datum: null, schwachstellen: [], staerken: [], verletzungen: '', ziel_text: '' },
+  supplements: [],
 };
+export const SUPP_ZEITEN = { morgens: 'Morgens', mittags: 'Mittags', abends: 'Abends', pre: 'Vor dem Training', post: 'Nach dem Training', zum_essen: 'Zum Essen', vor_schlaf: 'Vor dem Schlafen' };
+export const SUPP_TAGE = { taeglich: 'Täglich', training: 'Trainingstage', rest: 'Rest-Days' };
+export const SUPP_EINHEITEN = ['g', 'mg', 'µg', 'IE', 'Kapseln', 'Tabletten', 'ml', 'Scoops'];
 const PHASE_IDS = ['aufbau', 'diaet', 'erhalt', 'recomp'];
 const istTag = t => typeof t === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(t);
 
@@ -78,6 +83,8 @@ export function saeubern(e = {}){
   if(typeof e.vorlage === 'string' && (VORLAGEN[e.vorlage] || e.vorlage === 'eigene')) s.vorlage = e.vorlage;
   if(Array.isArray(e.kacheln)) s.kacheln = [...new Set(e.kacheln.filter(k => KACHELN[k]))].slice(0, 12);
   if(Array.isArray(e.bereiche)) s.bereiche = [...new Set(e.bereiche.filter(b => BEREICH_IDS.includes(b)))];
+  // Neue Bereiche in bestehende Vorlagen-Einstellungen übernehmen (nicht bei „Eigene“)
+  if(Array.isArray(e.bereiche) && !e.version && VORLAGEN[e.vorlage]) for(const b of VORLAGEN[s.vorlage].bereiche) if(!s.bereiche.includes(b) && !['analyse', 'aufbau', 'protokoll', 'ernaehrung', 'training', 'schlaf', 'herz', 'aktivitaet'].includes(b)) s.bereiche.push(b);
   const z = e.ziele || {};
   if(PHASEN[z.phase]) s.ziele.phase = z.phase;
   s.ziele.rate_prozent_woche = zahlIn(z.rate_prozent_woche, -1.5, 1.5);
@@ -106,6 +113,15 @@ export function saeubern(e = {}){
   s.split.vorlage = typeof sp.vorlage === 'string' ? sp.vorlage.slice(0, 20) : null;
   if(Array.isArray(sp.tage)) s.split.tage = sp.tage.filter(d => d && String(d.name || '').trim()).slice(0, 10)
     .map(d => ({ name: String(d.name).trim().slice(0, 40), muskeln: [...new Set((d.muskeln || []).filter(m => MUSKELN.includes(m)))] }));
+  const pr = e.profil || {}, txt = (v, n) => String(v || '').trim().slice(0, n);
+  s.profil = { geschlecht: ['m', 'w', 'd'].includes(pr.geschlecht) ? pr.geschlecht : null, geburtsjahr: zahlIn(pr.geburtsjahr, 1930, 2015),
+    erfahrung_jahre: zahlIn(pr.erfahrung_jahre, 0, 60), klasse: txt(pr.klasse, 60), wettkampf_datum: istTag(pr.wettkampf_datum) ? pr.wettkampf_datum : null,
+    schwachstellen: [...new Set((pr.schwachstellen || []).filter(m => MUSKELN.includes(m)))], staerken: [...new Set((pr.staerken || []).filter(m => MUSKELN.includes(m)))],
+    verletzungen: txt(pr.verletzungen, 400), ziel_text: txt(pr.ziel_text, 400) };
+  if(Array.isArray(e.supplements)) s.supplements = e.supplements.filter(x => x && txt(x.name, 40)).slice(0, 30).map(x => ({
+    name: txt(x.name, 40), dosis: zahlIn(x.dosis, 0, 100000), einheit: SUPP_EINHEITEN.includes(x.einheit) ? x.einheit : 'g',
+    zeit: SUPP_ZEITEN[x.zeit] ? x.zeit : 'morgens', tage: SUPP_TAGE[x.tage] ? x.tage : 'taeglich', notiz: txt(x.notiz, 120) }));
+  s.version = 2;
   return s;
 }
 

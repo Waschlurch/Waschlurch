@@ -21,3 +21,16 @@ export function attrappe(antwort = BEISPIEL, { stop = 'end_turn' } = {}){
   client.aufrufe = aufrufe;
   return client;
 }
+
+export const FORM_BEISPIEL = {
+  zusammenfassung: 'Solide Off-Season-Basis mit starkem Oberkörper; Beine und hintere Schulter hinken hinterher.',
+  kfa_von: 14, kfa_bis: 16, kondition: 'Aufbau',
+  staerken: ['Breiter Latissimus, gute V-Form', 'Volle Brust, besonders obere Brust'],
+  schwachstellen: [
+    { muskelgruppe: 'Beine', beobachtung: 'Quadrizeps-Sweep fehlt im Verhältnis zum Oberkörper.', empfehlung: 'Beine 2× pro Woche, Hackenschmidt + Beinstrecker, 14–18 Sätze/Woche.' },
+    { muskelgruppe: 'Hintere Schulter', beobachtung: 'Seitlich wenig Tiefe.', empfehlung: 'Reverse Flys an jedem Pull-Tag, 3×15–20.' },
+  ],
+  symmetrie: 'Links-rechts ausgeglichen, Oberkörper dominiert.', veraenderung: 'Gegenüber dem älteren Foto mehr Rückendichte, Taille stabil.',
+  posing_tipps: ['Beim Front-Doppelbizeps Lat stärker ausbreiten', 'Bauch beim Seitposing aktiv halten'], fotoqualitaet: '',
+};
+export const formAttrappe = () => attrappe(FORM_BEISPIEL);
