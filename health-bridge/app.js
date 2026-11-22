@@ -706,7 +706,7 @@ async function einstellungenSpeichern(e){
   neuRechnen();
 }
 async function protokollSpeichern(eintrag){
-  const leer = !eintrag.cheat && !eintrag.tagtyp && !eintrag.notiz && !eintrag.fokus && !eintrag.einheiten?.length;
+  const leer = !eintrag.cheat && !eintrag.tagtyp && !eintrag.notiz && !eintrag.fokus && !eintrag.einheiten?.length && !eintrag.supplements?.length;
   if(!VORSCHAU){
     const r = await fetch('/api/protokoll', { method: 'PUT', headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: JSON.stringify(eintrag) });
     if(!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Speichern fehlgeschlagen.');
