@@ -136,3 +136,11 @@ export async function ueberblick(tage = 7){
   return { zeitraum: jetzt, vergleich_mit: vorher, zeitzone: ZONE(), letzter_sync: sync,
     bereiche: Object.fromEntries(Object.keys(BEREICHE).filter(k => bereiche[k]).map(k => [k, bereiche[k]])) };
 }
+
+/** Rohbasis für den Rechenkern: Tageswerte aller Messgrößen, Nächte, Workouts (mit lokalem Tag), Körpergröße. */
+export async function basisLaden(bereich){
+  const { q } = await db();
+  const [reihen, naechte, wo, gr] = await Promise.all([tageswerte(Object.keys(KATALOG), bereich), schlaf(bereich), workouts(bereich),
+    q(`select wert from messwerte where metrik = 'height' order by zeit desc limit 1`)]);
+  return { von: bereich.von, bis: bereich.bis, reihen, schlaf: naechte, workouts: wo.map(w => ({ ...w, tag: lokalerTag(new Date(w.start)) })), groesse: gr[0] ? Math.round(Number(gr[0].wert)) : null };
+}

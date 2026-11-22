@@ -47,6 +47,13 @@ create table if not exists einstellungen (
   geaendert timestamptz not null default now()
 );
 
+create table if not exists protokoll (
+  tag    date primary key,
+  cheat  boolean not null default false,
+  tagtyp text,
+  notiz  text not null default ''
+);
+
 create table if not exists syncs (
   id     bigserial primary key,
   zeit   timestamptz not null default now(),

@@ -4,14 +4,17 @@
 import { KATALOG, BEREICHE, SCHLAF, metrikName } from './katalog.mjs';
 import { tageswerte, schlaf, workouts, rohwerte, verfuegbar, ueberblick, zeitraum } from './abfragen.mjs';
 import { ZONE } from './zeit.mjs';
-import { bodybuilding } from './bodybuilding.mjs';
+import { bodybuilding, coach } from './bodybuilding.mjs';
+import { laden as protokollLaden } from './protokoll.mjs';
+import { tagTyp, phaseAm, tagesListe, PHASEN as PHASEN_KURZ } from '../kern/rechnen.mjs';
+import { lokalerTag } from './zeit.mjs';
 import { laden as einstellungenLaden } from './einstellungen.mjs';
 
 export const PROTOKOLLE = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 export const SERVER = { name: 'puls-apple-health', title: 'Puls · Apple Health', version: '1.0.0' };
 
 const ANWEISUNG = `Puls stellt die Apple-Health-Daten des Nutzers bereit, die das iPhone regelmäßig synchronisiert.
-Beginne mit „gesundheit_ueberblick“ für ein Gesamtbild; für Training, Aufbau, Diät, Gewicht und Körperzusammensetzung nimm „bodybuilding_analyse“; vertiefe dann mit „schlaf_naechte“, „tageswerte“, „ernaehrung“, „workouts“ oder „rohwerte“.
+Beginne mit „gesundheit_ueberblick“ für ein Gesamtbild; für Training, Aufbau, Diät, Gewicht und Körperzusammensetzung nimm „bodybuilding_analyse“, für Bewertungen und Empfehlungen „coach_analyse“, für Phasen, Trainings-/Rest-Days und Cheat Days „protokoll_und_plan“; vertiefe dann mit „schlaf_naechte“, „tageswerte“, „ernaehrung“, „workouts“ oder „rohwerte“.
 „verfuegbare_daten“ zeigt, welche Werte es gibt und wie weit sie zurückreichen. Datumsangaben sind lokale Tage (YYYY-MM-DD), beide Grenzen inklusive.
 Schlafnächte zählen zum Tag des Aufwachens. Antworte auf Deutsch, nenne Zahlen mit Einheit, und weise darauf hin, dass du keine ärztliche Diagnose stellst.`;
 
@@ -36,7 +39,24 @@ export const WERKZEUGE = [
     name: 'bodybuilding_analyse', title: 'Bodybuilding-Auswertung',
     description: 'Auswertung für Muskelaufbau und Diät: Trendgewicht (geglättet) und Tempo in kg und % Körpergewicht pro Woche gegenüber dem Ziel der aktuellen Phase (Aufbau, Diät, Erhalt, Rekomposition), adaptiver Kalorienverbrauch (TDEE) aus Zufuhr und Gewichtstrend, Energiebilanz, empfohlene Kalorien, Eiweiß in g/kg gegenüber Ziel, Körperfett, Magermasse, FFMI, Taillenumfang sowie Krafttrainings pro Woche. Enthält auch die Tagesreihen. Ziele stammen aus den Einstellungen im Dashboard.',
     inputSchema: { type: 'object', properties: ZEIT, additionalProperties: false },
-    run: async a => { const z = zeitraum(a, 28, 180); const e = await einstellungenLaden(); return { zeitraum: z, ...(await bodybuilding(z, e.ziele)) }; },
+    run: async a => { const z = zeitraum(a, 28, 180); const e = await einstellungenLaden(); return { zeitraum: z, ...(await bodybuilding(z, e)) }; },
+  },
+  {
+    name: 'coach_analyse', title: 'Coach-Analyse der Woche',
+    description: 'Bewertung der letzten 7 Tage gegen die 7 Tage davor wie ein Bodybuilding-Coach: Wochen-Score (0–100) mit Teilwerten, Urteil besser/gleich/schlechter, Vergleichstabelle (Gewichtstempo, Kalorien, Eiweiß, Krafteinheiten, Schlaf, HRV, Ruhepuls, Schritte, Cardio, Cheat Days) und priorisierte Erkenntnisse mit konkreten Empfehlungen (z. B. Rest-Day-Kalorien zu hoch, zu schnelle Zunahme, zu wenig Schlaf, Erholung eingeschränkt, Muster wie Koffein → Schlaf). Nutze das für Fragen wie „War die Woche gut?“ oder „Was soll ich ändern?“.',
+    inputSchema: { type: 'object', properties: { bis: datum('Letzter Tag der bewerteten Woche (YYYY-MM-DD). Ohne Angabe: heute.') }, additionalProperties: false },
+    run: async a => coach(a.bis || lokalerTag(new Date()), await einstellungenLaden()),
+  },
+  {
+    name: 'protokoll_und_plan', title: 'Phasen, Trainingsplan und Protokoll',
+    description: 'Phasen mit Startdatum (Aufbau, Diät, Erhalt, Rekomposition), der Trainingsrhythmus (z. B. T,T,R = zwei Trainingstage, ein Rest-Day), alle Ziele (Kalorien je Tagtyp, Überschuss, Makros, Schritte, Cardio, Schlaf) und das Tagesprotokoll mit Cheat Days, Ausnahmen und Notizen. Pro Tag steht, ob Trainings- oder Rest-Day ist und welche Phase gilt.',
+    inputSchema: { type: 'object', properties: ZEIT, additionalProperties: false },
+    run: async a => {
+      const z = zeitraum(a, 14, 120); const [e, prot] = await Promise.all([einstellungenLaden(), protokollLaden(z)]);
+      const map = new Map(prot.map(p => [p.tag, p]));
+      return { zeitraum: z, phasen: e.phasen, plan: e.plan, ziele: e.ziele,
+        tage: tagesListe(z.von, z.bis).map(t => ({ tag: t, typ: tagTyp(t, e.plan, map), phase: PHASEN_KURZ[phaseAm(t, e.phasen, e.ziele.phase).phase], ...(map.get(t) ? { cheat: map.get(t).cheat, notiz: map.get(t).notiz || undefined } : {}) })) };
+    },
   },
   {
     name: 'schlaf_naechte', title: 'Schlaf pro Nacht',

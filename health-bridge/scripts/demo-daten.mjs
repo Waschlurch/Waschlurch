@@ -12,6 +12,7 @@ export function demoNutzlast(tage = 120, seed = 7){
     const tag = tagPlus(heute, -i); const [j, mo, t] = tag.split('-').map(Number);
     const mitt = ausLokal(j, mo, t, 0, 0); const d = f(mitt);
     const wochenende = [0, 6].includes(new Date(tag + 'T12:00:00Z').getUTCDay());
+    const zyklus = ((i % 3) + 3) % 3, training = zyklus !== 0, cheat = i % 11 === 4;
     const trend = (tage - i) / tage;
     const schritte = Math.max(1800, Math.round(n(wochenende ? 10500 : 8200, 2600)));
     if(i > 0 || true){
@@ -32,7 +33,7 @@ export function demoNutzlast(tage = 120, seed = 7){
       if(i % 7 === 0) add('waist_circumference', 'cm', { date: d, qty: +n(82 + trend * 0.5, 0.3).toFixed(1), source: 'Manuell' });
       if(i === tage - 1) add('height', 'cm', { date: d, qty: 182, source: 'Manuell' });
       if(r() < 0.85){
-        const kcal = Math.round(n(wochenende ? 3050 : 2850, 220));
+        const kcal = Math.round(cheat ? n(4400, 300) : training ? n(3150, 160) : n(2850, 230));
         add('dietary_energy', 'kcal', { date: d, qty: kcal, source: 'Yazio' });
         add('protein', 'g', { date: d, qty: Math.round(kcal * n(0.24, 0.03) / 4), source: 'Yazio' });
         add('carbohydrates', 'g', { date: d, qty: Math.round(kcal * n(0.45, 0.05) / 4), source: 'Yazio' });
@@ -50,9 +51,10 @@ export function demoNutzlast(tage = 120, seed = 7){
     const start = new Date(bett + n(14, 6) * 60000); const ende = new Date(start.getTime() + (gesamt + Math.max(0.05, wach)) * 3600e3);
     add('sleep_analysis', 'hr', { date: d, totalSleep: +gesamt.toFixed(3), asleep: 0, deep: +tief.toFixed(3), rem: +rem.toFixed(3), core: +(gesamt - tief - rem).toFixed(3), awake: +Math.max(0.05, wach).toFixed(3), inBed: +(gesamt + wach + 0.25).toFixed(3), sleepStart: f(start), sleepEnd: f(ende), inBedStart: f(new Date(bett)), inBedEnd: f(ende), source: 'Apple Watch' });
     // Trainings
-    const plan = [['Krafttraining · Push', 1, 68, null, 118], ['Krafttraining · Pull', 2, 64, null, 115], ['Laufen', 3, 32, 5.8, 148], ['Krafttraining · Beine', 4, 72, null, 124], ['Krafttraining · Oberkörper', 5, 62, null, 116], ['Radfahren', 6, 55, 21.5, 132]];
-    const wd = new Date(tag + 'T12:00:00Z').getUTCDay();
-    for(const [art, w, min, km, hf] of plan) if(w === wd && r() < 0.85){
+    const split = [['Krafttraining · Push', 68, null, 118], ['Krafttraining · Pull', 64, null, 115], ['Krafttraining · Beine', 74, null, 124], ['Krafttraining · Oberkörper', 62, null, 116]];
+    const cardio = [['Stairmaster', 30, null, 132], ['Radfahren', 40, 15.5, 128]];
+    const einheiten = training ? (r() < 0.9 ? [split[Math.floor(i / 3 * 2 + zyklus) % 4]] : []) : (r() < 0.75 ? [cardio[i % 2]] : []);
+    for(const [art, min, km, hf] of einheiten){
       const st = ausLokal(j, mo, t, 18, Math.round(r() * 50)); const dauer = n(min, 6);
       workouts.push({ id: `demo-${tag}-${art}`, name: art, start: f(st), end: f(new Date(st.getTime() + dauer * 60000)), duration: Math.round(dauer * 60),
         activeEnergyBurned: { qty: Math.round(dauer * n(9.5, 1.5)), units: 'kcal' }, ...(km ? { distance: { qty: +n(km, km * 0.1).toFixed(2), units: 'km' } } : {}),
@@ -60,4 +62,23 @@ export function demoNutzlast(tage = 120, seed = 7){
     }
   }
   return { data: { metrics: Object.values(M), workouts } };
+}
+
+/** Passende Einstellungen und Protokoll zur Demo: Rhythmus T,T,R, Diät → Aufbau, Cheat Days. */
+export function demoEinstellungen(tage = 120){
+  const heute = lokalerTag(new Date());
+  // Index i = 0 ist heute; Rest-Day, wenn i % 3 === 0 → Plan-Start auf einen Tag mit i % 3 === 2 legen (T,T,R)
+  const startI = 2 + 3 * Math.floor((tage - 3) / 3);
+  return {
+    vorlage: 'bodybuilding',
+    ziele: { phase: 'aufbau', protein_g_pro_kg: 2.2, groesse_cm: 182, schritte_ziel: 10000, cardio_min_ziel: 20, cardio_min_rest: 35, schlaf_ziel_h: 8, kraft_pro_woche: 5, ueberschuss_kcal: 300 },
+    phasen: [{ phase: 'diaet', start: tagPlus(heute, -tage + 1), notiz: 'Diät bis Herbst' }, { phase: 'aufbau', start: tagPlus(heute, -70), notiz: 'Off-Season-Aufbau' }],
+    plan: { muster: ['T', 'T', 'R'], start: tagPlus(heute, -startI) },
+  };
+}
+export function demoProtokoll(tage = 120){
+  const heute = lokalerTag(new Date()), aus = [];
+  for(let i = tage - 1; i >= 0; i--) if(i % 11 === 4) aus.push({ tag: tagPlus(heute, -i), cheat: true, tagtyp: null, notiz: i < 20 ? 'Pizza-Abend' : '' });
+  aus.push({ tag: tagPlus(heute, -9), cheat: false, tagtyp: 'rest', notiz: 'Krank – Training ausgefallen' });
+  return aus;
 }

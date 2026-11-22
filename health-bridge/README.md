@@ -15,6 +15,8 @@ Apple lässt Health-Daten nur auf dem iPhone selbst auslesen. Deshalb schickt ei
 | Werkzeug | Inhalt |
 |---|---|
 | `bodybuilding_analyse` | Trendgewicht, Tempo in kg und % pro Woche im Vergleich zum Phasenziel, adaptiver TDEE, Energiebilanz, empfohlene kcal, Eiweiß g/kg, Körperfett, Magermasse, FFMI, Taille, Krafttraining pro Woche |
+| `coach_analyse` | Wochen-Score, Vergleich zur Vorwoche, Warnungen und Empfehlungen |
+| `protokoll_und_plan` | Phasen, Trainingsrhythmus, Ziele, Trainings-/Rest-Day und Cheat Days pro Tag |
 | `gesundheit_ueberblick` | Alle Bereiche, jeweils mit Mittelwert, letztem Wert und Veränderung zum Zeitraum davor |
 | `schlaf_naechte` | Jede Nacht mit Einschlaf- und Aufwachzeit und den Phasen Tief, Kern, REM und Wach |
 | `tageswerte` | Ein Wert pro Tag für beliebige Messgrößen (Schritte, Ruhepuls, HRV, VO₂max …) |
@@ -24,6 +26,23 @@ Apple lässt Health-Daten nur auf dem iPhone selbst auslesen. Deshalb schickt ei
 | `verfuegbare_daten` | Welche Daten es gibt und wie weit sie zurückreichen |
 
 Alle Werkzeuge lesen nur. Claude kann über sie nichts ändern oder löschen.
+
+## Coach-Analyse, Phasen, Rhythmus, Protokoll
+
+- **Coach-Analyse:** Die letzten 7 Tage werden mit den 7 Tagen davor verglichen. Daraus entstehen ein **Wochen-Score** von 0 bis 100 (Gewichtstempo, Kalorien, Eiweiß, Training, Schlaf, Aktivität), ein Urteil „besser/schlechter“ und eine Vergleichstabelle. Dazu kommen priorisierte Hinweise mit konkreten Zahlen. Beispiele:
+  - zu schnelle oder zu langsame Zunahme mit der Korrektur in kcal
+  - Rest-Days über Ziel und zu knappe Trainingstage
+  - Eiweiß unter Ziel
+  - zu wenig Schlaf
+  - eingeschränkte Erholung (HRV/Ruhepuls gegen den 4-Wochen-Schnitt)
+  - Schritte und Cardio
+  - ausgelassene Trainingstage
+  - Cheat Days
+  - Muster: Schlaf hebt die HRV, Koffein kostet Schlaf
+- **Phasen mit Startdatum:** Aufbau, Diät, Erhalt und Rekomposition. Die Phase bestimmt das Zieltempo, erscheint als Band in den Diagrammen und liefert „seit Start“-Werte.
+- **Trainingsrhythmus:** zum Beispiel T·T·R ab einem Starttag. Ausnahmen trägst du pro Tag im Protokoll ein. Mit dem Rhythmus rechnet Puls getrennte Kalorienziele für Trainingstage und Rest-Days und prüft die Plantreue.
+- **Protokoll:** Ein Tag im Raster lässt sich antippen. Dort markierst du einen Cheat Day, änderst Trainings- oder Rest-Day oder schreibst eine Notiz.
+- **Zoom:** In jedem Diagramm mit zwei Fingern auf- und zuziehen. Am Rechner geht das mit Strg + Mausrad, von 7 Tagen bis zu einem Jahr. Gerechnet wird im Browser (`kern/`), deshalb lädt beim Zoomen nichts nach. Claude nutzt denselben Kern.
 
 ## Vorlagen & Ziele
 
@@ -111,6 +130,8 @@ Probier zum Beispiel: *„Wie war mein Schlaf diese Woche im Vergleich zur letzt
 | `api/sync.mjs`, `lib/import.mjs` | Eingang: Health Auto Export (v1/v2) und Kurzbefehl-JSON, Schlafsegmente → Nächte |
 | `api/daten.mjs` | Daten fürs Dashboard (Zugangscode) |
 | `api/einstellungen.mjs`, `lib/einstellungen.mjs` | Vorlagen, Kacheln, Bereiche, Ziele |
+| `kern/rechnen.mjs`, `kern/analyse.mjs` | Rechenkern für Browser und Server: Trend, TDEE, Tagtyp, Phasen, Kalorienziele, Coach-Analyse |
+| `api/protokoll.mjs`, `lib/protokoll.mjs` | Cheat Days, Tagtyp-Ausnahmen, Notizen |
 | `lib/bodybuilding.mjs` | Trend, Tempo, TDEE, Bilanz, Eiweiß/kg, Magermasse, FFMI, Kraft pro Woche |
 | `api/mcp.mjs`, `lib/mcp.mjs` | MCP-Server (Streamable HTTP, zustandslos, nur lesend) |
 | `lib/abfragen.mjs` | Tageswerte, Schlaf, Workouts, Überblick – gemeinsam für Dashboard und Claude |
@@ -129,5 +150,5 @@ Tageswerte: **Summen** wie Schritte oder kcal werden pro Quelle addiert, gezähl
 cd health-bridge
 npm install
 npm run demo     # http://localhost:5174 mit 120 Tagen Beispieldaten (PGlite im Speicher)
-npm test         # 84 Prüfungen; mit DATABASE_URL gegen echtes Postgres
+npm test         # 112 Prüfungen; mit DATABASE_URL gegen echtes Postgres
 ```

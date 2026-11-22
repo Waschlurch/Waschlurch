@@ -49,7 +49,7 @@
     </nav>
     <div class="kopf-rechts">
       <div class="seg" role="radiogroup" aria-label="Zeitraum" id="zeitraum">
-        <button role="radio" data-tage="7">7 T</button><button role="radio" data-tage="30">30 T</button><button role="radio" data-tage="90">90 T</button>
+        <button role="radio" data-tage="7">7 T</button><button role="radio" data-tage="30">30 T</button><button role="radio" data-tage="90">90 T</button><button role="radio" data-tage="365">1 J</button>
       </div>
       <button class="knopf-rund" id="anpassen-knopf" aria-haspopup="dialog" aria-label="Ansicht anpassen" title="Ansicht anpassen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
       <button class="knopf-claude" id="claude-knopf" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l1.6 6.2 6.1-2.4-4.1 5.2 5.9 2.8-6.5.3 1 6.4L12 16l-4 5 1-6.4-6.5-.3 5.9-2.8-4.1-5.2 6.1 2.4z"/></svg><span>Claude</span></button>
@@ -66,9 +66,45 @@
     <p class="sync" id="sync"><i class="punkt"></i><span>—</span></p>
   </section>
 
+  <nav class="vorlagen-leiste" id="vorlagen-leiste" aria-label="Vorlage wählen"></nav>
+  <p class="zoom-tipp" id="zoom-tipp">Tipp: In jedem Diagramm mit zwei Fingern auf- und zuziehen, um den Zeitraum zu ändern.</p>
+  <div class="zoom-anzeige" id="zoom-anzeige" aria-live="polite" hidden></div>
+
   <section class="kacheln" id="kacheln" aria-label="Kennzahlen"></section>
 
   <div id="bereiche">
+  <section class="bereich" id="analyse" data-bereich="analyse" aria-labelledby="h-analyse" style="--akzent: var(--ernaehrung)">
+    <div class="bereich-kopf">
+      <h2 id="h-analyse"><span class="nr"></span>Coach-Analyse</h2>
+      <p class="kennzahl" id="analyse-k"></p>
+    </div>
+    <div class="raster umgekehrt">
+      <article class="karte score-karte" id="score"></article>
+      <article class="karte"><header><h3>Diese Woche gegen letzte</h3><p class="klein" id="vgl-k"></p></header><div id="vergleich" class="vergleich"></div></article>
+    </div>
+    <ol class="erkenntnisse" id="erkenntnisse"></ol>
+  </section>
+
+  <section class="bereich" id="protokoll" data-bereich="protokoll" aria-labelledby="h-prot" style="--akzent: var(--schlaf)">
+    <div class="bereich-kopf">
+      <h2 id="h-prot"><span class="nr"></span>Protokoll &amp; Plan</h2>
+      <p class="kennzahl" id="prot-k"></p>
+    </div>
+    <div class="phasen-band" id="phasen-band"></div>
+    <article class="karte">
+      <header><h3>Tage</h3>
+        <ul class="legende"><li><i class="lg-t"></i>Trainingstag</li><li><i class="lg-r"></i>Rest-Day</li><li><i class="lg-k"></i>Kraft erledigt</li><li><i class="lg-c"></i>Cheat Day</li><li><i class="lg-n"></i>Notiz</li></ul>
+      </header>
+      <div class="wochentage" aria-hidden="true"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+      <div class="prot-gitter" id="prot-gitter"></div>
+      <p class="klein prot-hinweis">Tippe auf einen Tag: Cheat Day markieren, Trainings- oder Rest-Day ändern, Notiz schreiben.</p>
+    </article>
+    <div class="raster gleich">
+      <article class="karte"><header><h3>Kalorien gegen Tagesziel</h3><ul class="legende"><li><i style="background:var(--aktiv)"></i>Trainingstag</li><li><i style="background:var(--minus)"></i>Rest-Day</li><li><i class="strich" style="background:var(--text)"></i>Ziel</li></ul></header><div class="dia" id="d-kcal-ziel"></div></article>
+      <article class="karte"><header><h3>Cardio pro Tag</h3><p class="klein" id="cardio-k"></p></header><div class="dia" id="d-cardio"></div></article>
+    </div>
+  </section>
+
   <section class="bereich" id="aufbau" data-bereich="aufbau" aria-labelledby="h-aufbau" style="--akzent: var(--koerper)">
     <div class="bereich-kopf">
       <h2 id="h-aufbau"><span class="nr"></span>Körper &amp; Aufbau</h2>
@@ -182,21 +218,65 @@
     <fieldset><legend>Vorlage</legend><div class="vorlagen" id="a-vorlagen"></div></fieldset>
     <fieldset><legend>Kennzahlen oben <span class="klein" id="a-kachel-n"></span></legend><div class="chips" id="a-kacheln"></div></fieldset>
     <fieldset><legend>Bereiche &amp; Reihenfolge</legend><ol class="sortier" id="a-bereiche"></ol></fieldset>
+    <fieldset><legend>Phasen <span class="klein">Diätstart, Aufbaustart, Erhalt …</span></legend>
+      <ol class="phasen-liste" id="a-phasen"></ol>
+      <button type="button" class="knopf-leise" id="a-phase-neu">+ Phase ab heute</button>
+    </fieldset>
+    <fieldset><legend>Trainingsrhythmus <span class="klein">T = Trainingstag, R = Rest-Day</span></legend>
+      <div class="muster-vorlagen" id="a-muster-vorlagen"></div>
+      <div class="muster" id="a-muster" aria-label="Rhythmus, antippen zum Umschalten"></div>
+      <div class="felder zwei"><label>Tag 1 des Rhythmus<input type="date" id="a-plan-start"></label><div class="vorschau-tage" id="a-plan-vorschau" aria-label="Nächste 14 Tage"></div></div>
+    </fieldset>
     <fieldset><legend>Ziele</legend>
+      <h4 class="unterkopf">Kalorien</h4>
       <div class="felder">
-        <label>Phase<select name="phase" id="a-phase"></select></label>
-        <label>Tempo % KG / Woche<input name="rate_prozent_woche" type="number" step="0.05" min="-1.5" max="1.5" inputmode="decimal" placeholder="automatisch"></label>
+        <label>Trainingstag kcal<input name="kcal_training" type="number" step="10" min="800" max="9000" inputmode="numeric" placeholder="automatisch"></label>
+        <label>Rest-Day kcal<input name="kcal_rest" type="number" step="10" min="800" max="9000" inputmode="numeric" placeholder="automatisch"></label>
+        <label>Überschuss kcal / Tag<input name="ueberschuss_kcal" type="number" step="10" min="-1500" max="1500" inputmode="numeric" placeholder="aus Tempo"></label>
+        <label>Festes Tagesziel kcal<input name="kcal_ziel" type="number" step="10" min="800" max="9000" inputmode="numeric" placeholder="–"></label>
+        <label>Tempo % KG / Woche<input name="rate_prozent_woche" type="number" step="0.05" min="-1.5" max="1.5" inputmode="decimal" placeholder="aus Phase"></label>
         <label>Zielgewicht kg<input name="zielgewicht_kg" type="number" step="0.1" min="30" max="250" inputmode="decimal" placeholder="–"></label>
-        <label>Eiweiß g / kg<input name="protein_g_pro_kg" type="number" step="0.1" min="0.5" max="4" inputmode="decimal"></label>
-        <label>Kalorienziel kcal<input name="kcal_ziel" type="number" step="10" min="800" max="8000" inputmode="numeric" placeholder="automatisch"></label>
-        <label>Körpergröße cm<input name="groesse_cm" type="number" step="1" min="120" max="230" inputmode="numeric" placeholder="aus Health"></label>
-        <label>Krafteinheiten / Woche<input name="kraft_pro_woche" type="number" step="1" min="0" max="14" inputmode="numeric"></label>
-        <label>Schritte / Tag<input name="schritte_ziel" type="number" step="500" min="1000" max="50000" inputmode="numeric"></label>
-        <label>Schlaf h<input name="schlaf_ziel_h" type="number" step="0.25" min="4" max="12" inputmode="decimal"></label>
       </div>
-      <p class="klein">Leer lassen = automatisch: Tempo aus der Phase, Kalorien aus deinem gemessenen Verbrauch.</p>
+      <h4 class="unterkopf">Makros</h4>
+      <div class="felder">
+        <label>Eiweiß g / kg<input name="protein_g_pro_kg" type="number" step="0.1" min="0.5" max="4" inputmode="decimal"></label>
+        <label>Eiweiß g / Tag<input name="protein_g" type="number" step="5" min="30" max="500" inputmode="numeric" placeholder="aus g/kg"></label>
+        <label>Kohlenhydrate g<input name="kh_g" type="number" step="5" min="0" max="1200" inputmode="numeric" placeholder="–"></label>
+        <label>Fett g<input name="fett_g" type="number" step="5" min="10" max="400" inputmode="numeric" placeholder="–"></label>
+      </div>
+      <h4 class="unterkopf">Aktivität, Training, Schlaf</h4>
+      <div class="felder">
+        <label>Schritte / Tag<input name="schritte_ziel" type="number" step="500" min="1000" max="50000" inputmode="numeric"></label>
+        <label>Cardio min / Tag<input name="cardio_min_ziel" type="number" step="5" min="0" max="300" inputmode="numeric" placeholder="–"></label>
+        <label>Cardio min an Rest-Days<input name="cardio_min_rest" type="number" step="5" min="0" max="300" inputmode="numeric" placeholder="–"></label>
+        <label>Krafteinheiten / Woche<input name="kraft_pro_woche" type="number" step="1" min="0" max="14" inputmode="numeric"></label>
+        <label>Schlaf h<input name="schlaf_ziel_h" type="number" step="0.25" min="4" max="12" inputmode="decimal"></label>
+        <label>Körpergröße cm<input name="groesse_cm" type="number" step="1" min="120" max="230" inputmode="numeric" placeholder="aus Health"></label>
+      </div>
+      <p class="klein">Leer = automatisch: Kalorien aus deinem gemessenen Verbrauch (TDEE) plus Überschuss bzw. Zieltempo der Phase; Trainingstage +150, Rest-Days −150 kcal.</p>
     </fieldset>
     <div class="dlg-fuss"><span class="klein" id="a-status" role="status"></span><button type="submit" class="knopf-hell">Speichern</button></div>
+  </form>
+</dialog>
+
+<dialog id="tag-dlg" aria-labelledby="t-titel">
+  <form class="dlg" id="tag-form">
+    <header><h2 id="t-titel">Tag</h2><button type="button" class="zu" data-zu aria-label="Schließen">×</button></header>
+    <dl class="tag-info" id="t-info"></dl>
+    <fieldset><legend>Tagtyp</legend>
+      <div class="chips" id="t-typ">
+        <label><input type="radio" name="tagtyp" value="">Laut Rhythmus</label>
+        <label><input type="radio" name="tagtyp" value="training">Trainingstag</label>
+        <label><input type="radio" name="tagtyp" value="rest">Rest-Day</label>
+      </div>
+    </fieldset>
+    <fieldset><legend>Ernährung</legend>
+      <div class="chips"><label><input type="checkbox" name="cheat" id="t-cheat">Cheat Day</label></div>
+    </fieldset>
+    <fieldset><legend>Notiz</legend>
+      <textarea name="notiz" id="t-notiz" rows="2" maxlength="500" placeholder="z. B. krank, Refeed, Wettkampf, neues Programm"></textarea>
+    </fieldset>
+    <div class="dlg-fuss"><span class="klein" id="t-status" role="status"></span><button type="submit" class="knopf-hell">Speichern</button></div>
   </form>
 </dialog>
 

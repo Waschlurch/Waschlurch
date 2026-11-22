@@ -1,10 +1,13 @@
 import { balken, stapel, linie, fenster, spark, leer, tagKurz, divergierend } from './diagramme.js';
+import { bodybuilding as bbKern, tagPlus, tagesListe, phaseAm, tagTyp, PHASEN as PHASE_TITEL } from './kern/rechnen.mjs';
+import { analyse as analyseKern } from './kern/analyse.mjs';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SPEICHER = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+const ZOOM = [7, 14, 21, 30, 45, 60, 90, 120, 180, 270, 365];
 
-const zustand = { tage: Number(SPEICHER.get('puls.tage')) || 30, code: SPEICHER.get('puls.code') || '', daten: null };
+const zustand = { tage: Number(SPEICHER.get('puls.tage')) || 30, code: SPEICHER.get('puls.code') || '', roh: null, daten: null, analyse: null };
 
 const zahl = (v, nk = 0) => v == null ? '–' : v.toLocaleString('de-DE', { maximumFractionDigits: nk, minimumFractionDigits: 0 });
 const dauer = min => min == null ? '–' : `${Math.floor(min / 60)} h ${String(Math.round(min % 60)).padStart(2, '0')}`;
@@ -13,49 +16,56 @@ const farbe = n => getComputedStyle(document.documentElement).getPropertyValue('
 
 /* ── Vorschau: Beispieldaten ohne Server und ohne Verbindung ── */
 const VORSCHAU = document.querySelector('meta[name="puls-modus"]')?.content === 'vorschau' || new URLSearchParams(location.search).has('vorschau');
-const vorschau = {
-  meta: null,
-  async metaHolen(){ return this.meta ||= await (await fetch('vorschau-daten/meta.json')).json(); },
-  einstellungen(meta){
-    try { const e = JSON.parse(SPEICHER.get('puls.vorschau.einstellungen')); if(e?.kacheln && e?.ziele) return { ...meta.einstellungen, ...e, ziele: { ...meta.einstellungen.ziele, ...e.ziele } }; } catch {}
-    return structuredClone(meta.einstellungen);
-  },
-  speichern(e){ SPEICHER.set('puls.vorschau.einstellungen', JSON.stringify(e)); return e; },
-  async daten(){
-    const [meta, d] = await Promise.all([this.metaHolen(), fetch(`vorschau-daten/daten-${zustand.tage}.json`).then(r => r.json())]);
-    d.einstellungen = this.einstellungen(meta);
-    zieleAnwenden(d.bodybuilding, d.einstellungen.ziele, meta);
-    return d;
-  },
+const lokal = {
+  lesen(k){ try { return JSON.parse(SPEICHER.get(k)); } catch { return null; } },
+  schreiben(k, v){ SPEICHER.set(k, JSON.stringify(v)); },
 };
 
-/** Ziel-abhängige Werte im Browser neu rechnen (gleiche Formeln wie lib/bodybuilding.mjs). */
-function zieleAnwenden(bb, z, meta){
-  const RATE = { aufbau: 0.25, diaet: -0.6, erhalt: 0, recomp: 0 };
-  const g = bb.gewicht, e = bb.energie, w = g.aktuell_trend_kg;
-  const rp = z.rate_prozent_woche ?? RATE[z.phase] ?? 0, rk = w ? w * rp / 100 : null;
-  bb.ziele = z; bb.phase = { schluessel: z.phase, titel: meta.phasen[z.phase] };
-  Object.assign(g, { ziel_rate_prozent_woche: rp, ziel_rate_kg_woche: rk, zielgewicht_kg: z.zielgewicht_kg,
-    im_plan: g.rate_prozent_woche == null ? null : Math.abs(g.rate_prozent_woche - rp) <= Math.max(0.15, Math.abs(rp) * 0.4),
-    wochen_bis_ziel: z.zielgewicht_kg && g.rate_kg_woche && Math.sign(z.zielgewicht_kg - w) === Math.sign(g.rate_kg_woche) ? (z.zielgewicht_kg - w) / g.rate_kg_woche : null });
-  e.empfohlene_kcal = z.kcal_ziel ?? (e.tdee_kcal != null && rk != null ? Math.round(e.tdee_kcal + rk * 1100) : null);
-  const gkg = bb.reihen.eiweiss_g_pro_kg;
-  Object.assign(bb.eiweiss, { ziel_g_pro_kg: z.protein_g_pro_kg, ziel_g: w ? Math.round(w * z.protein_g_pro_kg) : null, tage_ziel_erreicht: gkg.filter(v => v != null && v >= z.protein_g_pro_kg * 0.95).length });
-  bb.kraft.ziel_pro_woche = z.kraft_pro_woche;
-  if(z.groesse_cm){ const h = z.groesse_cm / 100; bb.koerper.groesse_cm = z.groesse_cm; bb.koerper.ffmi = bb.koerper.magermasse_kg ? Math.round((bb.koerper.magermasse_kg / h ** 2 + 6.1 * (1.8 - h)) * 10) / 10 : null; }
-}
-
-/* ── Laden ─────────────────────────────────────────────── */
-async function laden({ verbindung = false } = {}){
-  if(VORSCHAU){ try { return await vorschau.daten(); } catch { $('#satz').textContent = 'Die Beispieldaten konnten nicht geladen werden.'; return null; } }
+/* ── Laden: Rohbasis holen, gerechnet wird hier im Browser ── */
+async function rohLaden(tage){
+  if(VORSCHAU){
+    try {
+      const j = await (await fetch('vorschau-daten/roh.json')).json();
+      const e = lokal.lesen('puls.vorschau.einstellungen'); if(e?.ziele) j.einstellungen = { ...j.einstellungen, ...e, ziele: { ...j.einstellungen.ziele, ...e.ziele } };
+      const p = lokal.lesen('puls.vorschau.protokoll'); if(Array.isArray(p)) j.protokoll = p;
+      return j;
+    } catch { $('#satz').textContent = 'Die Beispieldaten konnten nicht geladen werden.'; return null; }
+  }
   document.body.classList.add('laedt');
-  const r = await fetch(`/api/daten?tage=${zustand.tage}${verbindung ? '&verbindung=1' : ''}`, { headers: { 'x-puls-code': zustand.code } });
+  const r = await fetch(`/api/daten?tage=${tage}`, { headers: { 'x-puls-code': zustand.code } }).catch(() => null);
   document.body.classList.remove('laedt');
+  if(!r){ $('#satz').textContent = 'Keine Verbindung – angezeigt wird der letzte Stand.'; return null; }
   if(r.status === 401){ schloss(true); return null; }
   const j = await r.json().catch(() => ({}));
   if(!r.ok){ $('#satz').textContent = j.message || 'Die Daten konnten nicht geladen werden.'; return null; }
   return j;
 }
+
+/** Sicht auf ein Fenster der Rohbasis – ohne Netz, deshalb flüssig beim Zoomen. */
+function ansicht(roh, tage){
+  const bis = roh.heute, von = tagPlus(bis, -(tage - 1));
+  const reihen = {};
+  for(const [m, l] of Object.entries(roh.basis.reihen)) reihen[m] = l.filter(p => p.tag >= von && p.tag <= bis);
+  zustand.analyse ||= analyseKern(roh.basis, roh.einstellungen, roh.protokoll, bis);
+  return { zeitraum: { von, bis }, tage: tagesListe(von, bis), reihen, zeitzone: roh.zeitzone, letzterSync: roh.letzterSync,
+    schlaf: roh.basis.schlaf.filter(n => n.nacht >= von && n.nacht <= bis), workouts: roh.basis.workouts.filter(w => w.tag >= von && w.tag <= bis),
+    einstellungen: roh.einstellungen, protokoll: roh.protokoll, meta: roh.meta,
+    bodybuilding: bbKern(roh.basis, { von, bis }, roh.einstellungen, roh.protokoll), analyse: zustand.analyse };
+}
+
+async function aktualisieren({ neu = false } = {}){
+  if(neu || !zustand.roh || zustand.tage > zustand.roh.tage_geladen){
+    const roh = await rohLaden(Math.max(zustand.tage, 90));
+    if(!roh) return false;
+    zustand.roh = roh; zustand.analyse = null;
+  }
+  zustand.daten = ansicht(zustand.roh, Math.min(zustand.tage, zustand.roh.tage_geladen));
+  zeichnen();
+  return true;
+}
+
+/** Einstellungen oder Protokoll haben sich geändert: neu rechnen, ohne neu zu laden. */
+function neuRechnen(){ zustand.analyse = null; zustand.daten = ansicht(zustand.roh, Math.min(zustand.tage, zustand.roh.tage_geladen)); zeichnen(); }
 
 function schloss(an, fehler = ''){
   $('#schloss').hidden = !an;
@@ -66,10 +76,9 @@ function schloss(an, fehler = ''){
 $('#schloss-form').addEventListener('submit', async e => {
   e.preventDefault();
   zustand.code = $('#code').value.trim();
-  const d = await laden();
-  if(!d) return schloss(true, 'Der Code stimmt nicht.');
+  if(!await aktualisieren({ neu: true })) return schloss(true, 'Der Code stimmt nicht.');
   SPEICHER.set('puls.code', zustand.code);
-  schloss(false); zustand.daten = d; zeichnen();
+  schloss(false);
 });
 
 /* ── Werte holen ───────────────────────────────────────── */
@@ -91,9 +100,12 @@ function delta(werte, hochGut = true, fmt = v => zahl(v)){
 /* ── Zeichnen ──────────────────────────────────────────── */
 function zeichnen(){
   const d = zustand.daten; if(!d) return;
-  document.querySelectorAll('#zeitraum button').forEach(b => b.setAttribute('aria-checked', String(+b.dataset.tage === zustand.tage)));
+  try { zeichnenInnen(d); } catch(err){ console.error(err); }
+}
+function zeichnenInnen(d){
+  zoomKnoepfe();
   ordnen(d.einstellungen);
-  held(d); kacheln(d); aufbau(d); training(d); schlaf(d); herz(d); aktivitaet(d); ernaehrung(d);
+  held(d); vorlagenLeiste(d); kacheln(d); analyseBereich(d); protokollBereich(d); aufbau(d); training(d); schlaf(d); herz(d); aktivitaet(d); ernaehrung(d);
   $('#fuss-zone').textContent = `${tagKurz(d.zeitraum.von)} – ${tagKurz(d.zeitraum.bis)} · ${d.zeitzone}`;
 }
 
@@ -140,7 +152,7 @@ function pulslinie(rhr, hrv){
 }
 
 /* ── Bereiche ordnen ───────────────────────────────────── */
-const BEREICH_TITEL = { aufbau: 'Aufbau', training: 'Training', ernaehrung: 'Ernährung', schlaf: 'Schlaf', herz: 'Herz', aktivitaet: 'Aktivität' };
+const BEREICH_TITEL = { analyse: 'Coach', protokoll: 'Protokoll', aufbau: 'Aufbau', training: 'Training', ernaehrung: 'Ernährung', schlaf: 'Schlaf', herz: 'Herz', aktivitaet: 'Aktivität' };
 function ordnen(e){
   const wrap = $('#bereiche'), nav = $('.sprung');
   const an = e.bereiche;
@@ -170,6 +182,14 @@ function kachelDef(id, d){
     case 'taille': return { name: 'Taille', f: 'koerper', wert: w(bb.koerper.taille_cm, 'cm', 1), werte: r.taille_cm, unter: bb.koerper.taille_veraenderung_cm == null ? '' : `<span class="sub">${vorz(bb.koerper.taille_veraenderung_cm, 1)} cm</span>` };
     case 'kraft': { const k = bb.kraft; return { name: 'Kraft / Woche', f: 'aktiv', wert: w(k.pro_woche_mittel, `/ ${k.ziel_pro_woche}`, 1), werte: k.wochen.map(x => x.einheiten),
       unter: `<span class="delta ${k.pro_woche_mittel >= k.ziel_pro_woche ? 'gut' : ''}">${k.einheiten} Einheiten</span>` }; }
+    case 'score': { const w = d.analyse.woche, v = w.score.wert, u = w.score_vorher.wert; return { name: 'Wochen-Score', f: v >= 80 ? 'gut' : v >= 60 ? 'ernaehrung' : 'schlecht', wert: v == null ? '–' : `${v}<small>/ 100</small>`, werte: [u, v],
+      unter: u != null && v != null ? `<span class="delta ${v - u >= 4 ? 'gut' : v - u <= -4 ? 'schlecht' : ''}">${vorz(v - u)} zur Vorwoche</span>` : '' }; }
+    case 'kcal_heute': { const i = r.kcal.findLastIndex(v => v != null), k = r.kcal[i], z = r.kcal_ziel[i], typ = r.tagtyp[i];
+      return { name: typ === 'rest' ? 'Kalorien · Rest-Day' : 'Kalorien · Trainingstag', f: typ === 'rest' ? 'minus' : 'aktiv', wert: k == null ? '–' : `${zahl(k)}<small>/ ${zahl(z)}</small>`, werte: r.kcal,
+        unter: k != null && z ? `<span class="delta ${Math.abs(k - z) <= 200 ? 'gut' : 'schlecht'}">${vorz(k - z)} kcal ${i === r.kcal.length - 1 ? 'heute' : tagKurz(r.tage[i])}</span>` : '' }; }
+    case 'cardio': return { name: 'Cardio / Tag', f: 'minus', wert: `${zahl(bb.cardio.mittel_min)}<small>min</small>`, werte: r.cardio_min, unter: bb.cardio.ziel_min ? `<span class="delta ${bb.cardio.mittel_min >= bb.cardio.ziel_min ? 'gut' : 'schlecht'}">Ziel ${bb.cardio.ziel_min} min</span>` : '<span class="sub">kein Ziel</span>' };
+    case 'phase': { const sp = bb.phase.seit; return { name: bb.phase.titel + (sp ? ' seit' : ''), f: 'koerper', wert: sp ? `${zahl(sp.wochen, 1)}<small>Wochen</small>` : bb.phase.titel, werte: r.trend_kg,
+      unter: sp?.veraenderung_kg != null ? `<span class="sub">${vorz(sp.veraenderung_kg, 1)} kg seit ${tagKurz(sp.start)}</span>` : '<span class="sub">Startdatum eintragen</span>' }; }
     case 'gegessen': return { name: 'Gegessen', f: 'ernaehrung', wert: w(letzter(reihe('dietary_energy')), 'kcal'), werte: reihe('dietary_energy'), unter: bb.energie.empfohlene_kcal ? `<span class="sub">Ziel ${zahl(bb.energie.empfohlene_kcal)}</span>` : delta(reihe('dietary_energy'), null) };
     case 'schlaf': { const v = schlafReihe('gesamt_min'), l = letzter(v); return { name: 'Schlaf', f: 'schlaf', wert: l == null ? '–' : `${Math.floor(l / 60)}<small>h</small> ${String(Math.round(l % 60)).padStart(2, '0')}<small>min</small>`, werte: v, unter: delta(v, true, dauer) }; }
     case 'ruhepuls': { const v = reihe('resting_heart_rate'); return { name: 'Ruhepuls', f: 'herz', wert: w(letzter(v), 'bpm'), werte: v, unter: delta(v, false) }; }
@@ -186,7 +206,7 @@ function kacheln(d){
   const liste = d.einstellungen.kacheln.map(id => [id, kachelDef(id, d)]).filter(([, k]) => k);
   const n = liste.length, spalten = n <= 5 ? n : Math.ceil(n / Math.ceil(n / 5));
   const box = $('#kacheln'); box.style.setProperty('--spalten', Math.max(1, spalten));
-  const ziel = { gewicht: 'aufbau', rate: 'aufbau', protein_gkg: 'ernaehrung', bilanz: 'aufbau', tdee: 'aufbau', koerperfett: 'aufbau', magermasse: 'aufbau', ffmi: 'aufbau', taille: 'aufbau', kraft: 'training', gegessen: 'ernaehrung', schlaf: 'schlaf', ruhepuls: 'herz', hrv: 'herz', schritte: 'aktivitaet', aktivkalorien: 'aktivitaet', vo2max: 'herz', wasser: 'ernaehrung' };
+  const ziel = { score: 'analyse', kcal_heute: 'protokoll', cardio: 'protokoll', phase: 'protokoll', gewicht: 'aufbau', rate: 'aufbau', protein_gkg: 'ernaehrung', bilanz: 'aufbau', tdee: 'aufbau', koerperfett: 'aufbau', magermasse: 'aufbau', ffmi: 'aufbau', taille: 'aufbau', kraft: 'training', gegessen: 'ernaehrung', schlaf: 'schlaf', ruhepuls: 'herz', hrv: 'herz', schritte: 'aktivitaet', aktivkalorien: 'aktivitaet', vo2max: 'herz', wasser: 'ernaehrung' };
   const fueller = (spalten - n % spalten) % spalten;
   box.innerHTML = liste.map(([id, k], i) => `<a class="kachel${n % 2 && i === n - 1 ? ' voll' : ''}" href="#${ziel[id]}" style="--k:${farbe(k.f)}"><span class="t"><i></i>${k.name}</span><span class="w">${k.wert}</span><span class="u">${k.unter || '<span></span>'}${spark(k.werte, farbe(k.f))}</span></a>`).join('')
     + '<div class="kachel fueller" aria-hidden="true"></div>'.repeat(fueller);
@@ -198,12 +218,13 @@ function aufbau(d){
   const bb = d.bodybuilding, g = bb.gewicht, e = bb.energie, k = bb.koerper, r = bb.reihen;
   const pfeil = g.im_plan == null ? '' : g.im_plan ? 'gut' : 'schlecht';
   $('#phase').innerHTML = `
-    <div><span class="etikett">${esc(bb.phase.titel)}</span><b>${zahl(g.aktuell_trend_kg, 1)}<small>kg Trend</small></b><em>${g.zielgewicht_kg ? `Ziel ${zahl(g.zielgewicht_kg, 1)} kg${g.wochen_bis_ziel ? ` · ~${zahl(g.wochen_bis_ziel)} Wochen` : ''}` : 'Waage ' + zahl(g.letzte_messung_kg, 1) + ' kg'}</em></div>
+    <div><span class="etikett">${esc(bb.phase.titel)}${bb.phase.seit ? ` · Woche ${Math.ceil(bb.phase.seit.tage / 7)}` : ''}</span><b>${zahl(g.aktuell_trend_kg, 1)}<small>kg Trend</small></b><em>${bb.phase.seit?.veraenderung_kg != null ? `${vorz(bb.phase.seit.veraenderung_kg, 1)} kg seit ${tagKurz(bb.phase.seit.start)}` : ''}${g.zielgewicht_kg ? ` · Ziel ${zahl(g.zielgewicht_kg, 1)} kg${g.wochen_bis_ziel ? ` in ~${zahl(g.wochen_bis_ziel)} Wo.` : ''}` : ''}</em></div>
     <div><span>Tempo pro Woche</span><b>${vorz(g.rate_kg_woche, 2)}<small>kg</small></b><em class="${pfeil}">${vorz(g.rate_prozent_woche, 2)} % · Ziel ${vorz(g.ziel_rate_prozent_woche, 2)} %</em></div>
     <div><span>Verbrauch (TDEE)</span><b>${zahl(e.tdee_kcal)}<small>kcal</small></b><em>${e.tdee_methode?.startsWith('adaptiv') ? 'adaptiv aus Gewicht + Zufuhr' : 'laut Apple Health'}</em></div>
-    <div><span>Empfohlen pro Tag</span><b>${zahl(e.empfohlene_kcal)}<small>kcal</small></b><em>Eiweiß ${zahl(bb.eiweiss.ziel_g)} g · Ø gegessen ${zahl(e.zufuhr_mittel_kcal)}</em></div>`;
-  linie($('#d-gewicht'), { tage: r.tage, werte: r.trend_kg, punkte: r.gewicht_kg, farbe: farbe('koerper'), format: v => zahl(v, 1), name: 'Trend', einheit: 'kg', label: 'Gewicht: Trend und Messungen' });
-  divergierend($('#d-bilanz'), { tage: r.tage, werte: r.bilanz_kcal, farbePlus: farbe('plus'), farbeMinus: farbe('minus'), format: v => zahl(Math.abs(v)), einheit: 'kcal', label: 'Energiebilanz pro Tag' });
+    <div><span>Ziel Training / Rest</span><b>${zahl(e.ziel_training_kcal)}<small>/ ${zahl(e.ziel_rest_kcal)} kcal</small></b><em>Eiweiß ${zahl(bb.eiweiss.ziel_g)} g · Ø gegessen ${zahl(e.zufuhr_mittel_kcal)}</em></div>`;
+  const bd = phasenBaender(bb), mk = cheatMarker(bb);
+  linie($('#d-gewicht'), { tage: r.tage, baender: bd, marker: mk, werte: r.trend_kg, punkte: r.gewicht_kg, farbe: farbe('koerper'), format: v => zahl(v, 1), name: 'Trend', einheit: 'kg', label: 'Gewicht: Trend und Messungen' });
+  divergierend($('#d-bilanz'), { tage: r.tage, baender: bd, marker: mk, werte: r.bilanz_kcal, farbePlus: farbe('plus'), farbeMinus: farbe('minus'), format: v => zahl(Math.abs(v)), einheit: 'kcal', label: 'Energiebilanz pro Tag' });
   balken($('#d-gkg'), { tage: r.tage, werte: r.eiweiss_g_pro_kg, farbe: farbe('mk-eiweiss'), ziel: bb.eiweiss.ziel_g_pro_kg, format: v => zahl(v, 2), name: 'Eiweiß', einheit: 'g/kg', label: 'Eiweiß pro kg Körpergewicht' });
   $('#gkg-k').textContent = bb.eiweiss.mittel_g_pro_kg ? `Ø ${zahl(bb.eiweiss.mittel_g_pro_kg, 2)} g/kg · Ziel ${zahl(bb.eiweiss.ziel_g_pro_kg, 1)}` : '';
   linie($('#d-lbm'), { tage: r.tage, werte: r.magermasse_kg, farbe: farbe('koerper'), format: v => zahl(v, 1), name: 'Magermasse', einheit: 'kg', label: 'Magermasse' });
@@ -238,7 +259,71 @@ function training(d){
   $('#kraft-k').textContent = liste.length ? `${liste.length} Einheiten · ${dauer(liste.reduce((s, w) => s + (w.dauer_min || 0), 0))}` : '';
   $('#training-k').innerHTML = k.einheiten ? `<b>${k.einheiten}</b> Einheiten, <b>${dauer(k.minuten)}</b> unter der Hantel · Ø <b>${zahl(k.pro_woche_mittel, 1)}</b> pro Woche.` : '';
 }
-const KRAFT = /kraft|strength|functional|bodybuilding|gewicht|weight|hiit|core|crossfit|calisthenics/i;
+const KRAFT = /kraft|strength|functional|bodybuilding|gewicht|weight|hiit|core|crossfit|calisthenics|push|pull|beine|legs/i;
+
+/* ── Phasen & Cheat Days in Diagrammen ─────────────────── */
+const PHASE_FARBE = { aufbau: 'aktiv', diaet: 'minus', erhalt: 'text-3', recomp: 'schlaf' };
+function phasenBaender(bb){
+  if(!zustand.roh.einstellungen.phasen?.length) return [];
+  const p = bb.reihen.phase, aus = [];
+  p.forEach((x, i) => { const l = aus.at(-1); if(l && l.phase === x) l.bis = i; else aus.push({ phase: x, von: i, bis: i }); });
+  return aus.map(b => ({ ...b, farbe: farbe(PHASE_FARBE[b.phase]), text: PHASE_TITEL[b.phase] }));
+}
+const cheatMarker = bb => bb.reihen.cheat.map((c, i) => c ? { i, text: 'C', titel: 'Cheat Day' } : null).filter(Boolean);
+
+/* ── Coach-Analyse ─────────────────────────────────────── */
+const TON = { kritisch: { z: '!', t: 'Dringend' }, warnung: { z: '▲', t: 'Achtung' }, info: { z: 'i', t: 'Hinweis' }, gut: { z: '✓', t: 'Läuft' } };
+function analyseBereich(d){
+  const a = d.analyse, w = a.woche, s = w.score.wert, sv = w.score_vorher.wert;
+  const ton = s == null ? '' : s >= 80 ? 'gut' : s >= 60 ? 'mittel' : 'schwach';
+  const U = 2 * Math.PI * 52;
+  $('#score').innerHTML = `
+    <div class="ring ${ton}"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="spur"/><circle cx="60" cy="60" r="52" class="wert" stroke-dasharray="${U}" stroke-dashoffset="${U * (1 - (s || 0) / 100)}"/></svg>
+      <div><b>${s ?? '–'}</b><span>von 100</span></div></div>
+    <p class="urteil ${w.urteil}">${w.urteil === 'besser' ? 'Bessere Woche' : w.urteil === 'schlechter' ? 'Schwächere Woche' : w.urteil === 'gleich' ? 'Auf Vorwochen-Niveau' : 'Noch zu wenig Daten'}${sv != null ? ` <span>Vorwoche ${sv}</span>` : ''}</p>
+    <ul class="teile">${w.score.teile.map(t => `<li><span>${esc(t.name)}</span><i><b style="width:${t.wert}%"></b></i><em>${t.wert}</em></li>`).join('')}</ul>`;
+  $('#score').setAttribute('aria-label', `Wochen-Score ${s ?? 'unbekannt'} von 100`);
+  const fmtW = v => v.diese == null ? '–' : v.einheit === 'min' ? dauer(v.diese) : zahl(v.diese, v.nk);
+  const fmtL = v => v.letzte == null ? '–' : v.einheit === 'min' ? dauer(v.letzte) : zahl(v.letzte, v.nk);
+  $('#vergleich').innerHTML = `<table><thead><tr><th scope="col">Kennzahl</th><th scope="col">Diese</th><th scope="col">Letzte</th><th scope="col"><span class="sr">Bewertung</span></th></tr></thead><tbody>${w.vergleich.map(v => `<tr>
+    <th scope="row">${esc(v.titel)}${v.einheit && v.einheit !== 'min' ? ` <small>${esc(v.einheit)}</small>` : ''}</th><td>${fmtW(v)}</td><td>${fmtL(v)}</td>
+    <td class="b ${v.besser === true ? 'gut' : v.besser === false ? 'schlecht' : ''}">${v.besser === true ? '▲ besser' : v.besser === false ? '▼ schlechter' : '·'}</td></tr>`).join('')}</tbody></table>`;
+  $('#vgl-k').textContent = `${tagKurz(a.zeitraum.von)}–${tagKurz(a.zeitraum.bis)} · ${w.besser} besser, ${w.schlechter} schlechter`;
+  $('#erkenntnisse').innerHTML = a.erkenntnisse.length ? a.erkenntnisse.map(x => `<li class="e-${x.ton}"><span class="e-z" aria-hidden="true">${TON[x.ton].z}</span><div><p class="e-t"><span class="sr">${TON[x.ton].t}: </span>${esc(x.titel)}</p><p>${esc(x.text)}</p></div></li>`).join('')
+    : '<li class="e-info"><span class="e-z">i</span><div><p class="e-t">Noch keine Auswertung</p><p>Sobald Gewicht, Ernährung, Schlaf und Training ein paar Tage gesynct sind, erscheinen hier Bewertungen.</p></div></li>';
+  const dringend = a.erkenntnisse.filter(x => x.ton === 'kritisch' || x.ton === 'warnung').length;
+  $('#analyse-k').innerHTML = `${esc(a.phase.titel)}${a.phase.seit ? ` · Woche ${Math.ceil(a.phase.seit.tage / 7)}` : ''} · <b>${dringend}</b> ${dringend === 1 ? 'Punkt braucht' : 'Punkte brauchen'} Aufmerksamkeit, <b>${a.erkenntnisse.filter(x => x.ton === 'gut').length}</b> laufen gut.`;
+}
+
+/* ── Protokoll & Plan ──────────────────────────────────── */
+function protokollBereich(d){
+  const bb = d.bodybuilding, r = bb.reihen, e = d.einstellungen;
+  const prot = new Map(d.protokoll.map(p => [p.tag, p]));
+  // Phasen-Zeitleiste über das Fenster
+  const bd = phasenBaender(bb);
+  $('#phasen-band').innerHTML = bd.length ? bd.map(b => `<div style="flex:${b.bis - b.von + 1};--f:${b.farbe}"><b>${esc(b.text)}</b><span>${tagKurz(r.tage[b.von])}${b.bis > b.von ? ' – ' + tagKurz(r.tage[b.bis]) : ''}</span></div>`).join('')
+    : '<p class="klein">Keine Phasen eingetragen – unter „Ansicht & Ziele“ Diät- oder Aufbaustart festlegen.</p>';
+  // Raster: höchstens 12 Wochen, Montag zuerst
+  const max = Math.min(r.tage.length, 84), start = r.tage.length - max;
+  const erster = (new Date(r.tage[start] + 'T12:00:00Z').getUTCDay() + 6) % 7;
+  const zellen = Array(erster).fill('<span class="pz leer"></span>');
+  for(let i = start; i < r.tage.length; i++){
+    const t = r.tage[i], p = prot.get(t), typ = r.tagtyp[i], kraft = r.kraft_tage[i].length > 0;
+    const klassen = ['pz', typ === 'training' ? 'pz-t' : 'pz-r', kraft ? 'pz-k' : '', r.cheat[i] ? 'pz-c' : '', p?.notiz ? 'pz-n' : '', p?.tagtyp ? 'pz-x' : '', t === d.zeitraum.bis ? 'pz-heute' : ''].filter(Boolean).join(' ');
+    const label = `${tagKurz(t, true)}: ${typ === 'training' ? 'Trainingstag' : 'Rest-Day'}${kraft ? ', Krafttraining erledigt' : typ === 'training' ? ', kein Krafttraining' : ''}${r.cardio_min[i] ? `, ${r.cardio_min[i]} min Cardio` : ''}${r.cheat[i] ? ', Cheat Day' : ''}${p?.notiz ? ', Notiz: ' + p.notiz : ''}`;
+    zellen.push(`<button type="button" class="${klassen}" data-tag="${t}" aria-label="${esc(label)}" title="${esc(label)}"><span class="pz-d">${+t.slice(8)}</span><span class="pz-typ">${typ === 'training' ? 'T' : 'R'}</span></button>`);
+  }
+  $('#prot-gitter').innerHTML = zellen.join('');
+  // Kalorien gegen Tagesziel, gefärbt nach Tagtyp
+  const fT = farbe('aktiv'), fR = farbe('minus');
+  balken($('#d-kcal-ziel'), { tage: r.tage, werte: r.kcal, farben: r.tagtyp.map(t => t === 'rest' ? fR : fT), namen: r.tagtyp.map(t => t === 'rest' ? 'Rest-Day' : 'Trainingstag'), zielReihe: r.kcal_ziel,
+    format: v => zahl(v), einheit: 'kcal', label: 'Kalorien pro Tag gegen das Tagesziel', marker: cheatMarker(bb), baender: phasenBaender(bb) });
+  balken($('#d-cardio'), { tage: r.tage, werte: r.cardio_min, farbe: farbe('minus'), farben: r.tagtyp.map(t => t === 'rest' ? fR : farbe('text-3')), namen: r.tagtyp.map(t => t === 'rest' ? 'Cardio · Rest-Day' : 'Cardio · Trainingstag'),
+    ziel: e.ziele.cardio_min_ziel || undefined, format: v => zahl(v), einheit: 'min', label: 'Cardio-Minuten pro Tag' });
+  $('#cardio-k').textContent = `Ø ${zahl(bb.cardio.mittel_min)} min${bb.cardio.ziel_min ? ` · Ziel ${bb.cardio.ziel_min}` : ''}${bb.cardio.ziel_rest_min ? ` · Rest-Days ${bb.cardio.ziel_rest_min}` : ''}`;
+  const tt = bb.tagtypen;
+  $('#prot-k').innerHTML = `${e.plan?.muster?.length ? `Rhythmus <b>${e.plan.muster.join(' · ')}</b> · ` : ''}<b>${bb.kraft.davon_trainiert}</b> von ${bb.kraft.geplante_trainingstage} Trainingstagen trainiert · Rest-Days Ø <b>${zahl(tt.rest.kcal_mittel)}</b> kcal (Ziel ${zahl(tt.rest.kcal_ziel_mittel)})${bb.cheat_days.length ? ` · <b>${bb.cheat_days.length}</b> Cheat Day${bb.cheat_days.length > 1 ? 's' : ''}` : ''}.`;
+}
 
 const tabelle = (kopf, zeilen) => `<table><thead><tr>${kopf.map(k => `<th scope="col">${esc(k)}</th>`).join('')}</tr></thead><tbody>${zeilen.map(z => `<tr>${z.map((c, i) => i ? `<td>${esc(c)}</td>` : `<th scope="row">${esc(c)}</th>`).join('')}</tr>`).join('')}</tbody></table>`;
 
@@ -318,48 +403,117 @@ function ernaehrung(d){
   $('#ern-k').innerHTML = `An <b>${tageMit}</b> von ${d.tage.length} Tagen erfasst · Ø <b>${zahl(mittel(kcal))}</b>${emp ? ` von <b>${zahl(emp)}</b>` : ''} kcal · <b>${zahl(g[0])} g</b> Eiweiß.`;
 }
 
-/* ── Bedienung ─────────────────────────────────────────── */
-$('#zeitraum').addEventListener('click', async e => {
-  const b = e.target.closest('button'); if(!b) return;
-  zustand.tage = +b.dataset.tage; SPEICHER.set('puls.tage', zustand.tage);
-  document.querySelectorAll('#zeitraum button').forEach(x => x.setAttribute('aria-checked', String(x === b)));
-  const d = await laden(); if(d){ zustand.daten = d; zeichnen(); }
-});
+/* ── Zeitraum & Zoom ───────────────────────────────────── */
+function zoomKnoepfe(){
+  const t = zustand.tage, std = [7, 30, 90, 365];
+  document.querySelectorAll('#zeitraum button').forEach(b => b.setAttribute('aria-checked', String(+b.dataset.tage === t)));
+  let x = $('#zeitraum .frei');
+  if(!std.includes(t)){ if(!x){ x = document.createElement('span'); x.className = 'frei'; $('#zeitraum').appendChild(x); } x.textContent = t + ' T'; }
+  else x?.remove();
+}
+function tageSetzen(t, { still = false } = {}){
+  t = Math.max(7, Math.min(365, Math.round(t)));
+  if(t === zustand.tage) return;
+  zustand.tage = t; SPEICHER.set('puls.tage', t);
+  if(zustand.roh && t <= zustand.roh.tage_geladen){ zustand.daten = ansicht(zustand.roh, t); zeichnen(); }
+  else if(!still) aktualisieren();
+}
+const naechsteStufe = (t, richtung) => richtung > 0 ? ZOOM.find(z => z > t) ?? 365 : [...ZOOM].reverse().find(z => z < t) ?? 7;
+const schnapp = t => ZOOM.reduce((a, b) => Math.abs(Math.log(b / t)) < Math.abs(Math.log(a / t)) ? b : a);
+
+$('#zeitraum').addEventListener('click', e => { const b = e.target.closest('button'); if(b) tageSetzen(+b.dataset.tage); });
 $('#zeitraum').addEventListener('keydown', e => {
   if(!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-  const bs = [...document.querySelectorAll('#zeitraum button')], i = bs.findIndex(b => b.getAttribute('aria-checked') === 'true');
+  const bs = [...document.querySelectorAll('#zeitraum button')], i = Math.max(0, bs.findIndex(b => b.getAttribute('aria-checked') === 'true'));
   const n = bs[(i + (e.key === 'ArrowRight' ? 1 : bs.length - 1)) % bs.length]; n.focus(); n.click();
 });
 
+/** Pinch-Zoom mit zwei Fingern auf jedem Diagramm: auseinander = näher ran (weniger Tage), zusammen = mehr Tage. */
+const anzeige = $('#zoom-anzeige');
+let pinch = null, anzeigeT;
+const abstand = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+function zeigeZoom(t){ anzeige.hidden = false; anzeige.textContent = t >= 365 ? '1 Jahr' : `${t} Tage`; clearTimeout(anzeigeT); anzeigeT = setTimeout(() => anzeige.hidden = true, 900); }
+document.addEventListener('touchstart', e => {
+  if(e.touches.length === 2 && e.target.closest('.dia, .prot-gitter, .kacheln')){ pinch = { d0: abstand(e.touches), t0: zustand.tage, raf: 0 }; $('#zoom-tipp').hidden = true; SPEICHER.set('puls.zoom-gesehen', '1'); }
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if(!pinch || e.touches.length !== 2) return;
+  e.preventDefault();
+  const ziel = schnapp(pinch.t0 * pinch.d0 / abstand(e.touches));
+  zeigeZoom(ziel);
+  if(ziel !== zustand.tage && !pinch.raf) pinch.raf = requestAnimationFrame(() => { if(pinch) pinch.raf = 0; tageSetzen(ziel, { still: true }); });
+}, { passive: false });
+document.addEventListener('touchend', e => { if(pinch && e.touches.length < 2){ const t = zustand.tage; pinch = null; if(zustand.roh && t > zustand.roh.tage_geladen) aktualisieren(); } });
+// Safari-Gesten im Diagramm nicht als Seitenzoom behandeln
+for(const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => { if(e.target.closest?.('.dia, .prot-gitter, .kacheln')) e.preventDefault(); }, { passive: false });
+// Trackpad-Pinch bzw. Strg + Mausrad am Rechner
+document.addEventListener('wheel', e => {
+  if(!e.ctrlKey || !e.target.closest('.dia, .prot-gitter')) return;
+  e.preventDefault();
+  const t = naechsteStufe(zustand.tage, e.deltaY > 0 ? 1 : -1); zeigeZoom(t); tageSetzen(t);
+}, { passive: false });
+
+/* ── Verbinden ─────────────────────────────────────────── */
 async function verbinden(){
   const dlg = $('#verbinden'); dlg.showModal();
   if(VORSCHAU){ $('#v-mcp').textContent = 'Erscheint, sobald deine eigene Puls-App online ist'; $('#v-sync').textContent = 'Erscheint, sobald deine eigene Puls-App online ist'; $('#v-warn').hidden = false; $('#v-warn').textContent = 'Das ist die Vorschau mit Beispieldaten. Hier ist nichts mit Apple Health oder Claude verbunden.'; return; }
-  const d = await laden({ verbindung: true });
-  if(d?.verbindung){ $('#v-mcp').textContent = d.verbindung.mcp; $('#v-sync').textContent = d.verbindung.sync; $('#v-warn').hidden = d.verbindung.tokenGesetzt; }
+  const r = await fetch('/api/daten?tage=7&verbindung=1', { headers: { 'x-puls-code': zustand.code } }).then(x => x.json()).catch(() => null);
+  if(r?.verbindung){ $('#v-mcp').textContent = r.verbindung.mcp; $('#v-sync').textContent = r.verbindung.sync; $('#v-warn').hidden = r.verbindung.tokenGesetzt; }
 }
 $('#claude-knopf').addEventListener('click', verbinden);
 $('#claude-knopf-2').addEventListener('click', verbinden);
 $('#verbinden').addEventListener('click', async e => {
   if(e.target === e.currentTarget) return e.currentTarget.close();
   const b = e.target.closest('[data-kopie]'); if(!b) return;
-  try { await navigator.clipboard.writeText($('#' + b.dataset.kopie).textContent); b.textContent = 'Kopiert ✓'; setTimeout(() => b.textContent = 'Kopieren', 1600); } catch {}
+  const t = $('#' + b.dataset.kopie);
+  try { await navigator.clipboard.writeText(t.textContent); b.textContent = 'Kopiert ✓'; setTimeout(() => b.textContent = 'Kopieren', 1600); }
+  catch { const r = document.createRange(); r.selectNodeContents(t); getSelection().removeAllRanges(); getSelection().addRange(r); }
 });
 
-/* ── Ansicht & Ziele anpassen ─────────────────────────── */
-const anpassen = { meta: null, entwurf: null };
-async function api(methode, koerper){
-  if(VORSCHAU){
-    const meta = await vorschau.metaHolen();
-    const einstellungen = methode === 'PUT' ? vorschau.speichern(koerper) : vorschau.einstellungen(meta);
-    return { ...meta, einstellungen };
+/* ── Speichern: Einstellungen & Protokoll ──────────────── */
+async function einstellungenSpeichern(e){
+  if(VORSCHAU){ lokal.schreiben('puls.vorschau.einstellungen', e); zustand.roh.einstellungen = structuredClone(e); }
+  else {
+    const r = await fetch('/api/einstellungen', { method: 'PUT', headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: JSON.stringify(e) });
+    const j = await r.json().catch(() => ({}));
+    if(!r.ok) throw new Error(j.message || 'Speichern fehlgeschlagen.');
+    zustand.roh.einstellungen = j.einstellungen;
   }
-  const r = await fetch('/api/einstellungen', { method: methode, headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: koerper ? JSON.stringify(koerper) : undefined });
-  if(!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Fehler');
-  return r.json();
+  neuRechnen();
+}
+async function protokollSpeichern(eintrag){
+  const leer = !eintrag.cheat && !eintrag.tagtyp && !eintrag.notiz;
+  if(!VORSCHAU){
+    const r = await fetch('/api/protokoll', { method: 'PUT', headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: JSON.stringify(eintrag) });
+    if(!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Speichern fehlgeschlagen.');
+  }
+  const liste = zustand.roh.protokoll.filter(p => p.tag !== eintrag.tag);
+  if(!leer) liste.push(eintrag);
+  zustand.roh.protokoll = liste.sort((a, b) => a.tag.localeCompare(b.tag));
+  if(VORSCHAU) lokal.schreiben('puls.vorschau.protokoll', zustand.roh.protokoll);
+  neuRechnen();
 }
 
+/* ── Vorlagen direkt antippen ──────────────────────────── */
+function vorlagenLeiste(d){
+  const v = d.meta?.vorlagen || {}, akt = d.einstellungen.vorlage;
+  $('#vorlagen-leiste').innerHTML = Object.entries(v).map(([id, x]) => `<button type="button" data-vorlage="${id}" aria-pressed="${akt === id}">${esc(x.titel)}</button>`).join('')
+    + `<button type="button" data-eigene aria-pressed="${akt === 'eigene'}">Eigene …</button>`;
+  $('#zoom-tipp').hidden = !!SPEICHER.get('puls.zoom-gesehen') || !matchMedia('(pointer: coarse)').matches;
+}
+$('#vorlagen-leiste').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.hasAttribute('data-eigene')) return anpassenOeffnen();
+  const id = b.dataset.vorlage, v = zustand.roh.meta.vorlagen[id];
+  try { await einstellungenSpeichern({ ...zustand.roh.einstellungen, vorlage: id, kacheln: [...v.kacheln], bereiche: [...v.bereiche] }); } catch {}
+});
+
+/* ── Ansicht & Ziele ───────────────────────────────────── */
+const anpassen = { entwurf: null };
+const MUSTER = { '2 an / 1 frei': ['T', 'T', 'R'], '3 an / 1 frei': ['T', 'T', 'T', 'R'], '1 an / 1 frei': ['T', 'R'], '5 an / 2 frei': ['T', 'T', 'T', 'T', 'T', 'R', 'R'], 'PPL ×2 / 1 frei': ['T', 'T', 'T', 'T', 'T', 'T', 'R'] };
+
 function anpassenZeichnen(){
-  const { meta, entwurf: e } = anpassen;
+  const meta = zustand.roh.meta, e = anpassen.entwurf;
   $('#a-vorlagen').innerHTML = Object.entries(meta.vorlagen).map(([id, v]) => `<label><input type="radio" name="vorlage" value="${id}"${e.vorlage === id ? ' checked' : ''}><b>${esc(v.titel)}</b><span>${esc(v.text)}</span></label>`).join('')
     + `<label><input type="radio" name="vorlage" value="eigene"${e.vorlage === 'eigene' ? ' checked' : ''}><b>Eigene</b><span>Deine eigene Auswahl unten.</span></label>`;
   $('#a-kacheln').innerHTML = Object.entries(meta.kacheln).map(([id, t]) => `<label><input type="checkbox" value="${id}"${e.kacheln.includes(id) ? ' checked' : ''}>${esc(t)}</label>`).join('');
@@ -367,19 +521,38 @@ function anpassenZeichnen(){
   const alle = [...e.bereiche, ...Object.keys(meta.bereiche).filter(b => !e.bereiche.includes(b))];
   $('#a-bereiche').innerHTML = alle.map((id, i) => { const an = e.bereiche.includes(id); return `<li class="${an ? '' : 'aus'}" data-id="${id}"><label><input type="checkbox"${an ? ' checked' : ''}>${esc(meta.bereiche[id])}</label>
     <button type="button" data-hoch aria-label="${esc(meta.bereiche[id])} nach oben"${i === 0 || !an ? ' disabled' : ''}>↑</button><button type="button" data-runter aria-label="${esc(meta.bereiche[id])} nach unten"${!an || i >= e.bereiche.length - 1 ? ' disabled' : ''}>↓</button></li>`; }).join('');
+  // Phasen
+  $('#a-phasen').innerHTML = e.phasen.length ? e.phasen.map((p, i) => `<li data-i="${i}">
+      <select data-feld="phase" aria-label="Phase">${Object.entries(meta.phasen).map(([id, t]) => `<option value="${id}"${p.phase === id ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <input type="date" data-feld="start" value="${p.start}" aria-label="Start">
+      <input type="text" data-feld="notiz" value="${esc(p.notiz)}" placeholder="Notiz" aria-label="Notiz" maxlength="200">
+      <button type="button" data-weg aria-label="Phase entfernen">×</button></li>`).join('')
+    : '<li class="leer">Noch keine Phase. Lege z. B. „Aufbau ab 1. September“ an – Tempo, Kalorienziel und Analyse richten sich danach.</li>';
+  // Rhythmus
+  $('#a-muster-vorlagen').innerHTML = Object.keys(MUSTER).map(k => `<button type="button" data-muster="${k}" aria-pressed="${MUSTER[k].join() === e.plan.muster.join()}">${k}</button>`).join('');
+  $('#a-muster').innerHTML = e.plan.muster.map((x, i) => `<button type="button" class="m-${x}" data-i="${i}" aria-label="Tag ${i + 1}: ${x === 'T' ? 'Trainingstag' : 'Rest-Day'}">${x}</button>`).join('')
+    + '<button type="button" class="m-plus" data-plus aria-label="Tag anhängen">+</button>' + (e.plan.muster.length ? '<button type="button" class="m-minus" data-minus aria-label="Letzten Tag entfernen">−</button>' : '');
+  $('#a-plan-start').value = e.plan.start || '';
+  const heute = zustand.roh.heute;
+  $('#a-plan-vorschau').innerHTML = e.plan.muster.length && e.plan.start ? tagesListe(heute, tagPlus(heute, 13)).map(t => { const x = tagTyp(t, e.plan, new Map()); return `<span class="v-${x}" title="${tagKurz(t, true)}">${'SMDMDFS'[new Date(t + 'T12:00:00Z').getUTCDay()]}</span>`; }).join('') : '<span class="klein">Rhythmus und Starttag wählen</span>';
   const f = $('#anpassen-form');
-  $('#a-phase').innerHTML = Object.entries(meta.phasen).map(([id, t]) => `<option value="${id}"${e.ziele.phase === id ? ' selected' : ''}>${esc(t)}</option>`).join('');
-  for(const [k, v] of Object.entries(e.ziele)) if(f.elements[k] && k !== 'phase') f.elements[k].value = v ?? '';
+  for(const [k, v] of Object.entries(e.ziele)) if(f.elements[k] && f.elements[k].tagName === 'INPUT') f.elements[k].value = v ?? '';
 }
 
-function eigene(){ anpassen.entwurf.vorlage = 'eigene'; }
+async function anpassenOeffnen(){
+  if(!zustand.roh) return;
+  anpassen.entwurf = structuredClone(zustand.roh.einstellungen);
+  anpassen.entwurf.plan ||= { muster: [], start: null };
+  anpassen.entwurf.phasen ||= [];
+  anpassenZeichnen(); $('#a-status').textContent = '';
+  $('#anpassen').showModal();
+}
+const eigene = () => { anpassen.entwurf.vorlage = 'eigene'; };
 
 $('#a-vorlagen').addEventListener('change', e => {
-  const id = e.target.value, v = anpassen.meta.vorlagen[id];
+  const id = e.target.value, v = zustand.roh.meta.vorlagen[id];
   anpassen.entwurf.vorlage = id;
   if(v){ anpassen.entwurf.kacheln = [...v.kacheln]; anpassen.entwurf.bereiche = [...v.bereiche]; }
-  if(id === 'bodybuilding' && anpassen.entwurf.ziele.phase === 'diaet') anpassen.entwurf.ziele.phase = 'aufbau';
-  if(id === 'diaet') anpassen.entwurf.ziele.phase = 'diaet';
   anpassenZeichnen();
 });
 $('#a-kacheln').addEventListener('change', e => {
@@ -398,33 +571,83 @@ $('#a-bereiche').addEventListener('click', e => {
   const fokus = $(`#a-bereiche li[data-id="${id}"] ${e.target.closest('[data-hoch]') ? '[data-hoch]' : e.target.closest('[data-runter]') ? '[data-runter]' : 'input'}`);
   if(fokus && !fokus.disabled) fokus.focus();
 });
+$('#a-phase-neu').addEventListener('click', () => {
+  const letzte = anpassen.entwurf.phasen.at(-1)?.phase;
+  anpassen.entwurf.phasen.push({ phase: letzte === 'aufbau' ? 'diaet' : 'aufbau', start: zustand.roh.heute, notiz: '' });
+  anpassenZeichnen(); $('#a-phasen li:last-child select')?.focus();
+});
+$('#a-phasen').addEventListener('input', e => {
+  const li = e.target.closest('li[data-i]'); if(!li) return;
+  anpassen.entwurf.phasen[+li.dataset.i][e.target.dataset.feld] = e.target.value;
+});
+$('#a-phasen').addEventListener('click', e => {
+  const w = e.target.closest('[data-weg]'); if(!w) return;
+  anpassen.entwurf.phasen.splice(+w.closest('li').dataset.i, 1); anpassenZeichnen();
+});
+$('#a-muster-vorlagen').addEventListener('click', e => {
+  const b = e.target.closest('[data-muster]'); if(!b) return;
+  anpassen.entwurf.plan.muster = [...MUSTER[b.dataset.muster]];
+  anpassen.entwurf.plan.start ||= zustand.roh.heute;
+  anpassenZeichnen();
+});
+$('#a-muster').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  const m = anpassen.entwurf.plan.muster;
+  if(b.hasAttribute('data-plus')){ if(m.length < 14) m.push('T'); anpassen.entwurf.plan.start ||= zustand.roh.heute; }
+  else if(b.hasAttribute('data-minus')) m.pop();
+  else m[+b.dataset.i] = m[+b.dataset.i] === 'T' ? 'R' : 'T';
+  anpassenZeichnen();
+});
+$('#a-plan-start').addEventListener('input', e => { anpassen.entwurf.plan.start = e.target.value || null; anpassenZeichnen(); });
 $('#anpassen-form').addEventListener('input', e => {
-  if(!e.target.closest('.felder')) return;
-  const f = e.target.form, z = anpassen.entwurf.ziele;
-  for(const k of Object.keys(z)) if(f.elements[k]) z[k] = k === 'phase' ? f.elements[k].value : f.elements[k].value === '' ? null : Number(f.elements[k].value);
+  if(!e.target.closest('.felder') || !e.target.name) return;
+  const z = anpassen.entwurf.ziele;
+  z[e.target.name] = e.target.value === '' ? null : Number(e.target.value);
 });
 $('#anpassen-form').addEventListener('submit', async e => {
   e.preventDefault();
   const st = $('#a-status'); st.textContent = 'Speichere …';
-  try {
-    const j = await api('PUT', anpassen.entwurf);
-    zustand.daten = await laden() || zustand.daten;
-    st.textContent = ''; $('#anpassen').close(); zeichnen();
-    void j;
-  } catch(err){ st.textContent = err.message; }
+  try { await einstellungenSpeichern(anpassen.entwurf); st.textContent = ''; $('#anpassen').close(); }
+  catch(err){ st.textContent = err.message; }
 });
 $('#anpassen').addEventListener('click', e => { if(e.target === e.currentTarget || e.target.closest('[data-zu]')) e.currentTarget.close(); });
-$('#anpassen-knopf').addEventListener('click', async () => {
-  $('#anpassen').showModal(); $('#a-status').textContent = 'Lade …';
-  try { anpassen.meta = await api('GET'); anpassen.entwurf = structuredClone(anpassen.meta.einstellungen); anpassenZeichnen(); $('#a-status').textContent = ''; }
-  catch(err){ $('#a-status').textContent = err.message; }
+$('#anpassen-knopf').addEventListener('click', anpassenOeffnen);
+
+/* ── Tag bearbeiten (Protokoll) ────────────────────────── */
+function tagOeffnen(tag){
+  const d = zustand.daten, roh = zustand.roh, bb = d.bodybuilding;
+  const p = roh.protokoll.find(x => x.tag === tag) || { tag, cheat: false, tagtyp: null, notiz: '' };
+  const i = bb.reihen.tage.indexOf(tag);
+  const laut = tagTyp(tag, roh.einstellungen.plan, new Map());
+  const phase = phaseAm(tag, roh.einstellungen.phasen, roh.einstellungen.ziele.phase);
+  $('#t-titel').textContent = tagKurz(tag, true);
+  const zeile = (k, v) => v ? `<div><dt>${k}</dt><dd>${v}</dd></div>` : '';
+  const kraft = i >= 0 ? bb.reihen.kraft_tage[i] : [];
+  $('#t-info').innerHTML = zeile('Phase', esc(PHASE_TITEL[phase.phase])) + zeile('Laut Rhythmus', laut ? (laut === 'training' ? 'Trainingstag' : 'Rest-Day') : 'kein Rhythmus eingetragen')
+    + (i >= 0 ? zeile('Gegessen', bb.reihen.kcal[i] != null ? `${zahl(bb.reihen.kcal[i])} kcal${bb.reihen.kcal_ziel[i] ? ` · Ziel ${zahl(bb.reihen.kcal_ziel[i])}` : ''}` : 'nicht geloggt')
+      + zeile('Krafttraining', kraft.length ? kraft.map(k => `${esc(k.art)} (${zahl(k.dauer_min)} min)`).join(', ') : '–')
+      + zeile('Cardio', bb.reihen.cardio_min[i] ? `${zahl(bb.reihen.cardio_min[i])} min` : '–') : '');
+  const f = $('#tag-form');
+  f.dataset.tag = tag;
+  f.querySelectorAll('input[name=tagtyp]').forEach(r => r.checked = (r.value || null) === (p.tagtyp || null));
+  $('#t-cheat').checked = !!p.cheat; $('#t-notiz').value = p.notiz || ''; $('#t-status').textContent = '';
+  $('#tag-dlg').showModal();
+}
+$('#tag-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.currentTarget, typ = f.querySelector('input[name=tagtyp]:checked')?.value || null;
+  $('#t-status').textContent = 'Speichere …';
+  try { await protokollSpeichern({ tag: f.dataset.tag, cheat: $('#t-cheat').checked, tagtyp: typ, notiz: $('#t-notiz').value.trim() }); $('#tag-dlg').close(); }
+  catch(err){ $('#t-status').textContent = err.message; }
 });
+$('#tag-dlg').addEventListener('click', e => { if(e.target === e.currentTarget || e.target.closest('[data-zu]')) e.currentTarget.close(); });
+$('#prot-gitter').addEventListener('click', e => { const b = e.target.closest('[data-tag]'); if(b) tagOeffnen(b.dataset.tag); });
 
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(zeichnen, 150); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', zeichnen);
 addEventListener('scroll', () => $('#kopf').classList.toggle('fest', scrollY > 8), { passive: true });
-document.addEventListener('visibilitychange', async () => { if(document.visibilityState === 'visible' && zustand.daten){ const d = await laden(); if(d){ zustand.daten = d; zeichnen(); } } });
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && zustand.roh && !VORSCHAU) aktualisieren({ neu: true }); });
 
 if(!VORSCHAU && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-(async () => { const d = await laden(); if(d){ zustand.daten = d; zeichnen(); } })();
+aktualisieren({ neu: true });

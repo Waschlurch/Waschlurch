@@ -29,7 +29,7 @@ function tooltipEl(wrap){
 }
 
 /** Gemeinsames Gerüst: Achsen, Raster, Trefferflächen, Tooltip. */
-function geruest(el, { tage, hoehe = 220, y, yFormat = kompakt, links = 40, zeichne, tooltip, label }){
+function geruest(el, { tage, hoehe = 220, y, yFormat = kompakt, links = 40, zeichne, tooltip, label, baender, marker }){
   const breite = Math.max(280, el.clientWidth);
   const oben = 12, unten = 26, rechts = 8;
   const pw = breite - links - rechts, ph = hoehe - oben - unten;
@@ -46,7 +46,14 @@ function geruest(el, { tage, hoehe = 220, y, yFormat = kompakt, links = 40, zeic
     if((tage.length - 1 - i) % jede) return;
     s += `<text class="ax" x="${X(i)}" y="${hoehe - 8}" text-anchor="middle">${esc(achsText(t, tage.length))}</text>`;
   });
+  // Phasenbänder hinter allem, Beschriftung oben links im Band
+  for(const bd of baender || []){
+    const x0 = links + band * bd.von, w = band * (bd.bis - bd.von + 1);
+    s += `<rect class="phase-band" x="${x0}" y="${oben}" width="${w}" height="${ph}" fill="${bd.farbe}"/>`;
+    if(w > 46) s += `<text class="phase-t" x="${x0 + 6}" y="${oben + 12}" fill="${bd.farbe}">${esc(bd.text)}</text>`;
+  }
   s += `<g class="marks">${zeichne({ X, Y, band, ph, oben, links, breite, rechts })}</g>`;
+  for(const m of marker || []) s += `<g class="marker"><line x1="${X(m.i)}" x2="${X(m.i)}" y1="${oben}" y2="${oben + ph}"/><circle cx="${X(m.i)}" cy="${oben + 4}" r="7"/><text x="${X(m.i)}" y="${oben + 7.5}" text-anchor="middle">${esc(m.text)}</text></g>`;
   s += `<line class="cursor" x1="0" x2="0" y1="${oben}" y2="${oben + ph}" opacity="0"/>`;
   tage.forEach((t, i) => { s += `<rect class="hit" data-i="${i}" x="${links + band * i}" y="${oben}" width="${band}" height="${ph}"/>`; });
   s += '</svg>';
@@ -70,17 +77,20 @@ const zeile = (farbe, name, wert) => `<div class="tt-z">${farbe ? `<i style="bac
 const kopf = t => `<div class="tt-k">${esc(istDatum(t) ? tagKurz(t, true) : t)}</div>`;
 
 /** Balken: werte[i] je Tag (null = keine Daten). ziel = gestrichelte Linie. */
-export function balken(el, { tage, werte, farbe, ziel, format, name, einheit = '', label }){
-  const max = Math.max(ziel || 0, ...werte.filter(v => v != null), 1);
+export function balken(el, { tage, werte, farbe, farben, ziel, zielReihe, format, name, einheit = '', label, baender, marker, namen }){
+  const max = Math.max(ziel || 0, ...werte.filter(v => v != null), ...(zielReihe || []).filter(v => v != null), 1);
   const y = schoen(max);
-  geruest(el, { tage, y, label,
+  geruest(el, { tage, y, label, baender, marker,
     zeichne: ({ X, Y, band }) => {
       const b = Math.max(2, Math.min(22, band - 2));
-      let s = werte.map((v, i) => v == null ? '' : barPfad(X(i) - b / 2, Y(v), b, Y(0) - Y(v), i, farbe)).join('');
+      let s = werte.map((v, i) => v == null ? '' : barPfad(X(i) - b / 2, Y(v), b, Y(0) - Y(v), i, farben?.[i] || farbe)).join('');
+      if(zielReihe) zielReihe.forEach((z, i) => { if(z != null) s += `<line class="ziel-strich" x1="${X(i) - b / 2 - 2}" x2="${X(i) + b / 2 + 2}" y1="${Y(z)}" y2="${Y(z)}"/>`; });
       if(ziel) s += `<line class="ziel" x1="${X(0) - band / 2}" x2="${X(tage.length - 1) + band / 2}" y1="${Y(ziel)}" y2="${Y(ziel)}"/><text class="ziel-t" x="${X(0) - band / 2 + 4}" y="${Y(ziel) - 6}" text-anchor="start">Ziel ${kompakt(ziel)}</text>`;
       return s;
     },
-    tooltip: i => werte[i] == null ? kopf(tage[i]) + '<div class="tt-leer">Keine Daten</div>' : kopf(tage[i]) + zeile(farbe, name, format(werte[i]) + (einheit ? ' ' + einheit : '')),
+    tooltip: i => (werte[i] == null ? kopf(tage[i]) + '<div class="tt-leer">Keine Daten</div>' : kopf(tage[i]) + zeile(farben?.[i] || farbe, namen?.[i] || name, format(werte[i]) + (einheit ? ' ' + einheit : '')))
+      + (zielReihe?.[i] != null ? zeile('', 'Ziel', format(zielReihe[i]) + (einheit ? ' ' + einheit : '')) + (werte[i] != null ? zeile('', 'Abweichung', (werte[i] - zielReihe[i] > 0 ? '+' : '') + format(werte[i] - zielReihe[i])) : '') : '')
+      + (marker?.find(m => m.i === i) ? `<div class="tt-leer">${esc(marker.find(m => m.i === i).titel || '')}</div>` : ''),
   });
 }
 
@@ -117,12 +127,12 @@ export function stapel(el, { tage, teile, format, label, ziel }){
 }
 
 /** Linie (2 px) mit optionaler Min/Max-Spanne als Fläche; Lücken bleiben Lücken. */
-export function linie(el, { tage, werte, spanne, punkte, farbe, format, name, einheit = '', label, null: nullBasis = false, punkteName = 'Messung' }){
+export function linie(el, { tage, werte, spanne, punkte, farbe, format, name, einheit = '', label, null: nullBasis = false, punkteName = 'Messung', baender, marker }){
   const alle = [...werte, ...(punkte || []), ...(spanne || []).flatMap(s => s ? [s.min, s.max] : [])].filter(v => v != null);
   if(!alle.length) return leer(el, label);
   let lo = Math.min(...alle), hi = Math.max(...alle); const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.05 || 1;
   const y = schoen(hi + pad, nullBasis ? 0 : lo - pad);
-  geruest(el, { tage, y, label,
+  geruest(el, { tage, y, label, baender, marker,
     zeichne: ({ X, Y }) => {
       let s = '';
       if(spanne){
@@ -181,12 +191,12 @@ export function spark(werte, farbe, b = 96, h = 28){
 }
 
 /** Divergierende Balken um null: Überschuss nach oben, Defizit nach unten. */
-export function divergierend(el, { tage, werte, farbePlus, farbeMinus, format, einheit = '', label, namePlus = 'Überschuss', nameMinus = 'Defizit' }){
+export function divergierend(el, { tage, werte, farbePlus, farbeMinus, format, einheit = '', label, namePlus = 'Überschuss', nameMinus = 'Defizit', baender, marker }){
   const v = werte.filter(x => x != null);
   if(!v.length) return leer(el, label);
   const m = Math.max(...v.map(Math.abs), 1);
   const y = schoen(m, -m, 4);
-  geruest(el, { tage, y, label, yFormat: t => (t > 0 ? '+' : '') + kompakt(t),
+  geruest(el, { tage, y, label, baender, marker, yFormat: t => (t > 0 ? '+' : '') + kompakt(t),
     zeichne: ({ X, Y, band }) => {
       const b = Math.max(2, Math.min(22, band - 2));
       let s = `<line class="null" x1="${X(0) - band / 2}" x2="${X(tage.length - 1) + band / 2}" y1="${Y(0)}" y2="${Y(0)}"/>`;
