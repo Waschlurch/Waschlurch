@@ -508,3 +508,78 @@ legend + *{ clear:both; }
 .hbalken em{ white-space:nowrap; }
 #tag-form{ max-height:min(88vh, 900px); overflow:auto; }
 @media (max-width: 620px){ .hbalken li{ grid-template-columns:92px 1fr 62px; } }
+
+/* ── Intelligente Analyse ── */
+.unter-h{ margin:26px 0 12px; font-size:14px; font-weight:500; color:var(--text-2); }
+.raster.intel{ margin-top:14px; }
+.bereit{ display:flex; align-items:center; gap:18px; margin-bottom:14px; }
+.klein-ring{ width:112px; height:112px; margin:0; flex:none; }
+.klein-ring b{ font-size:40px; }
+.klein-ring span{ text-transform:capitalize; }
+.bereit-text{ margin:0; font-size:14px; color:var(--text-2); line-height:1.5; }
+.bereit-karte .teile li{ grid-template-columns:78px 1fr 86px; }
+.bereit-karte .teile em{ text-align:right; }
+.bereit-karte .teile em{ font-size:11.5px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hebel{ list-style:none; margin:0 0 14px; padding:0; display:grid; gap:10px; }
+.hebel li{ display:grid; grid-template-columns:28px 1fr; gap:12px; align-items:start; }
+.hebel li.leer{ display:block; color:var(--text-3); font-size:13px; }
+.h-nr{ width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font:600 13px var(--mono); background:color-mix(in oklab, var(--ernaehrung) 20%, transparent); color:var(--ernaehrung); }
+.hebel p{ margin:0; font-size:13.5px; color:var(--text-2); line-height:1.45; }
+.hebel .h-t{ font-weight:600; color:var(--text); font-size:14px; margin-bottom:2px; }
+.hebel .h-t small{ font-weight:400; color:var(--text-3); font-size:11.5px; font-family:var(--mono); margin-left:6px; }
+.hebel .h-beleg{ color:var(--gut); font-size:12.5px; margin-top:3px; }
+.prognose{ border-top:1px solid var(--line); padding-top:12px; }
+.p-t{ margin:0 0 8px; font-size:12.5px; color:var(--text-3); }
+.p-reihe{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:6px; }
+.p-reihe div{ background:var(--bg-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+.p-reihe span{ display:block; font-size:11.5px; color:var(--text-3); font-family:var(--mono); }
+.p-reihe b{ display:block; font-family:var(--serif); font-weight:400; font-size:26px; line-height:1.15; font-variant-numeric:tabular-nums; }
+.p-reihe small{ font-size:11.5px; color:var(--text-3); font-family:var(--mono); }
+.zusammenhaenge{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:10px; }
+.zusammenhaenge li{ position:relative; padding:14px 16px 14px 18px; border-radius:14px; background:var(--bg-2); border:1px solid var(--line); overflow:hidden; }
+.zusammenhaenge li::before{ content:''; position:absolute; inset:0 auto 0 0; width:3px; background:var(--e, var(--minus)); }
+.zusammenhaenge li.leer{ grid-column:1 / -1; color:var(--text-3); font-size:13px; }
+.zusammenhaenge li.leer::before{ display:none; }
+.z-gut{ --e:var(--gut); } .z-warnung{ --e:var(--ernaehrung); } .z-info{ --e:var(--minus); }
+.zusammenhaenge p{ margin:0; font-size:13.5px; color:var(--text-2); line-height:1.5; }
+.zusammenhaenge .z-t{ font-weight:600; color:var(--text); margin-bottom:3px; }
+.zusammenhaenge .z-s{ margin-top:7px; font-size:11.5px; color:var(--text-3); font-family:var(--mono); display:flex; align-items:center; gap:8px; }
+.zusammenhaenge .z-s i{ flex:none; width:44px; height:5px; border-radius:99px; background:linear-gradient(90deg, var(--e) var(--r), var(--line) var(--r)); }
+.methodik{ margin-top:12px; }
+.methodik summary{ cursor:pointer; color:var(--text-3); font-size:12.5px; }
+.methodik p{ font-size:12.5px; color:var(--text-3); margin:8px 0 0; line-height:1.5; }
+
+/* ── KI-Coach ── */
+.ki-karte{ margin-top:14px; background:radial-gradient(70% 120% at 100% 0%, rgba(217,119,87,.16), transparent 60%), var(--surface); }
+.ki-stern{ color:#d97757; margin-right:4px; }
+.ki-leer{ color:var(--text-2); font-size:14px; max-width:620px; margin:0 0 16px; }
+.ki-fuss{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px; }
+.ki-fuss .knopf-leise{ margin:0; }
+.ki-karte.denkt #ki-inhalt{ animation:schimmer 1.6s ease-in-out infinite; }
+.ki-kern{ font-size:16.5px; line-height:1.55; margin:0 0 18px; max-width:860px; text-wrap:pretty; }
+.ki-urteil{ display:inline-block; font:500 11px var(--mono); letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:99px; margin-right:10px; vertical-align:2px; background:var(--line); }
+.ki-urteil.gut{ background:color-mix(in oklab, var(--gut) 20%, transparent); color:var(--gut); }
+.ki-urteil.mittel{ background:color-mix(in oklab, var(--ernaehrung) 20%, transparent); color:var(--ernaehrung); }
+.ki-urteil.schwach{ background:color-mix(in oklab, var(--schlecht) 20%, transparent); color:var(--schlecht); }
+.ki-prio{ list-style:none; margin:0 0 18px; padding:0; display:grid; gap:10px; counter-reset:p; }
+.ki-prio li{ counter-increment:p; position:relative; padding:14px 16px 14px 52px; border-radius:16px; background:var(--bg-2); border:1px solid var(--line); }
+.ki-prio li::before{ content:counter(p); position:absolute; left:14px; top:14px; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:600 12.5px var(--mono); background:var(--line); }
+.ki-prio li.d-hoch::before{ background:color-mix(in oklab, var(--schlecht) 25%, transparent); color:var(--schlecht); }
+.ki-prio li.d-mittel::before{ background:color-mix(in oklab, var(--ernaehrung) 25%, transparent); color:var(--ernaehrung); }
+.ki-prio p{ margin:0 0 4px; font-size:13.5px; color:var(--text-2); line-height:1.5; }
+.ki-prio b{ color:var(--text); font-weight:500; }
+.kp-t{ font-weight:600; color:var(--text) !important; font-size:15px !important; }
+.kp-t small{ font:400 11px var(--mono); color:var(--text-3); margin-left:8px; text-transform:uppercase; letter-spacing:.05em; }
+.kp-m{ font-family:var(--mono); font-size:12px !important; color:var(--text-3) !important; margin:6px 0 0 !important; }
+.ki-raster{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px; }
+.ki-raster section, .ki-fragen{ background:var(--bg-2); border:1px solid var(--line); border-radius:16px; padding:14px 16px; min-width:0; }
+.ki-raster h4, .ki-fragen h4{ margin:0 0 8px; font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text-3); font-family:var(--mono); }
+.ki-raster p{ margin:0 0 12px; font-size:13.5px; color:var(--text-2); line-height:1.5; }
+.ki-tab{ width:100%; border-collapse:collapse; font-size:13.5px; font-variant-numeric:tabular-nums; margin-bottom:8px; }
+.ki-tab th, .ki-tab td{ padding:7px 4px; border-bottom:1px solid var(--line); text-align:right; }
+.ki-tab th{ text-align:left; font-weight:500; color:var(--text-2); }
+.ki-liste{ margin:0; padding-left:18px; font-size:13.5px; color:var(--text-2); line-height:1.6; }
+.ki-liste.gut li::marker{ color:var(--gut); } .ki-liste.warn li::marker{ color:var(--ernaehrung); }
+.ki-fragen ul{ margin:0 0 8px; padding-left:18px; font-size:13.5px; line-height:1.6; }
+@media (max-width: 860px){ .ki-raster{ grid-template-columns:1fr; } .zusammenhaenge{ grid-template-columns:1fr; } }
+@media (max-width: 620px){ .bereit{ flex-direction:column; align-items:flex-start; } .ki-prio li{ padding-left:46px; } .bereit-karte .teile li{ grid-template-columns:70px 1fr 90px; } }

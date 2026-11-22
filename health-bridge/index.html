@@ -82,6 +82,17 @@
       <article class="karte score-karte" id="score"></article>
       <article class="karte"><header><h3>Diese Woche gegen letzte</h3><p class="klein" id="vgl-k"></p></header><div id="vergleich" class="vergleich"></div></article>
     </div>
+    <div class="raster umgekehrt intel">
+      <article class="karte bereit-karte" id="bereitschaft"></article>
+      <article class="karte"><header><h3>Deine größten Hebel</h3><p class="klein">wo eine Änderung am meisten bringt</p></header><ol class="hebel" id="hebel"></ol><div class="prognose" id="prognose"></div></article>
+    </div>
+    <article class="karte"><header><h3>Was deine Daten verraten</h3><p class="klein" id="zh-k">nur statistisch belastbare Zusammenhänge</p></header><ul class="zusammenhaenge" id="zusammenhaenge"></ul><details class="methodik"><summary>Wie wird das berechnet?</summary><p id="methodik"></p></details></article>
+    <article class="karte ki-karte" id="ki">
+      <header><h3><span class="ki-stern" aria-hidden="true">✶</span> KI-Coach</h3><p class="klein" id="ki-stand"></p></header>
+      <div id="ki-inhalt"><p class="ki-leer">Claude liest alle deine Daten, die Statistik und deine Ziele und schreibt dir eine persönliche Analyse mit konkreten Anpassungen – wie ein Coach.</p></div>
+      <div class="ki-fuss"><button type="button" class="knopf-hell" id="ki-knopf">KI-Analyse erstellen</button><button type="button" class="knopf-leise" id="ki-stopp" hidden>Abbrechen</button><span class="klein" id="ki-status" role="status"></span></div>
+    </article>
+    <h3 class="unter-h">Alle Hinweise</h3>
     <ol class="erkenntnisse" id="erkenntnisse"></ol>
   </section>
 

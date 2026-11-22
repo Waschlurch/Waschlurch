@@ -9,7 +9,7 @@ export { trend, steigung, isoWoche, KRAFT, KCAL_PRO_KG } from '../kern/rechnen.m
 /** Basis inkl. Vorlauf für Trend/TDEE und die Vorwoche der Analyse. */
 export function basisBereich(fenster, e){
   const start = e ? phaseAm(fenster.bis, e.phasen, e.ziele.phase).start : null;
-  const kandidaten = [tagPlus(fenster.von, -VORLAUF - 7), tagPlus(fenster.bis, -13 - VORLAUF - 7)];
+  const kandidaten = [tagPlus(fenster.von, -VORLAUF - 7), tagPlus(fenster.bis, -89 - VORLAUF - 7)]; // 90 Tage für die intelligente Analyse
   if(start && start >= tagPlus(fenster.bis, -400)) kandidaten.push(start);
   return { von: kandidaten.sort()[0], bis: fenster.bis };
 }

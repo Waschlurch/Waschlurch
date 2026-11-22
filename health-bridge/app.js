@@ -1,6 +1,7 @@
 import { balken, stapel, linie, fenster, spark, leer, tagKurz, divergierend } from './diagramme.js';
 import { bodybuilding as bbKern, tagPlus, tagesListe, phaseAm, tagTyp, PHASEN as PHASE_TITEL, SPLITS, MUSKELN, ARTEN } from './kern/rechnen.mjs';
 import { analyse as analyseKern } from './kern/analyse.mjs';
+import { KI_ANWEISUNG, kiKontext, kiAufgabe, kiPruefen } from './kern/ki.mjs';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -79,6 +80,7 @@ $('#schloss-form').addEventListener('submit', async e => {
   if(!await aktualisieren({ neu: true })) return schloss(true, 'Der Code stimmt nicht.');
   SPEICHER.set('puls.code', zustand.code);
   schloss(false);
+  kiBereit();
 });
 
 /* ── Werte holen ───────────────────────────────────────── */
@@ -310,9 +312,114 @@ function analyseBereich(d){
   $('#vgl-k').textContent = `${tagKurz(a.zeitraum.von)}–${tagKurz(a.zeitraum.bis)} · ${w.besser} besser, ${w.schlechter} schlechter`;
   $('#erkenntnisse').innerHTML = a.erkenntnisse.length ? a.erkenntnisse.map(x => `<li class="e-${x.ton}"><span class="e-z" aria-hidden="true">${TON[x.ton].z}</span><div><p class="e-t"><span class="sr">${TON[x.ton].t}: </span>${esc(x.titel)}</p><p>${esc(x.text)}</p></div></li>`).join('')
     : '<li class="e-info"><span class="e-z">i</span><div><p class="e-t">Noch keine Auswertung</p><p>Sobald Gewicht, Ernährung, Schlaf und Training ein paar Tage gesynct sind, erscheinen hier Bewertungen.</p></div></li>';
+  intelligenzZeichnen(a.intelligenz);
+  kiZeichnen();
   const dringend = a.erkenntnisse.filter(x => x.ton === 'kritisch' || x.ton === 'warnung').length;
   $('#analyse-k').innerHTML = `${esc(a.phase.titel)}${a.phase.seit ? ` · Woche ${Math.ceil(a.phase.seit.tage / 7)}` : ''} · <b>${dringend}</b> ${dringend === 1 ? 'Punkt braucht' : 'Punkte brauchen'} Aufmerksamkeit, <b>${a.erkenntnisse.filter(x => x.ton === 'gut').length}</b> laufen gut.`;
 }
+
+/* ── Intelligente Analyse ───────────────────────────────── */
+function intelligenzZeichnen(I){
+  if(!I) return;
+  const B = I.bereitschaft, U = 2 * Math.PI * 44;
+  $('#bereitschaft').innerHTML = `<header><h3>Bereitschaft heute</h3><p class="klein">HRV · Ruhepuls · Schlaf · Belastung</p></header>
+    <div class="bereit"><div class="ring klein-ring ${B.stufe === 'hoch' ? 'gut' : B.stufe === 'mittel' ? 'mittel' : 'schwach'}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="spur"/><circle cx="50" cy="50" r="44" class="wert" stroke-dasharray="${U}" stroke-dashoffset="${U * (1 - B.wert / 100)}"/></svg><div><b>${B.wert}</b><span>${B.stufe}</span></div></div>
+    <p class="bereit-text">${esc(B.text)}</p></div>
+    <ul class="teile">${B.teile.map(t => `<li><span>${esc(t.name)}</span><i><b style="width:${t.wert}%"></b></i><em title="${esc(t.text)}">${esc(t.text)}</em></li>`).join('')}</ul>`;
+  $('#bereitschaft').setAttribute('aria-label', `Bereitschaft heute ${B.wert} von 100, ${B.stufe}`);
+  $('#hebel').innerHTML = I.hebel.length ? I.hebel.map((h, i) => `<li><span class="h-nr">${i + 1}</span><div><p class="h-t">${esc(h.name)} <small>+${h.potenzial} Score-Punkte möglich</small></p><p>${esc(h.text)}</p>${h.beleg ? `<p class="h-beleg">${esc(h.beleg)}</p>` : ''}</div></li>`).join('')
+    : '<li class="leer">Alle Bereiche nahe am Ziel – weiter so.</li>';
+  const P = I.prognose;
+  $('#prognose').innerHTML = P ? `<p class="p-t">Prognose bei aktuellem Tempo (${vorz(P.kg_pro_woche, 2)} kg/Woche)</p><div class="p-reihe">${P.punkte.map(x => `<div><span>in ${x.wochen} Wo.</span><b>${zahl(x.kg, 1)} kg</b><small>± ${zahl(x.band, 1)}</small></div>`).join('')}</div>${P.ziel_datum ? `<p class="klein">Zielgewicht ${zahl(P.zielgewicht_kg, 1)} kg etwa am ${tagKurz(P.ziel_datum, true)}.</p>` : ''}` : '';
+  const zeilen = [
+    ...I.zusammenhaenge.map(z => ({ ton: z.gut === false ? 'warnung' : z.gut ? 'gut' : 'info', titel: z.titel, text: z.text, klein: z.sicherheit, r: Math.abs(z.r) })),
+    ...I.trends.map(t => ({ ton: t.gut === false ? 'warnung' : t.gut ? 'gut' : 'info', titel: 'Trend', text: t.text })),
+    ...I.ausreisser.map(a => ({ ton: 'warnung', titel: 'Auffällig', text: a.text })),
+  ];
+  $('#zusammenhaenge').innerHTML = zeilen.length ? zeilen.map(z => `<li class="z-${z.ton}"><div><p class="z-t">${esc(z.titel)}</p><p>${esc(z.text)}</p>${z.klein ? `<p class="z-s">${z.r != null ? `<i style="--r:${Math.round(z.r * 100)}%"></i>` : ''}${esc(z.klein)}</p>` : ''}</div></li>`).join('')
+    : `<li class="leer">Noch keine belastbaren Muster – dafür braucht es mindestens 14 Tage mit Schlaf-, HRV- und Ernährungsdaten (bisher ${I.tage_mit_daten}).</li>`;
+  $('#zh-k').textContent = `${I.zusammenhaenge.length} Zusammenhänge · ${I.trends.length} Trends · ${I.ausreisser.length} Auffälligkeiten · letzte 90 Tage`;
+  $('#methodik').textContent = I.methodik;
+}
+
+/* ── KI-Coach ──────────────────────────────────────────── */
+const ki = { bericht: null, stand: null, laeuft: null, sample: undefined, verfuegbar: null };
+function kiZeichnen(){
+  const r = ki.bericht;
+  $('#ki-stand').textContent = ki.stand ? `Stand ${new Date(ki.stand).toLocaleString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : '';
+  $('#ki-knopf').textContent = r ? 'Neu analysieren' : 'KI-Analyse erstellen';
+  if(!r) return;
+  const urteil = { 'sehr gut': 'gut', gut: 'gut', gemischt: 'mittel', schwach: 'schwach' }[r.gesamturteil];
+  const e = r.ernaehrung, li = l => l.map(x => `<li>${esc(x)}</li>`).join('');
+  $('#ki-inhalt').innerHTML = `<p class="ki-kern"><span class="ki-urteil ${urteil}">${esc(r.gesamturteil)}</span>${esc(r.kernaussage)}</p>
+    <ol class="ki-prio">${r.prioritaeten.map(p => `<li class="d-${p.dringlichkeit}"><p class="kp-t">${esc(p.titel)}<small>${esc(p.dringlichkeit)}</small></p><p><b>Warum:</b> ${esc(p.warum)}</p><p><b>Tun:</b> ${esc(p.aktion)}</p><p class="kp-m">Messen: ${esc(p.messgroesse)}</p></li>`).join('')}</ol>
+    <div class="ki-raster">
+      <section><h4>Ernährung</h4><table class="ki-tab"><tbody>
+        <tr><th scope="row">Trainingstag</th><td>${zahl(e.kcal_trainingstag)} kcal</td><td>${zahl(e.kohlenhydrate_g_training)} g KH</td></tr>
+        <tr><th scope="row">Rest-Day</th><td>${zahl(e.kcal_restday)} kcal</td><td>${zahl(e.kohlenhydrate_g_rest)} g KH</td></tr>
+        <tr><th scope="row">Täglich</th><td>${zahl(e.eiweiss_g)} g Eiweiß</td><td>${zahl(e.fett_g)} g Fett</td></tr></tbody></table>
+        <p class="klein">${esc(e.begruendung)}</p>${e.kcal_trainingstag && e.kcal_restday ? '<button type="button" class="knopf-leise" id="ki-uebernehmen">Als Kalorienziele übernehmen</button>' : ''}</section>
+      <section><h4>Training</h4><p>${esc(r.training)}</p><h4>Erholung</h4><p>${esc(r.erholung)}</p></section>
+    </div>
+    <div class="ki-raster">
+      ${r.gut_laeuft.length ? `<section><h4>Läuft gut</h4><ul class="ki-liste gut">${li(r.gut_laeuft)}</ul></section>` : ''}
+      ${r.warnsignale.length ? `<section><h4>Warnsignale</h4><ul class="ki-liste warn">${li(r.warnsignale)}</ul></section>` : ''}
+    </div>
+    ${r.fragen.length ? `<section class="ki-fragen"><h4>Rückfragen von Claude</h4><ul>${li(r.fragen)}</ul><p class="klein">Beantworte sie im Protokoll als Notiz oder direkt im Chat mit Claude – dort kennt Claude über den Connector dieselben Daten.</p></section>` : ''}`;
+}
+
+async function kiBereit(){
+  if(VORSCHAU){
+    if(ki.sample === undefined) ki.sample = await (window.claude?.use?.('sample') ?? Promise.resolve(null)).catch(() => null);
+    const alt = lokal.lesen('puls.vorschau.ki'); if(alt?.bericht && !ki.bericht){ ki.bericht = alt.bericht; ki.stand = alt.stand; }
+    ki.verfuegbar = !!ki.sample;
+    if(!ki.verfuegbar) $('#ki-status').textContent = 'Der KI-Coach läuft in der Vorschau nur, wenn du die Seite in Claude öffnest.';
+  } else {
+    const r = await fetch('/api/ki-coach', { headers: { 'x-puls-code': zustand.code } }).then(x => x.ok ? x.json() : null).catch(() => null);
+    if(r?.letzter){ ki.bericht = r.letzter.bericht; ki.stand = r.letzter.erstellt; }
+    ki.verfuegbar = !!r?.verfuegbar;
+    if(r && !r.verfuegbar) $('#ki-status').textContent = 'Für den KI-Coach fehlt der Anthropic-API-Schlüssel (ANTHROPIC_API_KEY).';
+  }
+  $('#ki-knopf').disabled = !ki.verfuegbar;
+  kiZeichnen();
+}
+
+const KI_FEHLER = { not_granted: 'Du hast der Seite den Zugriff auf Claude nicht erlaubt.', rate_limited: 'Gerade zu viele Anfragen oder dein Nutzungslimit ist erreicht – später erneut versuchen.', invalid_json: 'Die Antwort hatte ein unerwartetes Format – bitte erneut versuchen.', refused: 'Claude hat diese Analyse abgelehnt.', sampling_disabled: 'Claude ist für dieses Konto hier nicht verfügbar.', session_expired: 'Bitte bei Claude neu anmelden.' };
+$('#ki-knopf').addEventListener('click', async () => {
+  if(ki.laeuft || !zustand.roh) return;
+  const knopf = $('#ki-knopf'), st = $('#ki-status'), stopp = $('#ki-stopp');
+  knopf.disabled = true; stopp.hidden = !VORSCHAU; st.textContent = 'Claude analysiert deine Daten … das dauert meist 30–90 Sekunden.';
+  $('#ki').classList.add('denkt');
+  ki.laeuft = new AbortController();
+  try {
+    if(VORSCHAU){
+      const roh = zustand.roh;
+      const kontext = kiKontext({ basis: roh.basis, einstellungen: roh.einstellungen, protokoll: roh.protokoll, analyse: zustand.analyse, bis: roh.heute });
+      const antwort = await ki.sample.json(`${KI_ANWEISUNG}
+
+${kiAufgabe(kontext, true)}`, { modelTier: 'complex', effort: 'high', signal: ki.laeuft.signal, cache: false });
+      ki.bericht = kiPruefen(antwort); ki.stand = new Date().toISOString();
+      lokal.schreiben('puls.vorschau.ki', { bericht: ki.bericht, stand: ki.stand });
+    } else {
+      const r = await fetch('/api/ki-coach', { method: 'POST', headers: { 'x-puls-code': zustand.code }, signal: ki.laeuft.signal });
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok) throw { code: j.code, message: j.message };
+      ki.bericht = j.letzter.bericht; ki.stand = j.letzter.erstellt;
+    }
+    st.textContent = ''; kiZeichnen();
+  } catch(e){
+    st.textContent = e?.code === 'cancelled' || e?.name === 'AbortError' ? 'Abgebrochen.' : KI_FEHLER[e?.code] || e?.message || 'Die KI-Analyse ist fehlgeschlagen. Bitte später erneut versuchen.';
+  } finally {
+    ki.laeuft = null; knopf.disabled = !ki.verfuegbar; stopp.hidden = true; $('#ki').classList.remove('denkt');
+  }
+});
+$('#ki-stopp').addEventListener('click', () => ki.laeuft?.abort());
+$('#ki-inhalt').addEventListener('click', async e => {
+  if(e.target.id !== 'ki-uebernehmen') return;
+  const er = ki.bericht.ernaehrung, z = zustand.roh.einstellungen;
+  try { await einstellungenSpeichern({ ...z, ziele: { ...z.ziele, kcal_training: er.kcal_trainingstag, kcal_rest: er.kcal_restday, protein_g: er.eiweiss_g || z.ziele.protein_g, fett_g: er.fett_g || z.ziele.fett_g } }); e.target.textContent = 'Übernommen ✓'; e.target.disabled = true; }
+  catch(err){ $('#ki-status').textContent = err.message; }
+});
 
 /* ── Protokoll & Plan ──────────────────────────────────── */
 function protokollBereich(d){
@@ -717,4 +824,4 @@ document.addEventListener('visibilitychange', () => { if(document.visibilityStat
 
 if(!VORSCHAU && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-aktualisieren({ neu: true });
+aktualisieren({ neu: true }).then(ok => { if(ok) kiBereit(); });

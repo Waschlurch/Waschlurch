@@ -8,7 +8,8 @@
     "api/daten.mjs": { "maxDuration": 20 },
     "api/mcp.mjs": { "maxDuration": 30 },
     "api/einstellungen.mjs": { "maxDuration": 10 },
-    "api/protokoll.mjs": { "maxDuration": 10 }
+    "api/protokoll.mjs": { "maxDuration": 10 },
+    "api/ki-coach.mjs": { "maxDuration": 300 }
   },
   "headers": [
     {

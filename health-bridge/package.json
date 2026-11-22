@@ -11,10 +11,13 @@
     "schema": "node scripts/schema.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0",
     "postgres": "^3.4.5"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.0"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

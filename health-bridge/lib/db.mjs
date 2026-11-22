@@ -58,6 +58,14 @@ create table if not exists protokoll (
 alter table protokoll add column if not exists fokus text;
 alter table protokoll add column if not exists einheiten jsonb not null default '[]'::jsonb;
 
+create table if not exists ki_berichte (
+  id      bigserial primary key,
+  tag     date not null,
+  erstellt timestamptz not null default now(),
+  modell  text,
+  inhalt  jsonb not null
+);
+
 create table if not exists syncs (
   id     bigserial primary key,
   zeit   timestamptz not null default now(),

@@ -17,6 +17,10 @@ import { saeubern, STANDARD } from '../lib/einstellungen.mjs';
 import protHandler from '../api/protokoll.mjs';
 import { tagTyp, phaseAm, kcalZiel, bodybuilding as bbKern, artNormal, fokusAus, muskelnAus, SPLITS } from '../kern/rechnen.mjs';
 import { analyse as analyseKern, score } from '../kern/analyse.mjs';
+import { korrelation, welch, pWert, intelligenz } from '../kern/erkenntnis.mjs';
+import { kiKontext, kiPruefen, KI_SCHEMA } from '../kern/ki.mjs';
+import { erstelleHandler as kiHandlerFabrik, MODEL as KI_MODEL } from '../api/ki-coach.mjs';
+import { attrappe as kiAttrappe, BEISPIEL as KI_BEISPIEL } from './ki-attrappe.mjs';
 import { trend, steigung, isoWoche, bodybuilding } from '../lib/bodybuilding.mjs';
 
 let ok = 0, nein = 0;
@@ -89,7 +93,7 @@ pruefe('Einzelobjekt ohne „reihen“', lesen({ metrik: 'hrv', werte: [50], dat
 
 block('Datenbank ' + (process.env.DATABASE_URL ? '(Postgres)' : '(PGlite)'));
 const { q } = await db();
-await q('truncate messwerte, schlaf_naechte, workouts, syncs, einstellungen, protokoll');
+await q('truncate messwerte, schlaf_naechte, workouts, syncs, einstellungen, protokoll, ki_berichte');
 const g1 = await speichern(hae);
 pruefe('Gespeichert', g1.messwerte === 5 && g1.naechte === 1 && g1.workouts === 1, g1);
 const g2 = await speichern(hae);
@@ -275,6 +279,63 @@ pruefe('Coach: Beine fehlen', tT.includes('Beine fehlt'), tT);
 pruefe('Coach: Muskelgruppen zu selten', tT.includes('Muskelgruppen zu selten trainiert'), tT);
 const protF = [{ tag: T21.at(-2), cheat: false, tagtyp: null, notiz: '', fokus: 'Beine', einheiten: [] }];
 pruefe('Fokus im Protokoll überschreibt Erkennung', bbKern(basisT, { von: T21[7], bis: ende }, eT, protF).reihen.fokus.at(-2) === (tagTyp(T21.at(-2), eT.plan, new Map()) === 'training' ? 'Beine' : 'Beine'));
+
+block('Statistik-Motor');
+pruefe('p-Wert t-Verteilung', Math.abs(pWert(2.086, 20) - 0.05) < 0.002 && Math.abs(pWert(0, 10) - 1) < 1e-9);
+const xs = Array.from({ length: 40 }, (_, i) => i), ys = xs.map(x => 2 * x + Math.sin(x) * 3);
+const kk = korrelation(xs, ys);
+pruefe('Korrelation stark & signifikant', kk.r > 0.98 && kk.p < 1e-6 && kk.n === 40);
+pruefe('Keine Korrelation bei Rauschen (≤ 5 % Fehlalarme)', (() => {
+  const zufall = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  let alarme = 0; for(let k = 0; k < 200; k++){ const ra = zufall(k * 2 + 1), rb = zufall(k * 2 + 1000); if(korrelation(Array.from({ length: 60 }, ra), Array.from({ length: 60 }, rb)).p < 0.05) alarme++; }
+  return alarme <= 18; })());
+pruefe('Lücken werden paarweise ignoriert', korrelation([1, null, 3, 4, 5, 6, 7, 8, 9, 10], [2, 5, null, 8, 10, 12, 14, 16, 18, 20]).n === 8);
+const w = welch([10, 11, 12, 10, 11, 12, 11], [14, 15, 16, 14, 15, 16, 15]);
+pruefe('Welch-Test erkennt Unterschied', w.diff === -4 && w.p < 0.001);
+// 90 Tage synthetisch: Schlaf treibt HRV, Koffein senkt Schlaf am Folgetag
+{ let s = 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647, n = (m, sd) => m + sd * (r() + r() + r() - 1.5) * 1.15;
+  const T = []; for(let i = 119; i >= 0; i--) T.push(tagPlus(ende, -i));
+  const reihen = { heart_rate_variability: [], resting_heart_rate: [], dietary_caffeine: [], weight_body_mass: [] }, schlaf = []; let kaf = 200;
+  T.forEach((t, i) => { const sl = n(440, 30) - Math.max(0, kaf - 180) / 2; schlaf.push({ nacht: t, gesamt_min: sl, tief_min: sl * 0.15 });
+    reihen.heart_rate_variability.push({ tag: t, wert: 30 + sl / 10 + n(0, 3) }); reihen.resting_heart_rate.push({ tag: t, wert: 70 - sl / 30 + n(0, 1) });
+    kaf = Math.max(0, n(220, 120)); reihen.dietary_caffeine.push({ tag: t, wert: kaf }); reihen.weight_body_mass.push({ tag: t, wert: 80 + i * 0.02 + n(0, 0.3) }); });
+  const I = intelligenz({ reihen, schlaf, workouts: [], groesse: 180 }, structuredClone(STANDARD), [], ende, [{ name: 'Schlaf', gewicht: 15, wert: 60 }]);
+  const namen = I.zusammenhaenge.map(z => z.titel);
+  pruefe('Findet Schlaf → HRV', namen.includes('Mehr Schlaf → höhere HRV am Morgen'), namen);
+  pruefe('Findet Koffein → Schlaf (Vortag)', I.zusammenhaenge.some(z => z.x === 'koffein' && z.y === 'schlaf' && z.r < 0), namen);
+  pruefe('Keine Scheinzusammenhänge (Schritte)', !namen.some(t => t.startsWith('Schritte')));
+  pruefe('Bereitschaft 0–100 mit Stufe', I.bereitschaft.wert >= 0 && I.bereitschaft.wert <= 100 && ['hoch', 'mittel', 'niedrig'].includes(I.bereitschaft.stufe));
+  pruefe('Prognose steigt mit Trend', I.prognose.kg_pro_woche > 0.1 && I.prognose.punkte[2].kg > I.prognose.punkte[0].kg, I.prognose);
+  pruefe('Hebel aus Score-Lücken', I.hebel[0]?.name === 'Schlaf' && I.hebel[0].beleg?.includes('Schlaf'), I.hebel);
+}
+
+block('KI-Coach');
+pruefe('Schema streng', KI_SCHEMA.additionalProperties === false && KI_SCHEMA.required.length === Object.keys(KI_SCHEMA.properties).length);
+const ktx = kiKontext({ basis: basisS, einstellungen: eS, protokoll: [], analyse: an, bis: ende });
+pruefe('Kontext kompakt und vollständig', ktx.length < 40000 && JSON.parse(ktx).letzte_14_tage.length === 14 && JSON.parse(ktx).statistik, ktx.length);
+pruefe('Antwort-Prüfung säubert', (() => { const x = kiPruefen({ ...KI_BEISPIEL, gesamturteil: 'super', ernaehrung: { kcal_trainingstag: '3400.6' } }); return x.gesamturteil === 'gemischt' && x.ernaehrung.kcal_trainingstag === 3401 && x.ernaehrung.fett_g === null; })());
+pruefe('Kaputte Antwort → Fehler', (() => { try { kiPruefen({ foo: 1 }); return false; } catch(e){ return e.code === 'ki_format'; } })());
+process.env.PULS_KI_ATTRAPPE = '1';
+const kiClient = kiAttrappe();
+const kiH = kiHandlerFabrik(() => kiClient);
+r = await ruf(kiH, null, { methode: 'GET', kopf: { 'x-puls-code': 'code' } });
+pruefe('GET ohne Bericht', r.statusCode === 200 && r.json.letzter === null && r.json.verfuegbar === true, r.text);
+r = await ruf(kiH, null, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('POST erstellt Bericht', r.statusCode === 200 && r.json.letzter.bericht.prioritaeten.length === 3, r.text.slice(0, 300));
+const pa = kiClient.aufrufe[0];
+pruefe('Aufruf: Modell, Effort, Schema, Fallback, Cache', pa.model === KI_MODEL && pa.model === 'claude-opus-5-5' && pa.output_config.effort === 'high' && pa.output_config.format.type === 'json_schema'
+  && pa.fallbacks === 'default' && pa.betas.includes('server-side-fallback-2026-07-01') && pa.system[0].cache_control?.type === 'ephemeral' && pa.messages[0].content.includes('<daten>'));
+r = await ruf(kiH, null, { methode: 'GET', kopf: { 'x-puls-code': 'code' } });
+pruefe('Bericht gespeichert', r.json.letzter?.bericht?.kernaussage === KI_BEISPIEL.kernaussage);
+r = await ruf(kiHandlerFabrik(() => kiAttrappe('kein json')), null, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('Ungültige Antwort → 502 ki_format', r.statusCode === 502 && r.json.code === 'ki_format');
+r = await ruf(kiHandlerFabrik(() => kiAttrappe(KI_BEISPIEL, { stop: 'refusal' })), null, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('Ablehnung → 502 ki_abgelehnt', r.statusCode === 502 && r.json.code === 'ki_abgelehnt');
+delete process.env.PULS_KI_ATTRAPPE;
+r = await ruf(kiH, null, { methode: 'POST', kopf: { 'x-puls-code': 'code' } });
+pruefe('Ohne API-Schlüssel → 503 ki_fehlt', r.statusCode === 503 && r.json.code === 'ki_fehlt');
+r = await ruf(kiH, null, { methode: 'POST' });
+pruefe('Ohne Code 401', r.statusCode === 401);
 
 block('Protokoll-API');
 r = await ruf(protHandler, { tag: '2026-11-20', cheat: true, notiz: 'Pizza' }, { methode: 'PUT', kopf: { 'x-puls-code': 'code' } });

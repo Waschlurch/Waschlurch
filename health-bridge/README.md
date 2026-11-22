@@ -47,6 +47,20 @@ Alle Werkzeuge lesen nur. Claude kann über sie nichts ändern oder löschen.
 - **Protokoll:** Ein Tag im Raster lässt sich antippen. Dort markierst du einen Cheat Day, änderst Trainings- oder Rest-Day oder schreibst eine Notiz.
 - **Zoom:** In jedem Diagramm mit zwei Fingern auf- und zuziehen. Am Rechner geht das mit Strg + Mausrad, von 7 Tagen bis zu einem Jahr. Gerechnet wird im Browser (`kern/`), deshalb lädt beim Zoomen nichts nach. Claude nutzt denselben Kern.
 
+## Intelligente Analyse & KI-Coach
+
+- **Was deine Daten verraten:** Puls prüft physiologisch plausible Hypothesen mit Pearson-Korrelation und t-Test, auch mit einem Tag Versatz. Beispiele: Schlaf → HRV, Koffein am Vortag → Schlaf, Krafttraining → Ruhepuls am Folgetag, Kohlenhydrate → Trainingsintensität, Wochenbilanz → Gewicht. Gezeigt wird ein Zusammenhang nur bei p < 0,05, |r| ≥ 0,25 und mindestens 14 Tagen, jeweils mit Effekt in Klartext („+9,5 ms HRV nach langen Nächten“). Puls prüft nicht alles gegen alles, das hält Zufallstreffer bei etwa 5 %. Ein Test misst diese Fehlalarmquote.
+- **Bereitschaft heute (0–100):** HRV und Ruhepuls als z-Wert gegen 28 Tage, die letzte Nacht und die Belastung der letzten 3 Tage. Daraus folgt eine Empfehlung für das heutige Training.
+- **Trends und Ausreißer:** Welch-t-Test der letzten 14 Tage gegen die 14 davor, z-Werte für Auffälligkeiten.
+- **Prognose:** Gewicht in 4, 8 und 12 Wochen mit Unsicherheitsband sowie das voraussichtliche Datum fürs Zielgewicht.
+- **Größte Hebel:** Lücken im Wochen-Score, gewichtet. Wenn möglich, belegt Puls sie mit deinen eigenen Zusammenhängen.
+- **KI-Coach (Claude Opus 5.5):** Claude bekommt alle Kennzahlen, die Statistik, deine Ziele, Phasen, den Split und die letzten 14 Tage. Daraus schreibt er eine Coach-Analyse mit:
+  - Prioritäten (Warum, Tun, Messen)
+  - Kalorien und Makros für Trainings- und Rest-Days, auf Knopfdruck als Ziele übernehmbar
+  - Training, Erholung, Warnsignale und Rückfragen
+
+  Technisch: strukturierte JSON-Ausgabe, automatischer Fallback bei Ablehnung, Prompt-Caching. Jeder Bericht wird gespeichert. Der KI-Coach braucht `ANTHROPIC_API_KEY` in Vercel. In der Vorschau läuft er stattdessen über dein Claude-Konto.
+
 ## Vorlagen & Ziele
 
 Mit dem Regler-Symbol oben öffnest du **Ansicht & Ziele**:
@@ -81,6 +95,7 @@ Jede andere Postgres-Datenbank (Neon, Railway, eigene) funktioniert genauso.
    - `DATABASE_URL`: aus Schritt 1
    - `PULS_TOKEN`: langer Zufallswert, z. B. `openssl rand -hex 32`. Er schützt den Sync und den Connector.
    - `PULS_PASSCODE`: dein Code für das Dashboard
+   - `ANTHROPIC_API_KEY` (optional): für den KI-Coach, von console.anthropic.com
    - `PULS_TZ` (optional): Zeitzone, Standard `Europe/Berlin`
 3. Deployen, die Adresse am iPhone in Safari öffnen und über *Teilen → Zum Home-Bildschirm* installieren.
 4. Oben rechts auf **Claude** tippen. Dort stehen beide Adressen zum Kopieren bereit.
@@ -135,6 +150,8 @@ Probier zum Beispiel: *„Wie war mein Schlaf diese Woche im Vergleich zur letzt
 | `api/einstellungen.mjs`, `lib/einstellungen.mjs` | Vorlagen, Kacheln, Bereiche, Ziele |
 | `kern/rechnen.mjs`, `kern/analyse.mjs` | Rechenkern für Browser und Server: Trend, TDEE, Tagtyp, Phasen, Kalorienziele, Coach-Analyse |
 | `api/protokoll.mjs`, `lib/protokoll.mjs` | Cheat Days, Tagtyp-Ausnahmen, Notizen |
+| `kern/erkenntnis.mjs` | Statistik-Motor: Zusammenhänge, Bereitschaft, Prognose, Trends, Ausreißer, Hebel |
+| `kern/ki.mjs`, `api/ki-coach.mjs` | KI-Coach: Anweisung, Antwortschema, Datenkontext; Claude-Aufruf und Speicherung |
 | `lib/bodybuilding.mjs` | Trend, Tempo, TDEE, Bilanz, Eiweiß/kg, Magermasse, FFMI, Kraft pro Woche |
 | `api/mcp.mjs`, `lib/mcp.mjs` | MCP-Server (Streamable HTTP, zustandslos, nur lesend) |
 | `lib/abfragen.mjs` | Tageswerte, Schlaf, Workouts, Überblick – gemeinsam für Dashboard und Claude |
@@ -153,5 +170,5 @@ Tageswerte: **Summen** wie Schritte oder kcal werden pro Quelle addiert, gezähl
 cd health-bridge
 npm install
 npm run demo     # http://localhost:5174 mit 120 Tagen Beispieldaten (PGlite im Speicher)
-npm test         # 127 Prüfungen; mit DATABASE_URL gegen echtes Postgres
+npm test         # 150 Prüfungen; mit DATABASE_URL gegen echtes Postgres
 ```

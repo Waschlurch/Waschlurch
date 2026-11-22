@@ -2,6 +2,7 @@
    Ausgerichtet auf maximalen Muskelaufbau bei kontrollierter Fettzunahme. Läuft im Browser und auf dem Server. */
 
 import { bodybuilding, ausrichten, tagesListe, tagPlus, mittel, r1, PHASEN, KCAL_PRO_KG } from './rechnen.mjs';
+import { intelligenz } from './erkenntnis.mjs';
 
 const fmt = (v, nk = 0) => v == null ? '–' : Number(v).toLocaleString('de-DE', { maximumFractionDigits: nk, minimumFractionDigits: nk });
 const vz = (v, nk = 0) => v == null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '±') + fmt(Math.abs(v), nk);
@@ -184,6 +185,7 @@ export function analyse(basis, e, protokollListe = [], bis){
     zeitraum: A, vergleich_mit: B, phase: bb.phase,
     woche: { score: sa, score_vorher: sb, urteil, besser: plus, schlechter: minus, vergleich },
     erkenntnisse: E,
+    intelligenz: intelligenz(basis, e, protokollListe, bis, sa.teile),
     training: { split_tage: T.split_tage, muskeln: T.muskeln, arten: T.arten, abweichungen: T.abweichungen, cardio_minuten_woche: T.cardio_minuten_woche },
   };
 }
