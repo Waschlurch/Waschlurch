@@ -1,6 +1,6 @@
 /* Offline-Hülle: Oberfläche aus dem Cache, Daten immer frisch vom Netz. */
-const CACHE = 'puls-v3';
-const HUELLE = ['/', '/index.html', '/app.css', '/app.js', '/diagramme.js', '/kern/rechnen.mjs', '/kern/analyse.mjs', '/kern/erkenntnis.mjs', '/kern/ki.mjs', '/icon.svg', '/manifest.webmanifest'];
+const CACHE = 'puls-v4';
+const HUELLE = ['/', '/index.html', '/app.css', '/app.js', '/diagramme.js', '/kern/rechnen.mjs', '/kern/analyse.mjs', '/kern/erkenntnis.mjs', '/kern/ki.mjs', '/kern/mahlzeiten.mjs', '/icon.svg', '/manifest.webmanifest'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(HUELLE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== CACHE).map(n => caches.delete(n)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

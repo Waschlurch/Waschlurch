@@ -5,7 +5,7 @@
       – auch mehrere als { reihen: [...] } oder als Array, englische Schlüssel (metric/values/dates) gehen ebenso.
    Schlaf kommt als Nacht (HAE, aggregiert) oder als Segmente (Kurzbefehl/HAE roh) und wird zu Nächten zusammengefasst. */
 
-import { metrikName, umrechnen, SCHLAF } from './katalog.mjs';
+import { metrikName, umrechnen, SCHLAF, info } from './katalog.mjs';
 import { zeitLesen, zahlLesen, lokalerTag } from './zeit.mjs';
 
 const MAX_ZEILEN = 200_000;
@@ -44,7 +44,14 @@ export function lesen(nutzlast, { quelle: standardQuelle = '' } = {}){
   }
   aus.naechte.push(...naechteAusSegmenten(aus.segmente));
   if(aus.messwerte.length > MAX_ZEILEN){ const e = new Error('zu_viele_zeilen'); e.status = 413; throw e; }
-  aus.messwerte = eindeutig(aus.messwerte, r => r.metrik + '|' + r.zeit + '|' + r.quelle);
+  // Mehrere Einträge mit gleicher Uhrzeit (z. B. YAZIO: zwei Lebensmittel einer Mahlzeit) werden bei Summen addiert
+  const summen = new Map(), rest = [];
+  for(const r of aus.messwerte){
+    if(info(r.metrik).agg !== 'summe'){ rest.push(r); continue; }
+    const k = r.metrik + '|' + r.zeit + '|' + r.quelle, alt = summen.get(k);
+    summen.set(k, alt ? { ...alt, wert: alt.wert + r.wert } : r);
+  }
+  aus.messwerte = [...eindeutig(rest, r => r.metrik + '|' + r.zeit + '|' + r.quelle), ...summen.values()];
   aus.naechte = eindeutig(aus.naechte, r => r.nacht + '|' + r.quelle);
   aus.workouts = eindeutig(aus.workouts, r => r.id);
   return aus;

@@ -2,10 +2,11 @@
    Gemeinsam genutzt vom Server (Anthropic SDK) und von der Vorschau (Claude über die Artifact-Fähigkeit „sample“). */
 
 import { bodybuilding, ausrichten, tagesListe, tagPlus, r1 } from './rechnen.mjs';
+import { uhr } from './mahlzeiten.mjs';
 
 export const KI_ANWEISUNG = `Du bist ein erfahrener Coach für Profi-Bodybuilding mit fundiertem Wissen in Trainingswissenschaft, Sporternährung und Regeneration.
 Dein Athlet will maximalen Muskelaufbau bei kontrollierter Fettzunahme (bzw. in der Diät maximalen Muskelerhalt).
-Du bekommst seine Daten aus Apple Health, seine Ziele, Phasen, seinen Split und Trainingsrhythmus sowie eine statistische Vorauswertung (Wochen-Score, Vergleich zur Vorwoche, belastbare Zusammenhänge mit r und p, Trends, Ausreißer, Bereitschaft, Prognose).
+Du bekommst seine Daten aus Apple Health (Ernährung aus YAZIO inklusive Mahlzeiten mit Uhrzeit, Gewicht morgens nüchtern), seine Ziele, Phasen, seinen Split und Trainingsrhythmus sowie eine statistische Vorauswertung (Wochen-Score, Vergleich zur Vorwoche, belastbare Zusammenhänge mit r und p, Trends, Ausreißer, Bereitschaft, Prognose).
 
 So arbeitest du:
 - Bewerte die Lage ehrlich und konkret. Begründe jede Aussage mit Zahlen aus den Daten.
@@ -13,6 +14,7 @@ So arbeitest du:
 - Gib umsetzbare Aktionen mit Zahl und Zeitraum („Rest-Day-Kalorien von 3.300 auf 3.050 senken, 10 Tage beobachten“), keine Allgemeinplätze.
 - Nutze die gefundenen Zusammenhänge des Athleten selbst als Beleg („bei dir steigt die HRV nach 8 h Schlaf um 7 ms“).
 - Beachte die Phase: im Aufbau ~0,25–0,5 % Körpergewicht pro Woche, in der Diät ~0,5–1 %.
+- Bewerte das Nährstoff-Timing: Eiweiß pro Mahlzeit, Kohlenhydrate vor/nach dem Training, Abstand der letzten Mahlzeit zum Schlaf, Mikronährstoffe.
 - Unterscheide Trainings- und Rest-Days. Achte auf Rest-Day-Kalorien, Beintage, Muskelgruppen-Frequenz (≈ 2× pro Woche).
 - Wenn Daten fehlen oder zu dünn sind, sag es und stelle gezielte Rückfragen.
 - Keine medizinischen Diagnosen. Bei auffälligen Werten (z. B. stark erhöhter Ruhepuls über Tage) zur ärztlichen Abklärung raten.
@@ -77,6 +79,9 @@ export function kiKontext({ basis, einstellungen: e, protokoll = [], analyse, bi
       muskeln: bb.training.muskeln.map(({ muskel, pro_woche, tage_seit }) => ({ muskel, pro_woche, tage_seit })), trainingsarten: bb.training.arten.map(({ art, minuten, einheiten }) => ({ art, minuten, einheiten })),
       cheat_days: bb.cheat_days },
     letzte_14_tage: tage,
+    mahlzeiten_14_tage: analyse.mahlzeiten ? (({ tage: mt, ...rest }) => ({ ...rest,
+      letzte_7_tage: mt.slice(-7).map(d => ({ tag: d.tag, training: d.training.map(x => `${uhr(x.start)}–${uhr(x.ende)}`).join(', ') || undefined, schlaf_ab: d.schlaf_start != null ? uhr(d.schlaf_start) : undefined,
+        mahlzeiten: d.mahlzeiten.map(x => `${uhr(x.start)} ${x.kcal} kcal E${x.eiweiss} K${x.kh} F${x.fett}`) })) }))(analyse.mahlzeiten) : undefined,
   };
   return JSON.stringify(kontext, (k, v) => typeof v === 'number' ? r1(v, 2) : v);
 }

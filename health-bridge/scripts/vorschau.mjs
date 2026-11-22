@@ -48,7 +48,7 @@ const kopf = `<title>Puls</title>
 `;
 await fs.writeFile(path.join(ziel, 'index.html'), kopf + body);
 await fs.mkdir(path.join(ziel, 'kern'), { recursive: true });
-for(const f of ['app.css', 'app.js', 'diagramme.js', 'kern/rechnen.mjs', 'kern/analyse.mjs', 'kern/erkenntnis.mjs', 'kern/ki.mjs']) await fs.copyFile(path.join(wurzel, f), path.join(ziel, f));
+for(const f of ['app.css', 'app.js', 'diagramme.js', 'kern/rechnen.mjs', 'kern/analyse.mjs', 'kern/erkenntnis.mjs', 'kern/ki.mjs', 'kern/mahlzeiten.mjs']) await fs.copyFile(path.join(wurzel, f), path.join(ziel, f));
 const groessen = await Promise.all((await fs.readdir(path.join(ziel, 'vorschau-daten'))).map(async f => `${f} ${((await fs.stat(path.join(ziel, 'vorschau-daten', f))).size / 1024).toFixed(0)} KB`));
 console.log('Vorschau gebaut:', groessen.join(', '));
 process.exit(0);

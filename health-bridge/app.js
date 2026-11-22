@@ -318,6 +318,37 @@ function analyseBereich(d){
   $('#analyse-k').innerHTML = `${esc(a.phase.titel)}${a.phase.seit ? ` · Woche ${Math.ceil(a.phase.seit.tage / 7)}` : ''} · <b>${dringend}</b> ${dringend === 1 ? 'Punkt braucht' : 'Punkte brauchen'} Aufmerksamkeit, <b>${a.erkenntnisse.filter(x => x.ton === 'gut').length}</b> laufen gut.`;
 }
 
+/* ── Mahlzeiten & Timing ──────────────────────────────── */
+function mahlzeitenZeichnen(d){
+  const MA = d.analyse.mahlzeiten; if(!MA) return;
+  const box = $('#zeitleiste');
+  if(!MA.hat_uhrzeiten){
+    box.innerHTML = '<p class="klein">Deine Ernährung kommt nur als Tagessumme an. In Health Auto Export für Ernährung „Daten zusammenfassen“ ausschalten – dann erscheinen hier deine Mahlzeiten mit Uhrzeit (z. B. aus YAZIO).</p>';
+    $('#timing-werte').innerHTML = '';
+  } else {
+    const von = 5 * 60, bis = 26 * 60, x = m => Math.max(0, Math.min(100, (m - von) / (bis - von) * 100));
+    const ziel = MA.ziel_eiweiss_mahlzeit * 0.75, tage = MA.tage.slice(-7).reverse();
+    const ticks = [6, 9, 12, 15, 18, 21, 24].map(h => `<span style="left:${x(h * 60)}%">${String(h % 24).padStart(2, '0')}</span>`).join('');
+    box.innerHTML = `<div class="zl-achse">${ticks}</div>` + tage.map(t => `<div class="zl-zeile"><span class="zl-tag">${tagKurz(t.tag, true).split(',')[0]} ${+t.tag.slice(8)}.</span><div class="zl-bahn">
+      ${t.training.map(k => `<i class="zl-train" style="left:${x(k.start)}%;width:${Math.max(1, x(k.ende) - x(k.start))}%" title="Training ${uhrText(k.start)}–${uhrText(k.ende)}"></i>`).join('')}
+      ${t.schlaf_start != null ? `<i class="zl-schlaf" style="left:${x(t.schlaf_start)}%" title="Schlafbeginn ${uhrText(t.schlaf_start)}"></i>` : ''}
+      ${t.mahlzeiten.map(m => `<b class="zl-m${m.eiweiss >= ziel ? ' voll' : ''}" style="left:${x(m.start)}%;--g:${Math.round(10 + Math.sqrt(m.kcal) * 0.75)}px" title="${uhrText(m.start)} · ${m.kcal} kcal · E ${m.eiweiss} g · KH ${m.kh} g · F ${m.fett} g"></b>`).join('')}
+      </div></div>`).join('');
+    const T = MA.training;
+    const w = (t, v, sub) => `<div><span>${t}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+    $('#timing-werte').innerHTML = w('Mahlzeiten / Tag', zahl(MA.mahlzeiten_pro_tag, 1), `${zahl(MA.eiweiss_mahlzeiten_pro_tag, 1)} mit ≥ ${Math.round(ziel)} g Eiweiß`)
+      + w('Eiweiß / Mahlzeit', `${zahl(MA.eiweiss_pro_mahlzeit)} g`, `Ziel ~${MA.ziel_eiweiss_mahlzeit} g`)
+      + w('Essensfenster', `${zahl(MA.essensfenster_h, 1)} h`, `${MA.erste_mahlzeit} – ${MA.letzte_mahlzeit}`)
+      + w('Letzte Mahlzeit → Schlaf', `${zahl(MA.abstand_schlaf_min)} min`, `${MA.spaete_mahlzeiten}× unter 90 min`)
+      + (T ? w('Vor dem Training', `${zahl(T.pre_kh)} g KH`, `${zahl(T.pre_eiweiss)} g Eiweiß · ${T.ohne_pre}× nichts`) + w('Nach dem Training', `${zahl(T.post_eiweiss)} g Eiweiß`, `${zahl(T.post_kh)} g KH`) : '');
+  }
+  $('#mikro').innerHTML = MA.mikro.length ? MA.mikro.map(m => {
+    const ref = m.ziel ?? m.max, q = ref ? m.mittel / ref : 0, st = m.status === 'ok' ? 'gut' : m.status === 'zu_viel' ? 'schwach' : 'mittel';
+    return `<li class="${st}"><span>${esc(m.titel)}</span><i style="--z:${Math.min(100, 100 / Math.max(1, q * 1.25))}%"><b style="width:${Math.min(100, q / Math.max(1, q * 1.25) * 100)}%"></b></i><em>${zahl(m.mittel, m.metrik === 'iron' || m.metrik === 'vitamin_d' ? 1 : 0)} ${m.einheit}</em><small>${m.ziel != null ? `Ziel ≥ ${zahl(m.ziel)}` : `max ~${zahl(m.max)}`}</small></li>`; }).join('')
+    : '<li class="leer">Keine Mikronährstoffe getrackt. YAZIO schreibt sie nach Apple Health, wenn du sie in Health Auto Export mit exportierst.</li>';
+}
+const uhrText = min => `${String(Math.floor((min % 1440) / 60)).padStart(2, '0')}:${String(Math.round(min % 60)).padStart(2, '0')}`;
+
 /* ── Intelligente Analyse ───────────────────────────────── */
 function intelligenzZeichnen(I){
   if(!I) return;
@@ -325,7 +356,9 @@ function intelligenzZeichnen(I){
   $('#bereitschaft').innerHTML = `<header><h3>Bereitschaft heute</h3><p class="klein">HRV · Ruhepuls · Schlaf · Belastung</p></header>
     <div class="bereit"><div class="ring klein-ring ${B.stufe === 'hoch' ? 'gut' : B.stufe === 'mittel' ? 'mittel' : 'schwach'}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="spur"/><circle cx="50" cy="50" r="44" class="wert" stroke-dasharray="${U}" stroke-dashoffset="${U * (1 - B.wert / 100)}"/></svg><div><b>${B.wert}</b><span>${B.stufe}</span></div></div>
     <p class="bereit-text">${esc(B.text)}</p></div>
-    <ul class="teile">${B.teile.map(t => `<li><span>${esc(t.name)}</span><i><b style="width:${t.wert}%"></b></i><em title="${esc(t.text)}">${esc(t.text)}</em></li>`).join('')}</ul>`;
+    <ul class="teile">${B.teile.map(t => `<li><span>${esc(t.name)}</span><i><b style="width:${t.wert}%"></b></i><em title="${esc(t.text)}">${esc(t.text)}</em></li>`).join('')}</ul>
+    ${B.vorbereitung?.length ? `<p class="vb-t">${B.heute?.typ === 'training' ? `Vorbereitung aufs Training${B.heute.fokus ? ` · heute ${esc(B.heute.fokus)}` : ''}` : 'Heute Rest-Day · Regeneration'}</p>
+    <ul class="vorbereitung">${B.vorbereitung.map(c => `<li class="${c.ok === true ? 'ja' : c.ok === false ? 'nein' : 'info'}"><span aria-hidden="true">${c.ok === true ? '✓' : c.ok === false ? '!' : '→'}</span>${esc(c.text)}</li>`).join('')}</ul>` : ''}`;
   $('#bereitschaft').setAttribute('aria-label', `Bereitschaft heute ${B.wert} von 100, ${B.stufe}`);
   $('#hebel').innerHTML = I.hebel.length ? I.hebel.map((h, i) => `<li><span class="h-nr">${i + 1}</span><div><p class="h-t">${esc(h.name)} <small>+${h.potenzial} Score-Punkte möglich</small></p><p>${esc(h.text)}</p>${h.beleg ? `<p class="h-beleg">${esc(h.beleg)}</p>` : ''}</div></li>`).join('')
     : '<li class="leer">Alle Bereiche nahe am Ziel – weiter so.</li>';
@@ -527,6 +560,7 @@ function ernaehrung(d){
     <div class="aufteilung" aria-hidden="true">${teile.map((t, i) => `<span style="flex:${g[i] * (i === 2 ? 9 : 4)};background:${t.farbe}"></span>`).join('')}</div>
     ${zeile('Eiweiß', g[0], 'g', teile[0].farbe)}${d.bodybuilding.eiweiss.mittel_g_pro_kg ? `<div class="z"><span>&nbsp;&nbsp;&nbsp;&nbsp;pro kg Körpergewicht</span><b>${zahl(d.bodybuilding.eiweiss.mittel_g_pro_kg, 2)} g</b></div>` : ''}${zeile('Kohlenhydrate', g[1], 'g', teile[1].farbe)}${zeile('Fett', g[2], 'g', teile[2].farbe)}
     ${zeile('Ballaststoffe', mittel(reihe('fiber')), 'g')}${zeile('Zucker', mittel(reihe('dietary_sugar')), 'g')}${zeile('Wasser', mittel(reihe('dietary_water')), 'ml')}${zeile('Koffein', mittel(reihe('dietary_caffeine')), 'mg')}`;
+  mahlzeitenZeichnen(d);
   const tageMit = kcal.filter(v => v != null).length;
   const emp = d.bodybuilding.energie.empfohlene_kcal;
   $('#ern-k').innerHTML = `An <b>${tageMit}</b> von ${d.tage.length} Tagen erfasst · Ø <b>${zahl(mittel(kcal))}</b>${emp ? ` von <b>${zahl(emp)}</b>` : ''} kcal · <b>${zahl(g[0])} g</b> Eiweiß.`;

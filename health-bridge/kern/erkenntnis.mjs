@@ -2,7 +2,8 @@
    fürs Training, prognostiziert das Gewicht, erkennt Trendwechsel und Ausreißer und priorisiert Hebel.
    Rein statistisch und nachvollziehbar – jede Aussage nennt Effekt, Stichprobe und Sicherheit. */
 
-import { bodybuilding, ausrichten, tagesListe, tagPlus, mittel, r1, trend, steigung, tageZwischen } from './rechnen.mjs';
+import { bodybuilding, ausrichten, tagesListe, tagPlus, mittel, r1, trend, steigung, tageZwischen, tagTyp, phaseAm } from './rechnen.mjs';
+import { mahlzeitenAnalyse, uhr } from './mahlzeiten.mjs';
 
 const fmt = (v, nk = 0) => v == null ? '–' : Number(v).toLocaleString('de-DE', { maximumFractionDigits: nk, minimumFractionDigits: nk });
 const vz = (v, nk = 0) => v == null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '±') + fmt(Math.abs(v), nk);
@@ -68,10 +69,16 @@ const H = [
   { x: 'kh', y: 'schlaf', lag: 0, satz: 'Kohlenhydrate am Abend des Tages → Schlafdauer', ziel: 'hoch' },
   { x: 'wasser', y: 'hrv', lag: 1, satz: 'Trinkmenge am Vortag → HRV', ziel: 'hoch' },
   { x: 'bilanz7', y: 'gewicht7', lag: 0, satz: 'Energiebilanz der Woche → Gewichtsänderung', ziel: 'neutral' },
+  { x: 'abstand_schlaf', y: 'schlaf', lag: 1, satz: 'Abstand letzte Mahlzeit → Schlafdauer', ziel: 'hoch' },
+  { x: 'abstand_schlaf', y: 'hrv', lag: 1, satz: 'Abstand letzte Mahlzeit → HRV über Nacht', ziel: 'hoch' },
+  { x: 'abend_kcal', y: 'schlaf', lag: 1, satz: 'Kalorien nach 19 Uhr → Schlafdauer', ziel: 'neutral' },
+  { x: 'natrium', y: 'waage', lag: 1, satz: 'Natrium am Vortag → Wasser auf der Waage', ziel: 'neutral' },
+  { x: 'kh', y: 'intensitaet', lag: 1, satz: 'Kohlenhydrate am Vortag → Trainingsintensität', ziel: 'hoch' },
+  { x: 'pre_kh', y: 'intensitaet', lag: 0, satz: 'Kohlenhydrate vor dem Training → Trainingsintensität', ziel: 'hoch' },
 ];
-const NAME = { schlaf: 'Schlaf', tief: 'Tiefschlaf', hrv: 'HRV', rhr: 'Ruhepuls', koffein: 'Koffein', kraft_min: 'Krafttraining', cardio: 'Cardio', schritte: 'Schritte', intensitaet: 'Trainingsintensität', kcal: 'Kalorien', kh: 'Kohlenhydrate', wasser: 'Wasser', bilanz7: 'Wochenbilanz', gewicht7: 'Gewichtsänderung' };
-const EINHEIT = { schlaf: 'min', tief: 'min', hrv: 'ms', rhr: 'bpm', koffein: 'mg', kraft_min: 'min', cardio: 'min', schritte: '', intensitaet: 'kcal/min', kcal: 'kcal', kh: 'g', wasser: 'ml', bilanz7: 'kcal', gewicht7: 'kg' };
-const NK = { intensitaet: 1, gewicht7: 2, hrv: 1, rhr: 1 };
+const NAME = { abstand_schlaf: 'Abstand letzte Mahlzeit → Schlaf', abend_kcal: 'Kalorien nach 19 Uhr', natrium: 'Natrium', waage: 'Abweichung der Waage vom Trend', pre_kh: 'Kohlenhydrate vor dem Training', schlaf: 'Schlaf', tief: 'Tiefschlaf', hrv: 'HRV', rhr: 'Ruhepuls', koffein: 'Koffein', kraft_min: 'Krafttraining', cardio: 'Cardio', schritte: 'Schritte', intensitaet: 'Trainingsintensität', kcal: 'Kalorien', kh: 'Kohlenhydrate', wasser: 'Wasser', bilanz7: 'Wochenbilanz', gewicht7: 'Gewichtsänderung' };
+const EINHEIT = { abstand_schlaf: 'min', abend_kcal: 'kcal', natrium: 'mg', waage: 'kg', pre_kh: 'g', schlaf: 'min', tief: 'min', hrv: 'ms', rhr: 'bpm', koffein: 'mg', kraft_min: 'min', cardio: 'min', schritte: '', intensitaet: 'kcal/min', kcal: 'kcal', kh: 'g', wasser: 'ml', bilanz7: 'kcal', gewicht7: 'kg' };
+const NK = { intensitaet: 1, gewicht7: 2, hrv: 1, rhr: 1, waage: 2 };
 
 /** Tagestabelle aller Merkmale über einen Zeitraum. */
 export function merkmale(basis, e, protokollListe, von, bis){
@@ -83,8 +90,12 @@ export function merkmale(basis, e, protokollListe, von, bis){
   const intens = einh.map(l => { const k = l.filter(x => x.kategorie === 'kraft' && x.energie_kcal && x.dauer_min >= 15); return k.length ? k.reduce((s, x) => s + x.energie_kcal, 0) / k.reduce((s, x) => s + x.dauer_min, 0) : null; });
   const bil = rb.bilanz_kcal, tr = rb.trend_kg;
   const bilanz7 = tage.map((_, i) => i >= 6 ? mittel(bil.slice(i - 6, i + 1)) : null);
+  const ma = mahlzeitenAnalyse(basis, { von, bis }, { gewichtKg: bb.gewicht.aktuell_trend_kg });
+  const waage = tage.map((_, i) => rb.gewicht_kg[i] != null && i > 0 && tr[i - 1] != null ? rb.gewicht_kg[i] - tr[i - 1] : null);
   const gewicht7 = tage.map((_, i) => i + 7 < tage.length && tr[i + 7] != null && tr[i] != null ? tr[i + 7] - tr[i] : null);
-  return { tage, bb, M: {
+  return { tage, bb, ma, M: {
+    abstand_schlaf: ma.tage.map(d => d.abstand_schlaf_min), abend_kcal: ma.tage.map(d => d.abend_kcal), pre_kh: ma.tage.map(d => d.pre_kh),
+    natrium: R.sodium, waage, kcal_ziel: rb.kcal_ziel, eiweiss: R.protein, tagtyp: rb.tagtyp, fokus_geplant: rb.fokus_geplant,
     schlaf: tage.map(t => naechte.get(t)?.gesamt_min ?? null), tief: tage.map(t => naechte.get(t)?.tief_min ?? null),
     hrv: R.heart_rate_variability, rhr: R.resting_heart_rate, koffein: R.dietary_caffeine, wasser: R.dietary_water, kh: R.carbohydrates,
     kcal: rb.kcal, schritte: R.step_count, cardio: rb.cardio_min, kraft_min: kraftMin.map((v, i) => einh[i] ? v : null), intensitaet: intens, bilanz7, gewicht7,
@@ -113,7 +124,7 @@ function zusammenhaenge(M){
 }
 
 /** Bereitschaft heute: HRV und Ruhepuls gegen den 28-Tage-Schnitt, letzte Nacht, Belastung der letzten 3 Tage. */
-function bereitschaft(M, tage, z){
+function bereitschaft(M, tage, z, bb, ma, e){
   const i = tage.length - 1, basis = s => s.slice(Math.max(0, i - 28), i).filter(v => v != null);
   const teile = [];
   const zwert = (s, umkehren) => { const b = basis(s), heute = s[i] ?? s[i - 1]; if(b.length < 7 || heute == null) return null; const z = (heute - mittel(b)) / (sd(b) || 1); return umkehren ? -z : z; };
@@ -125,11 +136,35 @@ function bereitschaft(M, tage, z){
   if(zR != null) teile.push({ name: 'Ruhepuls', gewicht: 25, wert: zu01(zR), text: `${vz(-zR, 1)} σ` });
   if(sl != null) teile.push({ name: 'Schlaf', gewicht: 30, wert: Math.max(0, Math.min(1, (sl - 300) / (zielMin - 300))), text: `${Math.floor(sl / 60)} h ${String(Math.round(sl % 60)).padStart(2, '0')}` });
   teile.push({ name: 'Belastung', gewicht: 10, wert: Math.max(0, Math.min(1, 1 - (last - 120) / 180)), text: `${fmt(last)} min/3 T` });
+  // Ernährung gestern: Kalorien gegen Ziel und Kohlenhydrate (Glykogen) pro kg
+  const kg = bb.gewicht.aktuell_trend_kg, gi = i - 1;
+  if(M.kcal[gi] != null && M.kcal_ziel[gi]){
+    const q = M.kcal[gi] / M.kcal_ziel[gi], khkg = M.kh[gi] != null && kg ? M.kh[gi] / kg : null;
+    const w = Math.max(0, Math.min(1, 1 - Math.abs(1 - q) * 2.5)) * 0.6 + (khkg != null ? Math.min(1, khkg / 4) : 0.5) * 0.4;
+    teile.push({ name: 'Ernährung', gewicht: 15, wert: w, text: `${Math.round(q * 100)} % kcal${khkg != null ? ` · ${fmt(khkg, 1)} g KH/kg` : ''}` });
+  }
+  if(M.abstand_schlaf[gi] != null) teile.push({ name: 'Mahlzeit', gewicht: 5, wert: Math.max(0, Math.min(1, M.abstand_schlaf[gi] / 150)), text: `${fmt(M.abstand_schlaf[gi])} min vor Schlaf` });
   const g = teile.reduce((s, t) => s + t.gewicht, 0);
   const wert = Math.round(100 * teile.reduce((s, t) => s + t.gewicht * t.wert, 0) / g);
   const stufe = wert >= 70 ? 'hoch' : wert >= 50 ? 'mittel' : 'niedrig';
   const text = stufe === 'hoch' ? 'Gut erholt – ideal für schwere Grundübungen und neue Bestleistungen.' : stufe === 'mittel' ? 'Normal belastbar – Plan durchziehen, aber nicht ans absolute Limit gehen.' : 'Erholung hat Vorrang – Volumen um ~30 % senken oder Technik/Pump statt Maximalkraft; früh schlafen.';
-  return { wert, stufe, text, teile: teile.map(t => ({ ...t, wert: Math.round(t.wert * 100) })), basis_tage: teile.length };
+  // Vorbereitung auf das heutige Training (Checkliste)
+  const heuteTyp = M.tagtyp[i], fokus = M.fokus_geplant[i], kgk = bb.gewicht.aktuell_trend_kg;
+  const check = [];
+  const add = (ok, text) => check.push({ ok, text });
+  if(sl != null) add(sl >= zielMin - 30, `Schlaf ${Math.floor(sl / 60)} h ${String(Math.round(sl % 60)).padStart(2, '0')} (Ziel ${z.schlaf_ziel_h} h)`);
+  if(M.kcal[i - 1] != null && M.kcal_ziel[i - 1]) add(M.kcal[i - 1] >= M.kcal_ziel[i - 1] - 200, `Gestern ${fmt(M.kcal[i - 1])} von ${fmt(M.kcal_ziel[i - 1])} kcal gegessen`);
+  if(M.kh[i - 1] != null && kgk) add(M.kh[i - 1] / kgk >= 3, `Glykogen: gestern ${fmt(M.kh[i - 1])} g Kohlenhydrate (${fmt(M.kh[i - 1] / kgk, 1)} g/kg, Ziel ≥ 3)`);
+  if(M.eiweiss[i - 1] != null && kgk) add(M.eiweiss[i - 1] / kgk >= z.protein_g_pro_kg * 0.9, `Eiweiß gestern ${fmt(M.eiweiss[i - 1])} g (${fmt(M.eiweiss[i - 1] / kgk, 1)} g/kg)`);
+  if(M.abstand_schlaf[i - 1] != null) add(M.abstand_schlaf[i - 1] >= 90, `Letzte Mahlzeit ${fmt(M.abstand_schlaf[i - 1])} min vor dem Schlafen (≥ 90 min ideal)`);
+  if(M.waage[i] != null && kgk) add(Math.abs(M.waage[i]) / kgk < 0.012, `Morgengewicht ${vz(M.waage[i], 1)} kg zum Trend${M.waage[i] < -kgk * 0.012 ? ' – eher dehydriert, früh trinken + Salz' : M.waage[i] > kgk * 0.012 ? ' – Wassereinlagerung (Salz/KH)' : ''}`);
+  const heuteM = ma.tage.at(-1)?.mahlzeiten || [];
+  if(heuteTyp === 'training'){
+    const bisher = heuteM.reduce((s, x) => ({ kh: s.kh + x.kh, eiweiss: s.eiweiss + x.eiweiss }), { kh: 0, eiweiss: 0 });
+    add(bisher.kh >= 60 || !heuteM.length ? null : false, heuteM.length ? `Heute bisher ${fmt(bisher.kh)} g KH und ${fmt(bisher.eiweiss)} g Eiweiß – vor dem Training 2–3 h vorher ~${fmt(Math.round(kgk * 1 / 10) * 10)} g KH + 40 g Eiweiß` : `Heute noch nichts getrackt – 2–3 h vor dem Training ~${fmt(Math.round(kgk * 1 / 10) * 10)} g KH + 40 g Eiweiß einplanen`);
+  }
+  return { wert, stufe, text, teile: teile.map(t => ({ ...t, wert: Math.round(t.wert * 100) })), basis_tage: teile.length,
+    heute: { typ: heuteTyp, fokus: fokus || null }, vorbereitung: check };
 }
 
 /** Gewichtsprognose aus dem Trend der letzten 21 Tage, mit Unsicherheitsband. */
@@ -192,16 +227,17 @@ function hebel(scoreTeile, zh, z){
 /** Gesamte intelligente Analyse für den Tag „bis“. */
 export function intelligenz(basis, e, protokollListe, bis, scoreTeile = []){
   const von = tagPlus(bis, -89);
-  const { tage, bb, M } = merkmale(basis, e, protokollListe, von, bis);
+  const { tage, bb, ma, M } = merkmale(basis, e, protokollListe, von, bis);
   const zh = zusammenhaenge(M);
   return {
     zeitraum: { von, bis }, tage_mit_daten: M.hrv.filter(v => v != null).length,
-    bereitschaft: bereitschaft(M, tage, e.ziele),
+    bereitschaft: bereitschaft(M, tage, e.ziele, bb, ma, e),
     prognose: prognose(bb),
     zusammenhaenge: zh,
     trends: trends(M),
     ausreisser: ausreisser(M, tage),
     hebel: hebel(scoreTeile, zh, e.ziele),
+    methodik_daten: { mahlzeiten_mit_uhrzeit: ma.hat_uhrzeiten },
     methodik: 'Pearson-Korrelation mit t-Test (nur vorab festgelegte, physiologisch plausible Hypothesen; p < 0,05, |r| ≥ 0,25, ≥ 14 Tage), Welch-t-Test für Trendwechsel, z-Werte gegen 28 Tage für Ausreißer, lineare Trendprognose über 21 Tage.',
   };
 }

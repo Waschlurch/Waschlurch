@@ -47,6 +47,25 @@ Alle Werkzeuge lesen nur. Claude kann über sie nichts ändern oder löschen.
 - **Protokoll:** Ein Tag im Raster lässt sich antippen. Dort markierst du einen Cheat Day, änderst Trainings- oder Rest-Day oder schreibst eine Notiz.
 - **Zoom:** In jedem Diagramm mit zwei Fingern auf- und zuziehen. Am Rechner geht das mit Strg + Mausrad, von 7 Tagen bis zu einem Jahr. Gerechnet wird im Browser (`kern/`), deshalb lädt beim Zoomen nichts nach. Claude nutzt denselben Kern.
 
+## YAZIO & Ernährung
+
+YAZIO hat keine öffentliche Schnittstelle. Inoffizielle Zugänge würden dein YAZIO-Passwort brauchen und verstoßen gegen die Nutzungsbedingungen, deshalb nutzt Puls sie nicht. Der Weg führt so: **YAZIO → Apple Health → Health Auto Export → Puls**.
+1. In YAZIO unter *Profil → Einstellungen → Apps & Geräte* Apple Health verbinden und das Schreiben von Ernährungsdaten erlauben. Danach in der Health-App unter *Ernährung → Datenquellen* prüfen, welche Werte YAZIO dort schreibt.
+2. In Health Auto Export Ernährung exportieren (Energie, Eiweiß, Kohlenhydrate, Fett, Natrium, Zucker, Ballaststoffe, Wasser, Koffein und Mikronährstoffe), dabei **„Daten zusammenfassen“ für Ernährung ausschalten**. Nur so kommen die Einträge mit Uhrzeit an.
+
+Daraus macht Puls:
+- **Mahlzeiten:** Einträge im Abstand von weniger als 75 min gehören zu einer Mahlzeit. Mehrere Lebensmittel mit derselben Uhrzeit werden addiert.
+- **Timing:**
+  - Eiweiß pro Mahlzeit (Ziel ≈ 0,4 g/kg)
+  - Kohlenhydrate und Eiweiß in den 3 h vor und 2 h nach dem Krafttraining
+  - Essensfenster
+  - Abstand der letzten Mahlzeit zum Schlafbeginn
+- **Zeitleiste:** die letzten 7 Tage mit Mahlzeiten, Training und Schlafbeginn.
+- **Mikronährstoffe gegen Richtwerte:** Ballaststoffe, Wasser, Kalium, Magnesium, Calcium, Eisen, Vitamin D, Natrium, Zucker und gesättigte Fette.
+- **Morgengewicht nüchtern:** Als Tageswert zählt die erste Messung vor 11 Uhr. Gibt es nur eine Abendmessung, nutzt Puls sie und markiert sie.
+- **Neue Zusammenhänge:** späte Mahlzeit → Schlaf und HRV, Natrium am Vortag → Wasser auf der Waage, Kohlenhydrate am Vortag bzw. vor dem Training → Trainingsintensität.
+- **Bereitschaft heute:** berücksichtigt jetzt auch die Ernährung von gestern (Kalorien gegen Ziel, Kohlenhydrate pro kg) und die letzte Mahlzeit. Dazu gibt es eine Checkliste zur Trainingsvorbereitung.
+
 ## Intelligente Analyse & KI-Coach
 
 - **Was deine Daten verraten:** Puls prüft physiologisch plausible Hypothesen mit Pearson-Korrelation und t-Test, auch mit einem Tag Versatz. Beispiele: Schlaf → HRV, Koffein am Vortag → Schlaf, Krafttraining → Ruhepuls am Folgetag, Kohlenhydrate → Trainingsintensität, Wochenbilanz → Gewicht. Gezeigt wird ein Zusammenhang nur bei p < 0,05, |r| ≥ 0,25 und mindestens 14 Tagen, jeweils mit Effekt in Klartext („+9,5 ms HRV nach langen Nächten“). Puls prüft nicht alles gegen alles, das hält Zufallstreffer bei etwa 5 %. Ein Test misst diese Fehlalarmquote.
@@ -150,6 +169,7 @@ Probier zum Beispiel: *„Wie war mein Schlaf diese Woche im Vergleich zur letzt
 | `api/einstellungen.mjs`, `lib/einstellungen.mjs` | Vorlagen, Kacheln, Bereiche, Ziele |
 | `kern/rechnen.mjs`, `kern/analyse.mjs` | Rechenkern für Browser und Server: Trend, TDEE, Tagtyp, Phasen, Kalorienziele, Coach-Analyse |
 | `api/protokoll.mjs`, `lib/protokoll.mjs` | Cheat Days, Tagtyp-Ausnahmen, Notizen |
+| `kern/mahlzeiten.mjs` | Mahlzeiten aus Einzeleinträgen, Pre-/Post-Workout, Abstand zum Schlaf, Mikronährstoffe |
 | `kern/erkenntnis.mjs` | Statistik-Motor: Zusammenhänge, Bereitschaft, Prognose, Trends, Ausreißer, Hebel |
 | `kern/ki.mjs`, `api/ki-coach.mjs` | KI-Coach: Anweisung, Antwortschema, Datenkontext; Claude-Aufruf und Speicherung |
 | `lib/bodybuilding.mjs` | Trend, Tempo, TDEE, Bilanz, Eiweiß/kg, Magermasse, FFMI, Kraft pro Woche |
@@ -170,5 +190,5 @@ Tageswerte: **Summen** wie Schritte oder kcal werden pro Quelle addiert, gezähl
 cd health-bridge
 npm install
 npm run demo     # http://localhost:5174 mit 120 Tagen Beispieldaten (PGlite im Speicher)
-npm test         # 150 Prüfungen; mit DATABASE_URL gegen echtes Postgres
+npm test         # 159 Prüfungen; mit DATABASE_URL gegen echtes Postgres
 ```

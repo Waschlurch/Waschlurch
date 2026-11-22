@@ -15,7 +15,7 @@ const ki = process.env.PULS_KI_ATTRAPPE ? kiFabrik((await import('./tests/ki-att
 const wurzel = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT) || 5174;
 const TYPEN = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
-const OEFFENTLICH = new Set(['index.html', 'app.css', 'app.js', 'diagramme.js', 'kern/rechnen.mjs', 'kern/analyse.mjs', 'kern/erkenntnis.mjs', 'kern/ki.mjs', 'sw.js', 'icon.svg', 'manifest.webmanifest']);
+const OEFFENTLICH = new Set(['index.html', 'app.css', 'app.js', 'diagramme.js', 'kern/rechnen.mjs', 'kern/analyse.mjs', 'kern/erkenntnis.mjs', 'kern/ki.mjs', 'kern/mahlzeiten.mjs', 'sw.js', 'icon.svg', 'manifest.webmanifest']);
 
 if(process.env.PULS_DEMO){
   const { demoNutzlast } = await import('./scripts/demo-daten.mjs');

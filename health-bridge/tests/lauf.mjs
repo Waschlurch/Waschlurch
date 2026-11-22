@@ -19,6 +19,7 @@ import { tagTyp, phaseAm, kcalZiel, bodybuilding as bbKern, artNormal, fokusAus,
 import { analyse as analyseKern, score } from '../kern/analyse.mjs';
 import { korrelation, welch, pWert, intelligenz } from '../kern/erkenntnis.mjs';
 import { kiKontext, kiPruefen, KI_SCHEMA } from '../kern/ki.mjs';
+import { mahlzeitenAus, mahlzeitenAnalyse, lokal } from '../kern/mahlzeiten.mjs';
 import { erstelleHandler as kiHandlerFabrik, MODEL as KI_MODEL } from '../api/ki-coach.mjs';
 import { attrappe as kiAttrappe, BEISPIEL as KI_BEISPIEL } from './ki-attrappe.mjs';
 import { trend, steigung, isoWoche, bodybuilding } from '../lib/bodybuilding.mjs';
@@ -103,7 +104,10 @@ pruefe('Summen: stärkste Quelle statt Doppelzählung', tw.step_count?.[0]?.wert
 pruefe('Mittel mit Spanne', tw.heart_rate[0].wert === 70 && tw.heart_rate[0].min === 48 && tw.heart_rate[0].max === 150);
 await speichern(lesen({ metrik: 'Gewicht', werte: [81, 80.2], daten: ['2026-11-20T06:00:00Z', '2026-11-20T19:00:00Z'] }));
 const gw = await tageswerte(['weight_body_mass'], { von: '2026-11-20', bis: '2026-11-20' });
-pruefe('Gewicht = letzter Wert des Tages', gw.weight_body_mass[0].wert === 80.2, gw);
+pruefe('Gewicht = Morgenmessung (nüchtern), nicht die Abendmessung', gw.weight_body_mass[0].wert === 81 && !gw.weight_body_mass[0].abends, gw);
+await speichern(lesen({ metrik: 'Gewicht', werte: [82.5], daten: ['2026-11-21T19:30:00Z'] }));
+const gw2 = await tageswerte(['weight_body_mass'], { von: '2026-11-21', bis: '2026-11-21' });
+pruefe('Nur Abendmessung → wird genutzt und markiert', gw2.weight_body_mass[0].wert === 82.5 && gw2.weight_body_mass[0].abends === true, gw2);
 await speichern(kb);
 const sl = await schlaf({ von: '2026-11-19', bis: '2026-11-21' });
 pruefe('Schlafnächte gelesen', sl.length === 2 && sl[1].gesamt_min === 435, sl);
@@ -308,6 +312,35 @@ pruefe('Welch-Test erkennt Unterschied', w.diff === -4 && w.p < 0.001);
   pruefe('Prognose steigt mit Trend', I.prognose.kg_pro_woche > 0.1 && I.prognose.punkte[2].kg > I.prognose.punkte[0].kg, I.prognose);
   pruefe('Hebel aus Score-Lücken', I.hebel[0]?.name === 'Schlaf' && I.hebel[0].beleg?.includes('Schlaf'), I.hebel);
 }
+
+block('Mahlzeiten (YAZIO über Apple Health)');
+const yz = lesen({ data: { metrics: [
+  { name: 'dietary_energy', units: 'kcal', data: [{ date: '2026-11-20 07:30:00 +0100', qty: 400, source: 'YAZIO' }, { date: '2026-11-20 07:30:00 +0100', qty: 250, source: 'YAZIO' }] },
+] } });
+pruefe('Zwei Lebensmittel zur selben Uhrzeit werden addiert', yz.messwerte.length === 1 && yz.messwerte[0].wert === 650, yz.messwerte);
+pruefe('Lokale Uhrzeit', lokal('2026-11-20T06:30:00Z').tag === '2026-11-20' && lokal('2026-11-20T06:30:00Z').min === 450 && lokal('2026-11-20T23:30:00Z').tag === '2026-11-21');
+const E = (m, iso, w) => ({ m, z: iso, w });
+const eintr = [
+  E('dietary_energy', '2026-11-20T06:30:00Z', 600), E('protein', '2026-11-20T06:30:00Z', 40), E('carbohydrates', '2026-11-20T06:30:00Z', 70),
+  E('dietary_energy', '2026-11-20T07:05:00Z', 150), E('protein', '2026-11-20T07:05:00Z', 5),            // gleiche Mahlzeit (< 75 min)
+  E('dietary_energy', '2026-11-20T14:00:00Z', 500), E('carbohydrates', '2026-11-20T14:00:00Z', 90), E('protein', '2026-11-20T14:00:00Z', 30),  // 15:00 Pre-Workout
+  E('dietary_energy', '2026-11-20T18:30:00Z', 900), E('protein', '2026-11-20T18:30:00Z', 55),            // 19:30 Post
+  E('dietary_energy', '2026-11-20T21:30:00Z', 300), E('protein', '2026-11-20T21:30:00Z', 35),            // 22:30 spät
+  E('dietary_water', '2026-11-20T10:00:00Z', 500),                                                       // nur Wasser: keine Mahlzeit
+  E('dietary_energy', '2026-11-19T23:00:00Z', 2500),                                                     // 00:00 lokal = Tagessumme → ignoriert
+];
+const mz = mahlzeitenAus(eintr, 'Europe/Berlin').get('2026-11-20');
+pruefe('Mahlzeiten gebündelt, Tagessumme & Wasser ignoriert', mz.length === 4 && mz[0].kcal === 750 && mz[0].eiweiss === 45, mz);
+const bM = { zone: 'Europe/Berlin', eintraege: eintr, reihen: { dietary_energy: [{ tag: '2026-11-20', wert: 2450 }], potassium: [], fiber: [] },
+  schlaf: [{ nacht: '2026-11-21', start: '2026-11-20T22:15:00Z', gesamt_min: 420 }],
+  workouts: [{ art: 'Push', start: '2026-11-20T16:00:00Z', ende: '2026-11-20T17:15:00Z', dauer_min: 75 }] };
+const MAx = mahlzeitenAnalyse(bM, { von: '2026-11-20', bis: '2026-11-20' }, { gewichtKg: 85 });
+const t20 = MAx.tage[0];
+pruefe('Pre-Workout: 90 g KH in den 3 h davor', t20.pre_kh === 90 && t20.pre_eiweiss === 30, t20);
+pruefe('Post-Workout: 55 g Eiweiß in den 2 h danach', t20.post_eiweiss === 55);
+pruefe('Abstand letzte Mahlzeit → Schlaf = 45 min', t20.abstand_schlaf_min === 45 && MAx.spaete_mahlzeiten === 1, t20);
+pruefe('Essensfenster 15 h', t20.fenster_h === 15);
+pruefe('Eiweiß-Ziel pro Mahlzeit aus Körpergewicht', MAx.ziel_eiweiss_mahlzeit === 35);
 
 block('KI-Coach');
 pruefe('Schema streng', KI_SCHEMA.additionalProperties === false && KI_SCHEMA.required.length === Object.keys(KI_SCHEMA.properties).length);

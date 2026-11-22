@@ -3,6 +3,7 @@
 
 import { bodybuilding, ausrichten, tagesListe, tagPlus, mittel, r1, PHASEN, KCAL_PRO_KG } from './rechnen.mjs';
 import { intelligenz } from './erkenntnis.mjs';
+import { mahlzeitenAnalyse } from './mahlzeiten.mjs';
 
 const fmt = (v, nk = 0) => v == null ? '–' : Number(v).toLocaleString('de-DE', { maximumFractionDigits: nk, minimumFractionDigits: nk });
 const vz = (v, nk = 0) => v == null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '±') + fmt(Math.abs(v), nk);
@@ -109,6 +110,21 @@ export function analyse(basis, e, protokollListe = [], bis){
     else add('gut', 'ernaehrung', 'Eiweiß sitzt', `Ø ${fmt(a.eiweiss_g)} g (${fmt(a.gkg, 2)} g/kg) – Ziel an ${bb.eiweiss.tage_ziel_erreicht} von ${bb.eiweiss.tage_geloggt} Tagen erreicht.`);
   }
 
+  // ── Mahlzeiten-Timing & Mikronährstoffe (14 Tage)
+  const MA = mahlzeitenAnalyse(basis, { von: tagPlus(bis, -13), bis }, { gewichtKg: bb.gewicht.aktuell_trend_kg });
+  if(MA.hat_uhrzeiten){
+    if(MA.eiweiss_mahlzeiten_pro_tag != null && MA.eiweiss_mahlzeiten_pro_tag < 3) add('info', 'ernaehrung', 'Eiweiß besser verteilen', `Ø ${fmt(MA.eiweiss_mahlzeiten_pro_tag, 1)} Mahlzeiten pro Tag mit ≥ ${fmt(Math.round(MA.ziel_eiweiss_mahlzeit * 0.75))} g Eiweiß. Für die Muskelproteinsynthese 4 Mahlzeiten mit je ~${MA.ziel_eiweiss_mahlzeit} g über den Tag verteilen (alle 3–5 h).`);
+    const T = MA.training;
+    if(T && T.ohne_pre >= 2) add('warnung', 'ernaehrung', 'Ohne Kohlenhydrate ins Training', `An ${T.ohne_pre} von ${T.tage} Trainingstagen keine Mahlzeit in den 3 h vor dem Training. 2–3 h vorher ~1 g Kohlenhydrate pro kg plus 30–40 g Eiweiß bringt mehr Leistung im Training.`);
+    else if(T && T.pre_kh != null && T.pre_kh < (bb.gewicht.aktuell_trend_kg || 80) * 0.6) add('info', 'ernaehrung', 'Pre-Workout aufstocken', `Vor dem Training Ø ${fmt(T.pre_kh)} g Kohlenhydrate. Ziel ~${fmt(Math.round((bb.gewicht.aktuell_trend_kg || 80) / 10) * 10)} g (≈ 1 g/kg) für volle Glykogenspeicher.`);
+    if(T && T.post_eiweiss != null && T.post_eiweiss < 30) add('info', 'ernaehrung', 'Nach dem Training mehr Eiweiß', `In den 2 h nach dem Training Ø ${fmt(T.post_eiweiss)} g Eiweiß. 40 g plus Kohlenhydrate beschleunigen die Regeneration.`);
+    if(T && T.ohne_pre < 2 && T.post_eiweiss >= 30) add('gut', 'ernaehrung', 'Nährstoff-Timing rund ums Training passt', `Vorher Ø ${fmt(T.pre_kh)} g KH, danach Ø ${fmt(T.post_eiweiss)} g Eiweiß.`);
+    if(MA.spaete_mahlzeiten >= 3) add('info', 'schlaf', 'Späte Mahlzeiten', `An ${MA.spaete_mahlzeiten} Tagen weniger als 90 min zwischen letzter Mahlzeit und Schlaf (Ø letzte Mahlzeit ${MA.letzte_mahlzeit}). Schwere Mahlzeiten spät können Schlaf und HRV drücken – Casein/Quark ist ok, große Portionen früher.`);
+  } else if(a.bb.energie.tage_geloggt >= 3) add('info', 'ernaehrung', 'Uhrzeiten der Mahlzeiten fehlen', 'Deine Ernährung kommt nur als Tagessumme an. Stelle in Health Auto Export für Ernährung „Daten zusammenfassen“ aus (oder exportiere ohne Gruppierung) – dann wertet Puls Mahlzeiten, Pre-/Post-Workout und den Abstand zum Schlaf aus.');
+  const zuWenig = MA.mikro.filter(m => m.status === 'zu_wenig'), zuViel = MA.mikro.filter(m => m.status === 'zu_viel');
+  if(zuWenig.length) add('info', 'ernaehrung', 'Mikronährstoffe unter Richtwert', zuWenig.map(m => `${m.titel} Ø ${fmt(m.mittel)} ${m.einheit} (Ziel ≥ ${fmt(m.ziel)})`).join(' · ') + `.${zuWenig.some(m => m.metrik !== 'vitamin_d') ? ' Gemüse, Obst, Nüsse, Hülsenfrüchte und Vollkorn decken das meiste ab.' : ''}${zuWenig.some(m => m.metrik === 'vitamin_d') ? ' Vitamin D kommt kaum aus der Nahrung – im Winter Sonne bzw. Supplement mit dem Arzt abklären.' : ''}`);
+  if(zuViel.length) add('info', 'ernaehrung', 'Über Richtwert', zuViel.map(m => `${m.titel} Ø ${fmt(m.mittel)} ${m.einheit} (max. ~${fmt(m.max)})`).join(' · ') + '.');
+
   // ── Training
   if(a.kraft_geplant){
     const fehl = a.kraft_geplant - a.bb.kraft.davon_trainiert;
@@ -186,6 +202,7 @@ export function analyse(basis, e, protokollListe = [], bis){
     woche: { score: sa, score_vorher: sb, urteil, besser: plus, schlechter: minus, vergleich },
     erkenntnisse: E,
     intelligenz: intelligenz(basis, e, protokollListe, bis, sa.teile),
+    mahlzeiten: MA,
     training: { split_tage: T.split_tage, muskeln: T.muskeln, arten: T.arten, abweichungen: T.abweichungen, cardio_minuten_woche: T.cardio_minuten_woche },
   };
 }

@@ -583,3 +583,36 @@ legend + *{ clear:both; }
 .ki-fragen ul{ margin:0 0 8px; padding-left:18px; font-size:13.5px; line-height:1.6; }
 @media (max-width: 860px){ .ki-raster{ grid-template-columns:1fr; } .zusammenhaenge{ grid-template-columns:1fr; } }
 @media (max-width: 620px){ .bereit{ flex-direction:column; align-items:flex-start; } .ki-prio li{ padding-left:46px; } .bereit-karte .teile li{ grid-template-columns:70px 1fr 90px; } }
+
+/* ── Mahlzeiten-Zeitleiste ── */
+.zeitleiste{ display:grid; gap:6px; margin-bottom:16px; }
+.zl-achse{ position:relative; height:16px; margin-left:64px; }
+.zl-achse span{ position:absolute; transform:translateX(-50%); font:10.5px var(--mono); color:var(--text-3); }
+.zl-zeile{ display:grid; grid-template-columns:56px 1fr; gap:8px; align-items:center; }
+.zl-tag{ font:12px var(--mono); color:var(--text-2); white-space:nowrap; }
+.zl-bahn{ position:relative; height:34px; border-radius:10px; background:var(--bg-2); border:1px solid var(--line); overflow:hidden; }
+.zl-train{ position:absolute; top:0; bottom:0; background:color-mix(in oklab, var(--aktiv) 30%, transparent); border-left:2px solid var(--aktiv); }
+.zl-schlaf{ position:absolute; top:3px; bottom:3px; width:2px; background:var(--schlaf); border-radius:2px; }
+.zl-schlaf::after{ content:'☾'; position:absolute; left:4px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--schlaf); }
+.zl-m{ position:absolute; top:50%; width:var(--g); height:var(--g); max-width:30px; max-height:30px; transform:translate(-50%, -50%); border-radius:50%; background:var(--text-3); border:2px solid var(--bg-2); opacity:.85; }
+.zl-m.voll{ background:var(--mk-eiweiss); opacity:1; }
+.timing-werte{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:8px; }
+.timing-werte div{ background:var(--bg-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+.timing-werte span{ display:block; font-size:12px; color:var(--text-3); }
+.timing-werte b{ display:block; font-family:var(--serif); font-weight:400; font-size:26px; line-height:1.2; font-variant-numeric:tabular-nums; }
+.timing-werte small{ display:block; font:11.5px var(--mono); color:var(--text-3); }
+.hbalken.mikro li{ grid-template-columns:130px 1fr 86px 96px; }
+/* Vorbereitung */
+.vb-t{ margin:16px 0 8px; font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:.06em; color:var(--text-3); font-family:var(--mono); }
+.vorbereitung{ list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.vorbereitung li{ display:grid; grid-template-columns:22px 1fr; gap:8px; font-size:13px; color:var(--text-2); line-height:1.45; }
+.vorbereitung span{ width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:600; }
+.vorbereitung .ja span{ background:color-mix(in oklab, var(--gut) 22%, transparent); color:var(--gut); }
+.vorbereitung .nein span{ background:color-mix(in oklab, var(--ernaehrung) 22%, transparent); color:var(--ernaehrung); }
+.vorbereitung .info span{ background:var(--line); color:var(--text-2); }
+@media (max-width: 620px){
+  .zl-zeile{ grid-template-columns:44px 1fr; } .zl-achse{ margin-left:52px; } .zl-tag{ font-size:11px; }
+  .hbalken.mikro li{ grid-template-columns:96px 1fr 70px; }
+}
+.timing-werte{ grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
+@media (max-width: 620px){ .timing-werte{ grid-template-columns:1fr 1fr; } .timing-werte b{ font-size:22px; } .zl-m{ max-width:20px; max-height:20px; } .zl-bahn{ height:28px; } }

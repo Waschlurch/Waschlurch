@@ -4,7 +4,7 @@ import { db, upsert } from './db.mjs';
 import { KATALOG, BEREICHE, info } from './katalog.mjs';
 import { ZONE, lokalerTag, tagesbeginn, tagPlus, istTag } from './zeit.mjs';
 
-const zahlen = r => { for(const k in r) if(typeof r[k] === 'string' && /_min$|^(wert|min|max|summe|mittel|letzter|n|energie_kcal|distanz_km|hf_mittel|hf_max|dauer_min)$/.test(k)) r[k] = Number(r[k]); return r; };
+const zahlen = r => { for(const k in r) if(typeof r[k] === 'string' && /_min$|^(wert|min|max|summe|mittel|letzter|morgen|n|energie_kcal|distanz_km|hf_mittel|hf_max|dauer_min)$/.test(k)) r[k] = Number(r[k]); return r; };
 const runde = (v, nk = 1) => v == null || !Number.isFinite(v) ? null : Math.round(v * 10 ** nk) / 10 ** nk;
 const isoZeit = v => v == null ? null : v instanceof Date ? v.toISOString() : new Date(v).toISOString();
 
@@ -37,21 +37,26 @@ export async function tageswerte(metriken, bereich){
   const { q } = await db();
   const zeilen = await q(`
     with t as (
-      select metrik, (zeit at time zone $4)::date as tag, quelle, wert, coalesce(min, wert) mn, coalesce(max, wert) mx, zeit
+      select metrik, (zeit at time zone $4)::date as tag, quelle, wert, coalesce(min, wert) mn, coalesce(max, wert) mx, zeit,
+             extract(hour from zeit at time zone $4) < 11 as morgens
       from messwerte where metrik = any($1::text[]) and zeit >= $2::timestamptz and zeit < $3::timestamptz
     ), pq as (
       select metrik, tag, quelle, sum(wert) s, avg(wert) a, min(mn) mn, max(mx) mx, count(*) n,
-             (array_agg(wert order by zeit desc))[1] l, max(zeit) lz
+             (array_agg(wert order by zeit desc))[1] l, max(zeit) lz,
+             (array_agg(wert order by zeit) filter (where morgens))[1] fm, min(zeit) filter (where morgens) fmz
       from t group by 1, 2, 3
     )
     select metrik, tag::text as tag, max(s) as summe, sum(a * n) / sum(n) as mittel, min(mn) as min, max(mx) as max,
-           sum(n)::int as n, (array_agg(l order by lz desc))[1] as letzter
+           sum(n)::int as n, (array_agg(l order by lz desc))[1] as letzter,
+           (array_agg(fm order by fmz) filter (where fm is not null))[1] as morgen
     from pq group by 1, 2 order by 1, 2`,
     [metriken, tagesbeginn(bereich.von).toISOString(), tagesbeginn(tagPlus(bereich.bis, 1)).toISOString(), ZONE()]);
   const aus = {};
   for(const r of zeilen.map(zahlen)){
     const i = info(r.metrik);
-    (aus[r.metrik] ||= []).push({ tag: r.tag, wert: runde(i.agg === 'summe' ? r.summe : i.agg === 'letzter' ? r.letzter : r.mittel, Math.max(i.nk, 1)),
+    // „morgens“: erste Messung vor 11 Uhr (nüchtern), sonst die letzte des Tages
+    const wert = i.agg === 'summe' ? r.summe : i.agg === 'letzter' ? r.letzter : i.agg === 'morgens' ? (r.morgen ?? r.letzter) : r.mittel;
+    (aus[r.metrik] ||= []).push({ tag: r.tag, wert: runde(wert, Math.max(i.nk, 1)), ...(i.agg === 'morgens' && r.morgen == null ? { abends: true } : {}),
       ...(i.agg === 'mittel' && r.min !== r.max ? { min: runde(r.min, i.nk), max: runde(r.max, i.nk) } : {}), n: r.n });
   }
   return aus;
@@ -137,10 +142,22 @@ export async function ueberblick(tage = 7){
     bereiche: Object.fromEntries(Object.keys(BEREICHE).filter(k => bereiche[k]).map(k => [k, bereiche[k]])) };
 }
 
-/** Rohbasis für den Rechenkern: Tageswerte aller Messgrößen, Nächte, Workouts (mit lokalem Tag), Körpergröße. */
+export const MAHLZEIT_METRIKEN = ['dietary_energy', 'protein', 'carbohydrates', 'total_fat', 'dietary_caffeine', 'sodium', 'dietary_water'];
+
+/** Einzelne Ernährungs- und Waageneinträge mit Uhrzeit (letzte bis zu 60 Tage) – Grundlage für Mahlzeiten und Morgengewicht. */
+export async function rohEintraege(bereich, tage = 60){
+  const { q } = await db();
+  const von = [bereich.von, tagPlus(bereich.bis, -(tage - 1))].sort().at(-1);
+  const r = await q(`select metrik, zeit, wert from messwerte where metrik = any($1::text[]) and zeit >= $2::timestamptz and zeit < $3::timestamptz order by zeit`,
+    [[...MAHLZEIT_METRIKEN, 'weight_body_mass'], tagesbeginn(von).toISOString(), tagesbeginn(tagPlus(bereich.bis, 1)).toISOString()]);
+  return r.map(x => ({ m: x.metrik, z: isoZeit(x.zeit), w: runde(Number(x.wert), 1) }));
+}
+
+/** Rohbasis für den Rechenkern: Tageswerte aller Messgrößen, Nächte, Workouts (mit lokalem Tag), Körpergröße, Einzeleinträge. */
 export async function basisLaden(bereich){
   const { q } = await db();
-  const [reihen, naechte, wo, gr] = await Promise.all([tageswerte(Object.keys(KATALOG), bereich), schlaf(bereich), workouts(bereich),
-    q(`select wert from messwerte where metrik = 'height' order by zeit desc limit 1`)]);
-  return { von: bereich.von, bis: bereich.bis, reihen, schlaf: naechte, workouts: wo.map(w => ({ ...w, tag: lokalerTag(new Date(w.start)) })), groesse: gr[0] ? Math.round(Number(gr[0].wert)) : null };
+  const [reihen, naechte, wo, gr, roh] = await Promise.all([tageswerte(Object.keys(KATALOG), bereich), schlaf(bereich), workouts(bereich),
+    q(`select wert from messwerte where metrik = 'height' order by zeit desc limit 1`), rohEintraege(bereich)]);
+  return { von: bereich.von, bis: bereich.bis, zone: ZONE(), reihen, schlaf: naechte, workouts: wo.map(w => ({ ...w, tag: lokalerTag(new Date(w.start)) })),
+    groesse: gr[0] ? Math.round(Number(gr[0].wert)) : null, eintraege: roh };
 }
