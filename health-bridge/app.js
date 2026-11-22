@@ -11,8 +11,43 @@ const dauer = min => min == null ? '–' : `${Math.floor(min / 60)} h ${String(M
 const mittel = a => { const v = a.filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
 const farbe = n => getComputedStyle(document.documentElement).getPropertyValue('--' + n).trim();
 
+/* ── Vorschau: Beispieldaten ohne Server und ohne Verbindung ── */
+const VORSCHAU = document.querySelector('meta[name="puls-modus"]')?.content === 'vorschau' || new URLSearchParams(location.search).has('vorschau');
+const vorschau = {
+  meta: null,
+  async metaHolen(){ return this.meta ||= await (await fetch('vorschau-daten/meta.json')).json(); },
+  einstellungen(meta){
+    try { const e = JSON.parse(SPEICHER.get('puls.vorschau.einstellungen')); if(e?.kacheln && e?.ziele) return { ...meta.einstellungen, ...e, ziele: { ...meta.einstellungen.ziele, ...e.ziele } }; } catch {}
+    return structuredClone(meta.einstellungen);
+  },
+  speichern(e){ SPEICHER.set('puls.vorschau.einstellungen', JSON.stringify(e)); return e; },
+  async daten(){
+    const [meta, d] = await Promise.all([this.metaHolen(), fetch(`vorschau-daten/daten-${zustand.tage}.json`).then(r => r.json())]);
+    d.einstellungen = this.einstellungen(meta);
+    zieleAnwenden(d.bodybuilding, d.einstellungen.ziele, meta);
+    return d;
+  },
+};
+
+/** Ziel-abhängige Werte im Browser neu rechnen (gleiche Formeln wie lib/bodybuilding.mjs). */
+function zieleAnwenden(bb, z, meta){
+  const RATE = { aufbau: 0.25, diaet: -0.6, erhalt: 0, recomp: 0 };
+  const g = bb.gewicht, e = bb.energie, w = g.aktuell_trend_kg;
+  const rp = z.rate_prozent_woche ?? RATE[z.phase] ?? 0, rk = w ? w * rp / 100 : null;
+  bb.ziele = z; bb.phase = { schluessel: z.phase, titel: meta.phasen[z.phase] };
+  Object.assign(g, { ziel_rate_prozent_woche: rp, ziel_rate_kg_woche: rk, zielgewicht_kg: z.zielgewicht_kg,
+    im_plan: g.rate_prozent_woche == null ? null : Math.abs(g.rate_prozent_woche - rp) <= Math.max(0.15, Math.abs(rp) * 0.4),
+    wochen_bis_ziel: z.zielgewicht_kg && g.rate_kg_woche && Math.sign(z.zielgewicht_kg - w) === Math.sign(g.rate_kg_woche) ? (z.zielgewicht_kg - w) / g.rate_kg_woche : null });
+  e.empfohlene_kcal = z.kcal_ziel ?? (e.tdee_kcal != null && rk != null ? Math.round(e.tdee_kcal + rk * 1100) : null);
+  const gkg = bb.reihen.eiweiss_g_pro_kg;
+  Object.assign(bb.eiweiss, { ziel_g_pro_kg: z.protein_g_pro_kg, ziel_g: w ? Math.round(w * z.protein_g_pro_kg) : null, tage_ziel_erreicht: gkg.filter(v => v != null && v >= z.protein_g_pro_kg * 0.95).length });
+  bb.kraft.ziel_pro_woche = z.kraft_pro_woche;
+  if(z.groesse_cm){ const h = z.groesse_cm / 100; bb.koerper.groesse_cm = z.groesse_cm; bb.koerper.ffmi = bb.koerper.magermasse_kg ? Math.round((bb.koerper.magermasse_kg / h ** 2 + 6.1 * (1.8 - h)) * 10) / 10 : null; }
+}
+
 /* ── Laden ─────────────────────────────────────────────── */
 async function laden({ verbindung = false } = {}){
+  if(VORSCHAU){ try { return await vorschau.daten(); } catch { $('#satz').textContent = 'Die Beispieldaten konnten nicht geladen werden.'; return null; } }
   document.body.classList.add('laedt');
   const r = await fetch(`/api/daten?tage=${zustand.tage}${verbindung ? '&verbindung=1' : ''}`, { headers: { 'x-puls-code': zustand.code } });
   document.body.classList.remove('laedt');
@@ -298,6 +333,7 @@ $('#zeitraum').addEventListener('keydown', e => {
 
 async function verbinden(){
   const dlg = $('#verbinden'); dlg.showModal();
+  if(VORSCHAU){ $('#v-mcp').textContent = 'Erscheint, sobald deine eigene Puls-App online ist'; $('#v-sync').textContent = 'Erscheint, sobald deine eigene Puls-App online ist'; $('#v-warn').hidden = false; $('#v-warn').textContent = 'Das ist die Vorschau mit Beispieldaten. Hier ist nichts mit Apple Health oder Claude verbunden.'; return; }
   const d = await laden({ verbindung: true });
   if(d?.verbindung){ $('#v-mcp').textContent = d.verbindung.mcp; $('#v-sync').textContent = d.verbindung.sync; $('#v-warn').hidden = d.verbindung.tokenGesetzt; }
 }
@@ -312,6 +348,11 @@ $('#verbinden').addEventListener('click', async e => {
 /* ── Ansicht & Ziele anpassen ─────────────────────────── */
 const anpassen = { meta: null, entwurf: null };
 async function api(methode, koerper){
+  if(VORSCHAU){
+    const meta = await vorschau.metaHolen();
+    const einstellungen = methode === 'PUT' ? vorschau.speichern(koerper) : vorschau.einstellungen(meta);
+    return { ...meta, einstellungen };
+  }
   const r = await fetch('/api/einstellungen', { method: methode, headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: koerper ? JSON.stringify(koerper) : undefined });
   if(!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Fehler');
   return r.json();
@@ -384,6 +425,6 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', zeichnen);
 addEventListener('scroll', () => $('#kopf').classList.toggle('fest', scrollY > 8), { passive: true });
 document.addEventListener('visibilitychange', async () => { if(document.visibilityState === 'visible' && zustand.daten){ const d = await laden(); if(d){ zustand.daten = d; zeichnen(); } } });
 
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if(!VORSCHAU && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
 (async () => { const d = await laden(); if(d){ zustand.daten = d; zeichnen(); } })();

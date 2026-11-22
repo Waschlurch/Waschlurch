@@ -24,7 +24,16 @@
     --glow: radial-gradient(60% 50% at 70% 0%, rgba(98,80,214,.12), transparent 70%), radial-gradient(40% 40% at 10% 10%, rgba(229,72,59,.07), transparent 70%);
   }
 }
-:root[data-theme="light"]{ color-scheme: light; }
+:root[data-theme="light"]{
+    color-scheme: light;
+    --bg:#f5f4f0; --bg-2:#efeee9; --surface:#ffffff; --surface-2:#f7f6f2; --line:rgba(10,10,12,.08); --line-2:rgba(10,10,12,.14);
+    --text:#111113; --text-2:#55544f; --text-3:#8a8983;
+    --schlaf:#6250d6; --herz:#e5483b; --aktiv:#5f8f00; --ernaehrung:#c87d00; --koerper:#0f9a91;
+    --ph-tief:#6250d6; --ph-kern:#1baf7a; --ph-rem:#2a78d6; --ph-wach:#eb6834;
+    --mk-eiweiss:#6250d6; --mk-kh:#1baf7a; --mk-fett:#2a78d6;
+    --gut:#1a8f52; --schlecht:#d2412f; --plus:#c87d00; --minus:#2a78d6;
+    --glow: radial-gradient(60% 50% at 70% 0%, rgba(98,80,214,.12), transparent 70%), radial-gradient(40% 40% at 10% 10%, rgba(229,72,59,.07), transparent 70%);
+}
 
 *{ box-sizing:border-box; }
 html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:84px; }
@@ -86,6 +95,9 @@ main{ max-width:1240px; margin:0 auto; padding:0 16px 40px; }
 .kachel{ background:var(--surface); padding:20px 20px 18px; display:flex; flex-direction:column; gap:10px; min-height:168px; position:relative; text-decoration:none; color:inherit; transition:background .25s; }
 .kachel:hover{ background:var(--surface-2); }
 .kachel.fueller{ pointer-events:none; }
+.kachel{ min-width:0; }
+.kachel .u{ flex-wrap:wrap; row-gap:8px; min-width:0; }
+.kachel .u > span{ min-width:0; }
 .kachel .sub{ font-size:12px; color:var(--text-3); font-family:var(--mono); }
 .kachel .t{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-2); }
 .kachel .t i{ width:8px; height:8px; border-radius:2px; background:var(--k); }
@@ -295,7 +307,9 @@ legend + *{ clear:both; }
   .kacheln{ grid-template-columns:1fr 1fr; margin-bottom:56px; }
   .kachel.fueller{ display:none; }
   .kachel{ min-height:148px; padding:16px; }
-  .kachel .w{ font-size:38px; }
+  .kachel .w{ font-size:34px; }
+  .kachel .spark{ width:72px; }
+  .pulslinie{ opacity:.22; top:150px; }
   .kachel.voll{ grid-column:1/-1; }
   .held{ padding:40px 0 28px; }
   .knopf-claude span{ display:none; }
@@ -311,3 +325,5 @@ legend + *{ clear:both; }
   .linie, .pulslinie .zieh, .logo path{ stroke-dashoffset:0; }
 }
 .mini em.mini-x{ display:block; font-style:normal; font-size:12px; color:var(--text-3); font-family:var(--mono); margin-top:4px; }
+.vorschau-band{ display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; margin:20px 0 0; padding:12px 16px; border:1px dashed var(--line-2); border-radius:14px; font-size:13.5px; color:var(--text-2); }
+.vorschau-band b{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ernaehrung); font-weight:500; }

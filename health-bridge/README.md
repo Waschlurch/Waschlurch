@@ -119,6 +119,10 @@ Probier zum Beispiel: *„Wie war mein Schlaf diese Woche im Vergleich zur letzt
 
 Tageswerte: **Summen** wie Schritte oder kcal werden pro Quelle addiert, gezählt wird die stärkste Quelle, damit iPhone und Watch nicht doppelt eingehen. **Mittelwerte** wie Puls oder HRV werden über den Tag gemittelt, inklusive Min und Max. Bei **Körperwerten** wie dem Gewicht zählt die letzte Messung des Tages. Eine Nacht gehört zum Tag des Aufwachens.
 
+## Vorschau ohne Verbindung
+
+`node scripts/vorschau.mjs` baut `vorschau/`. Das ist eine Seite mit Beispieldaten, die ohne Server und Datenbank läuft. Einstellungen bleiben dort nur im Browser, und die Werte, die von den Zielen abhängen, rechnet der Browser selbst neu.
+
 ## Lokal
 
 ```bash
