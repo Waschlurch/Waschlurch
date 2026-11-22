@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puls – Apple Health</title>
+<meta name="description" content="Deine Apple-Health-Daten, schön aufbereitet und direkt für Claude verfügbar.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0a0a0c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Puls">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<a class="skip" href="#inhalt">Zum Inhalt</a>
+
+<!-- Zugang -->
+<section id="schloss" class="schloss" hidden>
+  <div class="schloss-karte">
+    <svg class="logo gross" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" /><path d="M5 17h6l2.5-6 4 11 3-8 1.5 3H27"/></svg>
+    <h1>Puls</h1>
+    <p>Deine Apple-Health-Daten. Gib deinen Zugangscode ein.</p>
+    <form id="schloss-form" autocomplete="on">
+      <label class="sr" for="code">Zugangscode</label>
+      <input id="code" name="password" type="password" autocomplete="current-password" placeholder="Zugangscode" required>
+      <button type="submit">Öffnen</button>
+    </form>
+    <p class="fehler" id="schloss-fehler" role="alert"></p>
+  </div>
+</section>
+
+<header class="kopf" id="kopf">
+  <div class="kopf-innen">
+    <a class="marke" href="#" aria-label="Puls – nach oben">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" /><path d="M5 17h6l2.5-6 4 11 3-8 1.5 3H27"/></svg>
+      <span>Puls</span>
+    </a>
+    <nav class="sprung" aria-label="Bereiche">
+      <a href="#schlaf">Schlaf</a><a href="#herz">Herz</a><a href="#aktivitaet">Aktivität</a><a href="#ernaehrung">Ernährung</a><a href="#koerper">Körper</a>
+    </nav>
+    <div class="kopf-rechts">
+      <div class="seg" role="radiogroup" aria-label="Zeitraum" id="zeitraum">
+        <button role="radio" data-tage="7">7 T</button><button role="radio" data-tage="30">30 T</button><button role="radio" data-tage="90">90 T</button>
+      </div>
+      <button class="knopf-claude" id="claude-knopf" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l1.6 6.2 6.1-2.4-4.1 5.2 5.9 2.8-6.5.3 1 6.4L12 16l-4 5 1-6.4-6.5-.3 5.9-2.8-4.1-5.2 6.1 2.4z"/></svg><span>Claude</span></button>
+    </div>
+  </div>
+</header>
+
+<main id="inhalt">
+  <section class="held" aria-labelledby="gruss">
+    <svg class="pulslinie" id="pulslinie" aria-hidden="true" preserveAspectRatio="none"></svg>
+    <p class="datum" id="datum"></p>
+    <h1 id="gruss" class="gruss">Puls</h1>
+    <p class="satz" id="satz">Deine Daten werden geladen …</p>
+    <p class="sync" id="sync"><i class="punkt"></i><span>—</span></p>
+  </section>
+
+  <section class="kacheln" id="kacheln" aria-label="Kennzahlen"></section>
+
+  <section class="bereich" id="schlaf" aria-labelledby="h-schlaf" style="--akzent: var(--schlaf)">
+    <div class="bereich-kopf">
+      <h2 id="h-schlaf"><span class="nr">01</span>Schlaf</h2>
+      <p class="kennzahl" id="schlaf-k"></p>
+    </div>
+    <div class="raster zwei">
+      <article class="karte breit">
+        <header><h3>Schlafphasen pro Nacht</h3><ul class="legende" id="schlaf-leg"></ul></header>
+        <div class="dia" id="d-schlaf"></div>
+      </article>
+      <article class="karte">
+        <header><h3>Schlaffenster</h3><p class="klein" id="fenster-k"></p></header>
+        <div class="dia" id="d-fenster"></div>
+      </article>
+    </div>
+    <details class="tabelle"><summary>Als Tabelle</summary><div id="t-schlaf"></div></details>
+  </section>
+
+  <section class="bereich" id="herz" aria-labelledby="h-herz" style="--akzent: var(--herz)">
+    <div class="bereich-kopf">
+      <h2 id="h-herz"><span class="nr">02</span>Herz</h2>
+      <p class="kennzahl" id="herz-k"></p>
+    </div>
+    <div class="raster zwei gleich">
+      <article class="karte"><header><h3>Ruhepuls</h3><p class="klein">Tageswert · bpm</p></header><div class="dia" id="d-rhr"></div></article>
+      <article class="karte"><header><h3>Herzfrequenzvariabilität</h3><p class="klein">Tagesmittel · ms</p></header><div class="dia" id="d-hrv"></div></article>
+      <article class="karte"><header><h3>Herzfrequenz</h3><p class="klein">Mittel mit Tagesspanne · bpm</p></header><div class="dia" id="d-hf"></div></article>
+      <article class="karte mini" id="herz-mini"></article>
+    </div>
+  </section>
+
+  <section class="bereich" id="aktivitaet" aria-labelledby="h-akt" style="--akzent: var(--aktiv)">
+    <div class="bereich-kopf">
+      <h2 id="h-akt"><span class="nr">03</span>Aktivität</h2>
+      <p class="kennzahl" id="akt-k"></p>
+    </div>
+    <div class="raster zwei">
+      <article class="karte breit"><header><h3>Schritte</h3><p class="klein">pro Tag</p></header><div class="dia" id="d-schritte"></div></article>
+      <article class="karte"><header><h3>Aktivkalorien</h3><p class="klein">kcal pro Tag</p></header><div class="dia" id="d-energie"></div></article>
+    </div>
+    <article class="karte">
+      <header><h3>Trainings</h3><p class="klein" id="wo-k"></p></header>
+      <ol class="workouts" id="workouts"></ol>
+    </article>
+  </section>
+
+  <section class="bereich" id="ernaehrung" aria-labelledby="h-ern" style="--akzent: var(--ernaehrung)">
+    <div class="bereich-kopf">
+      <h2 id="h-ern"><span class="nr">04</span>Ernährung</h2>
+      <p class="kennzahl" id="ern-k"></p>
+    </div>
+    <div class="raster zwei">
+      <article class="karte breit"><header><h3>Makronährstoffe pro Tag</h3><ul class="legende" id="makro-leg"></ul></header><div class="dia" id="d-makro"></div></article>
+      <article class="karte"><header><h3>Im Schnitt</h3><p class="klein">pro Tag mit Einträgen</p></header><div id="ern-schnitt" class="schnitt"></div></article>
+    </div>
+  </section>
+
+  <section class="bereich" id="koerper" aria-labelledby="h-koe" style="--akzent: var(--koerper)">
+    <div class="bereich-kopf">
+      <h2 id="h-koe"><span class="nr">05</span>Körper</h2>
+      <p class="kennzahl" id="koe-k"></p>
+    </div>
+    <div class="raster zwei gleich">
+      <article class="karte"><header><h3>Gewicht</h3><p class="klein">kg</p></header><div class="dia" id="d-gewicht"></div></article>
+      <article class="karte"><header><h3>Körperfett</h3><p class="klein">%</p></header><div class="dia" id="d-fett"></div></article>
+    </div>
+  </section>
+
+  <section class="claude-band" aria-labelledby="h-claude">
+    <div>
+      <p class="ueber">Verbunden mit Claude</p>
+      <h2 id="h-claude">Frag Claude einfach.<br><em>Ohne Export.</em></h2>
+      <p>Claude liest deine Daten über einen eigenen Connector – Schlaf, Herz, Aktivität, Ernährung, jederzeit aktuell.</p>
+      <button class="knopf-hell" id="claude-knopf-2">Connector einrichten</button>
+    </div>
+    <ul class="fragen">
+      <li>„Wie hat sich mein Schlaf diese Woche gegenüber der letzten entwickelt?“</li>
+      <li>„Gibt es einen Zusammenhang zwischen Training und meiner HRV am nächsten Morgen?“</li>
+      <li>„Wie viel Eiweiß habe ich im Schnitt an Trainingstagen gegessen?“</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="fuss"><span>Puls · Apple Health ⇄ Claude</span><span id="fuss-zone"></span></footer>
+
+<dialog id="verbinden" aria-labelledby="v-titel">
+  <form method="dialog" class="dlg">
+    <header><h2 id="v-titel">Verbinden</h2><button class="zu" value="zu" aria-label="Schließen">×</button></header>
+    <ol class="schritte">
+      <li>
+        <h3>Claude</h3>
+        <p>In claude.ai: <b>Einstellungen → Connectors → Benutzerdefinierten Connector hinzufügen</b>. Name „Puls“, diese Adresse einfügen:</p>
+        <div class="kopier"><code id="v-mcp">—</code><button type="button" data-kopie="v-mcp">Kopieren</button></div>
+        <p class="klein">Claude Code: <code>claude mcp add --transport http puls &lt;Adresse&gt;</code></p>
+      </li>
+      <li>
+        <h3>iPhone</h3>
+        <p><b>Health Auto Export</b> → Automationen → REST API, Format JSON, „Daten zusammenfassen“ an, täglich. Ziel-URL:</p>
+        <div class="kopier"><code id="v-sync">—</code><button type="button" data-kopie="v-sync">Kopieren</button></div>
+        <p class="klein">Oder kostenlos per Kurzbefehl – Anleitung in der README.</p>
+      </li>
+    </ol>
+    <p class="warn" id="v-warn" hidden>PULS_TOKEN ist nicht gesetzt – die Adressen funktionieren nur lokal.</p>
+    <p class="klein">Die Adressen enthalten deinen Schlüssel. Behandle sie wie ein Passwort.</p>
+  </form>
+</dialog>
+</body>
+</html>

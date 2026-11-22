@@ -1,0 +1,20 @@
+{
+  "name": "puls",
+  "version": "1.0.0",
+  "description": "Apple Health ⇄ Claude: Sync, Dashboard und MCP-Server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.mjs",
+    "demo": "PULS_DEMO=1 node dev.mjs",
+    "test": "node tests/lauf.mjs",
+    "schema": "node scripts/schema.mjs"
+  },
+  "dependencies": {
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.0"
+  },
+  "engines": { "node": ">=20" }
+}
