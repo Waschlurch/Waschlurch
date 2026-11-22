@@ -8,6 +8,7 @@ import { KATALOG, BEREICHE } from '../lib/katalog.mjs';
 import { ZONE, lokalerTag } from '../lib/zeit.mjs';
 import { laden as einstellungenLaden, VORLAGEN, KACHELN, BEREICH_TITEL, PHASEN } from '../lib/einstellungen.mjs';
 import { basisBereich } from '../lib/bodybuilding.mjs';
+import { SPLITS, MUSKELN, ARTEN } from '../kern/rechnen.mjs';
 
 export function basisUrl(req){
   const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
@@ -29,7 +30,7 @@ export default async function handler(req, res){
     const [basis, protokoll, sync] = await Promise.all([basisLaden(b), protokollLaden({ von: b.von, bis: z.bis }), letzterSync()]);
     const antwort = { heute: lokalerTag(new Date()), tage_geladen: Math.round((new Date(z.bis) - new Date(z.von)) / 864e5) + 1, zeitzone: ZONE(),
       basis, protokoll, einstellungen, letzterSync: sync, katalog: katalogKurz(), bereiche: BEREICHE,
-      meta: { vorlagen: VORLAGEN, kacheln: KACHELN, bereiche: BEREICH_TITEL, phasen: PHASEN } };
+      meta: { vorlagen: VORLAGEN, kacheln: KACHELN, bereiche: BEREICH_TITEL, phasen: PHASEN, splits: SPLITS, muskeln: MUSKELN, arten: ARTEN } };
     if(url.searchParams.get('verbindung')){
       const basisU = basisUrl(req), t = process.env.PULS_TOKEN || 'lokal';
       antwort.verbindung = { sync: `${basisU}/api/sync?key=${t}`, mcp: `${basisU}/mcp/${t}`, token: t, tokenGesetzt: !!process.env.PULS_TOKEN };

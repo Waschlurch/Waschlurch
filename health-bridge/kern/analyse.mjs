@@ -137,6 +137,29 @@ export function analyse(basis, e, protokollListe = [], bis){
   if(z.cardio_min_ziel && (a.cardio || 0) < z.cardio_min_ziel * 0.8) add('info', 'aktivitaet', 'Cardio unter Ziel', `Ø ${fmt(a.cardio)} min pro Tag bei Ziel ${fmt(z.cardio_min_ziel)} min.${z.cardio_min_rest ? ` An Rest-Days Ø ${fmt(rest.cardio_mittel_min)} min (Ziel ${fmt(z.cardio_min_rest)}).` : ''}`);
   else if(z.cardio_min_ziel) add('gut', 'aktivitaet', 'Cardio im Ziel', `Ø ${fmt(a.cardio)} min pro Tag.`);
 
+  // ── Split, Muskelgruppen, Trainingsarten (14 Tage)
+  const b14 = bodybuilding(basis, { von: tagPlus(bis, -13), bis }, e, protokollListe), T = b14.training;
+  if(T.split){
+    const selten = T.muskeln.filter(m => m.im_split && m.pro_woche < 1.5);
+    if(selten.length) add(aufbau ? 'warnung' : 'info', 'training', 'Muskelgruppen zu selten trainiert', `${selten.map(m => `${m.muskel} ${fmt(m.pro_woche, 1)}×`).join(', ')} pro Woche (letzte 14 Tage). Für maximale Hypertrophie jede Muskelgruppe etwa 2× pro Woche reizen – Split oder Rhythmus anpassen.`);
+    const lange = T.muskeln.filter(m => m.im_split && m.tage_seit != null && m.tage_seit >= 8).sort((x, y) => y.tage_seit - x.tage_seit);
+    const nie = T.muskeln.filter(m => m.im_split && m.tage_seit == null);
+    if(lange.length) add('warnung', 'training', `${lange[0].muskel} seit ${lange[0].tage_seit} Tagen nicht trainiert`, `${lange.map(m => `${m.muskel} (${m.tage_seit} T)`).join(', ')}. Der nächste geplante Split-Tag sollte sie abdecken.`);
+    if(nie.length && b14.kraft.einheiten >= 3) add('info', 'training', 'Nicht zugeordnete Muskelgruppen', `${nie.map(m => m.muskel).join(', ')} tauchen in den letzten Wochen in keiner erkannten Einheit auf. Benenne Workouts nach deinem Split (z. B. „Push“) oder trage den Fokus im Protokoll ein.`);
+    if(T.abweichungen.length >= 2) add('info', 'training', 'Split-Reihenfolge weicht ab', `${T.abweichungen.length}× anders trainiert als geplant, z. B. ${tagKurz(T.abweichungen.at(-1).tag)}: ${T.abweichungen.at(-1).gemacht} statt ${T.abweichungen.at(-1).geplant}.`);
+    const fehlend = T.split_tage.filter(d => d.absolviert === 0);
+    if(fehlend.length && b14.kraft.einheiten >= 3) add('warnung', 'training', `${fehlend.map(d => d.name).join(', ')} fehlt`, `In 14 Tagen keine Einheit ${fehlend.map(d => `„${d.name}“`).join(' oder ')} erkannt.`);
+    if(!selten.length && !lange.length && !fehlend.length && b14.kraft.einheiten >= 3) add('gut', 'training', 'Split im Takt', `${T.split_tage.map(d => `${d.name} ${fmt(d.pro_woche, 1)}×`).join(', ')} pro Woche – jede Muskelgruppe im Schnitt ${fmt(mittel(T.muskeln.filter(m => m.im_split).map(m => m.pro_woche)), 1)}× wöchentlich.`);
+    const beinTage = T.split_tage.filter(d => d.muskeln.includes('Quadrizeps')), andere = T.split_tage.filter(d => !d.muskeln.includes('Quadrizeps'));
+    const kB = mittel(beinTage.map(d => d.kcal_mittel)), kA = mittel(andere.map(d => d.kcal_mittel));
+    if(kB != null && kA != null && kB < kA - 200) add('info', 'ernaehrung', 'Beintage unterversorgt', `An Beintagen isst du Ø ${fmt(kA - kB)} kcal weniger als an anderen Trainingstagen – dabei verbrauchen sie am meisten. Kohlenhydrate dort anheben.`);
+  } else if(b14.kraft.einheiten >= 2) add('info', 'training', 'Split eintragen', 'Lege unter „Ansicht & Ziele“ deinen Split fest (z. B. Push/Pull/Beine). Dann prüfe ich Frequenz pro Muskelgruppe, Lücken und Reihenfolge.');
+  const cardioW = T.cardio_minuten_woche;
+  if(aufbau && cardioW > 240) add('info', 'aktivitaet', 'Viel Cardio im Aufbau', `${fmt(cardioW)} min Cardio pro Woche (${T.arten.filter(a => a.kategorie === 'cardio').slice(0, 3).map(a => `${a.art} ${fmt(a.minuten)} min`).join(', ')}). Bei ~7 kcal pro Minute sind das grob ${fmt(Math.round(cardioW / 10) * 10)} kcal pro Tag – im Aufbau mitessen, sonst schrumpft der Überschuss.`);
+  if(diaet && cardioW < 60 && z.cardio_min_ziel) add('info', 'aktivitaet', 'Wenig Cardio in der Diät', `${fmt(cardioW)} min pro Woche. Stairmaster, Rad oder Schwimmen an Rest-Days helfen, das Defizit ohne weitere Kalorienkürzung zu halten.`);
+  const I = T.intensitaet;
+  if(I?.n_lang >= 3 && I?.n_kurz >= 3 && I.lang && I.kurz && I.lang > I.kurz * 1.06) add('info', 'schlaf', 'Muster: Nach gutem Schlaf trainierst du härter', `Nach Nächten nahe deinem Schlafziel verbrennst du im Krafttraining ${fmt((I.lang / I.kurz - 1) * 100)} % mehr kcal pro Minute als nach kurzen Nächten.`);
+
   // ── Muster der letzten 4 Wochen
   const f28 = { von: tagPlus(bis, -27), bis };
   const R28 = ausrichten(basis.reihen, tagesListe(f28.von, bis));
@@ -161,5 +184,6 @@ export function analyse(basis, e, protokollListe = [], bis){
     zeitraum: A, vergleich_mit: B, phase: bb.phase,
     woche: { score: sa, score_vorher: sb, urteil, besser: plus, schlechter: minus, vergleich },
     erkenntnisse: E,
+    training: { split_tage: T.split_tage, muskeln: T.muskeln, arten: T.arten, abweichungen: T.abweichungen, cardio_minuten_woche: T.cardio_minuten_woche },
   };
 }

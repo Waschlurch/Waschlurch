@@ -49,14 +49,23 @@ export const WERKZEUGE = [
   },
   {
     name: 'protokoll_und_plan', title: 'Phasen, Trainingsplan und Protokoll',
-    description: 'Phasen mit Startdatum (Aufbau, Diät, Erhalt, Rekomposition), der Trainingsrhythmus (z. B. T,T,R = zwei Trainingstage, ein Rest-Day), alle Ziele (Kalorien je Tagtyp, Überschuss, Makros, Schritte, Cardio, Schlaf) und das Tagesprotokoll mit Cheat Days, Ausnahmen und Notizen. Pro Tag steht, ob Trainings- oder Rest-Day ist und welche Phase gilt.',
+    description: 'Phasen mit Startdatum (Aufbau, Diät, Erhalt, Rekomposition), der Trainingsrhythmus (z. B. T,T,R = zwei Trainingstage, ein Rest-Day), der Split mit Muskelgruppen je Trainingstag, alle Ziele (Kalorien je Tagtyp, Überschuss, Makros, Schritte, Cardio, Schlaf) und das Tagesprotokoll mit Cheat Days, Ausnahmen und Notizen. Pro Tag steht, ob Trainings- oder Rest-Day ist, welche Phase gilt, welcher Split-Tag trainiert wurde bzw. geplant war und alle Einheiten (Apple Health + manuell, z. B. Schwimmen, Stairmaster).',
     inputSchema: { type: 'object', properties: ZEIT, additionalProperties: false },
     run: async a => {
       const z = zeitraum(a, 14, 120); const [e, prot] = await Promise.all([einstellungenLaden(), protokollLaden(z)]);
       const map = new Map(prot.map(p => [p.tag, p]));
-      return { zeitraum: z, phasen: e.phasen, plan: e.plan, ziele: e.ziele,
-        tage: tagesListe(z.von, z.bis).map(t => ({ tag: t, typ: tagTyp(t, e.plan, map), phase: PHASEN_KURZ[phaseAm(t, e.phasen, e.ziele.phase).phase], ...(map.get(t) ? { cheat: map.get(t).cheat, notiz: map.get(t).notiz || undefined } : {}) })) };
+      const bb = await bodybuilding(z, e), R = bb.reihen;
+      return { zeitraum: z, phasen: e.phasen, plan: e.plan, split: e.split, ziele: e.ziele,
+        tage: R.tage.map((t, i) => ({ tag: t, typ: R.tagtyp[i], phase: PHASEN_KURZ[R.phase[i]], fokus: R.fokus[i] || undefined, fokus_geplant: R.fokus_geplant[i] || undefined,
+          einheiten: R.einheiten[i].map(x => ({ art: x.art, titel: x.titel !== x.art ? x.titel : undefined, dauer_min: x.dauer_min, quelle: x.quelle })),
+          ...(map.get(t) ? { cheat: map.get(t).cheat || undefined, notiz: map.get(t).notiz || undefined } : {}) })) };
     },
+  },
+  {
+    name: 'training_auswertung', title: 'Training: Split, Muskelgruppen, Arten',
+    description: 'Trainingsauswertung: Einheiten pro Split-Tag (geplant vs. absolviert, Ø Dauer, Ø Kalorien an diesen Tagen), Frequenz pro Muskelgruppe pro Woche mit „Tage seit zuletzt“ und Ø Pause, Abweichungen von der Split-Reihenfolge, Minuten je Trainingsart (Krafttraining, Schwimmen, Stairmaster, Rad …; Apple Health + manuell) und Intensität nach langer vs. kurzer Nacht. Standard: letzte 28 Tage.',
+    inputSchema: { type: 'object', properties: ZEIT, additionalProperties: false },
+    run: async a => { const z = zeitraum(a, 28, 180); const e = await einstellungenLaden(); const bb = await bodybuilding(z, e); return { zeitraum: z, rhythmus: e.plan, ...bb.training, kraft: bb.kraft, cardio: bb.cardio }; },
   },
   {
     name: 'schlaf_naechte', title: 'Schlaf pro Nacht',

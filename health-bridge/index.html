@@ -134,6 +134,11 @@
       <article class="karte breit"><header><h3>Einheiten pro Woche</h3><p class="klein" id="kw-k"></p></header><div class="dia" id="d-kraft"></div></article>
       <article class="karte"><header><h3>Trainingstage</h3><p class="klein">Krafttraining je Tag</p></header><div class="kalender" id="kalender"></div></article>
     </div>
+    <div class="raster gleich">
+      <article class="karte"><header><h3>Muskelgruppen pro Woche</h3><p class="klein" id="muskel-k">Ziel ≈ 2× für maximale Hypertrophie</p></header><ul class="hbalken" id="muskeln"></ul></article>
+      <article class="karte"><header><h3>Split-Einheiten</h3><p class="klein" id="split-k"></p></header><div class="vergleich" id="split-tabelle"></div></article>
+    </div>
+    <article class="karte"><header><h3>Trainingsarten</h3><p class="klein">Minuten im Zeitraum · Apple Health und manuell</p></header><ul class="hbalken arten" id="arten"></ul></article>
     <article class="karte"><header><h3>Letzte Einheiten</h3><p class="klein" id="kraft-k"></p></header><ol class="workouts" id="kraft-liste"></ol></article>
   </section>
 
@@ -227,6 +232,12 @@
       <div class="muster" id="a-muster" aria-label="Rhythmus, antippen zum Umschalten"></div>
       <div class="felder zwei"><label>Tag 1 des Rhythmus<input type="date" id="a-plan-start"></label><div class="vorschau-tage" id="a-plan-vorschau" aria-label="Nächste 14 Tage"></div></div>
     </fieldset>
+    <fieldset><legend>Split <span class="klein">welche Muskeln an welchem Trainingstag</span></legend>
+      <div class="muster-vorlagen" id="a-split-vorlagen"></div>
+      <ol class="split-liste" id="a-split"></ol>
+      <button type="button" class="knopf-leise" id="a-split-neu">+ Split-Tag</button>
+      <p class="klein">Der Split läuft der Reihe nach über deine Trainingstage. Trainierst du anders, erkennt Puls die Einheit aus dem Workout-Namen (z. B. „Push“, „Leg Day“) oder du wählst sie im Protokoll.</p>
+    </fieldset>
     <fieldset><legend>Ziele</legend>
       <h4 class="unterkopf">Kalorien</h4>
       <div class="felder">
@@ -269,6 +280,15 @@
         <label><input type="radio" name="tagtyp" value="training">Trainingstag</label>
         <label><input type="radio" name="tagtyp" value="rest">Rest-Day</label>
       </div>
+    </fieldset>
+    <fieldset><legend>Training an diesem Tag</legend>
+      <ul class="einheiten-liste" id="t-einheiten"></ul>
+      <div class="einheit-neu">
+        <label class="sr" for="t-art">Art</label><select id="t-art"></select>
+        <label class="sr" for="t-min">Minuten</label><input id="t-min" type="number" min="1" max="600" step="5" inputmode="numeric" placeholder="min">
+        <button type="button" class="knopf-leise" id="t-plus">+ Eintragen</button>
+      </div>
+      <label class="feld-zeile">Trainiert (Split)<select id="t-fokus"></select></label>
     </fieldset>
     <fieldset><legend>Ernährung</legend>
       <div class="chips"><label><input type="checkbox" name="cheat" id="t-cheat">Cheat Day</label></div>

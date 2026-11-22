@@ -7,7 +7,7 @@ export function demoNutzlast(tage = 120, seed = 7){
   const heute = lokalerTag(new Date());
   const f = d => { const p = x => String(x).padStart(2, '0'); const o = -d.getTimezoneOffset(); return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:00 +0000`; };
   const M = {}; const add = (name, units, p) => (M[name] ||= { name, units, data: [] }).data.push(p);
-  const workouts = []; let gewicht = 82.4;
+  const workouts = []; let gewicht = 82.4, splitZeiger = 0;
   for(let i = tage - 1; i >= 0; i--){
     const tag = tagPlus(heute, -i); const [j, mo, t] = tag.split('-').map(Number);
     const mitt = ausLokal(j, mo, t, 0, 0); const d = f(mitt);
@@ -51,9 +51,11 @@ export function demoNutzlast(tage = 120, seed = 7){
     const start = new Date(bett + n(14, 6) * 60000); const ende = new Date(start.getTime() + (gesamt + Math.max(0.05, wach)) * 3600e3);
     add('sleep_analysis', 'hr', { date: d, totalSleep: +gesamt.toFixed(3), asleep: 0, deep: +tief.toFixed(3), rem: +rem.toFixed(3), core: +(gesamt - tief - rem).toFixed(3), awake: +Math.max(0.05, wach).toFixed(3), inBed: +(gesamt + wach + 0.25).toFixed(3), sleepStart: f(start), sleepEnd: f(ende), inBedStart: f(new Date(bett)), inBedEnd: f(ende), source: 'Apple Watch' });
     // Trainings
-    const split = [['Krafttraining · Push', 68, null, 118], ['Krafttraining · Pull', 64, null, 115], ['Krafttraining · Beine', 74, null, 124], ['Krafttraining · Oberkörper', 62, null, 116]];
-    const cardio = [['Stairmaster', 30, null, 132], ['Radfahren', 40, 15.5, 128]];
-    const einheiten = training ? (r() < 0.9 ? [split[Math.floor(i / 3 * 2 + zyklus) % 4]] : []) : (r() < 0.75 ? [cardio[i % 2]] : []);
+    const split = [['Push', 68, null, 118], ['Pull', 64, null, 115], ['Leg Day', 74, null, 124]];
+    const cardio = [['Stair Climbing', 30, null, 132], ['Pool Swim', 35, 1.2, 126], ['Indoor Cycling', 40, 15.5, 128]];
+    let einheiten = [];
+    if(training && r() < 0.9){ einheiten = [split[splitZeiger % 3]]; splitZeiger++; }
+    else if(!training && r() < 0.8) einheiten = [cardio[(i / 3 | 0) % 3]];
     for(const [art, min, km, hf] of einheiten){
       const st = ausLokal(j, mo, t, 18, Math.round(r() * 50)); const dauer = n(min, 6);
       workouts.push({ id: `demo-${tag}-${art}`, name: art, start: f(st), end: f(new Date(st.getTime() + dauer * 60000)), duration: Math.round(dauer * 60),
@@ -74,11 +76,13 @@ export function demoEinstellungen(tage = 120){
     ziele: { phase: 'aufbau', protein_g_pro_kg: 2.2, groesse_cm: 182, schritte_ziel: 10000, cardio_min_ziel: 20, cardio_min_rest: 35, schlaf_ziel_h: 8, kraft_pro_woche: 5, ueberschuss_kcal: 300 },
     phasen: [{ phase: 'diaet', start: tagPlus(heute, -tage + 1), notiz: 'Diät bis Herbst' }, { phase: 'aufbau', start: tagPlus(heute, -70), notiz: 'Off-Season-Aufbau' }],
     plan: { muster: ['T', 'T', 'R'], start: tagPlus(heute, -startI) },
+    split: { vorlage: 'ppl', tage: [{ name: 'Push', muskeln: ['Brust', 'Schultern', 'Trizeps'] }, { name: 'Pull', muskeln: ['Rücken', 'Bizeps', 'Unterarme', 'Nacken'] }, { name: 'Beine', muskeln: ['Quadrizeps', 'Beinbeuger', 'Gesäß', 'Waden', 'Bauch'] }] },
   };
 }
 export function demoProtokoll(tage = 120){
   const heute = lokalerTag(new Date()), aus = [];
   for(let i = tage - 1; i >= 0; i--) if(i % 11 === 4) aus.push({ tag: tagPlus(heute, -i), cheat: true, tagtyp: null, notiz: i < 20 ? 'Pizza-Abend' : '' });
   aus.push({ tag: tagPlus(heute, -9), cheat: false, tagtyp: 'rest', notiz: 'Krank – Training ausgefallen' });
+  for(const i of [2, 5, 13, 20]) aus.push({ tag: tagPlus(heute, -i), cheat: false, tagtyp: null, notiz: '', einheiten: [{ art: 'Posing', dauer_min: 20 }] });
   return aus;
 }

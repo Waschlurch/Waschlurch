@@ -2,6 +2,7 @@
    Liegen in der Datenbank, damit iPhone, Mac und Claude dasselbe sehen. */
 
 import { db } from './db.mjs';
+import { MUSKELN } from '../kern/rechnen.mjs';
 
 export const KACHELN = {
   gewicht:       'Trendgewicht',
@@ -18,6 +19,8 @@ export const KACHELN = {
   kcal_heute:    'Kalorien vs Ziel',
   cardio:        'Cardio / Tag',
   phase:         'Phase seit Start',
+  naechster:     'Nächste Einheit',
+  muskelfrequenz:'Muskelfrequenz',
   gegessen:      'Gegessen',
   schlaf:        'Schlaf',
   ruhepuls:      'Ruhepuls',
@@ -33,7 +36,7 @@ export const BEREICH_TITEL = { analyse: 'Coach-Analyse', protokoll: 'Protokoll &
 
 export const VORLAGEN = {
   bodybuilding: { titel: 'Bodybuilding', text: 'Gewichtstrend, Energiebilanz, Eiweiß, Magermasse und Krafttraining zuerst.',
-    kacheln: ['score', 'gewicht', 'rate', 'kcal_heute', 'protein_gkg', 'kraft', 'schlaf', 'hrv'],
+    kacheln: ['score', 'naechster', 'gewicht', 'rate', 'kcal_heute', 'protein_gkg', 'muskelfrequenz', 'schlaf'],
     bereiche: ['analyse', 'aufbau', 'protokoll', 'ernaehrung', 'training', 'schlaf', 'herz', 'aktivitaet'] },
   diaet: { titel: 'Definition', text: 'Defizit, Abnahmetempo, Taille und Erhalt der Magermasse im Blick.',
     kacheln: ['score', 'gewicht', 'rate', 'kcal_heute', 'protein_gkg', 'cardio', 'schritte', 'taille'],
@@ -62,6 +65,7 @@ export const STANDARD = {
     schritte_ziel: 10000, cardio_min_ziel: null, cardio_min_rest: null, schlaf_ziel_h: 8, kraft_pro_woche: 4 },
   phasen: [],
   plan: { muster: [], start: null },
+  split: { vorlage: null, tage: [] },
 };
 const PHASE_IDS = ['aufbau', 'diaet', 'erhalt', 'recomp'];
 const istTag = t => typeof t === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(t);
@@ -98,7 +102,10 @@ export function saeubern(e = {}){
   const pl = e.plan || {};
   if(Array.isArray(pl.muster)) s.plan.muster = pl.muster.filter(x => x === 'T' || x === 'R').slice(0, 14);
   s.plan.start = istTag(pl.start) ? pl.start : null;
-  if(!s.plan.start || !s.plan.muster.length) s.plan = { muster: s.plan.muster, start: s.plan.start };
+  const sp = e.split || {};
+  s.split.vorlage = typeof sp.vorlage === 'string' ? sp.vorlage.slice(0, 20) : null;
+  if(Array.isArray(sp.tage)) s.split.tage = sp.tage.filter(d => d && String(d.name || '').trim()).slice(0, 10)
+    .map(d => ({ name: String(d.name).trim().slice(0, 40), muskeln: [...new Set((d.muskeln || []).filter(m => MUSKELN.includes(m)))] }));
   return s;
 }
 

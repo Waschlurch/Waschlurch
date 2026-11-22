@@ -16,6 +16,7 @@ Apple lässt Health-Daten nur auf dem iPhone selbst auslesen. Deshalb schickt ei
 |---|---|
 | `bodybuilding_analyse` | Trendgewicht, Tempo in kg und % pro Woche im Vergleich zum Phasenziel, adaptiver TDEE, Energiebilanz, empfohlene kcal, Eiweiß g/kg, Körperfett, Magermasse, FFMI, Taille, Krafttraining pro Woche |
 | `coach_analyse` | Wochen-Score, Vergleich zur Vorwoche, Warnungen und Empfehlungen |
+| `training_auswertung` | Split-Tage, Muskelgruppen-Frequenz, Trainingsarten, Abweichungen, Intensität nach Schlaf |
 | `protokoll_und_plan` | Phasen, Trainingsrhythmus, Ziele, Trainings-/Rest-Day und Cheat Days pro Tag |
 | `gesundheit_ueberblick` | Alle Bereiche, jeweils mit Mittelwert, letztem Wert und Veränderung zum Zeitraum davor |
 | `schlaf_naechte` | Jede Nacht mit Einschlaf- und Aufwachzeit und den Phasen Tief, Kern, REM und Wach |
@@ -41,6 +42,8 @@ Alle Werkzeuge lesen nur. Claude kann über sie nichts ändern oder löschen.
   - Muster: Schlaf hebt die HRV, Koffein kostet Schlaf
 - **Phasen mit Startdatum:** Aufbau, Diät, Erhalt und Rekomposition. Die Phase bestimmt das Zieltempo, erscheint als Band in den Diagrammen und liefert „seit Start“-Werte.
 - **Trainingsrhythmus:** zum Beispiel T·T·R ab einem Starttag. Ausnahmen trägst du pro Tag im Protokoll ein. Mit dem Rhythmus rechnet Puls getrennte Kalorienziele für Trainingstage und Rest-Days und prüft die Plantreue.
+- **Training:** Workouts aus Apple Health werden ins Deutsche übersetzt und eingeordnet (Kraft, Cardio, Mobility), z. B. *Pool Swim* → Schwimmen und *Stair Climbing* → Stairmaster. Im Protokoll kannst du pro Tag eigene Einheiten ergänzen (Art und Minuten).
+- **Split:** Vorlagen sind Push/Pull/Beine, Ober-/Unterkörper, Arnold, Bro-Split und Ganzkörper. Du kannst auch einen eigenen Split mit Muskelgruppen pro Tag anlegen. Der Split läuft über die Trainingstage deines Rhythmus. Die tatsächlich trainierte Einheit bestimmt Puls in dieser Reihenfolge: Eintrag im Protokoll, dann der Workout-Name (z. B. „Leg Day“ → Beine, „Chest & Triceps“ → Push), dann der Plan. Daraus ergeben sich die Frequenz pro Muskelgruppe und Woche, „Tage seit zuletzt“, Abweichungen von der Reihenfolge, Kalorien pro Split-Tag und Minuten pro Trainingsart. Der Coach warnt zum Beispiel bei „Beine seit 9 Tagen nicht trainiert“, bei weniger als 1,5× pro Woche oder bei viel Cardio im Aufbau.
 - **Protokoll:** Ein Tag im Raster lässt sich antippen. Dort markierst du einen Cheat Day, änderst Trainings- oder Rest-Day oder schreibst eine Notiz.
 - **Zoom:** In jedem Diagramm mit zwei Fingern auf- und zuziehen. Am Rechner geht das mit Strg + Mausrad, von 7 Tagen bis zu einem Jahr. Gerechnet wird im Browser (`kern/`), deshalb lädt beim Zoomen nichts nach. Claude nutzt denselben Kern.
 
@@ -150,5 +153,5 @@ Tageswerte: **Summen** wie Schritte oder kcal werden pro Quelle addiert, gezähl
 cd health-bridge
 npm install
 npm run demo     # http://localhost:5174 mit 120 Tagen Beispieldaten (PGlite im Speicher)
-npm test         # 112 Prüfungen; mit DATABASE_URL gegen echtes Postgres
+npm test         # 127 Prüfungen; mit DATABASE_URL gegen echtes Postgres
 ```

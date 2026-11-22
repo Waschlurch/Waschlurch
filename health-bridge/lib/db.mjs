@@ -51,8 +51,12 @@ create table if not exists protokoll (
   tag    date primary key,
   cheat  boolean not null default false,
   tagtyp text,
-  notiz  text not null default ''
+  notiz  text not null default '',
+  fokus  text,
+  einheiten jsonb not null default '[]'::jsonb
 );
+alter table protokoll add column if not exists fokus text;
+alter table protokoll add column if not exists einheiten jsonb not null default '[]'::jsonb;
 
 create table if not exists syncs (
   id     bigserial primary key,

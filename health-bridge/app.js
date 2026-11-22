@@ -1,5 +1,5 @@
 import { balken, stapel, linie, fenster, spark, leer, tagKurz, divergierend } from './diagramme.js';
-import { bodybuilding as bbKern, tagPlus, tagesListe, phaseAm, tagTyp, PHASEN as PHASE_TITEL } from './kern/rechnen.mjs';
+import { bodybuilding as bbKern, tagPlus, tagesListe, phaseAm, tagTyp, PHASEN as PHASE_TITEL, SPLITS, MUSKELN, ARTEN } from './kern/rechnen.mjs';
 import { analyse as analyseKern } from './kern/analyse.mjs';
 
 const $ = s => document.querySelector(s);
@@ -190,6 +190,15 @@ function kachelDef(id, d){
     case 'cardio': return { name: 'Cardio / Tag', f: 'minus', wert: `${zahl(bb.cardio.mittel_min)}<small>min</small>`, werte: r.cardio_min, unter: bb.cardio.ziel_min ? `<span class="delta ${bb.cardio.mittel_min >= bb.cardio.ziel_min ? 'gut' : 'schlecht'}">Ziel ${bb.cardio.ziel_min} min</span>` : '<span class="sub">kein Ziel</span>' };
     case 'phase': { const sp = bb.phase.seit; return { name: bb.phase.titel + (sp ? ' seit' : ''), f: 'koerper', wert: sp ? `${zahl(sp.wochen, 1)}<small>Wochen</small>` : bb.phase.titel, werte: r.trend_kg,
       unter: sp?.veraenderung_kg != null ? `<span class="sub">${vorz(sp.veraenderung_kg, 1)} kg seit ${tagKurz(sp.start)}</span>` : '<span class="sub">Startdatum eintragen</span>' }; }
+    case 'naechster': { const T = bb.training, sp = T.split; if(!sp) return { name: 'Nächste Einheit', f: 'aktiv', wert: '–', werte: [], unter: '<span class="sub">Split eintragen</span>' };
+      const heuteTyp = r.tagtyp.at(-1), heuteF = r.fokus.at(-1), geplant = r.fokus_geplant.at(-1);
+      const letzterF = [...r.fokus].reverse().find(Boolean), j = sp.tage.findIndex(x => x.name === letzterF), naechst = sp.tage[(j + 1) % sp.tage.length]?.name;
+      const wert = heuteF ? heuteF : heuteTyp === 'training' ? (geplant || naechst) : naechst;
+      return { name: heuteF ? 'Heute trainiert' : heuteTyp === 'training' ? 'Heute dran' : 'Nächste Einheit', f: 'aktiv', wert: `<span class="w-text">${esc(wert || '–')}</span>`, werte: [],
+        unter: `<span class="sub">${heuteTyp === 'rest' && !heuteF ? 'heute Rest-Day' : esc((sp.tage.find(x => x.name === wert)?.muskeln || []).slice(0, 3).join(' · '))}</span>` }; }
+    case 'muskelfrequenz': { const m = bb.training.muskeln.filter(x => x.im_split), mi = mittel(m.map(x => x.pro_woche)), min = m.reduce((a, x) => !a || x.pro_woche < a.pro_woche ? x : a, null);
+      return { name: 'Muskelfrequenz', f: 'aktiv', wert: mi == null ? '–' : `${zahl(mi, 1)}<small>× / Woche</small>`, werte: [],
+        unter: min ? `<span class="delta ${min.pro_woche >= 1.5 ? 'gut' : 'schlecht'}">am seltensten: ${esc(min.muskel)} ${zahl(min.pro_woche, 1)}×</span>` : '<span class="sub">Split eintragen</span>' }; }
     case 'gegessen': return { name: 'Gegessen', f: 'ernaehrung', wert: w(letzter(reihe('dietary_energy')), 'kcal'), werte: reihe('dietary_energy'), unter: bb.energie.empfohlene_kcal ? `<span class="sub">Ziel ${zahl(bb.energie.empfohlene_kcal)}</span>` : delta(reihe('dietary_energy'), null) };
     case 'schlaf': { const v = schlafReihe('gesamt_min'), l = letzter(v); return { name: 'Schlaf', f: 'schlaf', wert: l == null ? '–' : `${Math.floor(l / 60)}<small>h</small> ${String(Math.round(l % 60)).padStart(2, '0')}<small>min</small>`, werte: v, unter: delta(v, true, dauer) }; }
     case 'ruhepuls': { const v = reihe('resting_heart_rate'); return { name: 'Ruhepuls', f: 'herz', wert: w(letzter(v), 'bpm'), werte: v, unter: delta(v, false) }; }
@@ -206,7 +215,7 @@ function kacheln(d){
   const liste = d.einstellungen.kacheln.map(id => [id, kachelDef(id, d)]).filter(([, k]) => k);
   const n = liste.length, spalten = n <= 5 ? n : Math.ceil(n / Math.ceil(n / 5));
   const box = $('#kacheln'); box.style.setProperty('--spalten', Math.max(1, spalten));
-  const ziel = { score: 'analyse', kcal_heute: 'protokoll', cardio: 'protokoll', phase: 'protokoll', gewicht: 'aufbau', rate: 'aufbau', protein_gkg: 'ernaehrung', bilanz: 'aufbau', tdee: 'aufbau', koerperfett: 'aufbau', magermasse: 'aufbau', ffmi: 'aufbau', taille: 'aufbau', kraft: 'training', gegessen: 'ernaehrung', schlaf: 'schlaf', ruhepuls: 'herz', hrv: 'herz', schritte: 'aktivitaet', aktivkalorien: 'aktivitaet', vo2max: 'herz', wasser: 'ernaehrung' };
+  const ziel = { naechster: 'training', muskelfrequenz: 'training', score: 'analyse', kcal_heute: 'protokoll', cardio: 'protokoll', phase: 'protokoll', gewicht: 'aufbau', rate: 'aufbau', protein_gkg: 'ernaehrung', bilanz: 'aufbau', tdee: 'aufbau', koerperfett: 'aufbau', magermasse: 'aufbau', ffmi: 'aufbau', taille: 'aufbau', kraft: 'training', gegessen: 'ernaehrung', schlaf: 'schlaf', ruhepuls: 'herz', hrv: 'herz', schritte: 'aktivitaet', aktivkalorien: 'aktivitaet', vo2max: 'herz', wasser: 'ernaehrung' };
   const fueller = (spalten - n % spalten) % spalten;
   box.innerHTML = liste.map(([id, k], i) => `<a class="kachel${n % 2 && i === n - 1 ? ' voll' : ''}" href="#${ziel[id]}" style="--k:${farbe(k.f)}"><span class="t"><i></i>${k.name}</span><span class="w">${k.wert}</span><span class="u">${k.unter || '<span></span>'}${spark(k.werte, farbe(k.f))}</span></a>`).join('')
     + '<div class="kachel fueller" aria-hidden="true"></div>'.repeat(fueller);
@@ -252,11 +261,21 @@ function training(d){
   $('#kalender').innerHTML = zellen.join('');
   $('#kalender').setAttribute('role', 'img');
   $('#kalender').setAttribute('aria-label', `Krafttraining an ${r.kraft_tage.filter(e => e.length).length} von ${r.tage.length} Tagen`);
-  const liste = d.workouts.filter(w => KRAFT.test(w.art));
-  $('#kraft-liste').innerHTML = liste.length ? liste.slice(0, matchMedia('(max-width: 620px)').matches ? 6 : 12).map(w => `<li><span class="ic" aria-hidden="true">▲</span><span class="a">${esc(w.art)}</span>
-    <span class="d">${new Date(w.start).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })} · ${zahl(w.dauer_min)} min${w.energie_kcal ? ' · ' + zahl(w.energie_kcal) + ' kcal' : ''}${w.hf_mittel ? ' · Ø ' + zahl(w.hf_mittel) + ' bpm' : ''}</span></li>`).join('')
+  const liste = alleEinheiten(d.bodybuilding).filter(x => x.kategorie === 'kraft');
+  $('#kraft-liste').innerHTML = liste.length ? liste.slice(0, matchMedia('(max-width: 620px)').matches ? 6 : 12).map(einheitLi).join('')
     : '<li class="leer">Keine Krafttrainings in diesem Zeitraum. Zeichne sie auf der Apple Watch als „Krafttraining“ auf – oder mit Apps wie Hevy oder Strong, die nach Apple Health schreiben.</li>';
   $('#kraft-k').textContent = liste.length ? `${liste.length} Einheiten · ${dauer(liste.reduce((s, w) => s + (w.dauer_min || 0), 0))}` : '';
+  // Muskelgruppen, Split-Tabelle, Arten
+  const T = d.bodybuilding.training, maxW = Math.max(3, ...T.muskeln.map(m => m.pro_woche || 0));
+  $('#muskeln').innerHTML = T.muskeln.length ? T.muskeln.map(m => { const st = m.pro_woche >= 1.8 ? 'gut' : m.pro_woche >= 1.3 ? 'mittel' : 'schwach';
+    return `<li class="${st}"><span>${esc(m.muskel)}</span><i style="--z:${2 / maxW * 100}%"><b style="width:${(m.pro_woche || 0) / maxW * 100}%"></b></i><em>${zahl(m.pro_woche, 1)}×</em><small>${m.tage_seit == null ? 'nie' : m.tage_seit === 0 ? 'heute' : `vor ${m.tage_seit} T`}</small></li>`; }).join('')
+    : '<li class="leer">Lege unter „Ansicht & Ziele“ deinen Split fest – dann siehst du hier jede Muskelgruppe.</li>';
+  $('#split-tabelle').innerHTML = T.split_tage.length ? `<table><thead><tr><th scope="col">Split-Tag</th><th scope="col">Gemacht</th><th scope="col">Ø Dauer</th><th scope="col">Ø kcal</th><th scope="col">Zuletzt</th></tr></thead><tbody>${T.split_tage.map(x => `<tr>
+    <th scope="row">${esc(x.name)}<small> ${esc(x.muskeln.slice(0, 3).join(', '))}${x.muskeln.length > 3 ? ' …' : ''}</small></th><td>${x.absolviert}${x.geplant ? ` / ${x.geplant}` : ''}</td><td>${x.dauer_mittel_min ? x.dauer_mittel_min + ' min' : '–'}</td><td>${zahl(x.kcal_mittel)}</td><td>${x.letzte ? tagKurz(x.letzte) : '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="klein">Noch kein Split eingetragen.</p>';
+  $('#split-k').textContent = T.abweichungen.length ? `${T.abweichungen.length}× von der Reihenfolge abgewichen` : T.split_tage.length ? 'Reihenfolge eingehalten' : '';
+  const maxA = Math.max(1, ...T.arten.map(a => a.minuten));
+  $('#arten').innerHTML = T.arten.length ? T.arten.map(a => `<li class="k-${a.kategorie}"><span>${SYM[a.art] || '●'} ${esc(a.art)}</span><i><b style="width:${a.minuten / maxA * 100}%"></b></i><em>${zahl(a.minuten)} min</em><small>${a.einheiten}×${a.manuell ? ` · ${a.manuell} manuell` : ''}</small></li>`).join('')
+    : '<li class="leer">Keine Einheiten im Zeitraum.</li>';
   $('#training-k').innerHTML = k.einheiten ? `<b>${k.einheiten}</b> Einheiten, <b>${dauer(k.minuten)}</b> unter der Hantel · Ø <b>${zahl(k.pro_woche_mittel, 1)}</b> pro Woche.` : '';
 }
 const KRAFT = /kraft|strength|functional|bodybuilding|gewicht|weight|hiit|core|crossfit|calisthenics|push|pull|beine|legs/i;
@@ -310,8 +329,8 @@ function protokollBereich(d){
   for(let i = start; i < r.tage.length; i++){
     const t = r.tage[i], p = prot.get(t), typ = r.tagtyp[i], kraft = r.kraft_tage[i].length > 0;
     const klassen = ['pz', typ === 'training' ? 'pz-t' : 'pz-r', kraft ? 'pz-k' : '', r.cheat[i] ? 'pz-c' : '', p?.notiz ? 'pz-n' : '', p?.tagtyp ? 'pz-x' : '', t === d.zeitraum.bis ? 'pz-heute' : ''].filter(Boolean).join(' ');
-    const label = `${tagKurz(t, true)}: ${typ === 'training' ? 'Trainingstag' : 'Rest-Day'}${kraft ? ', Krafttraining erledigt' : typ === 'training' ? ', kein Krafttraining' : ''}${r.cardio_min[i] ? `, ${r.cardio_min[i]} min Cardio` : ''}${r.cheat[i] ? ', Cheat Day' : ''}${p?.notiz ? ', Notiz: ' + p.notiz : ''}`;
-    zellen.push(`<button type="button" class="${klassen}" data-tag="${t}" aria-label="${esc(label)}" title="${esc(label)}"><span class="pz-d">${+t.slice(8)}</span><span class="pz-typ">${typ === 'training' ? 'T' : 'R'}</span></button>`);
+    const label = `${tagKurz(t, true)}: ${typ === 'training' ? 'Trainingstag' : 'Rest-Day'}${r.fokus[i] ? ', ' + r.fokus[i] + ' trainiert' : kraft ? ', Krafttraining erledigt' : typ === 'training' ? `, kein Krafttraining${r.fokus_geplant[i] ? ' (geplant: ' + r.fokus_geplant[i] + ')' : ''}` : ''}${r.einheiten[i].filter(x => x.kategorie !== 'kraft').map(x => `, ${x.art} ${x.dauer_min} min`).join('')}${r.cheat[i] ? ', Cheat Day' : ''}${p?.notiz ? ', Notiz: ' + p.notiz : ''}`;
+    zellen.push(`<button type="button" class="${klassen}" data-tag="${t}" aria-label="${esc(label)}" title="${esc(label)}"><span class="pz-d">${+t.slice(8)}</span><span class="pz-typ">${esc(r.fokus[i] ? r.fokus[i].slice(0, 6) : r.fokus_geplant[i] ? r.fokus_geplant[i].slice(0, 6) : typ === 'training' ? 'T' : 'R')}</span>${r.einheiten[i].some(x => x.kategorie === 'cardio') ? '<span class="pz-cardio" aria-hidden="true"></span>' : ''}</button>`);
   }
   $('#prot-gitter').innerHTML = zellen.join('');
   // Kalorien gegen Tagesziel, gefärbt nach Tagtyp
@@ -369,15 +388,18 @@ function herz(d){
 const SYMBOL = { lauf: '↗', run: '↗', rad: '◎', cycl: '◎', kraft: '▲', strength: '▲', yoga: '◡', schwimm: '≈', swim: '≈', geh: '·', walk: '·', hiit: '✦' };
 const symbol = art => { const a = art.toLowerCase(); for(const [k, v] of Object.entries(SYMBOL)) if(a.includes(k)) return v; return '●'; };
 
+const SYM = { Krafttraining: '▲', Schwimmen: '≈', Stairmaster: '⌗', Radfahren: '◎', Laufen: '↗', Gehen: '·', Crosstrainer: '⟲', Rudern: '⇄', HIIT: '✦', Wandern: '⛰', Yoga: '◡', Mobility: '◡', Posing: '◇', Seilspringen: '∿' };
+const alleEinheiten = bb => bb.reihen.tage.flatMap((t, i) => bb.reihen.einheiten[i].map(x => ({ ...x, tag: t, fokus: x.kategorie === 'kraft' ? bb.reihen.fokus[i] : null }))).reverse();
+const einheitLi = x => `<li><span class="ic" aria-hidden="true">${SYM[x.art] || '●'}</span><span class="a">${esc(x.fokus && x.art === 'Krafttraining' ? x.fokus : x.art)}${x.quelle === 'manuell' ? ' <em class="quelle">manuell</em>' : ''}</span>
+    <span class="d">${tagKurz(x.tag, true)} · ${zahl(x.dauer_min)} min${x.energie_kcal ? ' · ' + zahl(x.energie_kcal) + ' kcal' : ''}${x.hf_mittel ? ' · Ø ' + zahl(x.hf_mittel) + ' bpm' : ''}${x.titel && x.titel !== x.art && x.titel !== x.fokus ? ' · ' + esc(x.titel) : ''}</span></li>`;
+
 function aktivitaet(d){
   const schritte = reihe('step_count');
   balken($('#d-schritte'), { tage: d.tage, werte: schritte, farbe: farbe('aktiv'), ziel: d.einstellungen.ziele.schritte_ziel, format: v => zahl(v), name: 'Schritte', label: 'Schritte pro Tag' });
   balken($('#d-energie'), { tage: d.tage, werte: reihe('active_energy'), farbe: farbe('ernaehrung'), format: v => zahl(v), name: 'Aktivkalorien', einheit: 'kcal', label: 'Aktivkalorien pro Tag' });
-  const wo = d.workouts;
+  const wo = alleEinheiten(d.bodybuilding);
   $('#wo-k').textContent = wo.length ? `${wo.length} Einheiten · ${dauer(wo.reduce((s, w) => s + (w.dauer_min || 0), 0))}` : '';
-  $('#workouts').innerHTML = wo.length ? wo.slice(0, matchMedia('(max-width: 620px)').matches ? 6 : 12).map(w => `<li><span class="ic" aria-hidden="true">${symbol(w.art)}</span><span class="a">${esc(w.art)}</span>
-    <span class="d">${new Date(w.start).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })} · ${zahl(w.dauer_min)} min${w.distanz_km ? ' · ' + zahl(w.distanz_km, 1) + ' km' : ''}${w.energie_kcal ? ' · ' + zahl(w.energie_kcal) + ' kcal' : ''}</span></li>`).join('')
-    : '<li class="leer">Keine Trainings in diesem Zeitraum.</li>';
+  $('#workouts').innerHTML = wo.length ? wo.slice(0, matchMedia('(max-width: 620px)').matches ? 6 : 12).map(einheitLi).join('') : '<li class="leer">Keine Trainings in diesem Zeitraum.</li>';
   const s = mittel(schritte), ziel = schritte.filter(v => v >= d.einstellungen.ziele.schritte_ziel).length;
   $('#akt-k').innerHTML = s ? `Ø <b>${zahl(s)}</b> Schritte · Ziel an <b>${ziel}</b> von ${schritte.filter(v => v != null).length} Tagen erreicht.` : '';
 }
@@ -482,7 +504,7 @@ async function einstellungenSpeichern(e){
   neuRechnen();
 }
 async function protokollSpeichern(eintrag){
-  const leer = !eintrag.cheat && !eintrag.tagtyp && !eintrag.notiz;
+  const leer = !eintrag.cheat && !eintrag.tagtyp && !eintrag.notiz && !eintrag.fokus && !eintrag.einheiten?.length;
   if(!VORSCHAU){
     const r = await fetch('/api/protokoll', { method: 'PUT', headers: { 'x-puls-code': zustand.code, 'Content-Type': 'application/json' }, body: JSON.stringify(eintrag) });
     if(!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Speichern fehlgeschlagen.');
@@ -535,6 +557,12 @@ function anpassenZeichnen(){
   $('#a-plan-start').value = e.plan.start || '';
   const heute = zustand.roh.heute;
   $('#a-plan-vorschau').innerHTML = e.plan.muster.length && e.plan.start ? tagesListe(heute, tagPlus(heute, 13)).map(t => { const x = tagTyp(t, e.plan, new Map()); return `<span class="v-${x}" title="${tagKurz(t, true)}">${'SMDMDFS'[new Date(t + 'T12:00:00Z').getUTCDay()]}</span>`; }).join('') : '<span class="klein">Rhythmus und Starttag wählen</span>';
+  // Split
+  $('#a-split-vorlagen').innerHTML = Object.entries(SPLITS).map(([id, x]) => `<button type="button" data-split="${id}" aria-pressed="${e.split.vorlage === id}">${esc(x.titel)}</button>`).join('');
+  $('#a-split').innerHTML = e.split.tage.length ? e.split.tage.map((d, i) => `<li data-i="${i}">
+      <div class="split-kopf"><span class="nr-klein">${i + 1}</span><input type="text" data-feld="name" value="${esc(d.name)}" maxlength="40" aria-label="Name von Split-Tag ${i + 1}"><button type="button" data-weg aria-label="Split-Tag ${i + 1} entfernen">×</button></div>
+      <div class="chips klein-chips">${MUSKELN.map(m => `<label><input type="checkbox" value="${m}"${d.muskeln.includes(m) ? ' checked' : ''}>${m}</label>`).join('')}</div></li>`).join('')
+    : '<li class="leer">Noch kein Split. Wähle oben eine Vorlage oder lege eigene Tage an.</li>';
   const f = $('#anpassen-form');
   for(const [k, v] of Object.entries(e.ziele)) if(f.elements[k] && f.elements[k].tagName === 'INPUT') f.elements[k].value = v ?? '';
 }
@@ -544,6 +572,7 @@ async function anpassenOeffnen(){
   anpassen.entwurf = structuredClone(zustand.roh.einstellungen);
   anpassen.entwurf.plan ||= { muster: [], start: null };
   anpassen.entwurf.phasen ||= [];
+  anpassen.entwurf.split ||= { vorlage: null, tage: [] };
   anpassenZeichnen(); $('#a-status').textContent = '';
   $('#anpassen').showModal();
 }
@@ -598,6 +627,25 @@ $('#a-muster').addEventListener('click', e => {
   else m[+b.dataset.i] = m[+b.dataset.i] === 'T' ? 'R' : 'T';
   anpassenZeichnen();
 });
+$('#a-split-vorlagen').addEventListener('click', e => {
+  const b = e.target.closest('[data-split]'); if(!b) return;
+  anpassen.entwurf.split = { vorlage: b.dataset.split, tage: structuredClone(SPLITS[b.dataset.split].tage) };
+  anpassenZeichnen();
+});
+$('#a-split').addEventListener('input', e => {
+  const li = e.target.closest('li[data-i]'); if(!li) return;
+  const d = anpassen.entwurf.split.tage[+li.dataset.i]; anpassen.entwurf.split.vorlage = null;
+  if(e.target.dataset.feld === 'name') d.name = e.target.value;
+  else if(e.target.type === 'checkbox') d.muskeln = e.target.checked ? [...new Set([...d.muskeln, e.target.value])] : d.muskeln.filter(m => m !== e.target.value);
+});
+$('#a-split').addEventListener('click', e => {
+  const w = e.target.closest('[data-weg]'); if(!w) return;
+  anpassen.entwurf.split.tage.splice(+w.closest('li').dataset.i, 1); anpassen.entwurf.split.vorlage = null; anpassenZeichnen();
+});
+$('#a-split-neu').addEventListener('click', () => {
+  anpassen.entwurf.split.tage.push({ name: `Tag ${anpassen.entwurf.split.tage.length + 1}`, muskeln: [] }); anpassen.entwurf.split.vorlage = null;
+  anpassenZeichnen(); $('#a-split li:last-child input[type=text]')?.select();
+});
 $('#a-plan-start').addEventListener('input', e => { anpassen.entwurf.plan.start = e.target.value || null; anpassenZeichnen(); });
 $('#anpassen-form').addEventListener('input', e => {
   if(!e.target.closest('.felder') || !e.target.name) return;
@@ -627,17 +675,36 @@ function tagOeffnen(tag){
     + (i >= 0 ? zeile('Gegessen', bb.reihen.kcal[i] != null ? `${zahl(bb.reihen.kcal[i])} kcal${bb.reihen.kcal_ziel[i] ? ` · Ziel ${zahl(bb.reihen.kcal_ziel[i])}` : ''}` : 'nicht geloggt')
       + zeile('Krafttraining', kraft.length ? kraft.map(k => `${esc(k.art)} (${zahl(k.dauer_min)} min)`).join(', ') : '–')
       + zeile('Cardio', bb.reihen.cardio_min[i] ? `${zahl(bb.reihen.cardio_min[i])} min` : '–') : '');
+  // Training: Apple-Health-Einheiten (nur lesen) + manuelle (bearbeitbar), Split-Fokus
+  tagEntwurf = { tag, einheiten: structuredClone(p.einheiten || []), apple: i >= 0 ? bb.reihen.einheiten[i].filter(x => x.quelle === 'apple') : [] };
+  $('#t-art').innerHTML = ARTEN.map(a => `<option>${a}</option>`).join('');
+  const sp = roh.einstellungen.split?.tage || [], erkannt = i >= 0 ? bb.reihen.fokus[i] : null, geplantF = i >= 0 ? bb.reihen.fokus_geplant[i] : null;
+  const optionen = [...new Set([...sp.map(x => x.name), ...(p.fokus && !sp.some(x => x.name === p.fokus) ? [p.fokus] : [])])];
+  $('#t-fokus').innerHTML = `<option value="">Automatisch${erkannt && !p.fokus ? ` – erkannt: ${esc(erkannt)}` : geplantF ? ` – geplant: ${esc(geplantF)}` : ''}</option>` + optionen.map(n => `<option value="${esc(n)}"${p.fokus === n ? ' selected' : ''}>${esc(n)}</option>`).join('');
+  einheitenZeichnen();
   const f = $('#tag-form');
   f.dataset.tag = tag;
   f.querySelectorAll('input[name=tagtyp]').forEach(r => r.checked = (r.value || null) === (p.tagtyp || null));
   $('#t-cheat').checked = !!p.cheat; $('#t-notiz').value = p.notiz || ''; $('#t-status').textContent = '';
   $('#tag-dlg').showModal();
 }
+let tagEntwurf = null;
+function einheitenZeichnen(){
+  const a = tagEntwurf.apple.map(x => `<li><span>${SYM[x.art] || '●'} ${esc(x.titel && x.titel !== x.art ? `${x.art} · ${x.titel}` : x.art)}</span><em>${zahl(x.dauer_min)} min${x.energie_kcal ? ` · ${zahl(x.energie_kcal)} kcal` : ''}</em><small>Apple Health</small></li>`);
+  const m = tagEntwurf.einheiten.map((x, k) => `<li><span>${SYM[x.art] || '●'} ${esc(x.art)}</span><em>${zahl(x.dauer_min)} min</em><button type="button" data-weg="${k}" aria-label="${esc(x.art)} entfernen">×</button></li>`);
+  $('#t-einheiten').innerHTML = [...a, ...m].join('') || '<li class="leer">Nichts aufgezeichnet. Trage hier ein, was du gemacht hast – z. B. Schwimmen 30 min.</li>';
+}
+$('#t-plus').addEventListener('click', () => {
+  const min = Math.round(Number($('#t-min').value));
+  if(!(min >= 1 && min <= 600)){ $('#t-min').focus(); $('#t-status').textContent = 'Bitte Minuten eintragen.'; return; }
+  tagEntwurf.einheiten.push({ art: $('#t-art').value, dauer_min: min }); $('#t-min').value = ''; $('#t-status').textContent = ''; einheitenZeichnen();
+});
+$('#t-einheiten').addEventListener('click', e => { const b = e.target.closest('[data-weg]'); if(b){ tagEntwurf.einheiten.splice(+b.dataset.weg, 1); einheitenZeichnen(); } });
 $('#tag-form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.currentTarget, typ = f.querySelector('input[name=tagtyp]:checked')?.value || null;
   $('#t-status').textContent = 'Speichere …';
-  try { await protokollSpeichern({ tag: f.dataset.tag, cheat: $('#t-cheat').checked, tagtyp: typ, notiz: $('#t-notiz').value.trim() }); $('#tag-dlg').close(); }
+  try { await protokollSpeichern({ tag: f.dataset.tag, cheat: $('#t-cheat').checked, tagtyp: typ, notiz: $('#t-notiz').value.trim(), fokus: $('#t-fokus').value || null, einheiten: tagEntwurf.einheiten }); $('#tag-dlg').close(); }
   catch(err){ $('#t-status').textContent = err.message; }
 });
 $('#tag-dlg').addEventListener('click', e => { if(e.target === e.currentTarget || e.target.closest('[data-zu]')) e.currentTarget.close(); });

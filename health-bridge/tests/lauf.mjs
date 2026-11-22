@@ -15,7 +15,7 @@ import { demoNutzlast } from '../scripts/demo-daten.mjs';
 import einstHandler from '../api/einstellungen.mjs';
 import { saeubern, STANDARD } from '../lib/einstellungen.mjs';
 import protHandler from '../api/protokoll.mjs';
-import { tagTyp, phaseAm, kcalZiel, bodybuilding as bbKern } from '../kern/rechnen.mjs';
+import { tagTyp, phaseAm, kcalZiel, bodybuilding as bbKern, artNormal, fokusAus, muskelnAus, SPLITS } from '../kern/rechnen.mjs';
 import { analyse as analyseKern, score } from '../kern/analyse.mjs';
 import { trend, steigung, isoWoche, bodybuilding } from '../lib/bodybuilding.mjs';
 
@@ -146,7 +146,7 @@ r = await mcp({ jsonrpc: '2.0', method: 'notifications/initialized' });
 pruefe('Benachrichtigung → 202 ohne Körper', r.statusCode === 202 && r.text === '');
 r = await mcp(rpc('tools/list', {}));
 const namen = r.json.result.tools.map(t => t.name);
-pruefe('Zehn Werkzeuge, nur lesend', namen.length === 10 && r.json.result.tools.every(t => t.annotations.readOnlyHint && t.inputSchema.type === 'object' && !t.run), namen);
+pruefe('Elf Werkzeuge, nur lesend', namen.length === 11 && r.json.result.tools.every(t => t.annotations.readOnlyHint && t.inputSchema.type === 'object' && !t.run), namen);
 r = await mcp(rpc('tools/call', { name: 'gesundheit_ueberblick', arguments: { tage: 7 } }));
 pruefe('Überblick über MCP', !r.json.result.isError && JSON.parse(r.json.result.content[0].text).bereiche.herz, r.text.slice(0, 300));
 r = await mcp(rpc('tools/call', { name: 'tageswerte', arguments: { metriken: ['Schritte', 'Ruhepuls'], tage: 5 } }));
@@ -251,6 +251,31 @@ pruefe('Phase seit Start mit Startgewicht', bbS.phase.seit?.gewicht_start_kg != 
 pruefe('Tagtypen ausgewertet', bbS.tagtypen.rest.tage >= 4 && bbS.tagtypen.rest.ueber_ziel_tage >= 4 && bbS.tagtypen.training.kcal_mittel === 3400, bbS.tagtypen);
 pruefe('Plan-Treue', bbS.kraft.geplante_trainingstage === bbS.kraft.davon_trainiert && bbS.kraft.geplante_trainingstage >= 9);
 
+block('Training: Arten, Split, Muskeln');
+pruefe('Apple-Health-Arten → deutsch', ['Traditional Strength Training', 'Pool Swim', 'Stair Climbing', 'Indoor Cycling', 'Elliptical', 'Walking', 'Rowing', 'Yoga'].map(x => artNormal(x).art).join() === 'Krafttraining,Schwimmen,Stairmaster,Radfahren,Crosstrainer,Gehen,Rudern,Yoga');
+pruefe('Kategorien', artNormal('Stair Climbing').kategorie === 'cardio' && artNormal('Functional Strength Training').kategorie === 'kraft' && artNormal('Flexibility').kategorie === 'mobil');
+pruefe('Split-Erkennung aus Namen', fokusAus('Hevy: Leg Day', SPLITS.ppl) === 'Beine' && fokusAus('Chest & Triceps', SPLITS.ppl) === 'Push' && fokusAus('Upper A', SPLITS.ou) === 'Oberkörper' && fokusAus('Traditional Strength Training', SPLITS.ppl) === null);
+pruefe('Muskeln aus Text', muskelnAus('Bankdrücken + Curls').join() === 'Brust,Bizeps');
+const T21 = []; for(let i = 20; i >= 0; i--) T21.push(tagPlus(ende, -i));
+const eT = { ...structuredClone(STANDARD), plan: { muster: ['T', 'T', 'R'], start: T21[0] }, split: { vorlage: 'ppl', tage: structuredClone(SPLITS.ppl.tage) } };
+// nur Push und Pull werden trainiert – Beine fehlen; Rest-Days: Stairmaster
+const woT = []; let z = 0;
+T21.forEach(t => { if(tagTyp(t, eT.plan, new Map()) === 'training'){ woT.push({ tag: t, art: z++ % 2 ? 'Pull' : 'Push', dauer_min: 60, energie_kcal: 400 }); } else woT.push({ tag: t, art: 'Stair Climbing', dauer_min: 30 }); });
+const basisT = { reihen: {}, schlaf: [], workouts: woT, groesse: 180 };
+const protT = [{ tag: T21.at(-1), cheat: false, tagtyp: null, notiz: '', fokus: null, einheiten: [{ art: 'Schwimmen', dauer_min: 25 }] }];
+const bT = bbKern(basisT, { von: T21[7], bis: ende }, eT, protT);
+pruefe('Fokus aus Workout-Namen', bT.reihen.fokus.filter(Boolean).every(f => f === 'Push' || f === 'Pull'));
+pruefe('Beine: 0× pro Woche erkannt', bT.training.muskeln.find(m => m.muskel === 'Quadrizeps').einheiten === 0 && bT.training.muskeln.find(m => m.muskel === 'Brust').einheiten >= 3, bT.training.muskeln.slice(0, 3));
+pruefe('Manuelle Einheit zählt (Schwimmen)', bT.training.arten.some(a => a.art === 'Schwimmen' && a.manuell === 1) && bT.reihen.cardio_min.at(-1) >= 25, bT.training.arten);
+pruefe('Stairmaster als Cardio', bT.training.arten.some(a => a.art === 'Stairmaster' && a.kategorie === 'cardio'));
+pruefe('Split-Tage-Statistik', bT.training.split_tage.find(d => d.name === 'Beine').absolviert === 0 && bT.training.split_tage.find(d => d.name === 'Push').absolviert >= 2);
+const anT = analyseKern(basisT, eT, protT, ende);
+const tT = anT.erkenntnisse.map(x => x.titel);
+pruefe('Coach: Beine fehlen', tT.includes('Beine fehlt'), tT);
+pruefe('Coach: Muskelgruppen zu selten', tT.includes('Muskelgruppen zu selten trainiert'), tT);
+const protF = [{ tag: T21.at(-2), cheat: false, tagtyp: null, notiz: '', fokus: 'Beine', einheiten: [] }];
+pruefe('Fokus im Protokoll überschreibt Erkennung', bbKern(basisT, { von: T21[7], bis: ende }, eT, protF).reihen.fokus.at(-2) === (tagTyp(T21.at(-2), eT.plan, new Map()) === 'training' ? 'Beine' : 'Beine'));
+
 block('Protokoll-API');
 r = await ruf(protHandler, { tag: '2026-11-20', cheat: true, notiz: 'Pizza' }, { methode: 'PUT', kopf: { 'x-puls-code': 'code' } });
 pruefe('Cheat Day speichern', r.statusCode === 200 && r.json.eintrag.cheat === true, r.text);
@@ -261,10 +286,16 @@ r = await ruf(protHandler, null, { methode: 'GET', url: '/api/protokoll?von=2026
 pruefe('Leerer Eintrag wird gelöscht', r.json.eintraege.length === 0);
 r = await ruf(protHandler, { tag: 'morgen' }, { methode: 'PUT', kopf: { 'x-puls-code': 'code' } });
 pruefe('Ungültiger Tag → 400', r.statusCode === 400);
+r = await ruf(protHandler, { tag: '2026-11-19', fokus: 'Beine', einheiten: [{ art: 'Schwimmen', dauer_min: 30 }, { art: '', dauer_min: 5 }, { art: 'Stairmaster', dauer_min: 9999 }] }, { methode: 'PUT', kopf: { 'x-puls-code': 'code' } });
+pruefe('Fokus + Einheiten gespeichert und gesäubert', r.json.eintrag.fokus === 'Beine' && r.json.eintrag.einheiten.length === 1, r.text);
+r = await ruf(protHandler, null, { methode: 'GET', url: '/api/protokoll?von=2026-11-19&bis=2026-11-19', kopf: { 'x-puls-code': 'code' } });
+pruefe('Einheiten aus DB gelesen', r.json.eintraege[0]?.einheiten?.[0]?.art === 'Schwimmen', r.text);
 r = await ruf(protHandler, null, { methode: 'GET' });
 pruefe('Ohne Code 401', r.statusCode === 401);
 r = await mcp(rpc('tools/call', { name: 'coach_analyse', arguments: {} }));
 pruefe('MCP coach_analyse', !r.json.result.isError && r.json.result.structuredContent.woche.vergleich.length === 10, r.text.slice(0, 300));
+r = await mcp(rpc('tools/call', { name: 'training_auswertung', arguments: { tage: 14 } }));
+pruefe('MCP training_auswertung', !r.json.result.isError && Array.isArray(r.json.result.structuredContent.arten) && 'muskeln' in r.json.result.structuredContent, r.text.slice(0, 300));
 r = await mcp(rpc('tools/call', { name: 'protokoll_und_plan', arguments: { tage: 7 } }));
 pruefe('MCP protokoll_und_plan', r.json.result.structuredContent.tage.length === 7 && 'plan' in r.json.result.structuredContent, r.text.slice(0, 300));
 

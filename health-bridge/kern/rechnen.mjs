@@ -8,6 +8,52 @@ export const CARDIO = /rad|cycl|bike|spinning|stair|stepper|treppe|ellip|crosstr
 export const PHASEN = { aufbau: 'Aufbau', diaet: 'Diät', erhalt: 'Erhalt', recomp: 'Rekomposition' };
 export const PHASE_RATE = { aufbau: 0.25, diaet: -0.6, erhalt: 0, recomp: 0 };
 
+/* ── Training: Arten, Muskelgruppen, Splits ── */
+export const MUSKELN = ['Brust', 'Rücken', 'Schultern', 'Bizeps', 'Trizeps', 'Unterarme', 'Bauch', 'Quadrizeps', 'Beinbeuger', 'Gesäß', 'Waden', 'Nacken'];
+const BEINE = ['Quadrizeps', 'Beinbeuger', 'Gesäß', 'Waden'], OBEN = ['Brust', 'Rücken', 'Schultern', 'Bizeps', 'Trizeps'];
+export const SPLITS = {
+  ppl: { titel: 'Push / Pull / Beine', tage: [{ name: 'Push', muskeln: ['Brust', 'Schultern', 'Trizeps'] }, { name: 'Pull', muskeln: ['Rücken', 'Bizeps', 'Unterarme', 'Nacken'] }, { name: 'Beine', muskeln: [...BEINE, 'Bauch'] }] },
+  ou: { titel: 'Oberkörper / Unterkörper', tage: [{ name: 'Oberkörper', muskeln: [...OBEN, 'Unterarme', 'Nacken'] }, { name: 'Unterkörper', muskeln: [...BEINE, 'Bauch'] }] },
+  arnold: { titel: 'Arnold-Split', tage: [{ name: 'Brust & Rücken', muskeln: ['Brust', 'Rücken', 'Nacken'] }, { name: 'Schultern & Arme', muskeln: ['Schultern', 'Bizeps', 'Trizeps', 'Unterarme'] }, { name: 'Beine', muskeln: [...BEINE, 'Bauch'] }] },
+  bro: { titel: 'Bro-Split (5 Tage)', tage: [{ name: 'Brust', muskeln: ['Brust'] }, { name: 'Rücken', muskeln: ['Rücken', 'Nacken'] }, { name: 'Schultern', muskeln: ['Schultern'] }, { name: 'Arme', muskeln: ['Bizeps', 'Trizeps', 'Unterarme'] }, { name: 'Beine', muskeln: [...BEINE, 'Bauch'] }] },
+  ganz: { titel: 'Ganzkörper', tage: [{ name: 'Ganzkörper', muskeln: [...OBEN, ...BEINE, 'Bauch'] }] },
+};
+const ARTEN_REGELN = [
+  [/schwimm|swim|pool/i, 'Schwimmen', 'cardio'], [/stair|stepper|treppe/i, 'Stairmaster', 'cardio'], [/ellip|crosstrainer|cross trainer/i, 'Crosstrainer', 'cardio'],
+  [/rudern|rowing|rower|ergometer/i, 'Rudern', 'cardio'], [/radfahr|rad\b|cycl|bike|spinning/i, 'Radfahren', 'cardio'], [/lauf|run|jog/i, 'Laufen', 'cardio'],
+  [/hik|wander/i, 'Wandern', 'cardio'], [/walk|gehen|spazier/i, 'Gehen', 'cardio'], [/hiit|intervall/i, 'HIIT', 'cardio'], [/seil|jump rope|skipping/i, 'Seilspringen', 'cardio'],
+  [/yoga|pilates/i, 'Yoga', 'mobil'], [/flex|mobil|stretch|dehn|cooldown|abkühl/i, 'Mobility', 'mobil'], [/posing/i, 'Posing', 'sonst'],
+  [/kraft|strength|functional|bodybuilding|gewicht|weight|push|pull|bein|leg|ober|unter|upper|lower|brust|chest|back|rücken|schulter|shoulder|arm|core|calisthenics|crossfit|ganzkörper|full body/i, 'Krafttraining', 'kraft'],
+];
+export const ARTEN = ['Krafttraining', 'Schwimmen', 'Stairmaster', 'Radfahren', 'Laufen', 'Gehen', 'Crosstrainer', 'Rudern', 'HIIT', 'Wandern', 'Seilspringen', 'Yoga', 'Mobility', 'Posing', 'Sport'];
+/** Workout-Name aus Apple Health (englisch oder deutsch) → { art, kategorie }. */
+export function artNormal(name){
+  const s = String(name || '');
+  for(const [re, art, kategorie] of ARTEN_REGELN) if(re.test(s)) return { art, kategorie };
+  return { art: s || 'Sport', kategorie: 'sonst' };
+}
+const MUSKEL_WORTE = [
+  [/brust|chest|bench|bankdr/i, ['Brust']], [/(?<![a-zäöüß])r(ü|ue)cken|\bback|\blat\b|latzug|\brow/i, ['Rücken']], [/schulter|shoulder|delt/i, ['Schultern']],
+  [/bizeps|biceps|curl/i, ['Bizeps']], [/trizeps|triceps|dips/i, ['Trizeps']], [/unterarm|forearm|grip/i, ['Unterarme']], [/bauch|abs\b|core/i, ['Bauch']],
+  [/quad|squat|kniebeug|beinpress/i, ['Quadrizeps']], [/beinbeuger|hamstring|deadlift|kreuzheb/i, ['Beinbeuger']], [/gesäß|gesaess|glute|hip thrust/i, ['Gesäß']],
+  [/wade|calf|calves/i, ['Waden']], [/nacken|trap|shrug/i, ['Nacken']],
+  [/bein|leg|unterkörper|unterkoerper|lower/i, BEINE], [/oberkörper|oberkoerper|upper/i, OBEN], [/\barm/i, ['Bizeps', 'Trizeps']],
+  [/push/i, ['Brust', 'Schultern', 'Trizeps']], [/pull/i, ['Rücken', 'Bizeps']], [/ganzkörper|full ?body/i, [...OBEN, ...BEINE]],
+];
+/** Muskelgruppen, die ein Text nennt (Workout-Name, Notiz, Split-Tag). */
+export function muskelnAus(text){ const m = new Set(); for(const [re, l] of MUSKEL_WORTE) if(re.test(text || '')) l.forEach(x => m.add(x)); return [...m]; }
+/** Welcher Split-Tag passt zu einem Workout-Namen? Name-Treffer schlägt Muskel-Überlappung. */
+export function fokusAus(text, split){
+  const tage = split?.tage || []; if(!tage.length || !text) return null;
+  const t = text.toLowerCase();
+  const direkt = tage.find(d => d.name && t.includes(d.name.toLowerCase())); if(direkt) return direkt.name;
+  const m = muskelnAus(text); if(!m.length) return null;
+  let best = null, bestWert = 0;
+  // Anteil der erkannten Muskeln, die der Split-Tag abdeckt; bei Gleichstand gewinnt der spezifischere Tag
+  for(const d of tage){ const n = d.muskeln.filter(x => m.includes(x)).length; const wert = n / m.length + 0.01 * n / Math.max(1, d.muskeln.length); if(wert > bestWert){ bestWert = wert; best = d.name; } }
+  return bestWert >= 0.5 ? best : null;
+}
+
 export const r1 = (v, nk = 1) => v == null || !Number.isFinite(v) ? null : Math.round(v * 10 ** nk) / 10 ** nk;
 export const mittel = a => { const v = a.filter(x => x != null && Number.isFinite(x)); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
 export const summe = a => a.reduce((s, x) => s + (x || 0), 0);
@@ -89,14 +135,33 @@ export function bodybuilding(basis, fenster, e, protokollListe = []){
   const bilanz = alle.map((_, i) => kcal[i] != null && verbrauch[i] != null ? kcal[i] - verbrauch[i] : null);
   const gkg = alle.map((_, i) => protein[i] != null && tr[i] ? protein[i] / tr[i] : null);
 
-  const wo = (basis.workouts || []).filter(w => w.tag >= alle[0] && w.tag <= fenster.bis);
-  const kraftAm = new Map(), cardioAm = new Map();
+  // Apple-Health-Workouts + manuelle Einheiten aus dem Protokoll
+  const wo = [
+    ...(basis.workouts || []).filter(w => w.tag >= alle[0] && w.tag <= fenster.bis).map(w => ({ ...w, titel: w.art, ...artNormal(w.art), quelle: 'apple' })),
+    ...protokollListe.filter(p => p.tag >= alle[0] && p.tag <= fenster.bis).flatMap(p => (p.einheiten || []).map((x, k) => ({ id: `m-${p.tag}-${k}`, tag: p.tag, titel: x.art, ...artNormal(x.art), art: artNormal(x.art).art === 'Sport' ? x.art : artNormal(x.art).art, dauer_min: x.dauer_min, quelle: 'manuell' }))),
+  ];
+  const einheitenAm = new Map(), kraftAm = new Map(), cardioAm = new Map();
   for(const w of wo){
-    if(KRAFT.test(w.art) && !/lauf|run|rad|cycl/i.test(w.art)) (kraftAm.get(w.tag) || kraftAm.set(w.tag, []).get(w.tag)).push(w);
-    else if(CARDIO.test(w.art)) cardioAm.set(w.tag, (cardioAm.get(w.tag) || 0) + (w.dauer_min || 0));
+    (einheitenAm.get(w.tag) || einheitenAm.set(w.tag, []).get(w.tag)).push(w);
+    if(w.kategorie === 'kraft') (kraftAm.get(w.tag) || kraftAm.set(w.tag, []).get(w.tag)).push(w);
+    else if(w.kategorie === 'cardio') cardioAm.set(w.tag, (cardioAm.get(w.tag) || 0) + (w.dauer_min || 0));
   }
   const cardio = alle.map(t => cardioAm.has(t) ? Math.round(cardioAm.get(t)) : 0);
   const typen = alle.map(t => tagTyp(t, e.plan, protokoll) ?? (kraftAm.has(t) ? 'training' : 'rest'));
+  // Split: tatsächlicher Fokus (Protokoll > Workout-Name > Plan) und geplanter Fokus (nächster nach dem zuletzt trainierten)
+  const split = e.split?.tage?.length ? e.split : null;
+  const fokus = [], geplant = [];
+  let naechster = 0;
+  alle.forEach((t, i) => {
+    const p = protokoll.get(t), k = kraftAm.get(t);
+    geplant.push(split && typen[i] === 'training' ? split.tage[naechster % split.tage.length].name : null);
+    let f = p?.fokus || null;
+    if(!f && k && split) f = k.map(w => fokusAus(w.titel, split)).find(Boolean) || null;
+    if(!f && k) f = split ? geplant[i] : (muskelnAus(k.map(w => w.titel).join(' ')).length ? k[0].titel : null);
+    fokus.push(k || p?.fokus ? f : null);
+    if(split && fokus[i]){ const j = split.tage.findIndex(d => d.name === fokus[i]); if(j >= 0) naechster = j + 1; else naechster++; }
+  });
+  const muskelnVon = f => { const d = split?.tage.find(x => x.name === f); return d ? d.muskeln : muskelnAus(f); };
   const phasenTag = alle.map(t => phaseAm(t, e.phasen, z.phase).phase);
   const cheat = alle.map(t => !!protokoll.get(t)?.cheat);
 
@@ -144,12 +209,36 @@ export function bodybuilding(basis, fenster, e, protokollListe = []){
   const wochen = {};
   for(const t of sichtTage) wochen[isoWoche(t)] ||= { woche: isoWoche(t), einheiten: 0, minuten: 0, geplant: 0 };
   sichtTage.forEach((t, i) => { if(S.typ[i] === 'training') wochen[isoWoche(t)].geplant++; });
-  const kraftListe = wo.filter(w => w.tag >= fenster.von && kraftAm.get(w.tag)?.includes(w));
+  const kraftListe = wo.filter(w => w.tag >= fenster.von && w.kategorie === 'kraft');
   for(const w of kraftListe){ const k = wochen[isoWoche(w.tag)]; if(k){ k.einheiten++; k.minuten += w.dauer_min || 0; } }
   const wochenListe = Object.values(wochen).map(w => ({ ...w, minuten: Math.round(w.minuten) }));
   const volle = wochenListe.length > 1 ? wochenListe.slice(0, -1) : wochenListe;
   const geplantTraining = sichtTage.filter((t, i) => S.typ[i] === 'training' && t <= fenster.bis);
   const trainiertGeplant = geplantTraining.filter(t => kraftAm.has(t)).length;
+
+  // Training im Detail: Arten, Split-Tage, Muskelgruppen
+  const woSicht = wo.filter(w => w.tag >= fenster.von);
+  const artMap = new Map();
+  for(const w of woSicht){ const a = artMap.get(w.art) || { art: w.art, kategorie: w.kategorie, einheiten: 0, minuten: 0, apple: 0, manuell: 0 }; a.einheiten++; a.minuten += w.dauer_min || 0; a[w.quelle]++; artMap.set(w.art, a); }
+  const sichtFokus = sicht(fokus), sichtGeplant = sicht(geplant);
+  const fensterTage = sichtTage.length, wochenFaktor = 7 / Math.max(7, fensterTage);
+  const splitTage = (split?.tage || []).map(d => {
+    const idx = sichtFokus.map((f, i) => f === d.name ? i : -1).filter(i => i >= 0);
+    const dauern = idx.flatMap(i => (kraftAm.get(sichtTage[i]) || []).map(w => w.dauer_min)).filter(Boolean);
+    return { name: d.name, muskeln: d.muskeln, absolviert: idx.length, geplant: sichtGeplant.filter(g => g === d.name).length, pro_woche: r1(idx.length * wochenFaktor, 1),
+      dauer_mittel_min: r1(mittel(dauern), 0), kcal_mittel: r1(mittel(idx.map(i => S.kcal[i])), 0), letzte: idx.length ? sichtTage[idx.at(-1)] : null };
+  });
+  const muskelStat = MUSKELN.map(m => {
+    const tageM = alle.filter((t, i) => fokus[i] && muskelnVon(fokus[i]).includes(m));
+    const imFenster = tageM.filter(t => t >= fenster.von);
+    const luecken = tageM.slice(1).map((t, i) => tageZwischen(tageM[i], t));
+    return { muskel: m, einheiten: imFenster.length, pro_woche: r1(imFenster.length * wochenFaktor, 1), letzte: tageM.at(-1) || null,
+      tage_seit: tageM.length ? tageZwischen(tageM.at(-1), fenster.bis) : null, pause_mittel_tage: r1(mittel(luecken), 1), im_split: !!split?.tage.some(d => d.muskeln.includes(m)) };
+  }).filter(x => x.im_split || x.einheiten);
+  const abweichungen = sichtTage.map((t, i) => sichtGeplant[i] && sichtFokus[i] && sichtGeplant[i] !== sichtFokus[i] ? { tag: t, geplant: sichtGeplant[i], gemacht: sichtFokus[i] } : null).filter(Boolean);
+  // Intensität (kcal/min laut Apple Watch) nach langer vs. kurzer Nacht
+  const naechte = new Map((basis.schlaf || []).map(n => [n.nacht, n.gesamt_min]));
+  const intens = wo.filter(w => w.kategorie === 'kraft' && w.energie_kcal && w.dauer_min >= 15).map(w => ({ s: naechte.get(w.tag), i: w.energie_kcal / w.dauer_min })).filter(x => x.s != null);
 
   const lbmJetzt = letzter(lbm), lbmVorher = sicht(lbm).find(v => v != null);
   const sTaille = sicht(taille).filter(v => v != null);
@@ -189,11 +278,21 @@ export function bodybuilding(basis, fenster, e, protokollListe = []){
       einheiten: kraftListe.length, minuten: Math.round(summe(kraftListe.map(w => w.dauer_min))), pro_woche_mittel: r1(mittel(volle.map(w => w.einheiten)), 1),
       ziel_pro_woche: z.kraft_pro_woche, wochen: wochenListe, geplante_trainingstage: geplantTraining.length, davon_trainiert: trainiertGeplant,
     },
+    training: {
+      split: split ? { tage: split.tage } : null,
+      arten: [...artMap.values()].map(a => ({ ...a, minuten: Math.round(a.minuten) })).sort((a, b) => b.minuten - a.minuten),
+      split_tage: splitTage, muskeln: muskelStat, abweichungen,
+      cardio_minuten_woche: r1(summe(S.cardio) * wochenFaktor, 0),
+      intensitaet: intens.length ? { lang: r1(mittel(intens.filter(x => x.s >= (z.schlaf_ziel_h * 60) - 15).map(x => x.i)), 2), kurz: r1(mittel(intens.filter(x => x.s < (z.schlaf_ziel_h * 60) - 45).map(x => x.i)), 2),
+        n_lang: intens.filter(x => x.s >= (z.schlaf_ziel_h * 60) - 15).length, n_kurz: intens.filter(x => x.s < (z.schlaf_ziel_h * 60) - 45).length } : null,
+    },
     reihen: {
       tage: sichtTage, trend_kg: sicht(tr).map(v => r1(v, 2)), gewicht_kg: sicht(gewicht), bilanz_kcal: sicht(bilanz).map(v => r1(v, 0)),
       verbrauch_kcal: sicht(verbrauch).map(v => r1(v, 0)), eiweiss_g_pro_kg: sicht(gkg).map(v => r1(v, 2)), magermasse_kg: sicht(lbm).map(v => r1(v, 1)),
       taille_cm: sicht(taille), kcal: S.kcal, kcal_ziel: S.ziel, tagtyp: S.typ, phase: sicht(phasenTag), cheat: S.cheat, cardio_min: S.cardio,
-      kraft_tage: sichtTage.map(t => (kraftAm.get(t) || []).map(w => ({ art: w.art, dauer_min: w.dauer_min }))),
+      kraft_tage: sichtTage.map(t => (kraftAm.get(t) || []).map(w => ({ art: w.titel, dauer_min: w.dauer_min }))),
+      einheiten: sichtTage.map(t => (einheitenAm.get(t) || []).map(w => ({ id: w.id, art: w.art, titel: w.titel, kategorie: w.kategorie, dauer_min: r1(w.dauer_min, 0), energie_kcal: w.energie_kcal ?? null, hf_mittel: w.hf_mittel ?? null, quelle: w.quelle }))),
+      fokus: sichtFokus, fokus_geplant: sichtGeplant,
     },
   };
 }
