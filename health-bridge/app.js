@@ -35,10 +35,10 @@ async function rohLaden(tage){
   document.body.classList.add('laedt');
   const r = await fetch(`/api/daten?tage=${tage}`, { headers: { 'x-puls-code': zustand.code } }).catch(() => null);
   document.body.classList.remove('laedt');
-  if(!r){ $('#satz').textContent = 'Keine Verbindung – angezeigt wird der letzte Stand.'; return null; }
-  if(r.status === 401){ schloss(true); return null; }
+  if(!r){ zustand.fehlerText = 'Keine Verbindung zum Server.'; $('#satz').textContent = 'Keine Verbindung – angezeigt wird der letzte Stand.'; return null; }
+  if(r.status === 401){ zustand.fehlerText = 'Der Code stimmt nicht.'; schloss(true); return null; }
   const j = await r.json().catch(() => ({}));
-  if(!r.ok){ $('#satz').textContent = j.message || 'Die Daten konnten nicht geladen werden.'; return null; }
+  if(!r.ok){ zustand.fehlerText = j.message || 'Die Daten konnten nicht geladen werden.'; $('#satz').textContent = zustand.fehlerText; return null; }
   return j;
 }
 
@@ -77,7 +77,8 @@ function schloss(an, fehler = ''){
 $('#schloss-form').addEventListener('submit', async e => {
   e.preventDefault();
   zustand.code = $('#code').value.trim();
-  if(!await aktualisieren({ neu: true })) return schloss(true, 'Der Code stimmt nicht.');
+  zustand.fehlerText = '';
+  if(!await aktualisieren({ neu: true })) return schloss(true, zustand.fehlerText || 'Der Code stimmt nicht.');
   SPEICHER.set('puls.code', zustand.code);
   schloss(false);
   kiBereit();
