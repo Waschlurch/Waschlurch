@@ -1,4 +1,5 @@
 {
+  "regions": ["dub1"],
   "rewrites": [
     { "source": "/mcp/:key", "destination": "/api/mcp?key=:key" },
     { "source": "/mcp", "destination": "/api/mcp" }
